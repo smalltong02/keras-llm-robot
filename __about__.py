@@ -1,3 +1,5 @@
+from WebUI.configs.modelconfig import KERAS_LLM_VERSION
+
 __all__ = [
     "__title__",
     "__summary__",
@@ -9,11 +11,11 @@ __all__ = [
     "__copyright__",
 ]
 
-__title__ = "keras-llm-robat"
+__title__ = "Keras-llm-Robot"
 __summary__ = "A Web GUI application for LLM model"
-__uri__ = "https://github.com/smalltong02/keras_llm_robat"
+__uri__ = "https://github.com/smalltong02/keras-llm-robot"
 
-__version__ = "1.0.0"
+__version__ = KERAS_LLM_VERSION
 
 __author__ = "YIN MA and individual contributors"
 __email__ = "yinma@fortinet.com"

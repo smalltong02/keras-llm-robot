@@ -1,0 +1,2 @@
+
+SAVE_CHAT_HISTORY = False
