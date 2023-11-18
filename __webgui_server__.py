@@ -108,32 +108,36 @@ def run_controller(started_event: mp.Event = None):
     # add interface to release and load model worker
     @app.post("/release_worker")
     def release_worker(
-            model_name: str = Body(..., description="要释放模型的名称", samples=["chatglm-6b"]),
-            # worker_address: str = Body(None, description="要释放模型的地址，与名称二选一", samples=[FSCHAT_CONTROLLER_address()]),
-            new_model_name: str = Body(None, description="释放后加载该模型"),
-            keep_origin: bool = Body(False, description="不释放原模型，加载新模型")
+            model_name: str = Body(..., description="Unload the model", samples=["chatglm-6b"]),
+            # worker_address: str = Body(None, description="Unload the model address", samples=[FSCHAT_CONTROLLER_address()]),
+            new_model_name: str = Body(None, description="New model"),
+            keep_origin: bool = Body(False, description="Second model")
     ) -> Dict:
         available_models = app._controller.list_models()
         if new_model_name in available_models:
-            msg = f"要切换的LLM模型 {new_model_name} 已经存在"
+            msg = f"The model {new_model_name} has been loaded."
             print(msg)
             return {"code": 500, "msg": msg}
 
         if new_model_name:
-            print(f"开始切换LLM模型：从 {model_name} 到 {new_model_name}")
+            print(f"Change model: from {model_name} to {new_model_name}")
         else:
-            print(f"即将停止LLM模型： {model_name}")
+            print(f"Stoping model: {model_name}")
 
-        if model_name not in available_models:
-            msg = f"the model {model_name} is not available"
-            print(msg)
-            return {"code": 500, "msg": msg}
+        #if model_name not in available_models:
+        #    msg = f"the model {model_name} is not available"
+        #    print(msg)
+        #    return {"code": 500, "msg": msg}
 
-        worker_address = app._controller.get_worker_address(model_name)
-        if not worker_address:
-            msg = f"can not find model_worker address for {model_name}"
-            print(msg)
-            return {"code": 500, "msg": msg}
+        if model_name != "":
+            worker_address = app._controller.get_worker_address(model_name)
+            if not worker_address:
+                msg = f"can not find model_worker address for {model_name}"
+                print(msg)
+                return {"code": 500, "msg": msg}
+        else:
+            workerconfig = get_model_worker_config(model_name)
+            worker_address = "http://" + workerconfig["host"] + ":" + str(workerconfig["port"])
 
         with get_httpx_client() as client:
             r = client.post(worker_address + "/release",
@@ -169,26 +173,16 @@ def run_controller(started_event: mp.Event = None):
 
     uvicorn.run(app, host=host, port=port)
 
-def create_model_worker_app(log_level: str = "INFO", **kwargs) -> FastAPI:
-    """
-    kwargs包含的字段如下：
-    host:
-    port:
-    model_names:[`model_name`]
-    controller_address:
-    worker_address:
+def create_empty_worker_app() -> FastAPI:
+    from fastchat.serve.base_model_worker import app
+    MakeFastAPIOffline(app)
+    app.title = f"FastChat empty Model"
+    app._worker = ""
+    return app
 
-    对于Langchain支持的模型：
-        langchain_model:True
-        不会使用fschat
-    对于online_api:
-        online_api:True
-        worker_class: `provider`
-    对于离线模型：
-        model_path: `model_name_or_path`,huggingface的repo-id或本地路径
-        device:`LLM_DEVICE`
-    """
+def create_model_worker_app(log_level: str = "INFO", **kwargs) -> FastAPI:
     import fastchat.constants
+    from fastchat.serve.base_model_worker import app
     fastchat.constants.LOGDIR = LOG_PATH
     import argparse
 
@@ -197,26 +191,22 @@ def create_model_worker_app(log_level: str = "INFO", **kwargs) -> FastAPI:
 
     for k, v in kwargs.items():
         setattr(args, k, v)
-    if worker_class := kwargs.get("langchain_model"): #Langchian支持的模型不用做操作
-        from fastchat.serve.base_model_worker import app
+    if worker_class := kwargs.get("langchain_model"):
         worker = ""
-    # 在线模型API
+    # Online model
     elif worker_class := kwargs.get("worker_class"):
-        from fastchat.serve.base_model_worker import app
-
         worker = worker_class(model_names=args.model_names,
                               controller_addr=args.controller_address,
                               worker_addr=args.worker_address)
-        # sys.modules["fastchat.serve.base_model_worker"].worker = worker
 
-    # 本地模型
+    # Local model
     else:
         #from WebUI.configs.modelconfig import VLLM_MODEL_DICT
         from fastchat.serve.model_worker import app, GptqConfig, AWQConfig, ModelWorker, worker_id
 
-        args.gpus = "0" # GPU的编号,如果有多个GPU，可以设置为"0,1,2,3"
+        args.gpus = "0"
         args.max_gpu_memory = "22GiB"
-        args.num_gpus = 1  # model worker的切分是model并行，这里填写显卡的数量
+        args.num_gpus = 1
 
         args.load_8bit = False
         args.cpu_offloading = None
@@ -345,9 +335,12 @@ def run_model_worker(
     model_path = kwargs.get("model_path", "")
     kwargs["model_path"] = model_path
 
-    app = create_model_worker_app(log_level="INFO", **kwargs)
-    _set_app_event(app, started_event)
+    if model_name == "":
+        app = create_empty_worker_app()
+    else:
+        app = create_model_worker_app(log_level="INFO", **kwargs)
 
+    _set_app_event(app, started_event)
     # add interface to release and load model
     @app.post("/release")
     def release_model(
@@ -391,9 +384,6 @@ def main_server():
     if args.webui is None:
         print("Please use the --webui parameter to start the Web GUI for AI Robot.")
         sys.exit(0)
-
-    if len(sys.argv) > 1:
-        print(f"Service starting：")
 
     args.openai_api = True
     args.model_worker = True
@@ -522,7 +512,7 @@ def main_server():
                 if isinstance(cmd, list):
                     model_name, cmd, new_model_name = cmd
                     if cmd == "start":
-                        print(f"准备启动新模型进程：{new_model_name}")
+                        print(f"Change to new model：{new_model_name}")
                         process = Process(
                             target=run_model_worker,
                             name=f"model_worker - {new_model_name}",
@@ -536,18 +526,18 @@ def main_server():
                         process.name = f"{process.name} ({process.pid})"
                         processes["model_worker"][new_model_name] = process
                         e.wait()
-                        print(f"成功启动新模型进程：{new_model_name}")
+                        print(f"The model：{new_model_name} running!")
                     elif cmd == "stop":
                         if process := processes["model_worker"].get(model_name):
                             time.sleep(1)
                             process.terminate()
                             process.join()
-                            print(f"停止模型进程：{model_name}")
+                            print(f"Stop model：{model_name}")
                         else:
-                            print(f"未找到模型进程：{model_name}")
+                            print(f"Can not find the model：{model_name}")
                     elif cmd == "replace":
                         if process := processes["model_worker"].pop(model_name, None):
-                            print(f"停止模型进程：{model_name}")
+                            print(f"Stop model：{model_name}")
                             start_time = datetime.now()
                             time.sleep(1)
                             process.terminate()
@@ -566,9 +556,9 @@ def main_server():
                             processes["model_worker"][new_model_name] = process
                             e.wait()
                             timing = datetime.now() - start_time
-                            print(f"成功启动新模型进程：{new_model_name}。用时：{timing}。")
+                            print(f"Loading new model：{new_model_name}。used：{timing}。")
                         else:
-                            print(f"未找到模型进程：{model_name}")
+                            print(f"Can not find the model：{model_name}")
 
         except Exception as e:
             print(e)

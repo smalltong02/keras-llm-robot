@@ -4,6 +4,7 @@ from streamlit_chatbox import *
 from WebUI.configs.prompttemplates import PROMPT_TEMPLATES
 from WebUI.configs.modelconfig import (TEMPERATURE, HISTORY_LEN)
 import os, platform
+from datetime import datetime
 import time
 import psutil
 import GPUtil
@@ -60,6 +61,14 @@ def get_gpu_info():
     return gpuname, utilization.gpu, meminfo.used / (1024 ** 3)
 
 def dialogue_page(api: ApiRequest, is_lite: bool = False):
+    running_model = "None"
+    models_list = list(api.get_running_models())
+    if len(models_list) == 0:
+        running_model = "None"
+    else:
+        running_model = models_list[0]
+
+    disabled = False
     with st.sidebar:
         def on_mode_change():
             mode = st.session_state.dialogue_mode
@@ -69,6 +78,9 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                 if cur_kb:
                     text = f"{text} Current Knowledge Base： `{cur_kb}`."
             st.toast(text)
+
+        if running_model == "None":
+            disabled = True
 
         dialogue_modes = ["LLM Chat",
                         "KnowledgeBase Chat",
@@ -80,6 +92,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                                     index=0,
                                     on_change=on_mode_change,
                                     key="dialogue_mode",
+                                    disabled = disabled,
                                     )
         
         index_prompt = {
@@ -104,24 +117,19 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
             index=0,
             on_change=prompt_change,
             key="prompt_template_select",
+            disabled=disabled
         )
         prompt_template_name = st.session_state.prompt_template_select
-        temperature = st.slider("Temperature：", 0.0, 1.0, TEMPERATURE, 0.05)
-        history_len = st.number_input("Dialogue Turns：", 0, 20, HISTORY_LEN)
+        temperature = st.slider("Temperature：", 0.0, 1.0, TEMPERATURE, 0.05, disabled=disabled)
+        history_len = st.number_input("Dialogue Turns：", 0, 20, HISTORY_LEN, disabled=disabled)
 
         st.caption(
             f"""<p style="font-size: 1.5em; text-align: left; color: #3498db;"><b>Running Status:</b></p>""",
             unsafe_allow_html=True,
         )
 
-        running_model = "None"
-        models_list = list(api.get_running_models())
-        if len(models_list) == 0:
-            running_model = "None"
-        else:
-            running_model = models_list[0]
         st.caption(
-            f"""<p style="font-size: 1em; text-align: center; color: #333333;">Load Model：{running_model}</p>""",
+            f"""<p style="font-size: 1em; text-align: center;">Load Model：{running_model}</p>""",
             unsafe_allow_html=True,
         )
 
@@ -134,31 +142,31 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
         #)
         placeholder_cpu = st.empty()
         cpuutil = gal_cpu_usage
-        placeholder_cpu.caption(f"""<p style="font-size: 1em; text-align: center; color: #333333;">CPU Util：{cpuutil:.2f}%</p>""",
+        placeholder_cpu.caption(f"""<p style="font-size: 1em; text-align: center;">CPU Util：{cpuutil:.2f}%</p>""",
             unsafe_allow_html=True,
             )
         placeholder_ram = st.empty()
-        placeholder_ram.caption(f"""<p style="font-size: 1em; text-align: center; color: #333333;">CPU RAM: {cpumem:.2f} GB</p>""",
+        placeholder_ram.caption(f"""<p style="font-size: 1em; text-align: center;">CPU RAM: {cpumem:.2f} GB</p>""",
             unsafe_allow_html=True,
             )
         gpuname, gpuutil, gpumem = get_gpu_info()
         if gpuname == "":
             gpuname = "Unknown"
         st.caption(
-            f"""<p style="font-size: 1em; text-align: center; color: #333333;">GPU Name: {gpuname}</p>""",
+            f"""<p style="font-size: 1em; text-align: center;">GPU Name: {gpuname}</p>""",
             unsafe_allow_html=True,
         )
         placeholder_gpuutil = st.empty()
-        placeholder_gpuutil.caption(f"""<p style="font-size: 1em; text-align: center; color: #333333;">GPU Util: {gpuutil:.2f}%</p>""",
+        placeholder_gpuutil.caption(f"""<p style="font-size: 1em; text-align: center;">GPU Util: {gpuutil:.2f}%</p>""",
             unsafe_allow_html=True,
             )
         placeholder_gpumem = st.empty()
-        placeholder_gpumem.caption(f"""<p style="font-size: 1em; text-align: center; color: #333333;">GPU RAM: {gpumem:.2f} GB</p>""",
+        placeholder_gpumem.caption(f"""<p style="font-size: 1em; text-align: center;">GPU RAM: {gpumem:.2f} GB</p>""",
             unsafe_allow_html=True,
             )
 
     if not chat_box.chat_inited:
-        if running_model == "":
+        if running_model == "" or running_model == "None":
             st.toast(
                 f"Currently, no models are configured. Please select model on the Model Configuration tab.\n"
                 )
@@ -186,10 +194,10 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
 
     feedback_kwargs = {
         "feedback_type": "thumbs",
-        "optional_text_label": "欢迎反馈您打分的理由",
+        "optional_text_label": "Please provide feedback on the reasons for your rating.",
     }
 
-    if prompt := st.chat_input(chat_input_placeholder, key="prompt"):
+    if prompt := st.chat_input(chat_input_placeholder, key="prompt", disabled=disabled):
         history = get_messages_history(history_len)
         chat_box.user_say(prompt)
         if dialogue_mode == "LLM Chat":
@@ -218,19 +226,23 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                                    on_submit=on_feedback,
                                    kwargs={"chat_history_id": chat_history_id, "history_index": len(chat_box.history) - 1})
     
+    if st.session_state.get("need_rerun"):
+        st.session_state["need_rerun"] = False
+        st.rerun()
+
     while True:
         _, cpuutil, cpumem = get_cpu_info()
-        placeholder_cpu.caption(f"""<p style="font-size: 1em; text-align: center; color: #333333;">CPU Util：{cpuutil:.2f}%</p>""",
+        placeholder_cpu.caption(f"""<p style="font-size: 1em; text-align: center;">CPU Util：{cpuutil:.2f}%</p>""",
             unsafe_allow_html=True,
             )
-        placeholder_ram.caption(f"""<p style="font-size: 1em; text-align: center; color: #333333;">CPU RAM: {cpumem:.2f} GB</p>""",
+        placeholder_ram.caption(f"""<p style="font-size: 1em; text-align: center;">CPU RAM: {cpumem:.2f} GB</p>""",
             unsafe_allow_html=True,
             )
         _, gpuutil, gpumem = get_gpu_info()
-        placeholder_gpuutil.caption(f"""<p style="font-size: 1em; text-align: center; color: #333333;">GPU Util: {gpuutil:.2f}%</p>""",
+        placeholder_gpuutil.caption(f"""<p style="font-size: 1em; text-align: center;">GPU Util: {gpuutil:.2f}%</p>""",
             unsafe_allow_html=True,
             )
-        placeholder_gpumem.caption(f"""<p style="font-size: 1em; text-align: center; color: #333333;">GPU RAM: {gpumem:.2f} GB</p>""",
+        placeholder_gpumem.caption(f"""<p style="font-size: 1em; text-align: center;">GPU RAM: {gpumem:.2f} GB</p>""",
             unsafe_allow_html=True,
             )
         time.sleep(1)

@@ -5,8 +5,8 @@ from WebUI.Server.utils import (BaseResponse, fschat_controller_address, list_co
 from copy import deepcopy
 
 def get_running_models(
-    controller_address: str = Body(None, description="Fastchat controller服务器地址", examples=[fschat_controller_address()]),
-    placeholder: str = Body(None, description="该参数未使用，占位用"), 
+    controller_address: str = Body(None, description="Fastchat controller adress", examples=[fschat_controller_address()]),
+    placeholder: str = Body(None, description="Not use"), 
 ) -> BaseResponse:
     try:
         controller_address = controller_address or fschat_controller_address()
@@ -20,15 +20,12 @@ def get_running_models(
         return BaseResponse(
             code=500,
             data={},
-            msg=f"failed to get current models, error： {e}")
+            msg=f"failed to get current model, error: {e}")
 
 def list_running_models(
-    controller_address: str = Body(None, description="Fastchat controller服务器地址", examples=[fschat_controller_address()]),
-    placeholder: str = Body(None, description="该参数未使用，占位用"),
+    controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()]),
+    placeholder: str = Body(None, description="Not use"),
 ) -> BaseResponse:
-    '''
-    从fastchat controller获取已加载模型列表及其配置项
-    '''
     try:
         controller_address = controller_address or fschat_controller_address()
         with get_httpx_client() as client:
@@ -41,23 +38,27 @@ def list_running_models(
         return BaseResponse(
             code=500,
             data={},
-            msg=f"failed to get available models from controller: {controller_address}。错误信息是： {e}")
+            msg=f"failed to get all running models from controller: {controller_address} error: {e}")
 
 
 def list_config_models() -> BaseResponse:
     '''
-    从本地获取configs中配置的模型列表
+    read mode all list
     '''
     configs = {}
-    # 删除ONLINE_MODEL配置中的敏感信息
-    for name, config in list_config_llm_models()["online"].items():
-        configs[name] = {}
+    online_list = []
+    list_models = list_config_llm_models()
+    for name, config in list_models["online"].items():
         for k, v in config.items():
-            if not (k == "worker_class"
-                or "key" in k.lower()
-                or "secret" in k.lower()
-                or k.lower().endswith("id")):
-                configs[name][k] = v
+            if k == "model_list":
+                online_list += v
+                break
+    configs['online'] = online_list
+
+    local_list = []
+    for name, path in list_models["local"].items():
+        local_list += [name]
+    configs['local'] = local_list
     return BaseResponse(data=configs)
 
 
@@ -82,7 +83,7 @@ def get_model_config(
 
 def stop_llm_model(
     model_name: str = Body(..., description="要停止的LLM模型名称", examples=[LLM_MODELS[0]]),
-    controller_address: str = Body(None, description="Fastchat controller服务器地址", examples=[fschat_controller_address()])
+    controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])
 ) -> BaseResponse:
     '''
     向fastchat controller请求停止某个LLM模型。
@@ -104,13 +105,10 @@ def stop_llm_model(
 
 
 def change_llm_model(
-    model_name: str = Body(..., description="当前运行模型", examples=[LLM_MODELS[0]]),
-    new_model_name: str = Body(..., description="要切换的新模型", examples=[LLM_MODELS[0]]),
-    controller_address: str = Body(None, description="Fastchat controller服务器地址", examples=[fschat_controller_address()])
+    model_name: str = Body(..., description="Current Model", examples=[LLM_MODELS[0]]),
+    new_model_name: str = Body(..., description="Switch to new Model", examples=[LLM_MODELS[0]]),
+    controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])
 ):
-    '''
-    向fastchat controller请求切换LLM模型。
-    '''
     try:
         controller_address = controller_address or fschat_controller_address()
         with get_httpx_client() as client:

@@ -71,35 +71,35 @@ def mount_app_routes(app: FastAPI, run_mode: str = None):
     # 知识库相关接口
     #mount_knowledge_routes(app)
 
-    # LLM模型相关接口
+    # LLM Model interface
     app.post("/llm_model/list_running_models",
              tags=["LLM Model Management"],
-             summary="列出当前已加载的模型",
+             summary="List current running Model",
              )(list_running_models)
     
     app.post("/llm_model/get_running_models",
              tags=["LLM Model Management"],
-             summary="列出当前已加载的模型",
+             summary="Get current running Model",
              )(get_running_models)
 
     app.post("/llm_model/list_config_models",
              tags=["LLM Model Management"],
-             summary="列出configs已配置的模型",
+             summary="List Model configration information",
              )(list_config_models)
 
     app.post("/llm_model/get_model_config",
              tags=["LLM Model Management"],
-             summary="获取模型配置（合并后）",
+             summary="Get Model configration information",
              )(get_model_config)
 
     app.post("/llm_model/stop",
              tags=["LLM Model Management"],
-             summary="停止指定的LLM模型（Model Worker)",
+             summary="Stop LLM Model（Model Worker)",
              )(stop_llm_model)
 
     app.post("/llm_model/change",
              tags=["LLM Model Management"],
-             summary="切换指定的LLM模型（Model Worker)",
+             summary="Switch to new LLM Model（Model Worker)",
              )(change_llm_model)
 
     # 服务器相关接口

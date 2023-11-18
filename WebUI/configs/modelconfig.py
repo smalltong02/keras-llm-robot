@@ -1,7 +1,7 @@
 
 EMBEDDING_MODEL = "m3e-base"
 
-LLM_MODELS = ["llama-2-7b-chat-hf"]
+LLM_MODELS = [""]
 
 Agent_MODEL = None
 
@@ -21,18 +21,20 @@ TEMPERATURE = 0.7
 
 ONLINE_LLM_MODEL = {
     "openai-api": {
-        "model_name" : ["gpt-3.5-turbo", "gpt-4", "gpt", "gpt-4-1106-preview", "gpt-4-vision-preview"],
-        "api_base_url": "https://api.openai.com/v1",
-        "openai_api_key": "",
-        "openai_proxy": "",
+        "model_list" : ["gpt-3.5-turbo", "gpt-3.5-turbo-16k", "gpt-4", "gpt-4-1106-preview", "gpt-4-vision-preview"],
+        "base_url": "https://api.openai.com/v1",
+        "api_version": "",  # API version
+        "api_key": "",
+        "api_proxy": "",
     },
 
     # Azure API
     "azure-api": {
-        "deployment_name": "",
+        "model_list": [""],
         "resource_name": "",  # https://{resource_name}.openai.azure.com/openai/
         "api_version": "",  # API version
         "api_key": "",
+        "api_proxy": "",
         "provider": "AzureWorker",
     },
 }

@@ -328,19 +328,6 @@ class ListResponse(BaseResponse):
             }
         }
 
-def list_config_llm_models() -> Dict[str, Dict]:
-    '''
-    get configured llm models with different types.
-    return [(model_name, config_type), ...]
-    '''
-    workers = list(FSCHAT_MODEL_WORKERS)
-
-    return {
-        "local": MODEL_PATH["llm_model"],
-        "online": ONLINE_LLM_MODEL,
-        "worker": workers,
-    }
-
 def get_prompt_template(type: str, name: str) -> Optional[str]:
     '''
     从prompt_config中加载模板内容
