@@ -3,6 +3,7 @@ from configs import LLM_MODELS, HTTPX_DEFAULT_TIMEOUT
 from WebUI.Server.utils import (BaseResponse, fschat_controller_address, list_config_llm_models,
                           get_httpx_client, get_model_worker_config)
 from copy import deepcopy
+import json
 
 def get_running_models(
     controller_address: str = Body(None, description="Fastchat controller adress", examples=[fschat_controller_address()]),
@@ -82,13 +83,9 @@ def get_model_config(
 
 
 def stop_llm_model(
-    model_name: str = Body(..., description="要停止的LLM模型名称", examples=[LLM_MODELS[0]]),
+    model_name: str = Body(..., description="Stop Model", examples=[LLM_MODELS[0]]),
     controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])
 ) -> BaseResponse:
-    '''
-    向fastchat controller请求停止某个LLM模型。
-    注意：由于Fastchat的实现方式，实际上是把LLM模型所在的model_worker停掉。
-    '''
     try:
         controller_address = controller_address or fschat_controller_address()
         with get_httpx_client() as client:
@@ -105,7 +102,7 @@ def stop_llm_model(
 
 
 def change_llm_model(
-    model_name: str = Body(..., description="Current Model", examples=[LLM_MODELS[0]]),
+    model_name: str = Body(..., description="Change Model", examples=[LLM_MODELS[0]]),
     new_model_name: str = Body(..., description="Switch to new Model", examples=[LLM_MODELS[0]]),
     controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])
 ):
@@ -122,7 +119,21 @@ def change_llm_model(
         print(f'{e.__class__.__name__}: {e}')
         return BaseResponse(
             code=500,
-            msg=f"failed to switch LLM model from controller: {controller_address}。错误信息是： {e}")
+            msg=f"failed to switch LLM model from controller: {controller_address}. error: {e}")
+
+def get_webui_configs(
+        controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])
+) -> BaseResponse:
+    try:
+        with open(".\WebUI\configs\webuiconfig.json", 'r') as file:
+            jsondata = json.load(file)
+            return BaseResponse(data = jsondata)
+            
+    except Exception as e:
+        print(f'{e.__class__.__name__}: {e}')
+        return BaseResponse(
+            code=500,
+            msg=f"failed to get webui configration, error: {e}")
 
 
 def list_search_engines() -> BaseResponse:

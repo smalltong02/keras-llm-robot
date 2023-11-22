@@ -259,6 +259,15 @@ class ApiRequest:
         )
         return self._get_response_value(response, as_json=True, value_func=lambda r:r.get("data", {}))
     
+    def get_webui_config(
+            self,
+        ) -> Dict:
+
+        response = self.post(
+            "/server/get_webui_config",
+        )
+        return self._get_response_value(response, as_json=True, value_func=lambda r:r.get("data", {}))
+    
     def change_llm_model(
         self,
         model_name: str,
@@ -299,24 +308,18 @@ class ApiRequest:
             return self._get_response_value(response, as_json=True)
 
         async def ret_async():
-            running_models = await self.list_running_models()
+            running_models = await self.get_running_models()
             if new_model_name == model_name or new_model_name in running_models:
                 return {
                     "code": 200,
-                    "msg": "无需切换"
-                }
-
-            if model_name not in running_models:
-                return {
-                    "code": 500,
-                    "msg": f"指定的模型'{model_name}'没有运行。当前运行模型：{running_models}"
+                    "msg": "Not necessary to switch models."
                 }
 
             config_models = await self.list_config_models()
             if new_model_name not in config_models["local"]:
                 return {
                     "code": 500,
-                    "msg": f"要切换的模型'{new_model_name}'在configs中没有配置。"
+                    "msg": f"The new Model '{new_model_name}' is not configured in the configs."
                 }
 
             data = {
@@ -331,6 +334,59 @@ class ApiRequest:
             )
             return self._get_response_value(response, as_json=True)
 
+        if self._use_async:
+            return ret_async()
+        else:
+            return ret_sync()
+        
+    def eject_llm_model(self,
+        model_name: str,
+        controller_address: str = None,
+    ):
+        if not model_name:
+            return {
+                "code": 500,
+                "msg": f"name for the new model is None."
+            }
+        
+        def ret_sync():
+            running_models = self.get_running_models()
+            if model_name not in running_models:
+                return {
+                    "code": 200,
+                    "msg": f"the model '{model_name}' is not running."
+                }
+
+            data = {
+                "model_name": model_name,
+                "controller_address": controller_address,
+            }
+
+            response = self.post(
+                "/llm_model/stop",
+                json=data,
+            )
+            return self._get_response_value(response, as_json=True)
+
+        async def ret_async():
+            running_models = self.get_running_models()
+            if model_name not in running_models:
+                return {
+                    "code": 200,
+                    "msg": f"the model '{model_name}' is not running."
+                }
+
+            data = {
+                "model_name": model_name,
+                "controller_address": controller_address,
+            }
+
+            response = self.post(
+                "/llm_model/stop",
+                json=data,
+            )
+            return self._get_response_value(response, as_json=True)
+        
         if self._use_async:
             return ret_async()
         else:

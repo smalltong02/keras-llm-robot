@@ -17,6 +17,49 @@ chat_box = ChatBox(
     )
 )
 
+gal_cpuutil = 0.0
+gal_cpumem = 0.0
+gal_gpuutil = 0.0
+gal_gpumem = 0.0
+
+def update_running_status(placeholder_cpu, placeholder_ram, placeholder_gpuutil, placeholder_gpumem, binit = False, bcache = False):
+    global gal_cpuutil
+    global gal_cpumem
+    global gal_gpuutil
+    global gal_gpumem
+    
+    if binit:
+        gal_cpuutil = cpuutil = 0.0
+        gal_cpuutil = cpumem = 0.0
+        gal_cpuutil = gpuutil = 0.0
+        gal_cpuutil = gpumem = 0.0
+    else:
+        if bcache:
+            cpuutil = gal_cpuutil
+            cpumem = gal_cpumem
+            gpuutil = gal_gpuutil
+            gpumem = gal_gpumem
+        else:
+            _, cpuutil, cpumem = get_cpu_info()
+            _, gpuutil, gpumem = get_gpu_info()
+    
+    placeholder_cpu.caption(f"""<p style="font-size: 1em; text-align: center;">CPU Util：{cpuutil:.2f}%</p>""",
+        unsafe_allow_html=True,
+        )
+    placeholder_ram.caption(f"""<p style="font-size: 1em; text-align: center;">CPU RAM: {cpumem:.2f} GB</p>""",
+        unsafe_allow_html=True,
+        )
+    placeholder_gpuutil.caption(f"""<p style="font-size: 1em; text-align: center;">GPU Util: {gpuutil:.2f}%</p>""",
+        unsafe_allow_html=True,
+        )
+    placeholder_gpumem.caption(f"""<p style="font-size: 1em; text-align: center;">GPU RAM: {gpumem:.2f} GB</p>""",
+        unsafe_allow_html=True,
+        )
+    gal_cpuutil = cpuutil
+    gal_cpumem = cpumem
+    gal_gpuutil = gpuutil
+    gal_gpumem = gpumem
+
 def get_messages_history(history_len: int, content_in_expander: bool = False) -> List[Dict]:
     def filter(msg):
         content = [x for x in msg["elements"] if x._output_method in ["markdown", "text"]]
@@ -76,7 +119,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
             if mode == "KnowledgeBase Chat":
                 cur_kb = st.session_state.get("selected_kb")
                 if cur_kb:
-                    text = f"{text} Current Knowledge Base： `{cur_kb}`."
+                    text = f"{text} Current Knowledge Base: `{cur_kb}`."
             st.toast(text)
 
         if running_model == "None":
@@ -87,7 +130,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                         "Search Engine Chat",
                         "Agent Chat",
                         ]
-        dialogue_mode = st.selectbox("Please Select Chat Mode：",
+        dialogue_mode = st.selectbox("Please Select Chat Mode:",
                                     dialogue_modes,
                                     index=0,
                                     on_change=on_mode_change,
@@ -112,7 +155,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
             st.toast(text)
 
         prompt_template_select = st.selectbox(
-            "Please Select Prompt Template：",
+            "Please Select Prompt Template:",
             prompt_templates_kb_list,
             index=0,
             on_change=prompt_change,
@@ -120,8 +163,21 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
             disabled=disabled
         )
         prompt_template_name = st.session_state.prompt_template_select
-        temperature = st.slider("Temperature：", 0.0, 1.0, TEMPERATURE, 0.05, disabled=disabled)
-        history_len = st.number_input("Dialogue Turns：", 0, 20, HISTORY_LEN, disabled=disabled)
+        temperature = st.slider("Temperature:", 0.0, 1.0, TEMPERATURE, 0.05, disabled=disabled)
+        history_len = st.number_input("Dialogue Turns:", 0, 20, HISTORY_LEN, disabled=disabled)
+
+        now = datetime.now()
+        cols = st.columns(2)
+        export_btn = cols[0]
+        if cols[1].button('New chat', use_container_width=True):
+            chat_box.reset_history()
+        export_btn.download_button(
+            "Export chat",
+            "".join(chat_box.export2md()),
+            file_name=f"{now:%Y-%m-%d %H.%M}_chatrecord.md",
+            mime="text/markdown",
+            use_container_width=True,
+        )
 
         st.caption(
             f"""<p style="font-size: 1.5em; text-align: left; color: #3498db;"><b>Running Status:</b></p>""",
@@ -133,7 +189,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
             unsafe_allow_html=True,
         )
 
-        cpuname, cpuutil, cpumem = get_cpu_info(False)
+        #cpuname, cpuutil, cpumem = get_cpu_info(False)
         #if cpuname == "":
         #    cpuname = "Unknown"
         #st.caption(
@@ -141,15 +197,8 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
         #    unsafe_allow_html=True,
         #)
         placeholder_cpu = st.empty()
-        cpuutil = gal_cpu_usage
-        placeholder_cpu.caption(f"""<p style="font-size: 1em; text-align: center;">CPU Util：{cpuutil:.2f}%</p>""",
-            unsafe_allow_html=True,
-            )
         placeholder_ram = st.empty()
-        placeholder_ram.caption(f"""<p style="font-size: 1em; text-align: center;">CPU RAM: {cpumem:.2f} GB</p>""",
-            unsafe_allow_html=True,
-            )
-        gpuname, gpuutil, gpumem = get_gpu_info()
+        gpuname, _, _ = get_gpu_info()
         if gpuname == "":
             gpuname = "Unknown"
         st.caption(
@@ -157,13 +206,11 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
             unsafe_allow_html=True,
         )
         placeholder_gpuutil = st.empty()
-        placeholder_gpuutil.caption(f"""<p style="font-size: 1em; text-align: center;">GPU Util: {gpuutil:.2f}%</p>""",
-            unsafe_allow_html=True,
-            )
         placeholder_gpumem = st.empty()
-        placeholder_gpumem.caption(f"""<p style="font-size: 1em; text-align: center;">GPU RAM: {gpumem:.2f} GB</p>""",
-            unsafe_allow_html=True,
-            )
+        binit = True
+        if st.session_state.get("current_page", "") == "dialogue_page":
+            binit = False
+        update_running_status(placeholder_cpu, placeholder_ram, placeholder_gpuutil, placeholder_gpumem, binit, True)
 
     if not chat_box.chat_inited:
         if running_model == "" or running_model == "None":
@@ -198,6 +245,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
     }
 
     if prompt := st.chat_input(chat_input_placeholder, key="prompt", disabled=disabled):
+        update_running_status(placeholder_cpu, placeholder_ram, placeholder_gpuutil, placeholder_gpumem)
         history = get_messages_history(history_len)
         chat_box.user_say(prompt)
         if dialogue_mode == "LLM Chat":
@@ -225,24 +273,17 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                                    key=chat_history_id,
                                    on_submit=on_feedback,
                                    kwargs={"chat_history_id": chat_history_id, "history_index": len(chat_box.history) - 1})
+            
+            if st.session_state.get("need_rerun"):
+                st.session_state["need_rerun"] = False
+                st.rerun()
+            
+            st.session_state["current_page"] = "dialogue_page"
+            while True:
+                update_running_status(placeholder_cpu, placeholder_ram, placeholder_gpuutil, placeholder_gpumem)
+                time.sleep(1)
     
     if st.session_state.get("need_rerun"):
         st.session_state["need_rerun"] = False
         st.rerun()
 
-    while True:
-        _, cpuutil, cpumem = get_cpu_info()
-        placeholder_cpu.caption(f"""<p style="font-size: 1em; text-align: center;">CPU Util：{cpuutil:.2f}%</p>""",
-            unsafe_allow_html=True,
-            )
-        placeholder_ram.caption(f"""<p style="font-size: 1em; text-align: center;">CPU RAM: {cpumem:.2f} GB</p>""",
-            unsafe_allow_html=True,
-            )
-        _, gpuutil, gpumem = get_gpu_info()
-        placeholder_gpuutil.caption(f"""<p style="font-size: 1em; text-align: center;">GPU Util: {gpuutil:.2f}%</p>""",
-            unsafe_allow_html=True,
-            )
-        placeholder_gpumem.caption(f"""<p style="font-size: 1em; text-align: center;">GPU RAM: {gpumem:.2f} GB</p>""",
-            unsafe_allow_html=True,
-            )
-        time.sleep(1)

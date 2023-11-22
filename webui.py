@@ -51,8 +51,6 @@ if __name__ == "__main__":
     }
 
     with st.sidebar:
-        st.button('New chat', use_container_width=True)
-
         st.caption(
             f"""<h1 style="font-size: 2.5em; text-align: center; color: #3498db;">KERAS LLM Robot</h1>""",
             unsafe_allow_html=True,
@@ -65,7 +63,7 @@ if __name__ == "__main__":
             use_column_width=True
         )
         st.caption(
-            f"""<p style="text-align: right; color: #3498db;">Current Version：{KERAS_LLM_VERSION}</p>""",
+            f"""<p style="text-align: right; color: #3498db;">Current Version: {KERAS_LLM_VERSION}</p>""",
             unsafe_allow_html=True,
         )
 

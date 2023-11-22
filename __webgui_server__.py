@@ -52,10 +52,10 @@ def parse_args() -> argparse.ArgumentParser:
 def dump_server_info(after_start=False, args=None):
     print("\n")
     print("=" * 30 + f"{__title__} Configuration" + "=" * 30)
-    print(f"OS：{platform.platform()}.")
-    print(f"python：{sys.version}")
-    print(f"langchain：{langchain.__version__}.")
-    print(f"Version：{__version__}")
+    print(f"OS: {platform.platform()}.")
+    print(f"python: {sys.version}")
+    print(f"langchain: {langchain.__version__}.")
+    print(f"Version: {__version__}")
     print(f"Summary: {__summary__}")
     print(f"Author: {__author__}")
     print(f"Email: {__email__}")
@@ -164,9 +164,22 @@ def run_controller(started_event: mp.Event = None):
                 print(msg)
                 return {"code": 500, "msg": msg}
         else:
-            msg = f"sucess to release model: {model_name}"
-            print(msg)
-            return {"code": 200, "msg": msg}
+            timer = HTTPX_DEFAULT_TIMEOUT  # wait for new model_worker register
+            while timer > 0:
+                models = app._controller.list_models()
+                if model_name not in models:
+                    break
+                time.sleep(1)
+                timer -= 1
+                app._controller.refresh_all_workers()
+            if timer > 0:
+                msg = f"success to release model: {model_name}"
+                print(msg)
+                return {"code": 200, "msg": msg}
+            else:
+                msg = f"failed to release model: {model_name}"
+                print(msg)
+                return {"code": 500, "msg": msg}
 
     host = FSCHAT_CONTROLLER["host"]
     port = FSCHAT_CONTROLLER["port"]
@@ -344,8 +357,8 @@ def run_model_worker(
     # add interface to release and load model
     @app.post("/release")
     def release_model(
-        new_model_name: str = Body(None, description="释放后加载该模型"),
-        keep_origin: bool = Body(False, description="不释放原模型，加载新模型")
+        new_model_name: str = Body(None, description="Load new Model"),
+        keep_origin: bool = Body(False, description="keep origin Model and Load new Model")
     ) -> Dict:
         if keep_origin:
             if new_model_name:
@@ -512,7 +525,7 @@ def main_server():
                 if isinstance(cmd, list):
                     model_name, cmd, new_model_name = cmd
                     if cmd == "start":
-                        print(f"Change to new model：{new_model_name}")
+                        print(f"Change to new model: {new_model_name}")
                         process = Process(
                             target=run_model_worker,
                             name=f"model_worker - {new_model_name}",
@@ -526,18 +539,34 @@ def main_server():
                         process.name = f"{process.name} ({process.pid})"
                         processes["model_worker"][new_model_name] = process
                         e.wait()
-                        print(f"The model：{new_model_name} running!")
+                        print(f"The model: {new_model_name} running!")
                     elif cmd == "stop":
-                        if process := processes["model_worker"].get(model_name):
+                        if process := processes["model_worker"].pop(model_name):
                             time.sleep(1)
                             process.terminate()
                             process.join()
-                            print(f"Stop model：{model_name}")
+                            print(f"Stop model: {model_name}")
+                            print(f"Start empty model!")
+                            process = Process(
+                                target=run_model_worker,
+                                name=f"model_worker - None",
+                                kwargs=dict(model_name="",
+                                            controller_address=args.controller_address,
+                                            q=queue,
+                                            started_event=e),
+                                daemon=True,
+                            )
+                            process.start()
+                            process.name = f"{process.name} ({process.pid})"
+                            processes["model_worker"][""] = process
+                            e.wait()
+                            timing = datetime.now() - start_time
+                            print(f"Loading None Model, used: {timing}.")
                         else:
-                            print(f"Can not find the model：{model_name}")
+                            print(f"Can not find the model: {model_name}")
                     elif cmd == "replace":
                         if process := processes["model_worker"].pop(model_name, None):
-                            print(f"Stop model：{model_name}")
+                            print(f"Stop model: {model_name}")
                             start_time = datetime.now()
                             time.sleep(1)
                             process.terminate()
@@ -556,12 +585,11 @@ def main_server():
                             processes["model_worker"][new_model_name] = process
                             e.wait()
                             timing = datetime.now() - start_time
-                            print(f"Loading new model：{new_model_name}。used：{timing}。")
+                            print(f"Loading new model: {new_model_name}。used: {timing}.")
                         else:
-                            print(f"Can not find the model：{model_name}")
+                            print(f"Can not find the model: {model_name}")
 
         except Exception as e:
-            print(e)
             print("Caught KeyboardInterrupt! Setting stop event...")
         finally:
             for p in processes.values():

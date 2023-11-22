@@ -14,7 +14,7 @@ from WebUI.Server.embeddings_api import embed_texts_endpoint
 from WebUI.Server.chat.openai_chat import openai_chat
 from WebUI.Server.llm_api import (list_running_models, get_running_models, list_config_models,
                             change_llm_model, stop_llm_model,
-                            get_model_config, list_search_engines)
+                            get_model_config, get_webui_configs, list_search_engines)
 from WebUI.Server.utils import(get_prompt_template)
 from typing import List, Literal
 from __about__ import __version__
@@ -94,15 +94,19 @@ def mount_app_routes(app: FastAPI, run_mode: str = None):
 
     app.post("/llm_model/stop",
              tags=["LLM Model Management"],
-             summary="Stop LLM Model（Model Worker)",
+             summary="Stop LLM Model (Model Worker)",
              )(stop_llm_model)
 
     app.post("/llm_model/change",
              tags=["LLM Model Management"],
-             summary="Switch to new LLM Model（Model Worker)",
+             summary="Switch to new LLM Model (Model Worker)",
              )(change_llm_model)
 
-    # 服务器相关接口
+    # Server interface
+    app.post("/server/get_webui_config",
+             tags=["Server State"],
+             summary="get webui config",
+             )(get_webui_configs)
     #app.post("/server/configs",
     #         tags=["Server State"],
     #         summary="获取服务器原始配置信息",
