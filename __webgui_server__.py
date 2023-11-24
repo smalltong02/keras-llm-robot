@@ -585,7 +585,7 @@ def main_server():
                             processes["model_worker"][new_model_name] = process
                             e.wait()
                             timing = datetime.now() - start_time
-                            print(f"Loading new model: {new_model_name}。used: {timing}.")
+                            print(f"Loading new model: {new_model_name}. used: {timing}.")
                         else:
                             print(f"Can not find the model: {model_name}")
 

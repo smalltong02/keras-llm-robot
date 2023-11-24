@@ -3,6 +3,7 @@ from WebUI.webui_pages.utils import *
 from streamlit_chatbox import *
 from WebUI.configs.prompttemplates import PROMPT_TEMPLATES
 from WebUI.configs.modelconfig import (TEMPERATURE, HISTORY_LEN)
+from WebUI.configs.webuiconfig import *
 import os, platform
 from datetime import datetime
 import time
@@ -111,6 +112,11 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
     else:
         running_model = models_list[0]
 
+    webui_config = api.get_webui_config()
+    configinst = InnerJsonConfigWebUIParse(webui_config)
+    chatconfig = configinst.get("ChatConfiguration")
+    temperature = chatconfig.get("Temperature")
+    
     disabled = False
     with st.sidebar:
         def on_mode_change():
@@ -163,7 +169,6 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
             disabled=disabled
         )
         prompt_template_name = st.session_state.prompt_template_select
-        temperature = st.slider("Temperature:", 0.0, 1.0, TEMPERATURE, 0.05, disabled=disabled)
         history_len = st.number_input("Dialogue Turns:", 0, 20, HISTORY_LEN, disabled=disabled)
 
         now = datetime.now()

@@ -1,0 +1,198 @@
+{
+    "Name": "Keras-llm-Robot",
+    "Version": "1.0.0.",
+    "CreateDate": "11//07//2023 20:16PM",
+    "Description": "KERAS LLM Chat Robot",
+
+    "ModelConfig": {
+        "OnlineModel": {
+            "openai-api": {
+                "modellist" : ["gpt-3.5-turbo", "gpt-3.5-turbo-16k", "gpt-4", "gpt-4-1106-preview", "gpt-4-vision-preview"],
+                "baseurl": "https://api.openai.com/v1",
+                "apiversion": "",
+                "apikey": "",
+                "apiproxy": ""
+            },
+            "azure-api": {
+                "modellist": [""],
+                "resourcename": "",
+                "apiversion": "",
+                "apikey": "",
+                "apiproxy": "",
+                "provider": "AzureWorker"
+            }
+        },
+        
+        "EmbeddingModel": {
+            "jina-embeddings-v2-small-en": {
+                "path": "models/embeddings/jina-embeddings-v2-small-en",
+                "Huggingface": "jinaai/jina-embeddings-v2-small-en"
+            },
+            "jina-embeddings-v2-base-en": {
+                "path": "models/jina-embeddings-v2-base-en",
+                "Huggingface": "jinaai/jina-embeddings-v2-base-en"
+            },
+            "m3e-small": {
+                "path": "models/embeddings/m3e-small",
+                "Huggingface": "moka-ai/m3e-small"
+            },
+            "m3e-base": {
+                "path": "models/embeddings/m3e-base",
+                "Huggingface": "moka-ai/m3e-base"
+            },
+            "m3e-large": {
+                "path": "models/embeddings/m3e-large",
+                "Huggingface": "moka-ai/m3e-large"
+            },
+            "bge-small-en-v1.5": {
+                "path": "models/embeddings/bge-small-en-v1.5",
+                "Huggingface": "BAAI/bge-small-en-v1.5"
+            },
+            "bge-base-en-v1.5": {
+                "path": "models/embeddings/bge-base-en-v1.5",
+                "Huggingface": "BAAI/bge-base-en-v1.5"
+            },
+            "bge-large-en-v1.5": {
+                "path": "models/embeddings/bge-large-en-v1.5",
+                "Huggingface": "BAAI/bge-large-en-v1.5"
+            },
+            "text-embedding-ada-002": {
+                "path": "",
+                "apikey": "OPENAI_API_KEY"
+            }
+        },
+        
+        "LocalModel": {
+            "llama-2-7b-hf": {
+                "path": "models/llama-2-7b-hf",
+                "device": "auto",
+                "maxmemory":20,
+                "cputhreads":4,
+                "loadbits":16,
+                "Huggingface": "meta-llama/llama-2-7b-hf"
+            },
+            "llama-2-13b-hf": {
+                "path": "models/llama-2-13b-hf",
+                "device": "auto",
+                "maxmemory":24,
+                "cputhreads":4,
+                "loadbits":8,
+                "Huggingface": "meta-llama/llama-2-13b-hf"
+            },
+            "llama-2-70b-hf": {
+                "path": "models/llama-2-70b-hf",
+                "device": "auto",
+                "maxmemory":24,
+                "cputhreads":8,
+                "loadbits":4,
+                "Huggingface": "meta-llama/llama-2-70b-hf"
+            },
+            "llama-2-7b-chat-hf": {
+                "path": "models/Llama-2-7b-chat-hf",
+                "device": "auto",
+                "maxmemory":20,
+                "cputhreads":4,
+                "loadbits":16,
+                "Huggingface": "meta-llama/Llama-2-7b-chat-hf"
+            },
+            "llama-2-13b-chat-hf": {
+                "path": "models/Llama-2-13b-chat-hf",
+                "device": "auto",
+                "maxmemory":24,
+                "cputhreads":4,
+                "loadbits":8,
+                "Huggingface": "meta-llama/Llama-2-13b-chat-hf"
+            },
+            "llama-2-70b-chat-hf": {
+                "path": "models/Llama-2-70b-chat-hf",
+                "device": "auto",
+                "maxmemory":24,
+                "cputhreads":8,
+                "loadbits":4,
+                "Huggingface": "meta-llama/Llama-2-70b-chat-hf"
+            },
+            "chatglm2-6b": {
+                "path": "models/chatglm2-6b",
+                "device": "auto",
+                "maxmemory":20,
+                "cputhreads":4,
+                "loadbits":16,
+                "Huggingface": "THUDM/chatglm2-6b"
+            },
+            "chatglm2-6b-32k": {
+                "path": "models/chatglm2-6b-32k",
+                "device": "auto",
+                "maxmemory":24,
+                "cputhreads":4,
+                "loadbits":16,
+                "Huggingface": "THUDM/chatglm2-6b-32k"
+            }
+        }
+    },
+
+    "ChatConfiguration": {
+        "Temperature": 0.7,
+        "top_p": 0.9,
+        "typical_p": 1.0,
+        "top_a": 1.0,
+        "tfs": 1.0,
+        "epsilon_cutoff": 0.0,
+        "eta_cutoff": 0.0,
+        "diversity_penalty": 0.0,
+        "no_repeat_ngram_size": 0,
+        "do_samples": false,
+        "tokens_length": {
+            "cur": 1000,
+            "min": 0,
+            "max": 5000,
+            "step": 10
+        },
+        "seed": {
+            "cur": -1,
+            "min": -1,
+            "max": 1000
+        },
+        "top_k": {
+            "cur": 50,
+            "min": 0,
+            "max": 200,
+            "step": 1
+        },
+        "repetition_penalty": {
+            "cur": 1.15,
+            "min": 0.0,
+            "max": 3.0,
+            "step": 0.05
+        },
+        "encoder_repetition_penalty": {
+            "cur": 1.15,
+            "min": 0.0,
+            "max": 3.0,
+            "step": 0.05
+        },
+        "length_penalty": {
+            "cur": 1,
+            "min": 0,
+            "max": 2,
+            "step": 1
+        },
+        "guidance_scale": {
+            "cur": 1,
+            "min": 0,
+            "max": 2,
+            "step": 1
+        }
+    },
+
+    "QuantizationConfiguration": {
+
+    },
+
+    "Fine-Tunning": {
+
+    },
+
+    "PromptTemplates": {
+
+    }
+}
