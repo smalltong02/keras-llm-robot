@@ -19,6 +19,7 @@ from WebUI.configs.modelconfig import (LLM_MODELS)
 from WebUI.configs.serverconfig import (FSCHAT_MODEL_WORKERS, FSCHAT_CONTROLLER, HTTPX_DEFAULT_TIMEOUT,
                                         FSCHAT_OPENAI_API, API_SERVER)
 from typing import Tuple, List, Dict
+import json
 
 def parse_args() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
@@ -218,10 +219,7 @@ def create_model_worker_app(log_level: str = "INFO", **kwargs) -> FastAPI:
         from fastchat.serve.model_worker import app, GptqConfig, AWQConfig, ModelWorker, worker_id
 
         args.gpus = "0"
-        args.max_gpu_memory = "22GiB"
         args.num_gpus = 1
-
-        args.load_8bit = False
         args.cpu_offloading = None
         args.gptq_ckpt = None
         args.gptq_wbits = 16

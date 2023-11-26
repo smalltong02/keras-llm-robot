@@ -3,7 +3,6 @@ from WebUI.webui_pages.utils import *
 from streamlit_chatbox import *
 from WebUI.configs.prompttemplates import PROMPT_TEMPLATES
 from WebUI.configs.modelconfig import (TEMPERATURE, HISTORY_LEN)
-from WebUI.configs.webuiconfig import *
 import os, platform
 from datetime import datetime
 import time
@@ -113,8 +112,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
         running_model = models_list[0]
 
     webui_config = api.get_webui_config()
-    configinst = InnerJsonConfigWebUIParse(webui_config)
-    chatconfig = configinst.get("ChatConfiguration")
+    chatconfig = webui_config.get("ChatConfiguration")
     temperature = chatconfig.get("Temperature")
     
     disabled = False

@@ -14,7 +14,7 @@ from WebUI.Server.embeddings_api import embed_texts_endpoint
 from WebUI.Server.chat.openai_chat import openai_chat
 from WebUI.Server.llm_api import (list_running_models, get_running_models, list_config_models,
                             change_llm_model, stop_llm_model,
-                            get_model_config, get_webui_configs, list_search_engines)
+                            get_model_config, save_chat_config, save_model_config, get_webui_configs, list_search_engines)
 from WebUI.Server.utils import(get_prompt_template)
 from typing import List, Literal
 from __about__ import __version__
@@ -45,18 +45,23 @@ def create_app(run_mode: str = None):
 def mount_app_routes(app: FastAPI, run_mode: str = None):
     app.get("/",
             response_model=BaseResponse,
-            summary="swagger 文档")(document)
+            summary="swagger document")(document)
 
     # Tag: Chat
     app.post("/chat/fastchat",
              tags=["Chat"],
-             summary="与llm模型对话(直接与fastchat api对话)",
+             summary="Conversing with a llm model.(through the FastChat API)",
              )(openai_chat)
 
     app.post("/chat/chat",
              tags=["Chat"],
-             summary="与llm模型对话(通过LLMChain)",
+             summary="Conversing with a llm model.(through the LLMChain)",
              )(chat)
+    
+    app.post("/llm_model/save_chat_config",
+             tags=["Chat"],
+             summary="Save chat configration information",
+             )(save_chat_config)
 
     #app.post("/chat/search_engine_chat",
     #         tags=["Chat"],
@@ -91,6 +96,11 @@ def mount_app_routes(app: FastAPI, run_mode: str = None):
              tags=["LLM Model Management"],
              summary="Get Model configration information",
              )(get_model_config)
+    
+    app.post("/llm_model/save_model_config",
+             tags=["LLM Model Management"],
+             summary="Save Model configration information",
+             )(save_model_config)
 
     app.post("/llm_model/stop",
              tags=["LLM Model Management"],

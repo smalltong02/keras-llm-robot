@@ -4,6 +4,7 @@ from typing import Dict, Union
 import httpx, os
 from WebUI.configs.serverconfig import (FSCHAT_CONTROLLER, FSCHAT_OPENAI_API, FSCHAT_MODEL_WORKERS, HTTPX_DEFAULT_TIMEOUT)
 import sys
+import json
 import asyncio
 from pathlib import Path
 from WebUI import workers
@@ -12,7 +13,7 @@ from fastapi import FastAPI
 from langchain.chat_models import ChatOpenAI, AzureChatOpenAI, ChatAnthropic
 from langchain.llms import OpenAI, AzureOpenAI, Anthropic
 from typing import Dict, Union, Optional, Literal, Any, List, Callable, Awaitable
-from WebUI.configs.modelconfig import (LLM_MODELS, ONLINE_LLM_MODEL, MODEL_PATH, MODEL_ROOT_PATH, LLM_DEVICE)
+from WebUI.configs.webuiconfig import *
 
 async def wrap_done(fn: Awaitable, event: asyncio.Event):
     """Wrap an awaitable with a event to signal when it's done or an exception is raised."""
@@ -26,25 +27,6 @@ async def wrap_done(fn: Awaitable, event: asyncio.Event):
         # Signal the aiter to stop.
         event.set()
 
-def get_model_worker_config(self, model_name: str = None) -> dict:        
-    config = FSCHAT_MODEL_WORKERS.get("default", {}).copy()
-    config.update(ONLINE_LLM_MODEL.get(model_name, {}).copy())
-    config.update(FSCHAT_MODEL_WORKERS.get(model_name, {}).copy())
-
-    if model_name in ONLINE_LLM_MODEL:
-        config["online_api"] = True
-        if provider := config.get("provider"):
-            try:
-                config["worker_class"] = getattr(workers, provider)
-            except Exception as e:
-                msg = f"Online Model ‘{model_name}’'s provider configuration error."
-                print(f'{e.__class__.__name__}: {msg}')
-        
-    if model_name in MODEL_PATH["llm_model"]:
-        config["model_path"] = self.get_model_path(model_name)
-        config["device"] = self.llm_device(config.get("device"))
-    return config
-
 def fschat_controller_address() -> str:
         host = FSCHAT_CONTROLLER["host"]
         if host == "0.0.0.0":
@@ -53,7 +35,7 @@ def fschat_controller_address() -> str:
         return f"http://{host}:{port}"
 
 
-def fschat_model_worker_address(model_name: str = LLM_MODELS[0]) -> str:
+def fschat_model_worker_address(model_name: str = "") -> str:
     if model := get_model_worker_config(model_name):
         host = model["host"]
         if host == "0.0.0.0":
@@ -163,31 +145,20 @@ def set_httpx_config(timeout: float = HTTPX_DEFAULT_TIMEOUT, proxy: Union[str, D
         
     urllib.request.getproxies = _get_proxies
 
-def get_model_path(model_name: str, type: str = None) -> Optional[str]:
-    if type in MODEL_PATH:
-        paths = MODEL_PATH[type]
-    else:
-        paths = {}
-        for v in MODEL_PATH.values():
-            paths.update(v)
+def get_model_path(models_list: dict = {}, model_name: str = "", type: str = None) -> Optional[str]:   
+    local_paths = {}
+    hugg_paths = {}
+    for key, value in models_list.items():
+        local_paths.update({key: value["path"]})
+        hugg_paths.update({key: value["Huggingface"]})
 
-    if path_str := paths.get(model_name):
+    if path_str := local_paths.get(model_name):
         path = Path(path_str)
         if path.is_dir():
             return str(path)
-
-        root_path = Path(MODEL_ROOT_PATH)
-        if root_path.is_dir():
-            path = root_path / model_name
-            if path.is_dir():  # use key, {MODEL_ROOT_PATH}/chatglm-6b
-                return str(path)
-            path = root_path / path_str
-            if path.is_dir():  # use value, {MODEL_ROOT_PATH}/THUDM/chatglm-6b-new
-                return str(path)
-            path = root_path / path_str.split("/")[-1]
-            if path.is_dir():  # use value split by "/", {MODEL_ROOT_PATH}/chatglm-6b-new
-                return str(path)
-        return path_str
+    if hugg_str := hugg_paths.get(model_name):
+        return hugg_str
+    return ""
         
 def detect_device() -> Literal["cuda", "mps", "cpu"]:
     try:
@@ -200,18 +171,40 @@ def detect_device() -> Literal["cuda", "mps", "cpu"]:
         pass
     return "cpu"
         
-def llm_device(device: str = None) -> Literal["cuda", "mps", "cpu"]:
-    device = device or LLM_DEVICE
+def llm_device(models_list: dict = {}, model_name: str = "") -> Literal["cuda", "mps", "cpu"]:
+    config = models_list.get(model_name, {})
+    device = config.get("device", "un")
+    if device == "gpu":
+        device = "cuda"
     if device not in ["cuda", "mps", "cpu"]:
         device = detect_device()
     return device
 
-def get_model_worker_config(model_name: str = None) -> dict:        
+def load_8bit(models_list: dict = {}, model_name: str = "") -> bool:
+    config = models_list.get(model_name, {})
+    bits = config.get("loadbits", 16)
+    if bits == 8:
+        return True
+    return False
+
+def get_max_gpumem(models_list: dict = {}, model_name: str = "") -> str:
+    config = models_list.get(model_name, {})
+    memory = config.get("maxmemory", 20)
+    memory_str = f"{memory}GiB"
+    return memory_str
+
+def get_model_worker_config(model_name: str = None) -> dict:
     config = FSCHAT_MODEL_WORKERS.get("default", {}).copy()
-    config.update(ONLINE_LLM_MODEL.get(model_name, {}).copy())
+    if model_name is None or model_name == "":
+        return config
+    configinst = InnerJsonConfigWebUIParse()
+    webui_config = configinst.dump()
+    localmodel = webui_config.get("ModelConfig").get("LocalModel")
+    onlinemodel = webui_config.get("ModelConfig").get("OnlineModel")
+    config.update(onlinemodel.get(model_name, {}).copy())
     config.update(FSCHAT_MODEL_WORKERS.get(model_name, {}).copy())
 
-    if model_name in ONLINE_LLM_MODEL:
+    if model_name in onlinemodel:
         config["online_api"] = True
         if provider := config.get("provider"):
             try:
@@ -220,9 +213,11 @@ def get_model_worker_config(model_name: str = None) -> dict:
                 msg = f"Online Model ‘{model_name}’'s provider configuration error."
                 print(f'{e.__class__.__name__}: {msg}')
         
-    if model_name in MODEL_PATH["llm_model"]:
-        config["model_path"] = get_model_path(model_name)
-        config["device"] = llm_device(config.get("device"))
+    if model_name in localmodel:
+        config["model_path"] = get_model_path(localmodel, model_name)
+        config["device"] = llm_device(localmodel, model_name)
+        config["load_8bit"] = load_8bit(localmodel, model_name)
+        config["max_gpu_memory"] = get_max_gpumem(localmodel, model_name)
     return config
 
 def MakeFastAPIOffline(
@@ -329,14 +324,9 @@ class ListResponse(BaseResponse):
         }
 
 def get_prompt_template(type: str, name: str) -> Optional[str]:
-    '''
-    从prompt_config中加载模板内容
-    type: "llm_chat","agent_chat","knowledge_base_chat","search_engine_chat"的其中一种，如果有新功能，应该进行加入。
-    '''
-
     from WebUI.configs import prompttemplates
     import importlib
-    importlib.reload(prompttemplates)  # TODO: 检查configs/prompt_config.py文件有修改再重新加载
+    importlib.reload(prompttemplates)
     return prompttemplates.PROMPT_TEMPLATES[type].get(name)
 
 def get_OpenAI(
@@ -349,7 +339,7 @@ def get_OpenAI(
         verbose: bool = True,
         **kwargs: Any,
 ) -> OpenAI:
-    ## 以下模型是Langchain原生支持的模型，这些模型不会走Fschat封装
+    ## langchain model
     config_models = list_config_llm_models()
     if model_name in config_models.get("langchain", {}):
         config = config_models["langchain"][model_name]
@@ -392,9 +382,8 @@ def get_OpenAI(
                 anthropic_api_key=config.get("api_key"),
                 echo=echo,
             )
-    ## TODO 支持其他的Langchain原生支持的模型
     else:
-        ## 非Langchain原生支持的模型，走Fschat封装
+        ## fastchat model
         config = get_model_worker_config(model_name)
         model = OpenAI(
             streaming=streaming,
@@ -416,7 +405,10 @@ def list_embed_models() -> List[str]:
     '''
     get names of configured embedding models
     '''
-    return list(MODEL_PATH["embedding_model"])
+    configinst = InnerJsonConfigWebUIParse()
+    webui_config = configinst.dump()
+    embeddingmodel = webui_config.get("ModelConfig").get("EmbeddingModel")
+    return list(embeddingmodel)
 
 
 def list_config_llm_models() -> Dict[str, Dict]:
@@ -425,10 +417,14 @@ def list_config_llm_models() -> Dict[str, Dict]:
     return [(model_name, config_type), ...]
     '''
     workers = list(FSCHAT_MODEL_WORKERS)
+    configinst = InnerJsonConfigWebUIParse()
+    webui_config = configinst.dump()
+    localmodel = webui_config.get("ModelConfig").get("LocalModel")
+    onlinemodel = webui_config.get("ModelConfig").get("OnlineModel")
 
     return {
-        "local": MODEL_PATH["llm_model"],
-        "online": ONLINE_LLM_MODEL,
+        "local": localmodel,
+        "online": onlinemodel,
         "worker": workers,
     }
 

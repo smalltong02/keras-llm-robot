@@ -4,6 +4,7 @@ from WebUI.Server.utils import (BaseResponse, fschat_controller_address, list_co
                           get_httpx_client, get_model_worker_config)
 from copy import deepcopy
 import json
+from WebUI.configs.webuiconfig import *
 
 def get_running_models(
     controller_address: str = Body(None, description="Fastchat controller adress", examples=[fschat_controller_address()]),
@@ -51,7 +52,7 @@ def list_config_models() -> BaseResponse:
     list_models = list_config_llm_models()
     for name, config in list_models["online"].items():
         for k, v in config.items():
-            if k == "model_list":
+            if k == "modellist":
                 online_list += v
                 break
     configs['online'] = online_list
@@ -64,14 +65,11 @@ def list_config_models() -> BaseResponse:
 
 
 def get_model_config(
-    model_name: str = Body(description="配置中LLM模型的名称"),
-    placeholder: str = Body(description="占位用，无实际效果")
+    model_name: str = Body(description="LLM Model name"),
+    placeholder: str = Body(description="Unused")
 ) -> BaseResponse:
-    '''
-    获取LLM模型配置项（合并后的）
-    '''
     config = {}
-    # 删除ONLINE_MODEL配置中的敏感信息
+    
     for k, v in get_model_worker_config(model_name=model_name).items():
         if not (k == "worker_class"
             or "key" in k.lower()
@@ -125,15 +123,56 @@ def get_webui_configs(
         controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])
 ) -> BaseResponse:
     try:
-        with open(".\WebUI\configs\webuiconfig.json", 'r') as file:
-            jsondata = json.load(file)
-            return BaseResponse(data = jsondata)
-            
+        configinst = InnerJsonConfigWebUIParse()
+        return BaseResponse(data = configinst.dump())    
     except Exception as e:
         print(f'{e.__class__.__name__}: {e}')
         return BaseResponse(
             code=500,
             msg=f"failed to get webui configration, error: {e}")
+    
+def save_model_config(
+        model_name: str = Body(..., description="Change Model"),
+        config: dict = Body(..., description="Model configration information"),
+        controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])
+) -> BaseResponse:
+    try:
+        with open(".\WebUI\configs\webuiconfig.json", 'r+') as file:
+            jsondata = json.load(file)
+            jsondata["ModelConfig"]["LocalModel"][model_name].update(config)
+            file.seek(0)
+            json.dump(jsondata, file, indent=4)
+            file.truncate()
+        return BaseResponse(
+            code=200,
+            msg=f"success save local model configration!")
+            
+    except Exception as e:
+        print(f'{e.__class__.__name__}: {e}')
+        return BaseResponse(
+            code=500,
+            msg=f"failed to save local model configration, error: {e}")
+
+def save_chat_config(
+        config: dict = Body(..., description="Chat configration information"),
+        controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])
+) -> BaseResponse:
+    try:
+        with open(".\WebUI\configs\webuiconfig.json", 'r+') as file:
+            jsondata = json.load(file)
+            jsondata["ChatConfiguration"].update(config)
+            file.seek(0)
+            json.dump(jsondata, file, indent=4)
+            file.truncate()
+        return BaseResponse(
+            code=200,
+            msg=f"success save chat configration!")
+            
+    except Exception as e:
+        print(f'{e.__class__.__name__}: {e}')
+        return BaseResponse(
+            code=500,
+            msg=f"failed to save chat configration, error: {e}")
 
 
 def list_search_engines() -> BaseResponse:

@@ -237,9 +237,6 @@ class ApiRequest:
         return self._get_response_value(response, as_json=True, value_func=lambda r:r.get("data", []))
     
     def list_config_models(self) -> Dict[str, List[str]]:
-        '''
-        {"type": [model_name1, model_name2, ...], ...}。
-        '''
         response = self.post(
             "/llm_model/list_config_models",
         )
@@ -268,6 +265,12 @@ class ApiRequest:
         )
         return self._get_response_value(response, as_json=True, value_func=lambda r:r.get("data", {}))
     
+    def ret_sync(self, response):
+        return self._get_response_value(response, as_json=True)
+
+    async def ret_async(self, response):
+        return self._get_response_value(response, as_json=True)
+    
     def change_llm_model(
         self,
         model_name: str,
@@ -279,65 +282,35 @@ class ApiRequest:
                 "code": 500,
                 "msg": f"name for the new model is None."
             }
-
-        def ret_sync():
-            running_models = self.get_running_models()
-            if new_model_name == model_name or new_model_name in running_models:
-                return {
-                    "code": 200,
-                    "msg": "Not necessary to switch models."
-                }
-
-            config_models = self.list_config_models()
-            if new_model_name not in config_models["local"]:
-                return {
-                    "code": 500,
-                    "msg": f"The new Model '{new_model_name}' is not configured in the configs."
-                }
-
-            data = {
-                "model_name": model_name,
-                "new_model_name": new_model_name,
-                "controller_address": controller_address,
+        running_models = self.get_running_models()
+        if new_model_name == model_name or new_model_name in running_models:
+            return {
+                "code": 200,
+                "msg": "Not necessary to switch models."
             }
 
-            response = self.post(
-                "/llm_model/change",
-                json=data,
-            )
-            return self._get_response_value(response, as_json=True)
-
-        async def ret_async():
-            running_models = await self.get_running_models()
-            if new_model_name == model_name or new_model_name in running_models:
-                return {
-                    "code": 200,
-                    "msg": "Not necessary to switch models."
-                }
-
-            config_models = await self.list_config_models()
-            if new_model_name not in config_models["local"]:
-                return {
-                    "code": 500,
-                    "msg": f"The new Model '{new_model_name}' is not configured in the configs."
-                }
-
-            data = {
-                "model_name": model_name,
-                "new_model_name": new_model_name,
-                "controller_address": controller_address,
+        config_models = self.list_config_models()
+        if new_model_name not in config_models["local"]:
+            return {
+                "code": 500,
+                "msg": f"The new Model '{new_model_name}' is not configured in the configs."
             }
 
-            response = self.post(
-                "/llm_model/change",
-                json=data,
-            )
-            return self._get_response_value(response, as_json=True)
+        data = {
+            "model_name": model_name,
+            "new_model_name": new_model_name,
+            "controller_address": controller_address,
+        }
+
+        response = self.post(
+            "/llm_model/change",
+            json=data,
+        )
 
         if self._use_async:
-            return ret_async()
+            return self.ret_async(response)
         else:
-            return ret_sync()
+            return self.ret_sync(response)
         
     def eject_llm_model(self,
         model_name: str,
@@ -349,48 +322,85 @@ class ApiRequest:
                 "msg": f"name for the new model is None."
             }
         
-        def ret_sync():
-            running_models = self.get_running_models()
-            if model_name not in running_models:
-                return {
-                    "code": 200,
-                    "msg": f"the model '{model_name}' is not running."
-                }
-
-            data = {
-                "model_name": model_name,
-                "controller_address": controller_address,
+        running_models = self.get_running_models()
+        if model_name not in running_models:
+            return {
+                "code": 200,
+                "msg": f"the model '{model_name}' is not running."
             }
 
-            response = self.post(
-                "/llm_model/stop",
-                json=data,
-            )
-            return self._get_response_value(response, as_json=True)
+        data = {
+            "model_name": model_name,
+            "controller_address": controller_address,
+        }
 
-        async def ret_async():
-            running_models = self.get_running_models()
-            if model_name not in running_models:
-                return {
-                    "code": 200,
-                    "msg": f"the model '{model_name}' is not running."
-                }
-
-            data = {
-                "model_name": model_name,
-                "controller_address": controller_address,
-            }
-
-            response = self.post(
-                "/llm_model/stop",
-                json=data,
-            )
-            return self._get_response_value(response, as_json=True)
+        response = self.post(
+            "/llm_model/stop",
+            json=data,
+        )
         
         if self._use_async:
-            return ret_async()
+            return self.ret_async(response)
         else:
-            return ret_sync()
+            return self.ret_sync(response)
+        
+    def save_model_config(self,
+        modelconfig: {"name": str, "blocal": bool, "config": dict},
+        controller_address: str = None,
+    ):
+        if modelconfig is None or all(key in modelconfig for key in ["name", "blocal", "config"]) is False:
+            return {
+                "code": 500,
+                "msg": f"modelconfig is None."
+            }
+        
+        if modelconfig["blocal"] is False:
+            return {
+                "code": 500,
+                "msg": f"Current only support Local Model save."
+            }
+
+        data = {
+            "model_name": modelconfig["name"],
+            "config": modelconfig["config"],
+            "controller_address": controller_address,
+        }
+
+        response = self.post(
+            "/llm_model/save_model_config",
+            json=data,
+        )
+        
+        if self._use_async:
+            return self.ret_async(response)
+        else:
+            return self.ret_sync(response)
+    
+    def save_chat_config(self,
+        chatconfig: dict,
+        controller_address: str = None,
+    ):
+        if chatconfig is None:
+            return {
+                "code": 500,
+                "msg": f"chatconfig is None."
+            }
+        
+        data = {
+            "config": chatconfig,
+            "controller_address": controller_address,
+        }
+
+        response = self.post(
+            "/llm_model/save_chat_config",
+            json=data,
+        )
+        
+        if self._use_async:
+            return self.ret_async(response)
+        else:
+            return self.ret_sync(response)
+
     
     def _get_response_value(self, response: httpx.Response, as_json: bool = False, value_func: Callable = None,):
         
