@@ -35,7 +35,7 @@
                 "Huggingface": "jinaai/jina-embeddings-v2-small-en"
             },
             "jina-embeddings-v2-base-en": {
-                "path": "models/jina-embeddings-v2-base-en",
+                "path": "models/embeddings/jina-embeddings-v2-base-en",
                 "Huggingface": "jinaai/jina-embeddings-v2-base-en"
             },
             "m3e-small": {
@@ -69,7 +69,7 @@
         },
         "LocalModel": {
             "llama-2-7b-hf": {
-                "path": "models/llama-2-7b-hf",
+                "path": "models/llm/llama-2-7b-hf",
                 "device": "auto",
                 "maxmemory": 20,
                 "cputhreads": 4,
@@ -77,7 +77,7 @@
                 "Huggingface": "meta-llama/llama-2-7b-hf"
             },
             "llama-2-13b-hf": {
-                "path": "models/llama-2-13b-hf",
+                "path": "models/llm/llama-2-13b-hf",
                 "device": "auto",
                 "maxmemory": 24,
                 "cputhreads": 4,
@@ -85,7 +85,7 @@
                 "Huggingface": "meta-llama/llama-2-13b-hf"
             },
             "llama-2-70b-hf": {
-                "path": "models/llama-2-70b-hf",
+                "path": "models/llm/llama-2-70b-hf",
                 "device": "auto",
                 "maxmemory": 24,
                 "cputhreads": 8,
@@ -93,7 +93,7 @@
                 "Huggingface": "meta-llama/llama-2-70b-hf"
             },
             "llama-2-7b-chat-hf": {
-                "path": "models/Llama-2-7b-chat-hf",
+                "path": "models/llm/Llama-2-7b-chat-hf",
                 "device": "auto",
                 "maxmemory": 20,
                 "cputhreads": 4,
@@ -101,7 +101,7 @@
                 "Huggingface": "meta-llama/Llama-2-7b-chat-hf"
             },
             "llama-2-13b-chat-hf": {
-                "path": "models/Llama-2-13b-chat-hf",
+                "path": "models/llm/Llama-2-13b-chat-hf",
                 "device": "auto",
                 "maxmemory": 24,
                 "cputhreads": 4,
@@ -109,7 +109,7 @@
                 "Huggingface": "meta-llama/Llama-2-13b-chat-hf"
             },
             "llama-2-70b-chat-hf": {
-                "path": "models/Llama-2-70b-chat-hf",
+                "path": "models/llm/Llama-2-70b-chat-hf",
                 "device": "auto",
                 "maxmemory": 24,
                 "cputhreads": 8,
@@ -117,7 +117,7 @@
                 "Huggingface": "meta-llama/Llama-2-70b-chat-hf"
             },
             "chatglm2-6b": {
-                "path": "models/chatglm2-6b",
+                "path": "models/llm/chatglm2-6b",
                 "device": "auto",
                 "maxmemory": 20,
                 "cputhreads": 4,
@@ -125,7 +125,7 @@
                 "Huggingface": "THUDM/chatglm2-6b"
             },
             "chatglm2-6b-32k": {
-                "path": "models/chatglm2-6b-32k",
+                "path": "models/llm/chatglm2-6b-32k",
                 "device": "auto",
                 "maxmemory": 24,
                 "cputhreads": 4,

@@ -15,7 +15,6 @@ from WebUI.Server.utils import (set_httpx_config, get_model_worker_config, get_h
                                 fschat_model_worker_address)
 from __about__ import __title__, __summary__, __version__, __author__, __email__, __license__, __copyright__
 from webuisrv import InnerLlmAIRobotWebUIServer
-from WebUI.configs.modelconfig import (LLM_MODELS)
 from WebUI.configs.serverconfig import (FSCHAT_MODEL_WORKERS, FSCHAT_CONTROLLER, HTTPX_DEFAULT_TIMEOUT,
                                         FSCHAT_OPENAI_API, API_SERVER)
 from typing import Tuple, List, Dict
@@ -42,7 +41,7 @@ def parse_args() -> argparse.ArgumentParser:
         "--model-name",
         type=str,
         nargs="+",
-        default=LLM_MODELS,
+        default=[""],
         help="specify model name for model worker. "
              "add addition names with space seperated to start multiple model workers.",
         dest="model_name",
@@ -327,7 +326,7 @@ def run_openai_api(started_event: mp.Event = None):
     uvicorn.run(app, host=host, port=port)
 
 def run_model_worker(
-        model_name: str = LLM_MODELS[0],
+        model_name: str = "",
         controller_address: str = "",
         q: mp.Queue = None,
         started_event: mp.Event = None,
