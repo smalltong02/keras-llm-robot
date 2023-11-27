@@ -9,7 +9,7 @@ from WebUI.configs.serverconfig import API_SERVER
 from WebUI.configs import HTTPX_DEFAULT_TIMEOUT
 from WebUI.webui_pages.dialogue.dialogue import dialogue_page, chat_box
 from WebUI.webui_pages.model_configuration.configuration import configuration_page
-from WebUI.webui_pages.knowledge_base.knowledgebase import knowledge_base_page
+from WebUI.webui_pages.retrieval_agent.retrievalagent import retrieval_agent_page
 
 def api_address() -> str:
     host = API_SERVER["host"]
@@ -44,9 +44,9 @@ if __name__ == "__main__":
             "icon": "magic",
             "func": configuration_page,
         },
-        "Knowledge Base": {
+        "Retrieval & Agent": {
             "icon": "archive-fill",
-            "func": knowledge_base_page,
+            "func": retrieval_agent_page,
         },
     }
 
