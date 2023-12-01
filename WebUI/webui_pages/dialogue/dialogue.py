@@ -2,12 +2,14 @@ import streamlit as st
 from WebUI.webui_pages.utils import *
 from streamlit_chatbox import *
 from WebUI.configs.prompttemplates import PROMPT_TEMPLATES
-from WebUI.configs.modelconfig import (TEMPERATURE, HISTORY_LEN)
+from WebUI.configs.modelconfig import HISTORY_LEN
+from transformers import AutoProcessor, pipeline
 import os, platform
 from datetime import datetime
+import speech_recognition as sr
+import torch
 import time
 import psutil
-import GPUtil
 import pynvml
 
 chat_box = ChatBox(
@@ -22,11 +24,14 @@ gal_cpumem = 0.0
 gal_gpuutil = 0.0
 gal_gpumem = 0.0
 
-def update_running_status(placeholder_cpu, placeholder_ram, placeholder_gpuutil, placeholder_gpumem, binit = False, bcache = False):
+def update_running_status(placeholder_cpu, placeholder_ram, placeholder_gpuutil, placeholder_gpumem, bshow = True, binit = False, bcache = False):
     global gal_cpuutil
     global gal_cpumem
     global gal_gpuutil
     global gal_gpumem
+
+    if bshow:
+        return
     
     if binit:
         gal_cpuutil = cpuutil = 0.0
@@ -113,9 +118,12 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
 
     webui_config = api.get_webui_config()
     chatconfig = webui_config.get("ChatConfiguration")
+    webconfig = webui_config.get("WebConfig")
     temperature = chatconfig.get("Temperature")
+    bshowstatus = webconfig.get("ShowRunningStatus")
     
     disabled = False
+    voice_prompt = ""
     with st.sidebar:
         def on_mode_change():
             mode = st.session_state.dialogue_mode
@@ -182,38 +190,74 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
             use_container_width=True,
         )
 
-        st.caption(
-            f"""<p style="font-size: 1.5em; text-align: left; color: #3498db;"><b>Running Status:</b></p>""",
-            unsafe_allow_html=True,
-        )
+        voicechatbtn = st.button(label="🎧", use_container_width=True, disabled=disabled)
+        if voicechatbtn:
+            voicemodel = st.session_state["voice_models"]
+            if voicemodel is None:
+                st.error("Voice model not loaded...")
+                voice_prompt = ""    
+            else:
+                with st.spinner(f"Voice recording starting..."):
+                    r = sr.Recognizer()
+                    with sr.Microphone() as source:
+                        st.success("Please speaking...")
+                        audio = r.listen(source, timeout=5, phrase_time_limit=5)
+                        try:
+                            with open("speaking.wav", "wb") as file: 
+                                file.write(audio.get_wav_data(convert_rate=16000))
+                            voice_prompt = ""
+                            processor = AutoProcessor.from_pretrained("D:\\MLModel\\Audio-to-Text\\whisper-large-v3")
 
-        st.caption(
-            f"""<p style="font-size: 1em; text-align: center;">Load Model：{running_model}</p>""",
-            unsafe_allow_html=True,
-        )
+                            pipe = pipeline(
+                                "automatic-speech-recognition",
+                                model=voicemodel,
+                                tokenizer=processor.tokenizer,
+                                feature_extractor=processor.feature_extractor,
+                                max_new_tokens=128,
+                                chunk_length_s=30,
+                                batch_size=16,
+                                return_timestamps=True,
+                                torch_dtype=torch.float16,
+                                device="cuda",
+                            )
+                            result = pipe("speaking.wav")
+                            voice_prompt = result["text"]
+                            print(voice_prompt)
+                            st.success("Translation finished!")
+                        except:
+                            st.error("Recording failed...")
+        if bshowstatus:
+            st.caption(
+                f"""<p style="font-size: 1.5em; text-align: left; color: #3498db;"><b>Running Status:</b></p>""",
+                unsafe_allow_html=True,
+            )
+            st.caption(
+                f"""<p style="font-size: 1em; text-align: center;">Load Model: {running_model}</p>""",
+                unsafe_allow_html=True,
+            )
 
-        #cpuname, cpuutil, cpumem = get_cpu_info(False)
-        #if cpuname == "":
-        #    cpuname = "Unknown"
-        #st.caption(
-        #    f"""<p style="font-size: 1em; text-align: center; color: #333333;">CPU Name: {cpuname}</p>""",
-        #    unsafe_allow_html=True,
-        #)
-        placeholder_cpu = st.empty()
-        placeholder_ram = st.empty()
-        gpuname, _, _ = get_gpu_info()
-        if gpuname == "":
-            gpuname = "Unknown"
-        st.caption(
-            f"""<p style="font-size: 1em; text-align: center;">GPU Name: {gpuname}</p>""",
-            unsafe_allow_html=True,
-        )
-        placeholder_gpuutil = st.empty()
-        placeholder_gpumem = st.empty()
-        binit = True
-        if st.session_state.get("current_page", "") == "dialogue_page":
-            binit = False
-        update_running_status(placeholder_cpu, placeholder_ram, placeholder_gpuutil, placeholder_gpumem, binit, True)
+            #cpuname, cpuutil, cpumem = get_cpu_info(False)
+            #if cpuname == "":
+            #    cpuname = "Unknown"
+            #st.caption(
+            #    f"""<p style="font-size: 1em; text-align: center; color: #333333;">CPU Name: {cpuname}</p>""",
+            #    unsafe_allow_html=True,
+            #)
+            placeholder_cpu = st.empty()
+            placeholder_ram = st.empty()
+            gpuname, _, _ = get_gpu_info()
+            if gpuname == "":
+                gpuname = "Unknown"
+            st.caption(
+                f"""<p style="font-size: 1em; text-align: center;">GPU Name: {gpuname}</p>""",
+                unsafe_allow_html=True,
+            )
+            placeholder_gpuutil = st.empty()
+            placeholder_gpumem = st.empty()
+            binit = True
+            if st.session_state.get("current_page", "") == "dialogue_page":
+                binit = False
+            update_running_status(placeholder_cpu, placeholder_ram, placeholder_gpuutil, placeholder_gpumem, bshowstatus, binit, True)
 
     if not chat_box.chat_inited:
         if running_model == "" or running_model == "None":
@@ -247,8 +291,14 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
         "optional_text_label": "Please provide feedback on the reasons for your rating.",
     }
 
-    if prompt := st.chat_input(chat_input_placeholder, key="prompt", disabled=disabled):
-        update_running_status(placeholder_cpu, placeholder_ram, placeholder_gpuutil, placeholder_gpumem)
+    
+    prompt = st.chat_input(chat_input_placeholder, key="prompt", disabled=disabled)
+    if voice_prompt != "":
+        prompt = voice_prompt
+    
+    if prompt != None and prompt != "":
+        if bshowstatus:
+            update_running_status(placeholder_cpu, placeholder_ram, placeholder_gpuutil, placeholder_gpumem)
         history = get_messages_history(history_len)
         chat_box.user_say(prompt)
         if dialogue_mode == "LLM Chat":
@@ -256,10 +306,10 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
             text = ""
             chat_history_id = ""
             r = api.chat_chat(prompt,
-                              history=history,
-                              model=running_model,
-                              prompt_name=prompt_template_name,
-                              temperature=temperature)
+                            history=history,
+                            model=running_model,
+                            prompt_name=prompt_template_name,
+                            temperature=temperature)
             for t in r:
                 if error_msg := check_error_msg(t):  # check whether error occured
                     st.error(error_msg)
@@ -273,19 +323,20 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                 }
             chat_box.update_msg(text, streaming=False, metadata=metadata)
             chat_box.show_feedback(**feedback_kwargs,
-                                   key=chat_history_id,
-                                   on_submit=on_feedback,
-                                   kwargs={"chat_history_id": chat_history_id, "history_index": len(chat_box.history) - 1})
-            
+                                key=chat_history_id,
+                                on_submit=on_feedback,
+                                kwargs={"chat_history_id": chat_history_id, "history_index": len(chat_box.history) - 1})
+                
             if st.session_state.get("need_rerun"):
                 st.session_state["need_rerun"] = False
                 st.rerun()
-            
+                
             st.session_state["current_page"] = "dialogue_page"
-            while True:
-                update_running_status(placeholder_cpu, placeholder_ram, placeholder_gpuutil, placeholder_gpumem)
-                time.sleep(1)
-    
+            if bshowstatus:
+                while True:
+                    update_running_status(placeholder_cpu, placeholder_ram, placeholder_gpuutil, placeholder_gpumem)
+                    time.sleep(1)
+        
     if st.session_state.get("need_rerun"):
         st.session_state["need_rerun"] = False
         st.rerun()

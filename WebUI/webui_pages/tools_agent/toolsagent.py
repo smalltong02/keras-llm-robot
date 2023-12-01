@@ -1,7 +1,7 @@
 import streamlit as st
 from WebUI.webui_pages.utils import *
 
-def retrieval_agent_page(api: ApiRequest, is_lite: bool = False):
+def tools_agent_page(api: ApiRequest, is_lite: bool = False):
     
     running_model = ""
     models_list = list(api.get_running_models())

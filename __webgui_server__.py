@@ -15,9 +15,9 @@ from WebUI.Server.utils import (set_httpx_config, get_model_worker_config, get_h
                                 fschat_model_worker_address)
 from __about__ import __title__, __summary__, __version__, __author__, __email__, __license__, __copyright__
 from webuisrv import InnerLlmAIRobotWebUIServer
-from WebUI.configs.serverconfig import (FSCHAT_MODEL_WORKERS, FSCHAT_CONTROLLER, HTTPX_DEFAULT_TIMEOUT,
+from WebUI.configs.serverconfig import (FSCHAT_MODEL_WORKERS, FSCHAT_CONTROLLER, HTTPX_DEFAULT_TIMEOUT, HTTPX_LOAD_TIMEOUT, HTTPX_RELEASE_TIMEOUT,
                                         FSCHAT_OPENAI_API, API_SERVER)
-from typing import Tuple, List, Dict
+from typing import Union, List, Dict
 import json
 
 def parse_args() -> argparse.ArgumentParser:
@@ -148,7 +148,7 @@ def run_controller(started_event: mp.Event = None):
                 return {"code": 500, "msg": msg}
 
         if new_model_name:
-            timer = HTTPX_DEFAULT_TIMEOUT  # wait for new model_worker register
+            timer = HTTPX_LOAD_TIMEOUT  # wait for new model_worker register
             while timer > 0:
                 models = app._controller.list_models()
                 if new_model_name in models:
@@ -156,7 +156,7 @@ def run_controller(started_event: mp.Event = None):
                 time.sleep(1)
                 timer -= 1
             if timer > 0:
-                msg = f"sucess change model from {model_name} to {new_model_name}"
+                msg = f"success change model from {model_name} to {new_model_name}"
                 print(msg)
                 return {"code": 200, "msg": msg}
             else:
@@ -164,7 +164,7 @@ def run_controller(started_event: mp.Event = None):
                 print(msg)
                 return {"code": 500, "msg": msg}
         else:
-            timer = HTTPX_DEFAULT_TIMEOUT  # wait for new model_worker register
+            timer = HTTPX_RELEASE_TIMEOUT  # wait for release model
             while timer > 0:
                 models = app._controller.list_models()
                 if model_name not in models:
@@ -193,7 +193,7 @@ def create_empty_worker_app() -> FastAPI:
     app._worker = ""
     return app
 
-def create_model_worker_app(log_level: str = "INFO", **kwargs) -> FastAPI:
+def create_model_worker_app(log_level: str = "INFO", **kwargs) -> Union[FastAPI, None]:
     import fastchat.constants
     from fastchat.serve.base_model_worker import app
     fastchat.constants.LOGDIR = LOG_PATH
@@ -208,9 +208,12 @@ def create_model_worker_app(log_level: str = "INFO", **kwargs) -> FastAPI:
         worker = ""
     # Online model
     elif worker_class := kwargs.get("worker_class"):
-        worker = worker_class(model_names=args.model_names,
+        try:
+            worker = worker_class(model_names=args.model_names,
                               controller_addr=args.controller_address,
                               worker_addr=args.worker_address)
+        except Exception as e:
+            return None
 
     # Local model
     else:
@@ -255,25 +258,29 @@ def create_model_worker_app(log_level: str = "INFO", **kwargs) -> FastAPI:
             groupsize=args.awq_groupsize,
         )
 
-        worker = ModelWorker(
-            controller_addr=args.controller_address,
-            worker_addr=args.worker_address,
-            worker_id=worker_id,
-            model_path=args.model_path,
-            model_names=args.model_names,
-            limit_worker_concurrency=args.limit_worker_concurrency,
-            no_register=args.no_register,
-            device=args.device,
-            num_gpus=args.num_gpus,
-            max_gpu_memory=args.max_gpu_memory,
-            load_8bit=args.load_8bit,
-            cpu_offloading=args.cpu_offloading,
-            gptq_config=gptq_config,
-            awq_config=awq_config,
-            stream_interval=args.stream_interval,
-            conv_template=args.conv_template,
-            embed_in_truncate=args.embed_in_truncate,
-        )
+        try:
+            worker = ModelWorker(
+                controller_addr=args.controller_address,
+                worker_addr=args.worker_address,
+                worker_id=worker_id,
+                model_path=args.model_path,
+                model_names=args.model_names,
+                limit_worker_concurrency=args.limit_worker_concurrency,
+                no_register=args.no_register,
+                device=args.device,
+                num_gpus=args.num_gpus,
+                max_gpu_memory=args.max_gpu_memory,
+                load_8bit=args.load_8bit,
+                cpu_offloading=args.cpu_offloading,
+                gptq_config=gptq_config,
+                awq_config=awq_config,
+                stream_interval=args.stream_interval,
+                conv_template=args.conv_template,
+                embed_in_truncate=args.embed_in_truncate,
+            )
+        except Exception as e:
+            print(e)
+            return None
         sys.modules["fastchat.serve.model_worker"].args = args
         sys.modules["fastchat.serve.model_worker"].gptq_config = gptq_config
         # sys.modules["fastchat.serve.model_worker"].worker = worker
@@ -349,7 +356,9 @@ def run_model_worker(
         app = create_empty_worker_app()
     else:
         app = create_model_worker_app(log_level="INFO", **kwargs)
-
+        if app is None:
+            app = create_empty_worker_app()
+    
     _set_app_event(app, started_event)
     # add interface to release and load model
     @app.post("/release")

@@ -4,6 +4,9 @@ from .modelconfig import LLM_DEVICE
 
 HTTPX_DEFAULT_TIMEOUT = 300.0
 
+HTTPX_LOAD_TIMEOUT = 120.0
+HTTPX_RELEASE_TIMEOUT = 60
+
 OPEN_CROSS_DOMAIN = False
 
 # The server will listen on all available network interfaces.
