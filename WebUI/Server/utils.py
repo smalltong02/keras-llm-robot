@@ -194,16 +194,21 @@ def get_max_gpumem(models_list: dict = {}, model_name: str = "") -> str:
     return memory_str
 
 def get_model_worker_config(model_name: str = None) -> dict:
-    config = FSCHAT_MODEL_WORKERS.get("default", {}).copy()
-    if model_name is None or model_name == "":
-        return config
+    config = {}
     configinst = InnerJsonConfigWebUIParse()
     webui_config = configinst.dump()
+    server_config = webui_config.get("ServerConfig")
+    
+    config["host"] = server_config.get("default_host_ip")
+    config["port"] = server_config["fastchat_model_worker"]["default"].get("port")
+    config["vllm_enable"] = server_config["fastchat_model_worker"]["default"].get("vllm_enable")
+
+    if model_name is None or model_name == "":
+        return config
+
     localmodel = webui_config.get("ModelConfig").get("LocalModel")
     onlinemodel = webui_config.get("ModelConfig").get("OnlineModel")
     config.update(onlinemodel.get(model_name, {}).copy())
-    config.update(FSCHAT_MODEL_WORKERS.get(model_name, {}).copy())
-
     if model_name in onlinemodel:
         config["online_api"] = True
         if provider := config.get("provider"):
@@ -212,12 +217,55 @@ def get_model_worker_config(model_name: str = None) -> dict:
             except Exception as e:
                 msg = f"Online Model ‘{model_name}’'s provider configuration error."
                 print(f'{e.__class__.__name__}: {msg}')
-        
     if model_name in localmodel:
         config["model_path"] = get_model_path(localmodel, model_name)
         config["device"] = llm_device(localmodel, model_name)
         config["load_8bit"] = load_8bit(localmodel, model_name)
         config["max_gpu_memory"] = get_max_gpumem(localmodel, model_name)
+    return config
+    # config = FSCHAT_MODEL_WORKERS.get("default", {}).copy()
+    # if model_name is None or model_name == "":
+    #     return config
+    # configinst = InnerJsonConfigWebUIParse()
+    # webui_config = configinst.dump()
+    # localmodel = webui_config.get("ModelConfig").get("LocalModel")
+    # onlinemodel = webui_config.get("ModelConfig").get("OnlineModel")
+    # config.update(onlinemodel.get(model_name, {}).copy())
+    # config.update(FSCHAT_MODEL_WORKERS.get(model_name, {}).copy())
+
+    # if model_name in onlinemodel:
+    #     config["online_api"] = True
+    #     if provider := config.get("provider"):
+    #         try:
+    #             config["worker_class"] = getattr(workers, provider)
+    #         except Exception as e:
+    #             msg = f"Online Model ‘{model_name}’'s provider configuration error."
+    #             print(f'{e.__class__.__name__}: {msg}')
+        
+    # if model_name in localmodel:
+    #     config["model_path"] = get_model_path(localmodel, model_name)
+    #     config["device"] = llm_device(localmodel, model_name)
+    #     config["load_8bit"] = load_8bit(localmodel, model_name)
+    #     config["max_gpu_memory"] = get_max_gpumem(localmodel, model_name)
+    # return config
+
+def get_vtot_worker_config(model_name: str = None) -> dict:
+    config = {}
+    
+    configinst = InnerJsonConfigWebUIParse()
+    webui_config = configinst.dump()
+    server_config = webui_config.get("ServerConfig")
+    config["host"] = server_config.get("default_host_ip")
+    config["port"] = server_config["vtot_model_worker"].get("port")
+    
+    if model_name is None or model_name == "":
+        return config
+    vtot_model = webui_config.get("ModelConfig").get("VtoTModel")
+    if model_name in vtot_model:
+        config["model_path"] = vtot_model[model_name].get("path")
+        config["device"] = vtot_model[model_name].get("device")
+        config["loadbits"] = vtot_model[model_name].get("loadbits")
+        config["Huggingface"] = vtot_model[model_name].get("Huggingface")
     return config
 
 def MakeFastAPIOffline(

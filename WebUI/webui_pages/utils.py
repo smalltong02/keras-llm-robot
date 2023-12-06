@@ -1,6 +1,7 @@
 import streamlit as st
 import httpx
 import json
+import base64
 import contextlib
 from pprint import pprint
 from typing import *
@@ -375,7 +376,125 @@ class ApiRequest:
             return self.ret_async(response)
         else:
             return self.ret_sync(response)
+        
+    def save_vtot_model_config(self,
+        model_name: str = "",
+        modelconfig: dict = {},
+        controller_address: str = None,
+    ):
+        if model_name == "" or modelconfig is None:
+            return {
+                "code": 500,
+                "msg": f"modelconfig is None."
+            }
+        data = {
+            "model_name": model_name,
+            "config": modelconfig,
+            "controller_address": controller_address,
+        }
+
+        response = self.post(
+            "/voice_model/save_voice_model_config",
+            json=data,
+        )
+        
+        if self._use_async:
+            return self.ret_async(response)
+        else:
+            return self.ret_sync(response)
+        
+    def get_vtot_model(self, controller_address: str = None):
+        data = {
+            "controller_address": controller_address,
+        }
+        response = self.post(
+            "/voice_model/get_vtot_model",
+            json=data,
+        )
+        return self._get_response_value(response, as_json=True, value_func=lambda r:r.get("data", []))
     
+    def eject_voice_model(self,
+        model_name: str,
+        controller_address: str = None,
+    ):
+        if not model_name:
+            return {
+                "code": 500,
+                "msg": f"name for the new model is None."
+            }
+        
+        running_model = self.get_vtot_model()
+        if model_name != running_model:
+            return {
+                "code": 200,
+                "msg": f"the model '{model_name}' is not running."
+            }
+
+        data = {
+            "model_name": model_name,
+            "controller_address": controller_address,
+        }
+
+        response = self.post(
+            "/voice_model/stop",
+            json=data,
+        )
+        
+        if self._use_async:
+            return self.ret_async(response)
+        else:
+            return self.ret_sync(response)
+
+    def change_voice_model(self,
+        model_name: str,
+        new_model_name: str,
+        controller_address: str = None,
+    ):
+        if not new_model_name:
+            return {
+                "code": 500,
+                "msg": f"name for the new model is None."
+            }
+        running_model = self.get_vtot_model()
+        if new_model_name == model_name or new_model_name == running_model:
+            return {
+                "code": 200,
+                "msg": "Not necessary to switch models."
+            }
+
+        data = {
+            "model_name": model_name,
+            "new_model_name": new_model_name,
+            "controller_address": controller_address,
+        }
+
+        response = self.post(
+            "/voice_model/change",
+            json=data,
+        )
+
+        if self._use_async:
+            return self.ret_async(response)
+        else:
+            return self.ret_sync(response)
+        
+    def get_vtot_data(self,
+        voice_data: bytes,
+        controller_address: str = None
+    ):
+        if voice_data is None or len(voice_data) == 0:
+            return ""
+        base64_data = base64.b64encode(voice_data).decode('utf-8')
+        data = {
+            "voice_data": base64_data,
+            "controller_address": controller_address,
+        }
+        response = self.post(
+            "/voice_model/get_vtot_data",
+            json=data,
+        )
+        return self._get_response_value(response, as_json=True, value_func=lambda r:r.get("data", ""))
+
     def save_chat_config(self,
         chatconfig: dict,
         controller_address: str = None,

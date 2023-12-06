@@ -1,16 +1,23 @@
 import streamlit as st
 from WebUI.webui_pages.utils import *
 
+training_devices_list = ["auto","cpu","gpu","mps"]
+loadbits_list = ["32 bits","16 bits","8 bits"]
+
 def tools_agent_page(api: ApiRequest, is_lite: bool = False):
     
     running_model = ""
     models_list = list(api.get_running_models())
     if len(models_list):
         running_model = models_list[0]
+    webui_config = api.get_webui_config()
+    current_vtot_model = api.get_vtot_model()
+    voicemodel = None
+    
     if running_model == "":
         running_model = "None"
     st.caption(
-            f"""<h1 style="font-size: 1.5em; text-align: center; color: #3498db;">Running Model: {running_model}</h1>""",
+            f"""<h1 style="font-size: 1.5em; text-align: center; color: #3498db;">Running LLM Model: {running_model}</h1>""",
             unsafe_allow_html=True,
         )
     tabretrieval, tabinterpreter, tabttov, tabvtot, tabimager, tabimageg, tabfunctions = st.tabs(["Retrieval", "Code Interpreter", "Text-to-Voice", "Voice-to-Text", "Image Recognition", "Image Generation", "Functions"])
@@ -81,7 +88,136 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
         pass
 
     with tabvtot:
-        pass
+        vtotmodel = webui_config.get("ModelConfig").get("VtoTModel")
+        vtotmodel_lists = [f"{key}" for key in vtotmodel]
+        col1, col2 = st.columns(2)
+        with col1:
+            if current_vtot_model == "":
+                index = 0
+            else:
+                index = vtotmodel_lists.index(current_vtot_model)
+            voicemodel = st.selectbox(
+                    "Please Select Voice Model",
+                    vtotmodel_lists,
+                    index=index,
+                )
+            le_button = st.button(
+                "Load & Eject",
+                use_container_width=True,
+            )
+            if le_button:
+                if voicemodel == current_vtot_model:
+                    with st.spinner(f"Release Model: {voicemodel}, Please do not perform any actions or refresh the page."):
+                        r = api.eject_voice_model(voicemodel)
+                        if msg := check_error_msg(r):
+                            st.error(msg)
+                        elif msg := check_success_msg(r):
+                            st.success(msg)
+                            current_vtot_model = ""
+                else:
+                    with st.spinner(f"Loading Model: {voicemodel}, Please do not perform any actions or refresh the page."):
+                        r = api.change_voice_model(current_vtot_model, voicemodel)
+                        if msg := check_error_msg(r):
+                            st.error(msg)
+                        elif msg := check_success_msg(r):
+                            st.success(msg)
+                            current_vtot_model = voicemodel
+        with col2:
+            if voicemodel is not None:
+                pathstr = vtotmodel[voicemodel].get("path")
+            else:
+                pathstr = ""
+            st.text_input("Local Path", pathstr)
+            save_path = st.button(
+                "Save Path",
+                use_container_width=True,
+            )
+
+        st.divider()
+        config = vtotmodel[voicemodel]
+        if voicemodel == "whisper-large-v3" or voicemodel == "whisper-base" or voicemodel == "whisper-medium":
+            with st.form("whisper_model"):
+                devcol, bitcol = st.columns(2)
+                with devcol:
+                    sdevice = config.get("device").lower()
+                    if sdevice in training_devices_list:
+                        index = training_devices_list.index(sdevice)
+                    else:
+                        index = 0
+                    predict_dev = st.selectbox(
+                            "Please select Device",
+                            training_devices_list,
+                            index=index
+                        )
+                with bitcol:
+                    nloadbits = config.get("loadbits")
+                    index = 0 if nloadbits == 32 else (1 if nloadbits == 16 else (2 if nloadbits == 8 else 16))
+                    nloadbits = st.selectbox(
+                        "Load Bits",
+                        loadbits_list,
+                        index=index
+                    )
+                save_parameters = st.form_submit_button(
+                    "Save Parameters",
+                    use_container_width=True
+                )
+                if save_parameters:
+                    config["device"] = predict_dev
+                    if nloadbits == "32 bits":
+                        config["loadbits"] = 32
+                    elif nloadbits == "16 bits":
+                        config["loadbits"] = 16
+                    else:
+                        config["loadbits"] = 8
+                    with st.spinner(f"Saving Parameters, Please do not perform any actions or refresh the page."):
+                        r = api.save_vtot_model_config(voicemodel, config)
+                        if msg := check_error_msg(r):
+                            st.error(f"failed to save configuration for model {voicemodel}.")
+                        elif msg := check_success_msg(r):
+                            st.success(f"success save configuration for model {voicemodel}.")
+
+        elif voicemodel == "faster-whisper-large-v3":
+            with st.form("faster_whisper_model"):
+                devcol, bitcol = st.columns(2)
+                with devcol:
+                    sdevice = config.get("device").lower()
+                    if sdevice in training_devices_list:
+                        index = training_devices_list.index(sdevice)
+                    else:
+                        index = 0
+                    predict_dev = st.selectbox(
+                            "Please select Device",
+                            training_devices_list,
+                            index=index
+                        )
+                with bitcol:
+                    nloadbits = config.get("loadbits")
+                    index = 0 if nloadbits == 32 else (1 if nloadbits == 16 else (2 if nloadbits == 8 else 16))
+                    nloadbits = st.selectbox(
+                        "Load Bits",
+                        loadbits_list,
+                        index=index
+                    )
+                save_parameters = st.form_submit_button(
+                        "Save Parameters",
+                        use_container_width=True
+                    )
+                if save_parameters:
+                    config["device"] = predict_dev
+                    if nloadbits == "32 bits":
+                        config["loadbits"] = 32
+                    elif nloadbits == "16 bits":
+                        config["loadbits"] = 16
+                    else:
+                        config["loadbits"] = 8
+                    with st.spinner(f"Saving Parameters, Please do not perform any actions or refresh the page."):
+                        r = api.save_vtot_model_config(voicemodel, config)
+                        if msg := check_error_msg(r):
+                            st.error(f"failed to save configuration for model {voicemodel}.")
+                        elif msg := check_success_msg(r):
+                            st.success(f"success save configuration for model {voicemodel}.")
+        else:
+            pass
 
     with tabimager:
         pass

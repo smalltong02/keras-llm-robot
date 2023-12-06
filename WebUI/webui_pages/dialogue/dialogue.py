@@ -3,7 +3,6 @@ from WebUI.webui_pages.utils import *
 from streamlit_chatbox import *
 from WebUI.configs.prompttemplates import PROMPT_TEMPLATES
 from WebUI.configs.modelconfig import HISTORY_LEN
-from transformers import AutoProcessor, pipeline
 import os, platform
 from datetime import datetime
 import speech_recognition as sr
@@ -48,7 +47,7 @@ def update_running_status(placeholder_cpu, placeholder_ram, placeholder_gpuutil,
             _, cpuutil, cpumem = get_cpu_info()
             _, gpuutil, gpumem = get_gpu_info()
     
-    placeholder_cpu.caption(f"""<p style="font-size: 1em; text-align: center;">CPU Util：{cpuutil:.2f}%</p>""",
+    placeholder_cpu.caption(f"""<p style="font-size: 1em; text-align: center;">CPU Util: {cpuutil:.2f}%</p>""",
         unsafe_allow_html=True,
         )
     placeholder_ram.caption(f"""<p style="font-size: 1em; text-align: center;">CPU RAM: {cpumem:.2f} GB</p>""",
@@ -121,7 +120,9 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
     webconfig = webui_config.get("WebConfig")
     temperature = chatconfig.get("Temperature")
     bshowstatus = webconfig.get("ShowRunningStatus")
-    
+    voicemodel = api.get_vtot_model()
+    imagemodel = ""
+
     disabled = False
     voice_prompt = ""
     with st.sidebar:
@@ -190,42 +191,31 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
             use_container_width=True,
         )
 
-        voicechatbtn = st.button(label="🎧", use_container_width=True, disabled=disabled)
+        voicedisable = True if voicemodel == "" else False
+        voicechatbtn = st.button(label="🎧", use_container_width=True, disabled=voicedisable)
         if voicechatbtn:
-            voicemodel = st.session_state["voice_models"]
-            if voicemodel is None:
-                st.error("Voice model not loaded...")
-                voice_prompt = ""    
-            else:
-                with st.spinner(f"Voice recording starting..."):
-                    r = sr.Recognizer()
-                    with sr.Microphone() as source:
-                        st.success("Please speaking...")
-                        audio = r.listen(source, timeout=5, phrase_time_limit=5)
-                        try:
-                            with open("speaking.wav", "wb") as file: 
-                                file.write(audio.get_wav_data(convert_rate=16000))
-                            voice_prompt = ""
-                            processor = AutoProcessor.from_pretrained("D:\\MLModel\\Audio-to-Text\\whisper-large-v3")
-
-                            pipe = pipeline(
-                                "automatic-speech-recognition",
-                                model=voicemodel,
-                                tokenizer=processor.tokenizer,
-                                feature_extractor=processor.feature_extractor,
-                                max_new_tokens=128,
-                                chunk_length_s=30,
-                                batch_size=16,
-                                return_timestamps=True,
-                                torch_dtype=torch.float16,
-                                device="cuda",
-                            )
-                            result = pipe("speaking.wav")
-                            voice_prompt = result["text"]
-                            print(voice_prompt)
+            with st.spinner(f"Voice recording starting..."):
+                r = sr.Recognizer()
+                with sr.Microphone() as source:
+                    st.success("Please speaking...")
+                    audio = r.listen(source, timeout=5, phrase_time_limit=5)
+                    try:
+                        voice_data = audio.get_wav_data(convert_rate=16000)
+                        voice_prompt = api.get_vtot_data(voice_data)
+                        if voice_prompt:
                             st.success("Translation finished!")
-                        except:
-                            st.error("Recording failed...")
+                        else:
+                            st.error("Translation failed...")
+                        if running_model == "" or running_model == "None":
+                            voice_prompt = ""
+                    except Exception as e:
+                        print(e)
+                        st.error("Recording failed...")
+
+        imagedisable = True if imagemodel == "" else False
+        imagechatbtn = st.button(label="🎨", use_container_width=True, disabled=imagedisable)
+        if imagechatbtn:
+            pass
         if bshowstatus:
             st.caption(
                 f"""<p style="font-size: 1.5em; text-align: left; color: #3498db;"><b>Running Status:</b></p>""",

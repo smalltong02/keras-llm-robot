@@ -14,7 +14,9 @@ from WebUI.Server.embeddings_api import embed_texts_endpoint
 from WebUI.Server.chat.openai_chat import openai_chat
 from WebUI.Server.llm_api import (list_running_models, get_running_models, list_config_models,
                             change_llm_model, stop_llm_model,
-                            get_model_config, save_chat_config, save_model_config, get_webui_configs, list_search_engines)
+                            get_model_config, save_chat_config, save_model_config, get_webui_configs,
+                            get_vtot_model, get_vtot_data, stop_vtot_model, change_vtot_model, save_voice_model_config,
+                            list_search_engines)
 from WebUI.Server.utils import(get_prompt_template)
 from typing import List, Literal
 from __about__ import __version__
@@ -111,6 +113,32 @@ def mount_app_routes(app: FastAPI, run_mode: str = None):
              tags=["LLM Model Management"],
              summary="Switch to new LLM Model (Model Worker)",
              )(change_llm_model)
+    
+    # Voice Model interface
+    app.post("/voice_model/get_vtot_model",
+             tags=["Voice Model Management"],
+             summary="Get current running Voice Model",
+             )(get_vtot_model)
+    
+    app.post("/voice_model/get_vtot_data",
+             tags=["Voice Model Management"],
+             summary="Translate voice to text",
+             )(get_vtot_data)
+    
+    app.post("/voice_model/save_voice_model_config",
+             tags=["Voice Model Management"],
+             summary="Save Voice Model configration information",
+             )(save_voice_model_config)
+    
+    app.post("/voice_model/stop",
+             tags=["Voice Model Management"],
+             summary="Stop Voice Model",
+             )(stop_vtot_model)
+    
+    app.post("/voice_model/change",
+             tags=["Voice Model Management"],
+             summary="Switch to new Voice Model",
+             )(change_vtot_model)
 
     # Server interface
     app.post("/server/get_webui_config",

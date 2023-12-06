@@ -10,7 +10,7 @@ from WebUI.configs import HTTPX_DEFAULT_TIMEOUT
 from WebUI.webui_pages.dialogue.dialogue import dialogue_page, chat_box
 from WebUI.webui_pages.model_configuration.configuration import configuration_page
 from WebUI.webui_pages.tools_agent.toolsagent import tools_agent_page
-from WebUI.configs.voicemodels import init_voice_models
+#from WebUI.configs.voicemodels import init_voice_models
 
 def api_address() -> str:
     host = API_SERVER["host"]
@@ -35,10 +35,10 @@ if __name__ == "__main__":
         }
     )
 
-    voice_model = st.session_state.get("voice_models", None)
-    if voice_model == None:
-        voice_model = init_voice_models()
-        st.session_state["voice_models"] = voice_model
+    #voice_model = st.session_state.get("voice_models", None)
+    #if voice_model == None:
+    #    voice_model = init_voice_models()
+    #    st.session_state["voice_models"] = voice_model
 
     #im = Image.open(os.path.join("img","workflow.png"))
     pages = {

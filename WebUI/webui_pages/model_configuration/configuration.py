@@ -1,7 +1,6 @@
 import streamlit as st
 from WebUI.webui_pages.utils import *
 from WebUI.configs import *
-from streamlit_modal import Modal
 import streamlit.components.v1 as components
 from WebUI.webui_pages import *
 import time
@@ -245,7 +244,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                     else:
                         chatconfig["do_samples"] = False
 
-                    with st.spinner(f"Saving path, Please do not perform any actions or refresh the page."):
+                    with st.spinner(f"Saving Parameters, Please do not perform any actions or refresh the page."):
                         r = api.save_model_config(current_model)
                         if msg := check_error_msg(r):
                             st.error(msg)

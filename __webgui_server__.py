@@ -12,13 +12,14 @@ from multiprocessing import Process
 from WebUI.Server.llm_api_stale import (LOG_PATH)
 from WebUI.Server.utils import (set_httpx_config, get_model_worker_config, get_httpx_client, 
                                 FastAPI, MakeFastAPIOffline, fschat_controller_address,
-                                fschat_model_worker_address)
+                                fschat_model_worker_address, get_vtot_worker_config)
 from __about__ import __title__, __summary__, __version__, __author__, __email__, __license__, __copyright__
 from webuisrv import InnerLlmAIRobotWebUIServer
-from WebUI.configs.serverconfig import (FSCHAT_MODEL_WORKERS, FSCHAT_CONTROLLER, HTTPX_DEFAULT_TIMEOUT, HTTPX_LOAD_TIMEOUT, HTTPX_RELEASE_TIMEOUT,
-                                        FSCHAT_OPENAI_API, API_SERVER)
+from WebUI.configs.serverconfig import (FSCHAT_MODEL_WORKERS, FSCHAT_CONTROLLER, HTTPX_LOAD_TIMEOUT, HTTPX_RELEASE_TIMEOUT,
+                                        HTTPX_LOAD_VOICE_TIMEOUT, HTTPX_RELEASE_VOICE_TIMEOUT, FSCHAT_OPENAI_API, API_SERVER)
+from WebUI.configs.voicemodels import (init_voice_models, translate_voice_data)
 from typing import Union, List, Dict
-import json
+
 
 def parse_args() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
@@ -93,13 +94,21 @@ def _set_app_event(app: FastAPI, started_event: mp.Event = None):
         if started_event is not None:
             started_event.set()
 
-def run_controller(started_event: mp.Event = None):
+def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
     import uvicorn
     from fastapi import Body
     import time
     import sys
     set_httpx_config()
 
+    glob_minor_models = {
+        "vtotmodel": {
+            "model_name": ""
+        },
+        "ttovmodel": {
+            "model_name": ""
+        },
+    }
     app = create_controller_app(
         dispatch_method=FSCHAT_CONTROLLER.get("dispatch_method"),
     )
@@ -180,6 +189,85 @@ def run_controller(started_event: mp.Event = None):
                 msg = f"failed to release model: {model_name}"
                 print(msg)
                 return {"code": 500, "msg": msg}
+            
+    @app.post("/get_vtot_model")
+    def get_vtot_model(
+    ) -> Dict:
+        model_name = glob_minor_models["vtotmodel"]["model_name"]
+        return {"code": 200, "model": model_name}
+    
+    @app.post("/release_vtot_model")
+    def release_vtot_model(
+        model_name: str = Body(..., description="Unload the model", samples=""),
+        new_model_name: str = Body(None, description="New model"),
+    ) -> Dict:
+        if new_model_name:
+            print(f"Change voice model: from {model_name} to {new_model_name}")
+        else:
+            print(f"Stoping voice model: {model_name}")
+        workerconfig = get_vtot_worker_config()
+        worker_address = "http://" + workerconfig["host"] + ":" + str(workerconfig["port"])
+        if model_name:
+            q.put([model_name, "stop_vtot_model", None])
+            timer = HTTPX_RELEASE_VOICE_TIMEOUT  # wait for release model
+            while timer > 0:
+                with get_httpx_client() as client:
+                    try:
+                        r = client.post(worker_address + "/get_name",
+                            json={})
+                    except Exception as e:
+                        break
+                time.sleep(1)
+                timer -= 1
+            if timer <= 0:
+                msg = f"failed to stop voice model: {model_name}"
+                print(msg)
+                return {"code": 500, "msg": msg}
+            glob_minor_models["vtotmodel"]["model_name"] = ""
+
+        if new_model_name:
+            q.put([model_name, "start_vtot_model", new_model_name])
+            timer = HTTPX_LOAD_VOICE_TIMEOUT  # wait for new vtot_worker register
+            while timer > 0:
+                with get_httpx_client() as client:
+                    try:
+                        r = client.post(worker_address + "/get_name",
+                            json={})
+                        break
+                    except Exception as e:
+                        pass
+                time.sleep(1)
+                timer -= 1
+            if timer <= 0:
+                msg = f"failed change voice model from {model_name} to {new_model_name}"
+                print(msg)
+                return {"code": 500, "msg": msg}
+            glob_minor_models["vtotmodel"]["model_name"] = new_model_name
+            msg = f"success change voice model from {model_name} to {new_model_name}"
+            return {"code": 200, "msg": msg}
+        else:
+            msg = f"success stop voice model {model_name}"
+            return {"code": 200, "msg": msg}
+
+    @app.post("/get_vtot_data")
+    def get_vtot_data(
+        voice_data: str = Body(..., description="voice data", samples=""),
+        voice_type: str = Body(None, description="voice type"),
+    ) -> Dict:
+        if len(voice_data) == 0:
+            msg = f"failed translate voice to text, because voice data is incorrect."
+            return {"code": 500, "msg": msg}
+        workerconfig = get_vtot_worker_config()
+        worker_address = "http://" + workerconfig["host"] + ":" + str(workerconfig["port"])
+        with get_httpx_client() as client:
+            try:
+                r = client.post(worker_address + "/get_vtot_data",
+                    json={"voice_data": voice_data, "voice_type": voice_type},
+                    )
+                data = r.json()["text"]
+                return {"code": 200, "text": data}
+            except Exception as e:
+                return {"code": 500, "text": ""}
 
     host = FSCHAT_CONTROLLER["host"]
     port = FSCHAT_CONTROLLER["port"]
@@ -332,6 +420,80 @@ def run_openai_api(started_event: mp.Event = None):
     port = FSCHAT_OPENAI_API["port"]
     uvicorn.run(app, host=host, port=port)
 
+def create_voice_worker_app(log_level: str = "INFO", **kwargs) -> Union[FastAPI, None]:
+    app = FastAPI()
+    parser = argparse.ArgumentParser()
+    args = parser.parse_args([])
+
+    for k, v in kwargs.items():
+        setattr(args, k, v)
+
+    try:
+        config = {
+            "model_path": args.model_path,
+            "device": args.device,
+            "loadbits": args.loadbits,
+        }
+        voice_model = init_voice_models(config)
+        if voice_model is None:
+            return None
+    except Exception as e:
+        print(e)
+        return None
+    app.title = f"Voice model worker ({args.model_name})"
+    app._worker = ""
+    return app
+
+def run_voice_worker(
+    model_name: str = "",
+    controller_address: str = "",
+    q: mp.Queue = None,
+    started_event: mp.Event = None,
+):
+    import uvicorn
+    from fastapi import Body
+    import sys
+
+    kwargs = get_vtot_worker_config(model_name)
+    host = kwargs.pop("host")
+    port = kwargs.pop("port")
+    kwargs["model_name"] = model_name
+    app = FastAPI()
+    try:
+        config = {
+            "model_name": kwargs["model_name"],
+            "model_path": kwargs["model_path"],
+            "device": kwargs["device"],
+            "loadbits": kwargs["loadbits"],
+        }
+        voice_model = init_voice_models(config)
+        if voice_model is None:
+                return None
+    except Exception as e:
+        print(e)
+        return None
+    app.title = f"Voice model worker ({model_name})"
+    app._worker = ""
+    _set_app_event(app, started_event)
+    
+    # add interface to get voice model name
+    @app.post("/get_name")
+    def get_name(
+    ) -> dict:
+        return {"code": 200, "name": model_name}
+    
+    @app.post("/get_vtot_data")
+    def get_vtot_data(
+        voice_data: str = Body(..., description="voice data", samples=""),
+        voice_type: str = Body(None, description="voice type"),
+    ) -> dict:
+        if len(voice_data) == 0 or voice_model is None:
+            return {"code": 500, "text": ""}
+        text_data = translate_voice_data(voice_model, config, voice_data)
+        return {"code": 200, "text": text_data}
+
+    uvicorn.run(app, host=host, port=port)
+
 def run_model_worker(
         model_name: str = "",
         controller_address: str = "",
@@ -412,17 +574,17 @@ def main_server():
     
     dump_server_info(args=args)
 
-    processes = {"online_api": {}, "model_worker": {}}
+    processes = {"online_api": {}, "model_worker": {}, "vtot_worker": {}}
 
     def process_count():
-        return len(processes) + len(processes["online_api"]) + len(processes["model_worker"]) - 2
-    
+        return len(processes) + len(processes["online_api"]) + len(processes["model_worker"]) + len(processes["vtot_worker"]) - 2
+       
     controller_started = manager.Event()
     if args.openai_api:
         process = Process(
             target=run_controller,
             name=f"controller",
-            kwargs=dict(started_event=controller_started),
+            kwargs=dict(started_event=controller_started, q=queue),
             daemon=True,
         )
         processes["controller"] = process
@@ -552,7 +714,6 @@ def main_server():
                             process.terminate()
                             process.join()
                             print(f"Stop model: {model_name}")
-                            print(f"Start empty model!")
                             process = Process(
                                 target=run_model_worker,
                                 name=f"model_worker - None",
@@ -594,6 +755,30 @@ def main_server():
                             print(f"Loading new model: {new_model_name}. used: {timing}.")
                         else:
                             print(f"Can not find the model: {model_name}")
+                    elif cmd == "start_vtot_model":
+                        print(f"Change to new model: {new_model_name}")
+                        process = Process(
+                            target=run_voice_worker,
+                            name=f"voice_worker - {new_model_name}",
+                            kwargs=dict(model_name=new_model_name,
+                                        controller_address=args.controller_address,
+                                        q=queue,
+                                        started_event=e),
+                            daemon=True,
+                        )
+                        process.start()
+                        process.name = f"{process.name} ({process.pid})"
+                        processes["vtot_worker"][new_model_name] = process
+                        e.wait()
+                        print(f"The voice model: {new_model_name} running!")
+                    elif cmd == "stop_vtot_model":
+                        if process := processes["vtot_worker"].pop(model_name):
+                            time.sleep(1)
+                            process.terminate()
+                            process.join()
+                            print(f"Stop voice model: {model_name}")
+                        else:
+                            print(f"Can not find the model: {model_name}")
 
         except Exception as e:
             print("Caught KeyboardInterrupt! Setting stop event...")
@@ -608,7 +793,7 @@ def main_server():
 
             for p in processes.values():
                 print("Process status: %s", p)
-
+   
 if __name__ == "__main__":
     if sys.version_info < (3, 10):
         loop = asyncio.get_event_loop()

@@ -71,6 +71,32 @@
                 "apikey": "OPENAI_API_KEY"
             }
         },
+        "VtoTModel": {
+            "whisper-base": {
+                "path": "models/voices/whisper-base",
+                "device": "gpu",
+                "loadbits": 16,
+                "Huggingface": "openai/whisper-base"
+            },
+            "whisper-medium": {
+                "path": "models/voices/whisper-medium",
+                "device": "gpu",
+                "loadbits": 16,
+                "Huggingface": "openai/whisper-medium"
+            },
+            "whisper-large-v3": {
+                "path": "models/voices/whisper-large-v3",
+                "device": "gpu",
+                "loadbits": 16,
+                "Huggingface": "openai/whisper-large-v3"
+            },
+            "faster-whisper-large-v3": {
+                "path": "models/voices/faster-whisper-large-v3",
+                "device": "gpu",
+                "loadbits": 8,
+                "Huggingface": "bababababooey/faster-whisper-large-v3"
+            }
+        },
         "LocalModel": {
             "llama-2-7b-hf": {
                 "path": "models/llm/llama-2-7b-hf",
@@ -144,6 +170,14 @@
                 "loadbits": 16,
                 "Huggingface": "THUDM/chatglm3-6b"
             },
+            "tigerbot-13b-chat": {
+                "path": "models/llm/tigerbot-13b-chat",
+                "device": "auto",
+                "maxmemory": 20,
+                "cputhreads": 4,
+                "loadbits": 8,
+                "Huggingface": "TigerResearch/tigerbot-13b-chat"
+            },
             "neural-chat-7b-v3-1": {
                 "path": "models/llm/neural-chat-7b-v3-1",
                 "device": "auto",
@@ -162,12 +196,11 @@
             }
         }
     },
-    "FastChatServer": {
+    "ServerConfig": {
         "default_host_ip": "127.0.0.1",
         "default_timeout": 300,
         "load_timeout": 120,
         "release_timeout": 60,
-
         "webui_server": {
             "host": "default_host_ip",
             "port": 8818
@@ -185,12 +218,17 @@
             "host": "default_host_ip",
             "port": 20000
         },
+        "vtot_model_worker": {
+            "host": "default_host_ip",
+            "port": 20002,
+            "device": "auto"
+        },
         "fastchat_model_worker": {
             "default": {
                 "host": "default_host_ip",
-                "port": 20002,
+                "port": 20010,
                 "device": "auto",
-                "vllm_enable": false   
+                "vllm_enable": false
             }
         }
     },
@@ -250,29 +288,5 @@
     },
     "QuantizationConfiguration": {},
     "Fine-Tunning": {},
-    "PromptTemplates": {
-        "completion": {
-            "default": "{input}"
-        },
-    
-        "llm_chat": {
-            "default": "{{ input }}",
-    
-            "python": "\"\"You are a Python expert, please write code using Python. \n{{ input }}\"\""
-        },
-    
-        "knowledge_base_chat": {
-            "default": "\"\"<Instruction>Answer questions based on available information, be concise and professional. If the answer cannot be derived from the provided information, state \"Unable to answer the question based on available information.\" Do not add fabricated elements to the response. </Instruction><Context>{{ context }}</Context>、<Question>{{ question }}</Question>\"\"",
-            "text":"\"\"<Instruction>Answer questions based on known information, succinctly and professionally. If the answer cannot be derived from the available information, state \"Unable to answer the question based on known information.\" </Instruction><Context>{{ context }}</Context>、<Question>{{ question }}</Question>\"\"",
-            "Empty":"\"\"<Instruction>Unable to provide an answer based on known information.</Instruction><Question>{{ question }}</Question>\"\""
-        },
-    
-        "search_engine_chat": {
-            "default": "{{ input }}"
-        },
-    
-        "agent_chat": {
-            "default": "{{ input }}"
-        }
-    }
+    "PromptTemplates": {}
 }
