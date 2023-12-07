@@ -54,6 +54,7 @@ Pillow==9.3.0
 prompt-toolkit==3.0.40
 protobuf==4.25.0
 psutil==5.9.6
+PyAudio==0.2.14
 pyav==11.4.1
 pyarrow==14.0.0
 pydantic==1.10.13
@@ -105,4 +106,3 @@ wcwidth==0.2.10
 yarl==1.9.2
 zipp==3.17.0
 SpeechRecognition==3.10.0
-PyAudio==0.2.11
