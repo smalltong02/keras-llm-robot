@@ -108,4 +108,3 @@ wcwidth==0.2.10
 yarl==1.9.2
 zipp==3.17.0
 SpeechRecognition==3.10.0
-PyAudio==0.2.11
