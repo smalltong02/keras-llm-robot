@@ -1,9 +1,12 @@
 import streamlit as st
 from WebUI.webui_pages.utils import *
 from streamlit_chatbox import *
+from streamlit_webrtc import webrtc_streamer, WebRtcMode, ClientSettings
+from aiortc.contrib.media import MediaRecorder
 from WebUI.configs.prompttemplates import PROMPT_TEMPLATES
 from WebUI.configs.modelconfig import HISTORY_LEN
 import os, platform
+from pathlib import Path
 from datetime import datetime
 import speech_recognition as sr
 import torch
@@ -22,6 +25,10 @@ gal_cpuutil = 0.0
 gal_cpumem = 0.0
 gal_gpuutil = 0.0
 gal_gpumem = 0.0
+
+TMP_DIR = Path('temp')
+if not TMP_DIR.exists():
+    TMP_DIR.mkdir(exist_ok=True, parents=True)
 
 def update_running_status(placeholder_cpu, placeholder_ram, placeholder_gpuutil, placeholder_gpumem, bshow = True, binit = False, bcache = False):
     global gal_cpuutil
@@ -192,16 +199,39 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
         )
 
         voicedisable = True if voicemodel == "" else False
-        voicechatbtn = st.button(label="🎧", use_container_width=True, disabled=voicedisable)
-        if voicechatbtn:
-            with st.spinner(f"Voice recording starting..."):
-                r = sr.Recognizer()
-                with sr.Microphone() as source:
-                    st.success("Please speaking...")
-                    audio = r.listen(source, timeout=5, phrase_time_limit=5)
+        if voicedisable == False:
+            st.divider()
+            st.write("Chat by voice or video: ")
+
+            wavpath = TMP_DIR / "record.wav"
+            def recorder_factory():
+                return MediaRecorder(str(wavpath))
+
+            webrtc_ctx = webrtc_streamer(
+                key="sendonly-audio",
+                mode=WebRtcMode.SENDRECV,
+                in_recorder_factory=recorder_factory,
+                client_settings=ClientSettings(
+                    media_stream_constraints={
+                        "video": False,
+                        "audio": {
+                            "echoCancellation": False,  # don't turn on else it would reduce wav quality
+                            "noiseSuppression": True,
+                            "autoGainControl": True,
+                        },
+                    },
+                ),
+                audio_html_attrs={"muted": True},
+            )
+            st.divider()
+            voice_data = None
+            if wavpath.exists() and not webrtc_ctx.state.playing:
+                with open(wavpath, "rb") as file:
+                    voice_data = file.read()
+                if voice_data is not None:
                     try:
-                        voice_data = audio.get_wav_data(convert_rate=16000)
                         voice_prompt = api.get_vtot_data(voice_data)
+                        print("voice_prompt: ", voice_prompt)
                         if voice_prompt:
                             st.success("Translation finished!")
                         else:
@@ -211,6 +241,30 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                     except Exception as e:
                         print(e)
                         st.error("Recording failed...")
+                try:
+                    wavpath.unlink()
+                except Exception as e:
+                    pass
+
+        # voicechatbtn = st.button(label="🎧", use_container_width=True, disabled=voicedisable)
+        # if voicechatbtn:
+        #     with st.spinner(f"Voice recording starting..."):
+        #         r = sr.Recognizer()
+        #         with sr.Microphone() as source:
+        #             st.success("Please speaking...")
+        #             audio = r.listen(source, timeout=5, phrase_time_limit=5)
+        #             try:
+        #                 voice_data = audio.get_wav_data(convert_rate=16000)
+        #                 voice_prompt = api.get_vtot_data(voice_data)
+        #                 if voice_prompt:
+        #                     st.success("Translation finished!")
+        #                 else:
+        #                     st.error("Translation failed...")
+        #                 if running_model == "" or running_model == "None":
+        #                     voice_prompt = ""
+        #             except Exception as e:
+        #                 print(e)
+        #                 st.error("Recording failed...")
 
         imagedisable = True if imagemodel == "" else False
         imagechatbtn = st.button(label="🎨", use_container_width=True, disabled=imagedisable)
