@@ -201,7 +201,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
         voicedisable = True if voicemodel == "" else False
         if voicedisable == False:
             st.divider()
-            st.write("Chat by voice or video: ")
+            st.write("Chat by 🎧 and 🎬: ")
 
             wavpath = TMP_DIR / "record.wav"
             def recorder_factory():
@@ -211,6 +211,9 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                 key="sendonly-audio",
                 mode=WebRtcMode.SENDRECV,
                 in_recorder_factory=recorder_factory,
+                # rtc_configuration={
+                #     "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}] 
+                # },
                 client_settings=ClientSettings(
                     media_stream_constraints={
                         "video": False,
