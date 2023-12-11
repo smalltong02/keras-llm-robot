@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime, JSON, func
 
-from WebUI.Server.db.base import Base
+from WebUI.Server.db.base import Base, engine
 
 
 class ChatHistoryModel(Base):
@@ -23,3 +23,5 @@ class ChatHistoryModel(Base):
 
     def __repr__(self):
         return f"<ChatHistory(id='{self.id}', chat_type='{self.chat_type}', query='{self.query}', response='{self.response}',meta_data='{self.meta_data}',feedback_score='{self.feedback_score}',feedback_reason='{self.feedback_reason}', create_time='{self.create_time}')>"
+
+Base.metadata.create_all(bind=engine)

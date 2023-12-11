@@ -137,9 +137,21 @@ def save_model_config(
         controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])
 ) -> BaseResponse:
     try:
+        configinst = InnerJsonConfigWebUIParse()
+        webui_config = configinst.dump()
+        localmodel = webui_config.get("ModelConfig").get("LocalModel")
+        multimodalmodel = webui_config.get("ModelConfig").get("MultimodalModel")
+        if model_name in [f"{key}" for key in localmodel]:
+            modelkey = "LocalModel"
+        elif model_name in [f"{key}" for key in multimodalmodel]:
+            modelkey = "MultimodalModel"
+        else:
+            return BaseResponse(
+                code=500,
+                msg=f"failed to save local model configration!")
         with open(".\WebUI\configs\webuiconfig.json", 'r+') as file:
             jsondata = json.load(file)
-            jsondata["ModelConfig"]["LocalModel"][model_name].update(config)
+            jsondata["ModelConfig"][modelkey][model_name].update(config)
             file.seek(0)
             json.dump(jsondata, file, indent=4)
             file.truncate()

@@ -10,6 +10,7 @@ from WebUI.configs.serverconfig import OPEN_CROSS_DOMAIN
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import RedirectResponse
 from WebUI.Server.chat.chat import chat
+from WebUI.Server.chat.feedback import chat_feedback
 from WebUI.Server.embeddings_api import embed_texts_endpoint
 from WebUI.Server.chat.openai_chat import openai_chat
 from WebUI.Server.llm_api import (list_running_models, get_running_models, list_config_models,
@@ -70,10 +71,10 @@ def mount_app_routes(app: FastAPI, run_mode: str = None):
     #         summary="与搜索引擎对话",
     #         )(search_engine_chat)
 
-    #app.post("/chat/feedback",
-    #         tags=["Chat"],
-    #         summary="返回llm模型对话评分",
-    #         )(chat_feedback)
+    app.post("/chat/feedback",
+             tags=["Chat"],
+             summary="Return dialogue scores.",
+             )(chat_feedback)
 
     # 知识库相关接口
     #mount_knowledge_routes(app)

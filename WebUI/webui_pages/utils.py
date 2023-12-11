@@ -5,6 +5,7 @@ import base64
 import contextlib
 from pprint import pprint
 from typing import *
+from WebUI.configs import *
 from WebUI.Server.utils import get_httpx_client
 from WebUI.configs.serverconfig import API_SERVER
 from WebUI.configs import HTTPX_DEFAULT_TIMEOUT
@@ -90,6 +91,23 @@ class ApiRequest:
                 msg = f"error when delete {url}: {e}"
                 print(f'{e.__class__.__name__}: {msg}')
                 retry -= 1
+
+    def chat_feedback(
+        self,
+        chat_history_id: str,
+        score: int,
+        reason: str = "",
+    ) -> int:
+        '''
+        反馈对话评价
+        '''
+        data = {
+            "chat_history_id": chat_history_id,
+            "score": score,
+            "reason": reason,
+        }
+        resp = self.post("/chat/feedback", json=data)
+        return self._get_response_value(resp)
 
     def chat_chat(
         self,
@@ -346,16 +364,16 @@ class ApiRequest:
             return self.ret_sync(response)
         
     def save_model_config(self,
-        modelconfig: {"name": str, "blocal": bool, "config": dict},
+        modelconfig: {"name": str, "mtype": ModelType, "config": dict},
         controller_address: str = None,
     ):
-        if modelconfig is None or all(key in modelconfig for key in ["name", "blocal", "config"]) is False:
+        if modelconfig is None or all(key in modelconfig for key in ["name", "mtype", "config"]) is False:
             return {
                 "code": 500,
                 "msg": f"modelconfig is None."
             }
         
-        if modelconfig["blocal"] is False:
+        if modelconfig["mtype"] == ModelType.Online:
             return {
                 "code": 500,
                 "msg": f"Current only support Local Model save."

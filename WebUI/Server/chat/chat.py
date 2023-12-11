@@ -13,7 +13,7 @@ from WebUI.Server.chat.utils import History
 from WebUI.Server.utils import get_prompt_template
 from WebUI.Server.db.repository import add_chat_history_to_db, update_chat_history
 
-chat_history_id = "0"
+#chat_history_id = "0"
 
 async def chat(query: str = Body(..., description="用户输入", examples=["恼羞成怒"]),
     history: List[History] = Body([],
@@ -57,9 +57,9 @@ async def chat(query: str = Body(..., description="用户输入", examples=["恼
         )
 
         answer = ""
-        #chat_history_id = add_chat_history_to_db(chat_type="llm_chat", query=query)
-        global chat_history_id
-        chat_history_id = str(int(chat_history_id) + 1)
+        chat_history_id = add_chat_history_to_db(chat_type="llm_chat", query=query)
+        #global chat_history_id
+        #chat_history_id = str(int(chat_history_id) + 1)
         if stream:
             async for token in callback.aiter():
                 answer += token
@@ -74,9 +74,9 @@ async def chat(query: str = Body(..., description="用户输入", examples=["恼
                 {"text": answer, "chat_history_id": chat_history_id},
                 ensure_ascii=False)
 
-        #if SAVE_CHAT_HISTORY and len(chat_history_id) > 0:
+        if SAVE_CHAT_HISTORY and len(chat_history_id) > 0:
             # 后续可以加入一些其他信息，比如真实的prompt等
-            #update_chat_history(chat_history_id, response=answer)
+            update_chat_history(chat_history_id, response=answer)
         await task
 
     return StreamingResponse(chat_iterator(query=query,

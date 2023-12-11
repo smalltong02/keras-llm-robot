@@ -3,18 +3,18 @@ from WebUI.webui_pages.utils import *
 from WebUI.configs import *
 import streamlit.components.v1 as components
 from WebUI.webui_pages import *
-import time
 
 training_devices_list = ["auto","cpu","gpu","mps"]
-loadbits_list = ["16 bits","8 bits"]
+loadbits_list = ["16 bits","8 bits","4 bits"]
 quantization_list = ["16 bits", "8 bits", "6 bits", "5 bits", "4 bits"]
 
 def configuration_page(api: ApiRequest, is_lite: bool = False):
-    running_model = {"name": str, "blocal": bool}
-    current_model = {"name": str, "blocal": bool, "config": dict}
+    running_model = {"name": str, "mtype": ModelType}
+    current_model = {"name": str, "mtype": ModelType, "config": dict}
     webui_config = api.get_webui_config()
     localmodel = webui_config.get("ModelConfig").get("LocalModel")
     onlinemodel = webui_config.get("ModelConfig").get("OnlineModel")
+    multimodalmodel = webui_config.get("ModelConfig").get("MultimodalModel")
     embeddingmodel = webui_config.get("ModelConfig").get("EmbeddingModel")
     chatconfig = webui_config.get("ChatConfiguration")
     quantconfig = webui_config.get("QuantizationConfiguration")
@@ -26,26 +26,29 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
     if len(models_list):
         running_model["name"] = models_list[0]
     localmodel_lists = [f"{key}" for key in localmodel]
+    multimodel_lists = [f"{key}" for key in multimodalmodel]
     onlinemodel_lists = []
     for _, value in onlinemodel.items():
         modellist = value.get("modellist", [])
         onlinemodel_lists.extend(modellist)
     onlinemodel_lists = list(filter(None, onlinemodel_lists))
-    all_model_lists = localmodel_lists + onlinemodel_lists
+    all_model_lists = localmodel_lists + multimodel_lists + onlinemodel_lists
 
     index = 0
     current_model["name"] = all_model_lists[0]
-    running_model["blocal"] = True
+    running_model["mtype"] = ModelType.Local
     if running_model["name"] != "":
         try:
             index = all_model_lists.index(running_model["name"])
             all_model_lists[index] += " (running)"
-            if index >= len(localmodel_lists):
-                running_model["blocal"] = False
+            if index < len(localmodel_lists):
+                running_model["mtype"] = ModelType.Local
+            elif index < len(localmodel_lists) + len(multimodel_lists):
+                running_model["mtype"] = ModelType.Multimodal
             else:
-                running_model["blocal"] = True
+                running_model["mtype"] = ModelType.Online
             current_model["name"] = running_model["name"]
-            current_model["blocal"] = running_model["blocal"]
+            current_model["mtype"] = running_model["mtype"]
         except ValueError:
             index = 0
 
@@ -58,15 +61,21 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                 index=index,
             )
         index = all_model_lists.index(current_model["name"])
-        if index >= len(localmodel_lists):
-            current_model["blocal"] = False
-            current_model["config"] = None
-        else:
-            current_model["blocal"] = True
+        if index < len(localmodel_lists):
+            current_model["mtype"] = ModelType.Local
             if current_model["name"].endswith("(running)"):
                 current_model["config"] = localmodel[current_model["name"][:-10].strip()]
             else:
                 current_model["config"] = localmodel[current_model["name"]]
+        elif index < len(localmodel_lists) + len(multimodel_lists):
+            current_model["mtype"] = ModelType.Multimodal
+            if current_model["name"].endswith("(running)"):
+                current_model["config"] = multimodalmodel[current_model["name"][:-10].strip()]
+            else:
+                current_model["config"] = multimodalmodel[current_model["name"]]
+        else:
+            current_model["mtype"] = ModelType.Online
+            current_model["config"] = None
         #if new_model == "None":
         #    disabled = True
         le_button = st.button(
@@ -85,7 +94,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                         elif msg := check_success_msg(r):
                             st.success(msg)
                             running_model["name"] = ""
-                            running_model["blocal"] = True
+                            running_model["mtype"] = ModelType.Local
                 else:
                     with st.spinner(f"Loading Model: {current_model['name']}, Please do not perform any actions or refresh the page."):
                         r = api.change_llm_model(running_model["name"], current_model["name"])
@@ -94,9 +103,9 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                         elif msg := check_success_msg(r):
                             st.success(msg)
                             running_model["name"] = current_model["name"]
-                            running_model["blocal"] = current_model["blocal"]
+                            running_model["config"] = current_model["config"]
     with col2:
-        if current_model["blocal"]:
+        if current_model["mtype"] != ModelType.Online:
             if current_model["name"].endswith("(running)"):
                 current_model["name"] = current_model["name"][:-10].strip()
             pathstr = current_model["config"].get("path")
@@ -109,7 +118,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
         )
         if save_path:
             with st.spinner(f"Saving path, Please do not perform any actions or refresh the page."):
-                if current_model["name"] == "None" or current_model["blocal"] is False:
+                if current_model["name"] == "None" or current_model["mtype"] == ModelType.Online:
                     st.error("Save path failed!")
                 else:
                     r = api.save_model_config(current_model)
@@ -118,8 +127,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                     elif msg := check_success_msg(r):
                         st.success(msg)
     st.divider()
-
-    if current_model["blocal"]:
+    if current_model["mtype"] != ModelType.Online:
         tabparams, tabquant, tabembedding, tabtunning, tabprompt = st.tabs(["Parameters", "Quantization", "Embedding Model", "Fine-Tunning", "Prompt Templates"])
         with tabparams:
             with st.form("Parameter"):
@@ -177,7 +185,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                     cur = seed.get("cur")
                     seed = st.number_input("Seed (-1 for random)", value = cur, min_value=min, max_value=max, disabled=disabled)
                     nloadbits = current_model["config"].get("loadbits")
-                    index = 0 if nloadbits == 16 else (1 if nloadbits == 8 else 16)
+                    index = 0 if nloadbits == 16 else (1 if nloadbits == 8 else 2)
                     nloadbits = st.selectbox(
                         "Load Bits",
                         loadbits_list,

@@ -249,26 +249,6 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                 except Exception as e:
                     pass
 
-        # voicechatbtn = st.button(label="🎧", use_container_width=True, disabled=voicedisable)
-        # if voicechatbtn:
-        #     with st.spinner(f"Voice recording starting..."):
-        #         r = sr.Recognizer()
-        #         with sr.Microphone() as source:
-        #             st.success("Please speaking...")
-        #             audio = r.listen(source, timeout=5, phrase_time_limit=5)
-        #             try:
-        #                 voice_data = audio.get_wav_data(convert_rate=16000)
-        #                 voice_prompt = api.get_vtot_data(voice_data)
-        #                 if voice_prompt:
-        #                     st.success("Translation finished!")
-        #                 else:
-        #                     st.error("Translation failed...")
-        #                 if running_model == "" or running_model == "None":
-        #                     voice_prompt = ""
-        #             except Exception as e:
-        #                 print(e)
-        #                 st.error("Recording failed...")
-
         imagedisable = True if imagemodel == "" else False
         imagechatbtn = st.button(label="🎨", use_container_width=True, disabled=imagedisable)
         if imagechatbtn:
