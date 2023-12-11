@@ -31,9 +31,6 @@ def create_app(run_mode: str = None):
         version=__version__
     )
     MakeFastAPIOffline(app)
-    # Add CORS middleware to allow all origins
-    # 在config.py中设置OPEN_DOMAIN=True，允许跨域
-    # set OPEN_DOMAIN=True in config.py to allow cross-domain
     if OPEN_CROSS_DOMAIN:
         app.add_middleware(
             CORSMiddleware,
@@ -76,7 +73,7 @@ def mount_app_routes(app: FastAPI, run_mode: str = None):
              summary="Return dialogue scores.",
              )(chat_feedback)
 
-    # 知识库相关接口
+    #knowledge interface
     #mount_knowledge_routes(app)
 
     # LLM Model interface

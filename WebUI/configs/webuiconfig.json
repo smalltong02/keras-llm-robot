@@ -188,7 +188,7 @@
             },
             "openchat_3.5": {
                 "path": "models/llm/openchat_3.5",
-                "device": "auto",
+                "device": "cpu",
                 "maxmemory": 20,
                 "cputhreads": 4,
                 "loadbits": 8,
@@ -217,6 +217,14 @@
                 "cputhreads": 4,
                 "loadbits": 16,
                 "Huggingface": "Qwen/Qwen-14B-Chat-Int4"
+            },
+            "fastchat-t5-3b-v1.0": {
+                "path": "models/llm/fastchat-t5-3b-v1.0",
+                "device": "auto",
+                "maxmemory": 20,
+                "cputhreads": 4,
+                "loadbits": 8,
+                "Huggingface": "lmsys/fastchat-t5-3b-v1.0"
             },
             "fuyu-8b": {
                 "path": "models/llm/fuyu-8b",
