@@ -95,6 +95,14 @@
                 "Huggingface": "bababababooey/faster-whisper-large-v3"
             }
         },
+        "TtoVModel": {
+            "XTTS-v2": {
+                "path": "models/voices/XTTS-v2",
+                "device": "gpu",
+                "loadbits": 16,
+                "Huggingface": "coqui/XTTS-v2"
+            }
+        },
         "LocalModel": {
             "LLM Model": {
                 "3B Model": {

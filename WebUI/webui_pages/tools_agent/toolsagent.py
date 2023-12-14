@@ -12,6 +12,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
         running_model = models_list[0]
     webui_config = api.get_webui_config()
     current_vtot_model = api.get_vtot_model()
+    current_ttov_model = ""#api.get_ttov_model()
     voicemodel = None
     
     if running_model == "":
@@ -85,7 +86,44 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
         pass
 
     with tabttov:
-        pass
+        ttovmodel = webui_config.get("ModelConfig").get("TtoVModel")
+        ttovmodel_lists = [f"{key}" for key in ttovmodel]
+        col1, col2 = st.columns(2)
+        with col1:
+            if current_ttov_model == "":
+                index = 0
+            else:
+                index = ttovmodel_lists.index(current_vtot_model)
+            speechmodel = st.selectbox(
+                    "Please Select Speech Model",
+                    ttovmodel_lists,
+                    index=index,
+                )
+            sple_button = st.button(
+                "Load & Eject",
+                key="sple_btn",
+                use_container_width=True,
+            )
+            if sple_button:
+                if speechmodel == current_ttov_model:
+                    with st.spinner(f"Release Model: {speechmodel}, Please do not perform any actions or refresh the page."):
+                        pass
+                else:
+                    with st.spinner(f"Loading Model: {speechmodel}, Please do not perform any actions or refresh the page."):
+                        pass
+        with col2:
+            if speechmodel is not None:
+                pathstr = ttovmodel[speechmodel].get("path")
+            else:
+                pathstr = ""
+            st.text_input("Local Path", pathstr)
+            spsave_path = st.button(
+                "Save Path",
+                key="spsave_btn",
+                use_container_width=True,
+            )
+
+        st.divider()
 
     with tabvtot:
         vtotmodel = webui_config.get("ModelConfig").get("VtoTModel")
@@ -101,11 +139,12 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                     vtotmodel_lists,
                     index=index,
                 )
-            le_button = st.button(
+            vole_button = st.button(
                 "Load & Eject",
+                key="vole_btn",
                 use_container_width=True,
             )
-            if le_button:
+            if vole_button:
                 if voicemodel == current_vtot_model:
                     with st.spinner(f"Release Model: {voicemodel}, Please do not perform any actions or refresh the page."):
                         r = api.eject_voice_model(voicemodel)
@@ -128,8 +167,9 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
             else:
                 pathstr = ""
             st.text_input("Local Path", pathstr)
-            save_path = st.button(
+            vosave_path = st.button(
                 "Save Path",
+                key="vosave_btn",
                 use_container_width=True,
             )
 
