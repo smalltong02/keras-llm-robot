@@ -1,12 +1,14 @@
 from fastapi import Body
-from configs import LLM_MODELS, HTTPX_DEFAULT_TIMEOUT
+from configs import LLM_MODELS, TEMPERATURE, HTTPX_DEFAULT_TIMEOUT
 from WebUI.Server.utils import (BaseResponse, fschat_controller_address, list_config_llm_models,
                           get_httpx_client, get_model_worker_config, get_vtot_worker_config)
 from copy import deepcopy
 import json
 from WebUI.configs.webuiconfig import *
+from WebUI.configs.basicconfig import *
+from WebUI.Server.chat.utils import History
 
-def get_running_models(
+def list_running_models(
     controller_address: str = Body(None, description="Fastchat controller adress", examples=[fschat_controller_address()]),
     placeholder: str = Body(None, description="Not use"), 
 ) -> BaseResponse:
@@ -24,7 +26,7 @@ def get_running_models(
             data={},
             msg=f"failed to get current model, error: {e}")
 
-def list_running_models(
+def get_running_models(
     controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()]),
     placeholder: str = Body(None, description="Not use"),
 ) -> BaseResponse:
@@ -33,8 +35,22 @@ def list_running_models(
         with get_httpx_client() as client:
             r = client.post(controller_address + "/list_models")
             models = r.json()["models"]
-            data = {m: get_model_config(m).data for m in models}
-            return BaseResponse(data=data)
+            if len(models):
+                data = {m: get_model_config(m).data for m in models}
+                return BaseResponse(data=data)
+            else:
+                workerconfig = get_model_worker_config()
+                worker_address = "http://" + workerconfig["host"] + ":" + str(workerconfig["port"])
+                with get_httpx_client() as client:
+                    try:
+                        r = client.post(worker_address + "/get_name",
+                            json={})
+                        name = r.json().get("name", "")
+                        if name != "":
+                            models = [name]
+                    except Exception as e:
+                        pass
+                return BaseResponse(data=models)
     except Exception as e:
         print(f'{e.__class__.__name__}: {e}')
         return BaseResponse(
@@ -97,7 +113,53 @@ def stop_llm_model(
         return BaseResponse(
             code=500,
             msg=f"failed to stop LLM model {model_name} from controller: {controller_address}. error: {e}")
-
+    
+def chat_llm_model(
+    query: str = Body(..., description="User input: ", examples=["chat"]),
+    history: List[History] = Body([],
+                                  description="History chat",
+                                  examples=[[
+                                      {"role": "user", "content": "Who are you?"},
+                                      {"role": "assistant", "content": "I am AI."}]]
+                                  ),
+    stream: bool = Body(False, description="stream output"),
+    model_name: str = Body(LLM_MODELS[0], description="model name"),
+    temperature: float = Body(TEMPERATURE, description="LLM Temperature", ge=0.0, le=1.0),
+    max_tokens: Optional[int] = Body(None, description="max tokens."),
+    prompt_name: str = Body("default", description=""),
+    controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])
+) -> BaseResponse:
+    try:
+        controller_address = controller_address or fschat_controller_address()
+        with get_httpx_client() as client:
+            r = client.post(
+                controller_address + "/text_chat",
+                json={
+                    "query": query,
+                    "history": history,
+                    "stream": stream,
+                    "model_name": model_name,
+                    "temperature": temperature,
+                    "max_tokens": max_tokens,
+                    "prompt_name": prompt_name,
+                    },
+            )
+            code = r.json()["code"]
+            if code == 200:
+                return BaseResponse(
+                    code=200,
+                    data=r.json()["answer"]
+                    )
+            else:
+                return BaseResponse(
+                    code=500,
+                    data={},
+                    msg=f"failed to translate voice data, error: {e}")
+    except Exception as e:
+        print(f'{e.__class__.__name__}: {e}')
+        return BaseResponse(
+            code=500,
+            msg=f"failed chat with llm model. error: {e}")
 
 def change_llm_model(
     model_name: str = Body(..., description="Change Model", examples=""),
@@ -132,26 +194,35 @@ def get_webui_configs(
             msg=f"failed to get webui configration, error: {e}")
     
 def save_model_config(
-        model_name: str = Body(..., description="Change Model"),
+        mtype: int = Body(..., description="Model Type"),
+        msize: int = Body(..., description="Model Size"),
+        msubtype: int = Body(..., description="Model Sub Type"),
+        model_name: str = Body(..., description="Model Name"),
         config: dict = Body(..., description="Model configration information"),
         controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])
 ) -> BaseResponse:
     try:
-        configinst = InnerJsonConfigWebUIParse()
-        webui_config = configinst.dump()
-        localmodel = webui_config.get("ModelConfig").get("LocalModel")
-        multimodalmodel = webui_config.get("ModelConfig").get("MultimodalModel")
-        if model_name in [f"{key}" for key in localmodel]:
-            modelkey = "LocalModel"
-        elif model_name in [f"{key}" for key in multimodalmodel]:
-            modelkey = "MultimodalModel"
+        if mtype == ModelType.Local.value:
+            msize = GetSizeName(ModelSize(msize))
+            provider = "LLM Model"
+        elif mtype == ModelType.Llamacpp.value:
+            msize = GetSizeName(ModelSize(msize))
+            provider = "Llamacpp(GGUF) Model"
+        elif mtype == ModelType.Multimodal.value:
+            msize = GetSubTypeName(ModelSubType(msubtype))
+            provider = "Multimodal Model"
+        elif mtype == ModelType.Online.value:
+            return BaseResponse(
+                code=500,
+                msg=f"failed to save local model configration, error mtype!")
         else:
             return BaseResponse(
                 code=500,
-                msg=f"failed to save local model configration!")
+                msg=f"failed to save local model configration, error mtype!")
+
         with open(".\WebUI\configs\webuiconfig.json", 'r+') as file:
             jsondata = json.load(file)
-            jsondata["ModelConfig"][modelkey][model_name].update(config)
+            jsondata["ModelConfig"]["LocalModel"][provider][msize][model_name].update(config)
             file.seek(0)
             json.dump(jsondata, file, indent=4)
             file.truncate()

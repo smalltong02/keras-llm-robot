@@ -9,6 +9,7 @@ from WebUI.configs import *
 from WebUI.Server.utils import get_httpx_client
 from WebUI.configs.serverconfig import API_SERVER
 from WebUI.configs import HTTPX_DEFAULT_TIMEOUT
+from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
 
 def api_address() -> str:
     host = API_SERVER["host"]
@@ -120,12 +121,14 @@ class ApiRequest:
         prompt_name: str = "default",
         **kwargs,
     ):
-        '''
-        对应api.py/chat/chat接口 #TODO: 考虑是否返回json
-        '''
+        configinst = InnerJsonConfigWebUIParse()
+        webui_config = configinst.dump()
+        modelinfo = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "config": dict}
+        modelinfo["mtype"], modelinfo["msize"], modelinfo["msubtype"] = GetModelInfoByName(webui_config, model)
+
         data = {
             "query": query,
-            "history": history,
+            "history": [],
             "stream": stream,
             "model_name": model,
             "temperature": temperature,
@@ -136,8 +139,21 @@ class ApiRequest:
         print(f"received input message:")
         pprint(data)
 
-        response = self.post("/chat/chat", json=data, stream=True, **kwargs)
-        return self._httpx_stream2generator(response, as_json=True)
+        if modelinfo["mtype"] == ModelType.Local:    
+            response = self.post("/chat/chat", json=data, stream=True, **kwargs)
+            return self._httpx_stream2generator(response, as_json=True)
+        
+        elif modelinfo["mtype"] == ModelType.Llamacpp:
+            response = self.post(
+               "/llm_model/chat",
+               json=data,
+            )
+            return self._get_response_value(response, as_json=True, value_func=lambda r: [json.loads(r["data"])] if "data" in r else [{}])
+        return [{
+            "chat_history_id": "111",
+            "text": "abc"
+        }]
+
 
     def _httpx_stream2generator(
         self,
@@ -308,12 +324,12 @@ class ApiRequest:
                 "msg": "Not necessary to switch models."
             }
 
-        config_models = self.list_config_models()
-        if new_model_name not in config_models["local"]:
-            return {
-                "code": 500,
-                "msg": f"The new Model '{new_model_name}' is not configured in the configs."
-            }
+        # config_models = self.list_config_models()
+        # if new_model_name not in config_models["local"]:
+        #     return {
+        #         "code": 500,
+        #         "msg": f"The new Model '{new_model_name}' is not configured in the configs."
+        #     }
 
         data = {
             "model_name": model_name,
@@ -364,10 +380,10 @@ class ApiRequest:
             return self.ret_sync(response)
         
     def save_model_config(self,
-        modelconfig: {"name": str, "mtype": ModelType, "config": dict},
+        modelconfig: {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "mllamacpp": "", "config": dict},
         controller_address: str = None,
     ):
-        if modelconfig is None or all(key in modelconfig for key in ["name", "mtype", "config"]) is False:
+        if modelconfig is None or all(key in modelconfig for key in ["mtype", "msize", "msubtype", "mname", "config"]) is False:
             return {
                 "code": 500,
                 "msg": f"modelconfig is None."
@@ -378,9 +394,11 @@ class ApiRequest:
                 "code": 500,
                 "msg": f"Current only support Local Model save."
             }
-
         data = {
-            "model_name": modelconfig["name"],
+            "mtype": modelconfig["mtype"].value,
+            "msize": modelconfig["msize"].value,
+            "msubtype": modelconfig["msubtype"].value,
+            "model_name": modelconfig["mname"],
             "config": modelconfig["config"],
             "controller_address": controller_address,
         }

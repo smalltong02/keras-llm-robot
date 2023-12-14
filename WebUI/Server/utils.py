@@ -14,6 +14,7 @@ from langchain.chat_models import ChatOpenAI, AzureChatOpenAI, ChatAnthropic
 from langchain.llms import OpenAI, AzureOpenAI, Anthropic
 from typing import Dict, Union, Optional, Literal, Any, List, Callable, Awaitable
 from WebUI.configs.webuiconfig import *
+from WebUI.configs.basicconfig import *
 
 async def wrap_done(fn: Awaitable, event: asyncio.Event):
     """Wrap an awaitable with a event to signal when it's done or an exception is raised."""
@@ -145,20 +146,14 @@ def set_httpx_config(timeout: float = HTTPX_DEFAULT_TIMEOUT, proxy: Union[str, D
         
     urllib.request.getproxies = _get_proxies
 
-def get_model_path(models_list: dict = {}, model_name: str = "", type: str = None) -> Optional[str]:   
-    local_paths = {}
-    hugg_paths = {}
-    for key, value in models_list.items():
-        local_paths.update({key: value["path"]})
-        hugg_paths.update({key: value["Huggingface"]})
+def get_model_path(modelinfo: dict) -> Optional[str]:   
+    local_path = modelinfo.get("path", "")
+    hugg_path = modelinfo.get("Huggingface", "")
 
-    if path_str := local_paths.get(model_name):
-        path = Path(path_str)
-        if path.is_dir():
-            return str(path)
-    if hugg_str := hugg_paths.get(model_name):
-        return hugg_str
-    return ""
+
+    if Path(local_path).is_dir():
+        return local_path
+    return hugg_path
         
 def detect_device() -> Literal["cuda", "mps", "cpu"]:
     try:
@@ -171,25 +166,22 @@ def detect_device() -> Literal["cuda", "mps", "cpu"]:
         pass
     return "cpu"
         
-def llm_device(models_list: dict = {}, model_name: str = "") -> Literal["cuda", "mps", "cpu"]:
-    config = models_list.get(model_name, {})
-    device = config.get("device", "un")
+def llm_device(modelinfo: dict) -> Literal["cuda", "mps", "cpu"]:
+    device = modelinfo.get("device", "un")
     if device == "gpu":
         device = "cuda"
     if device not in ["cuda", "mps", "cpu"]:
         device = detect_device()
     return device
 
-def load_8bit(models_list: dict = {}, model_name: str = "") -> bool:
-    config = models_list.get(model_name, {})
-    bits = config.get("loadbits", 16)
+def load_8bit(modelinfo: dict) -> bool:
+    bits = modelinfo.get("loadbits", 16)
     if bits == 8:
         return True
     return False
 
-def get_max_gpumem(models_list: dict = {}, model_name: str = "") -> str:
-    config = models_list.get(model_name, {})
-    memory = config.get("maxmemory", 20)
+def get_max_gpumem(modelinfo: dict) -> str:
+    memory = modelinfo.get("maxmemory", 20)
     memory_str = f"{memory}GiB"
     return memory_str
 
@@ -206,7 +198,6 @@ def get_model_worker_config(model_name: str = None) -> dict:
     if model_name is None or model_name == "":
         return config
 
-    localmodel = webui_config.get("ModelConfig").get("LocalModel")
     onlinemodel = webui_config.get("ModelConfig").get("OnlineModel")
     config.update(onlinemodel.get(model_name, {}).copy())
     if model_name in onlinemodel:
@@ -217,37 +208,21 @@ def get_model_worker_config(model_name: str = None) -> dict:
             except Exception as e:
                 msg = f"Online Model ‘{model_name}’'s provider configuration error."
                 print(f'{e.__class__.__name__}: {msg}')
-    if model_name in localmodel:
-        config["model_path"] = get_model_path(localmodel, model_name)
-        config["device"] = llm_device(localmodel, model_name)
-        config["load_8bit"] = load_8bit(localmodel, model_name)
-        config["max_gpu_memory"] = get_max_gpumem(localmodel, model_name)
-    return config
-    # config = FSCHAT_MODEL_WORKERS.get("default", {}).copy()
-    # if model_name is None or model_name == "":
-    #     return config
-    # configinst = InnerJsonConfigWebUIParse()
-    # webui_config = configinst.dump()
-    # localmodel = webui_config.get("ModelConfig").get("LocalModel")
-    # onlinemodel = webui_config.get("ModelConfig").get("OnlineModel")
-    # config.update(onlinemodel.get(model_name, {}).copy())
-    # config.update(FSCHAT_MODEL_WORKERS.get(model_name, {}).copy())
 
-    # if model_name in onlinemodel:
-    #     config["online_api"] = True
-    #     if provider := config.get("provider"):
-    #         try:
-    #             config["worker_class"] = getattr(workers, provider)
-    #         except Exception as e:
-    #             msg = f"Online Model ‘{model_name}’'s provider configuration error."
-    #             print(f'{e.__class__.__name__}: {msg}')
-        
-    # if model_name in localmodel:
-    #     config["model_path"] = get_model_path(localmodel, model_name)
-    #     config["device"] = llm_device(localmodel, model_name)
-    #     config["load_8bit"] = load_8bit(localmodel, model_name)
-    #     config["max_gpu_memory"] = get_max_gpumem(localmodel, model_name)
-    # return config
+    else:
+        modelinfo = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "config": dict}
+        modelinfo["mtype"], modelinfo["msize"], modelinfo["msubtype"] = GetModelInfoByName(webui_config, model_name)
+        if modelinfo["mtype"] == ModelType.Local or modelinfo["mtype"] == ModelType.Multimodal or modelinfo["mtype"] == ModelType.Llamacpp:
+            modelinfo["mname"] = model_name
+            modelinfo["config"] = GetModelConfig(webui_config, modelinfo)
+            if modelinfo["config"]:
+                config["model_path"] = get_model_path(modelinfo["config"])
+                config["device"] = llm_device(modelinfo["config"])
+                config["load_8bit"] = load_8bit(modelinfo["config"])
+                config["max_gpu_memory"] = get_max_gpumem(modelinfo["config"])
+            if modelinfo["mtype"] == ModelType.Llamacpp:
+                config["llamacpp_model"] = True
+    return config
 
 def get_vtot_worker_config(model_name: str = None) -> dict:
     config = {}

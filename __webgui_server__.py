@@ -18,6 +18,10 @@ from webuisrv import InnerLlmAIRobotWebUIServer
 from WebUI.configs.serverconfig import (FSCHAT_MODEL_WORKERS, FSCHAT_CONTROLLER, HTTPX_LOAD_TIMEOUT, HTTPX_RELEASE_TIMEOUT,
                                         HTTPX_LOAD_VOICE_TIMEOUT, HTTPX_RELEASE_VOICE_TIMEOUT, FSCHAT_OPENAI_API, API_SERVER)
 from WebUI.configs.voicemodels import (init_voice_models, translate_voice_data)
+from WebUI.configs.webuiconfig import *
+from WebUI.configs.basicconfig import *
+from WebUI.configs import LLM_MODELS, TEMPERATURE
+from WebUI.Server.chat.utils import History
 from typing import Union, List, Dict
 
 
@@ -122,7 +126,15 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
             new_model_name: str = Body(None, description="New model"),
             keep_origin: bool = Body(False, description="Second model")
     ) -> Dict:
-        available_models = app._controller.list_models()
+        configinst = InnerJsonConfigWebUIParse()
+        webui_config = configinst.dump()
+        modelinfo = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "config": dict}
+        modelinfo["mtype"], modelinfo["msize"], modelinfo["msubtype"] = GetModelInfoByName(webui_config, new_model_name)
+
+        available_models = []
+        if modelinfo["mtype"] == ModelType.Local:
+            available_models = app._controller.list_models()
+
         if new_model_name in available_models:
             msg = f"The model {new_model_name} has been loaded."
             print(msg)
@@ -133,17 +145,11 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
         else:
             print(f"Stoping model: {model_name}")
 
-        #if model_name not in available_models:
-        #    msg = f"the model {model_name} is not available"
-        #    print(msg)
-        #    return {"code": 500, "msg": msg}
-
         if model_name != "":
             worker_address = app._controller.get_worker_address(model_name)
             if not worker_address:
-                msg = f"can not find model_worker address for {model_name}"
-                print(msg)
-                return {"code": 500, "msg": msg}
+                workerconfig = get_model_worker_config(model_name)
+                worker_address = "http://" + workerconfig["host"] + ":" + str(workerconfig["port"])
         else:
             workerconfig = get_model_worker_config(model_name)
             worker_address = "http://" + workerconfig["host"] + ":" + str(workerconfig["port"])
@@ -159,24 +165,56 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
         if new_model_name:
             timer = HTTPX_LOAD_TIMEOUT  # wait for new model_worker register
             while timer > 0:
-                models = app._controller.list_models()
-                if new_model_name in models:
+                if modelinfo["mtype"] == ModelType.Local:
+                    models = app._controller.list_models()
+                    if new_model_name in models:
+                        break
+                elif modelinfo["mtype"] == ModelType.Llamacpp:
+                    with get_httpx_client() as client:
+                        try:
+                            r = client.post(worker_address + "/get_name",
+                                json={})
+                            name = r.json().get("name", "")
+                            if new_model_name == name:
+                                break
+                        except Exception as e:
+                            pass
+                elif modelinfo["mtype"] == ModelType.Multimodal:
+                    break
+                elif modelinfo["mtype"] == ModelType.Online:
                     break
                 time.sleep(1)
                 timer -= 1
+                app._controller.refresh_all_workers()
             if timer > 0:
                 msg = f"success change model from {model_name} to {new_model_name}"
                 print(msg)
                 return {"code": 200, "msg": msg}
-            else:
-                msg = f"failed change model from {model_name} to {new_model_name}"
-                print(msg)
-                return {"code": 500, "msg": msg}
+            
+            msg = f"failed change model from {model_name} to {new_model_name}"
+            print(msg)
+            return {"code": 500, "msg": msg}
         else:
             timer = HTTPX_RELEASE_TIMEOUT  # wait for release model
+            modelinfo["mtype"], modelinfo["msize"], modelinfo["msubtype"] = GetModelInfoByName(webui_config, model_name)
             while timer > 0:
-                models = app._controller.list_models()
-                if model_name not in models:
+                if modelinfo["mtype"] == ModelType.Local:
+                    models = app._controller.list_models()
+                    if model_name not in models:
+                        break
+                elif modelinfo["mtype"] == ModelType.Llamacpp:
+                    with get_httpx_client() as client:
+                        try:
+                            r = client.post(worker_address + "/get_name",
+                                json={})
+                            name = r.json().get("name", "")
+                            if model_name != name:
+                                break
+                        except Exception as e:
+                            break
+                elif modelinfo["mtype"] == ModelType.Multimodal:
+                    break
+                elif modelinfo["mtype"] == ModelType.Online:
                     break
                 time.sleep(1)
                 timer -= 1
@@ -185,11 +223,56 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
                 msg = f"success to release model: {model_name}"
                 print(msg)
                 return {"code": 200, "msg": msg}
-            else:
-                msg = f"failed to release model: {model_name}"
-                print(msg)
-                return {"code": 500, "msg": msg}
             
+            msg = f"failed to release model: {model_name}"
+            print(msg)
+            return {"code": 500, "msg": msg}
+            
+    @app.post("/text_chat")
+    def text_chat(
+        query: str = Body(..., description="User input: ", examples=["chat"]),
+        history: List[History] = Body([],
+                                    description="History chat",
+                                    examples=[[
+                                        {"role": "user", "content": "Who are you?"},
+                                        {"role": "assistant", "content": "I am AI."}]]
+                                    ),
+        stream: bool = Body(False, description="stream output"),
+        model_name: str = Body(LLM_MODELS[0], description="model name"),
+        temperature: float = Body(TEMPERATURE, description="LLM Temperature", ge=0.0, le=1.0),
+        max_tokens: Optional[int] = Body(None, description="max tokens."),
+        prompt_name: str = Body("default", description=""),
+    ) -> Dict:
+        workerconfig = get_model_worker_config(model_name)
+        worker_address = "http://" + workerconfig["host"] + ":" + str(workerconfig["port"])
+        with get_httpx_client() as client:
+            try:
+                r = client.post(worker_address + "/get_name",
+                    json={},
+                    )
+                name = r.json().get("name", "")
+                if model_name != name:
+                    return {"code": 500, "text": ""}
+            except Exception as e:
+                return {"code": 500, "text": ""}
+        
+        with get_httpx_client() as client:
+            try:
+                r = client.post(worker_address + "/text_chat",
+                    json={
+                        "query": query,
+                        "history": history,
+                        "stream": stream,
+                        "temperature": temperature,
+                        "max_tokens": max_tokens,
+                        "prompt_name": prompt_name,
+                        },
+                    )
+                return r.json()
+            except Exception as e:
+                return {"code": 500, "answer": {}}
+        
+
     @app.post("/get_vtot_model")
     def get_vtot_model(
     ) -> Dict:
@@ -279,6 +362,8 @@ def create_empty_worker_app() -> FastAPI:
     MakeFastAPIOffline(app)
     app.title = f"FastChat empty Model"
     app._worker = ""
+    app._model = None
+    app._model_name = ""
     return app
 
 def create_model_worker_app(log_level: str = "INFO", **kwargs) -> Union[FastAPI, None]:
@@ -290,6 +375,9 @@ def create_model_worker_app(log_level: str = "INFO", **kwargs) -> Union[FastAPI,
     parser = argparse.ArgumentParser()
     args = parser.parse_args([])
 
+    app_worker = ""
+    app._model = None
+    app._model_name = ""
     for k, v in kwargs.items():
         setattr(args, k, v)
     if worker_class := kwargs.get("langchain_model"):
@@ -304,6 +392,17 @@ def create_model_worker_app(log_level: str = "INFO", **kwargs) -> Union[FastAPI,
             return None
 
     # Local model
+    elif kwargs.get("llamacpp_model", False) == True:
+        modellist = GetGGUFModelPath(args.model_path)
+        if len(modellist):
+            from langchain.llms.ctransformers import CTransformers
+            llm_model = CTransformers(model=args.model_path, model_file=modellist[0], model_type="llama")
+            app._model = llm_model
+            app._model_name = args.model_names[0]
+        MakeFastAPIOffline(app)
+        app.title = f"Llamacpp Model ({args.model_names[0]})"
+        return app
+    # fastchat model
     else:
         #from WebUI.configs.modelconfig import VLLM_MODEL_DICT
         from fastchat.serve.model_worker import app, GptqConfig, AWQConfig, ModelWorker, worker_id
@@ -520,7 +619,7 @@ def run_model_worker(
         app = create_model_worker_app(log_level="INFO", **kwargs)
         if app is None:
             app = create_empty_worker_app()
-    
+
     _set_app_event(app, started_event)
     # add interface to release and load model
     @app.post("/release")
@@ -537,6 +636,46 @@ def run_model_worker(
             else:
                 q.put([model_name, "stop", None])
         return {"code": 200, "msg": "done"}
+    
+    @app.post("/get_name")
+    def get_name(
+    ) -> dict:
+        return {"code": 200, "name": app._model_name}
+    
+    @app.post("/text_chat")
+    def text_chat(
+        query: str = Body(..., description="User input: ", examples=["chat"]),
+        history: List[History] = Body([],
+                                    description="History chat",
+                                    examples=[[
+                                        {"role": "user", "content": "Who are you?"},
+                                        {"role": "assistant", "content": "I am AI."}]]
+                                    ),
+        stream: bool = Body(False, description="stream output"),
+        temperature: float = Body(TEMPERATURE, description="LLM Temperature", ge=0.0, le=1.0),
+        max_tokens: Optional[int] = Body(None, description="max tokens."),
+        prompt_name: str = Body("default", description=""),
+    ) -> Dict:
+        from langchain.chains import LLMChain
+        from WebUI.Server.utils import get_prompt_template
+        from langchain.prompts.chat import ChatPromptTemplate
+        from transformers import pipeline
+        from WebUI.Server.db.repository import add_chat_history_to_db, update_chat_history
+
+        prompt_template = get_prompt_template("llm_chat", prompt_name)
+        input_msg = History(role="user", content=prompt_template).to_msg_template(False)
+        chat_prompt = ChatPromptTemplate.from_messages(
+            [i.to_msg_template() for i in history] + [input_msg])
+        print("chat_prompt: ", chat_prompt)
+        chain = LLMChain(prompt=chat_prompt, llm=app._model)
+        chat_history_id = add_chat_history_to_db(chat_type="llm_chat", query=query)
+        answer = chain.run({"input": query})
+        jsdata = json.dumps(
+                    {"text": answer, "chat_history_id": chat_history_id},
+                    ensure_ascii=False)
+        update_chat_history(chat_history_id, response=answer)
+        return {"code": 200, "answer": jsdata}
+
 
     uvicorn.run(app, host=host, port=port)
 

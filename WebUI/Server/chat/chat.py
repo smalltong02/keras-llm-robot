@@ -13,21 +13,18 @@ from WebUI.Server.chat.utils import History
 from WebUI.Server.utils import get_prompt_template
 from WebUI.Server.db.repository import add_chat_history_to_db, update_chat_history
 
-#chat_history_id = "0"
-
-async def chat(query: str = Body(..., description="用户输入", examples=["恼羞成怒"]),
+async def chat(query: str = Body(..., description="User input: ", examples=["chat"]),
     history: List[History] = Body([],
-                                  description="历史对话",
+                                  description="History chat",
                                   examples=[[
-                                      {"role": "user", "content": "我们来玩成语接龙，我先来，生龙活虎"},
-                                      {"role": "assistant", "content": "虎头虎脑"}]]
+                                      {"role": "user", "content": "Who are you?"},
+                                      {"role": "assistant", "content": "I am AI."}]]
                                   ),
-    stream: bool = Body(False, description="流式输出"),
-    model_name: str = Body(LLM_MODELS[0], description="LLM 模型名称。"),
-    temperature: float = Body(TEMPERATURE, description="LLM 采样温度", ge=0.0, le=1.0),
-    max_tokens: Optional[int] = Body(None, description="限制LLM生成Token数量，默认None代表模型最大值"),
-    # top_p: float = Body(TOP_P, description="LLM 核采样。勿与temperature同时设置", gt=0.0, lt=1.0),
-    prompt_name: str = Body("default", description="使用的prompt模板名称(在configs/prompt_config.py中配置)"),
+    stream: bool = Body(False, description="stream output"),
+    model_name: str = Body(LLM_MODELS[0], description="model name"),
+    temperature: float = Body(TEMPERATURE, description="LLM Temperature", ge=0.0, le=1.0),
+    max_tokens: Optional[int] = Body(None, description="max tokens."),
+    prompt_name: str = Body("default", description=""),
     ):
     history = [History.from_data(h) for h in history]
 
@@ -48,6 +45,7 @@ async def chat(query: str = Body(..., description="用户输入", examples=["恼
         input_msg = History(role="user", content=prompt_template).to_msg_template(False)
         chat_prompt = ChatPromptTemplate.from_messages(
             [i.to_msg_template() for i in history] + [input_msg])
+        print("chat_prompt: ", chat_prompt)
         chain = LLMChain(prompt=chat_prompt, llm=model)
 
         # Begin a task that runs in the background.
@@ -58,8 +56,6 @@ async def chat(query: str = Body(..., description="用户输入", examples=["恼
 
         answer = ""
         chat_history_id = add_chat_history_to_db(chat_type="llm_chat", query=query)
-        #global chat_history_id
-        #chat_history_id = str(int(chat_history_id) + 1)
         if stream:
             async for token in callback.aiter():
                 answer += token

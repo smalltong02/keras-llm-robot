@@ -337,6 +337,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                             model=running_model,
                             prompt_name=prompt_template_name,
                             temperature=temperature)
+            print("answer: ", r)
             for t in r:
                 if error_msg := check_error_msg(t):  # check whether error occured
                     st.error(error_msg)
