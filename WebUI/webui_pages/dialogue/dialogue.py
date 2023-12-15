@@ -26,10 +26,6 @@ gal_cpumem = 0.0
 gal_gpuutil = 0.0
 gal_gpumem = 0.0
 
-TMP_DIR = Path('temp')
-if not TMP_DIR.exists():
-    TMP_DIR.mkdir(exist_ok=True, parents=True)
-
 def update_running_status(placeholder_cpu, placeholder_ram, placeholder_gpuutil, placeholder_gpumem, bshow = True, binit = False, bcache = False):
     global gal_cpuutil
     global gal_cpumem

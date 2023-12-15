@@ -1,7 +1,7 @@
 from fastapi import Body
 from configs import LLM_MODELS, TEMPERATURE, HTTPX_DEFAULT_TIMEOUT
 from WebUI.Server.utils import (BaseResponse, fschat_controller_address, list_config_llm_models,
-                          get_httpx_client, get_model_worker_config, get_vtot_worker_config)
+                          get_httpx_client, get_model_worker_config, get_vtot_worker_config, get_speech_worker_config)
 from copy import deepcopy
 import json
 from WebUI.configs.webuiconfig import *
@@ -352,6 +352,123 @@ def change_vtot_model(
         return BaseResponse(
             code=500,
             msg=f"failed to switch Voice model from controller: {controller_address}. error: {e}")
+    
+def get_speech_model_config(
+        model_name: str = Body(description="Speech Model name"),
+        placeholder: str = Body(description="Unused")
+) -> BaseResponse:
+    try:
+        config = get_speech_worker_config(model_name=model_name)
+        return BaseResponse(data=config)
+    except Exception as e:
+        print(f'{e.__class__.__name__}: {e}')
+        return BaseResponse(
+            code=500,
+            msg=f"failed to save local model configration, error: {e}")
+    
+def save_speech_model_config(
+    model_name: str = Body(..., description="Change Model"),
+    config: dict = Body(..., description="Model configration information"),
+    controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])    
+) -> BaseResponse:
+    try:
+        with open("WebUI/configs/webuiconfig.json", 'r+') as file:
+            jsondata = json.load(file)
+            jsondata["ModelConfig"]["TtoVModel"][model_name].update(config)
+            file.seek(0)
+            json.dump(jsondata, file, indent=4)
+            file.truncate()
+        return BaseResponse(
+            code=200,
+            msg=f"success save local model configration!")
+            
+    except Exception as e:
+        print(f'{e.__class__.__name__}: {e}')
+        return BaseResponse(
+            code=500,
+            msg=f"failed to save local model configration, error: {e}")
+
+def get_speech_model(
+    controller_address: str = Body(None, description="Fastchat controller adress", examples=[fschat_controller_address()]),
+    placeholder: str = Body(None, description="Not use"), 
+) -> BaseResponse:
+    try:
+        controller_address = controller_address or fschat_controller_address()
+        with get_httpx_client() as client:
+            r = client.post(controller_address + "/get_speech_model")
+            model = r.json()["model"]
+            return BaseResponse(data=model)
+    except Exception as e:
+        print(f'{e.__class__.__name__}: {e}')
+        return BaseResponse(
+            code=500,
+            data={},
+            msg=f"failed to get current model, error: {e}")
+    
+def get_speech_data(
+    text_data: str = Body(..., description="speech data"),
+    controller_address: str = Body(None, description="Fastchat controller adress", examples=[fschat_controller_address()])
+) -> BaseResponse:
+    try:
+        controller_address = controller_address or fschat_controller_address()
+        with get_httpx_client() as client:
+            r = client.post(
+                controller_address + "/get_speech_data",
+                json={"text_data": text_data},
+                )
+            data = r.json()["speech_data"]
+            code = r.json()["code"]
+            if code == 200:
+                return BaseResponse(data=data)
+            else:
+                return BaseResponse(
+                    code=500,
+                    data="",
+                    msg=f"failed to translate voice data, error: {e}")
+    except Exception as e:
+        print(f'{e.__class__.__name__}: {e}')
+        return BaseResponse(
+            code=500,
+            data="",
+            msg=f"failed to translate voice data, error: {e}")
+    
+def stop_speech_model(
+    model_name: str = Body(..., description="Stop Model"),
+    controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])
+) -> BaseResponse:
+    try:
+        controller_address = controller_address or fschat_controller_address()
+        with get_httpx_client() as client:
+            r = client.post(
+                controller_address + "/release_speech_model",
+                json={"model_name": model_name},
+            )
+            return r.json()
+    except Exception as e:
+        print(f'{e.__class__.__name__}: {e}')
+        return BaseResponse(
+            code=500,
+            msg=f"failed to stop Voice model {model_name} from controller: {controller_address}. error: {e}")
+    
+def change_speech_model(
+    model_name: str = Body(..., description="Change Model", examples=""),
+    new_model_name: str = Body(..., description="Switch to new Model", examples=""),
+    controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])
+):
+    try:
+        controller_address = controller_address or fschat_controller_address()
+        with get_httpx_client() as client:
+            r = client.post(
+                controller_address + "/release_speech_model",
+                json={"model_name": model_name, "new_model_name": new_model_name},
+                timeout=HTTPX_DEFAULT_TIMEOUT, # wait for new worker_model
+            )
+            return r.json()
+    except Exception as e:
+        print(f'{e.__class__.__name__}: {e}')
+        return BaseResponse(
+            code=500,
+            msg=f"failed to switch speech model from controller: {controller_address}. error: {e}")
 
 def save_chat_config(
         config: dict = Body(..., description="Chat configration information"),

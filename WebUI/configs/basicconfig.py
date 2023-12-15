@@ -5,6 +5,10 @@ import os
 
 SAVE_CHAT_HISTORY = True
 
+TMP_DIR = Path('temp')
+if not TMP_DIR.exists():
+    TMP_DIR.mkdir(exist_ok=True, parents=True)
+
 glob_model_type_list = ["LLM Model","Multimodal Model","Llamacpp(GGUF) Model","Online Model"]
 glob_model_size_list = ["3B Model","7B Model","13B Model","34B Model","70B Model"]
 glob_model_subtype_list = ["Vision Chat Model","Voice Chat Model","Video Chat Model"]

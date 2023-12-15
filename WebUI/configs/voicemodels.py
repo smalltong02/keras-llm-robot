@@ -1,7 +1,10 @@
 import io
 import torch
 import base64
+from WebUI.configs.basicconfig import TMP_DIR
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
+from TTS.api import TTS
+import wave
 
 def init_voice_models(config):
     if isinstance(config, dict):
@@ -75,14 +78,38 @@ def translate_voice_data(model, config, voice_data: str = "") -> str:
                 pass
     return ""
 
+def init_speech_models(config):
+    if isinstance(config, dict):
+        model_id = config["model_path"]
+        device =  'cuda' if config["device"] == 'gpu' else config["device"]
+        tts_model = TTS(model_id)
+        tts_model.to(device)
+        return tts_model
+    return None
 
-    # 
-    # 
-    # 
+def translate_speech_data(model, config, text_data: str = "", speech_type: str = "female-1") -> str:
+    if len(text_data):
+        if isinstance(config, dict):
+            if speech_type == "female-1":
+                speaker_wav = "WebUI/configs/speech_template/female-1.wav"
+            elif speech_type == "female-2":
+                speaker_wav = "WebUI/configs/speech_template/female-2.wav"
+            elif speech_type == "male-1":
+                speaker_wav = "WebUI/configs/speech_template/male-1.wav"
+            elif speech_type == "male-2":
+                speaker_wav = "WebUI/configs/speech_template/male-2.wav"
+            wav_file_path = TMP_DIR / "speech.wav"
 
-    # print("Detected language '%s' with probability %f" % (info.language, info.language_probability))
+            model.tts_to_file(text_data, speaker_wav=speaker_wav, file_path=wav_file_path)
 
-    # texts = ""
-    # for segment in segments:
-    #     texts += segment.text
-    # print(texts)
+            raw_data = None
+            with wave.open(wav_file_path, 'rb') as wave_file:
+                channels = wave_file.getnchannels()
+                sample_width = wave_file.getsampwidth()
+                frame_rate = wave_file.getframerate()
+                frames = wave_file.getnframes()
+                raw_data = wave_file.readframes(frames)
+            if raw_data != None:
+                base64_data = base64.b64encode(raw_data).decode('utf-8')
+                return base64_data
+            return ""

@@ -243,6 +243,25 @@ def get_vtot_worker_config(model_name: str = None) -> dict:
         config["Huggingface"] = vtot_model[model_name].get("Huggingface")
     return config
 
+def get_speech_worker_config(model_name: str = None) -> dict:
+    config = {}
+    
+    configinst = InnerJsonConfigWebUIParse()
+    webui_config = configinst.dump()
+    server_config = webui_config.get("ServerConfig")
+    config["host"] = server_config.get("default_host_ip")
+    config["port"] = server_config["ttov_model_worker"].get("port")
+    
+    if model_name is None or model_name == "":
+        return config
+    ttov_model = webui_config.get("ModelConfig").get("TtoVModel")
+    if model_name in ttov_model:
+        config["model_path"] = ttov_model[model_name].get("path")
+        config["device"] = ttov_model[model_name].get("device")
+        config["loadbits"] = ttov_model[model_name].get("loadbits")
+        config["Huggingface"] = ttov_model[model_name].get("Huggingface")
+    return config
+
 def MakeFastAPIOffline(
         app: FastAPI,
         static_dir=Path(__file__).parent / "static",

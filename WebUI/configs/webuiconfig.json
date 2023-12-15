@@ -384,6 +384,11 @@
             "port": 20002,
             "device": "auto"
         },
+        "ttov_model_worker": {
+            "host": "default_host_ip",
+            "port": 20003,
+            "device": "auto"
+        },
         "fastchat_model_worker": {
             "default": {
                 "host": "default_host_ip",
