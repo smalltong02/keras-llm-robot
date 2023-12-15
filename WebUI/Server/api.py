@@ -17,6 +17,7 @@ from WebUI.Server.llm_api import (list_running_models, get_running_models, list_
                             change_llm_model, stop_llm_model, chat_llm_model,
                             get_model_config, save_chat_config, save_model_config, get_webui_configs,
                             get_vtot_model, get_vtot_data, stop_vtot_model, change_vtot_model, save_voice_model_config,
+                            get_speech_model, get_speech_data, save_speech_model_config, stop_speech_model, change_speech_model,
                             list_search_engines)
 from WebUI.Server.utils import(get_prompt_template)
 from typing import List, Literal
@@ -142,6 +143,32 @@ def mount_app_routes(app: FastAPI, run_mode: str = None):
              tags=["Voice Model Management"],
              summary="Switch to new Voice Model",
              )(change_vtot_model)
+    
+    # Speech Model interface
+    app.post("/speech_model/get_ttov_model",
+             tags=["Speech Model Management"],
+             summary="Get current running Speech Model",
+             )(get_speech_model)
+    
+    app.post("/speech_model/get_ttov_data",
+             tags=["Speech Model Management"],
+             summary="Translate text to speech",
+             )(get_speech_data)
+    
+    app.post("/speech_model/save_speech_model_config",
+             tags=["Speech Model Management"],
+             summary="Save Speech Model configration information",
+             )(save_speech_model_config)
+    
+    app.post("/voice_model/stop",
+             tags=["Voice Model Management"],
+             summary="Stop Voice Model",
+             )(stop_speech_model)
+    
+    app.post("/speech_model/change",
+             tags=["Speech Model Management"],
+             summary="Switch to new Speech Model",
+             )(change_speech_model)
 
     # Server interface
     app.post("/server/get_webui_config",

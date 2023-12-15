@@ -530,6 +530,97 @@ class ApiRequest:
             json=data,
         )
         return self._get_response_value(response, as_json=True, value_func=lambda r:r.get("data", ""))
+    
+    def get_ttov_model(self, controller_address: str = None):
+        data = {
+            "controller_address": controller_address,
+        }
+        response = self.post(
+            "/speech_model/get_ttov_model",
+            json=data,
+        )
+        return self._get_response_value(response, as_json=True, value_func=lambda r:r.get("data", []))
+    
+    def eject_speech_model(self,
+        model_name: str,
+        controller_address: str = None,
+    ):
+        if not model_name:
+            return {
+                "code": 500,
+                "msg": f"name for the new model is None."
+            }
+        
+        running_model = self.get_ttov_model()
+        if model_name != running_model:
+            return {
+                "code": 200,
+                "msg": f"the model '{model_name}' is not running."
+            }
+
+        data = {
+            "model_name": model_name,
+            "controller_address": controller_address,
+        }
+
+        response = self.post(
+            "/speech_model/stop",
+            json=data,
+        )
+        
+        if self._use_async:
+            return self.ret_async(response)
+        else:
+            return self.ret_sync(response)
+
+    def change_speech_model(self,
+        model_name: str,
+        new_model_name: str,
+        controller_address: str = None,
+    ):
+        if not new_model_name:
+            return {
+                "code": 500,
+                "msg": f"name for the new model is None."
+            }
+        running_model = self.get_ttov_model()
+        if new_model_name == model_name or new_model_name == running_model:
+            return {
+                "code": 200,
+                "msg": "Not necessary to switch models."
+            }
+
+        data = {
+            "model_name": model_name,
+            "new_model_name": new_model_name,
+            "controller_address": controller_address,
+        }
+
+        response = self.post(
+            "/speech_model/change",
+            json=data,
+        )
+
+        if self._use_async:
+            return self.ret_async(response)
+        else:
+            return self.ret_sync(response)
+        
+    def get_ttov_data(self,
+        text_data: str = None,
+        controller_address: str = None
+    ):
+        if text_data is None or len(text_data) == 0:
+            return ""
+        data = {
+            "text_data": text_data,
+            "controller_address": controller_address,
+        }
+        response = self.post(
+            "/speech_model/get_ttov_data",
+            json=data,
+        )
+        return self._get_response_value(response, as_json=True, value_func=lambda r:r.get("data", ""))
 
     def save_chat_config(self,
         chatconfig: dict,

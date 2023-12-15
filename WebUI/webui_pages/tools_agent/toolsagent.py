@@ -12,7 +12,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
         running_model = models_list[0]
     webui_config = api.get_webui_config()
     current_vtot_model = api.get_vtot_model()
-    current_ttov_model = ""#api.get_ttov_model()
+    current_ttov_model = api.get_ttov_model()
     voicemodel = None
     
     if running_model == "":
@@ -107,10 +107,20 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
             if sple_button:
                 if speechmodel == current_ttov_model:
                     with st.spinner(f"Release Model: {speechmodel}, Please do not perform any actions or refresh the page."):
-                        pass
+                        r = api.eject_speech_model(speechmodel)
+                        if msg := check_error_msg(r):
+                            st.error(msg)
+                        elif msg := check_success_msg(r):
+                            st.success(msg)
+                            current_ttov_model = ""
                 else:
                     with st.spinner(f"Loading Model: {speechmodel}, Please do not perform any actions or refresh the page."):
-                        pass
+                        r = api.change_speech_model(current_ttov_model, speechmodel)
+                        if msg := check_error_msg(r):
+                            st.error(msg)
+                        elif msg := check_success_msg(r):
+                            st.success(msg)
+                            current_ttov_model = speechmodel
         with col2:
             if speechmodel is not None:
                 pathstr = ttovmodel[speechmodel].get("path")
