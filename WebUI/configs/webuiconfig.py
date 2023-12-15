@@ -4,7 +4,7 @@ class InnerJsonConfigWebUIParse:
     def __init__(self):
         try:
             self.config = None
-            with open("./WebUI/configs/webuiconfig.json", 'r') as file:
+            with open("WebUI/configs/webuiconfig.json", 'r') as file:
                 jsondata = json.load(file)
                 self.config = jsondata
         except Exception as e:

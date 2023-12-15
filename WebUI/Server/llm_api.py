@@ -220,7 +220,7 @@ def save_model_config(
                 code=500,
                 msg=f"failed to save local model configration, error mtype!")
 
-        with open(".\WebUI\configs\webuiconfig.json", 'r+') as file:
+        with open("WebUI/configs/webuiconfig.json", 'r+') as file:
             jsondata = json.load(file)
             jsondata["ModelConfig"]["LocalModel"][provider][msize][model_name].update(config)
             file.seek(0)
@@ -255,7 +255,7 @@ def save_voice_model_config(
     controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])    
 ) -> BaseResponse:
     try:
-        with open(".\WebUI\configs\webuiconfig.json", 'r+') as file:
+        with open("WebUI/configs/webuiconfig.json", 'r+') as file:
             jsondata = json.load(file)
             jsondata["ModelConfig"]["VtoTModel"][model_name].update(config)
             file.seek(0)
@@ -358,7 +358,7 @@ def save_chat_config(
         controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])
 ) -> BaseResponse:
     try:
-        with open(".\WebUI\configs\webuiconfig.json", 'r+') as file:
+        with open("WebUI/configs/webuiconfig.json", 'r+') as file:
             jsondata = json.load(file)
             jsondata["ChatConfiguration"].update(config)
             file.seek(0)
