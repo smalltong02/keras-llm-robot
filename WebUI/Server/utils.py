@@ -514,11 +514,16 @@ def get_ChatOpenAI(
         **kwargs: Any,
 ) -> ChatOpenAI:
     config = get_model_worker_config(model_name)
+    apikey = config.get("api_key", "[Your Key]")
+    if apikey == "[Your Key]":
+        apikey = os.environ.get('OPENAI_API_KEY')
+    if apikey == None:
+        apikey = "EMPTY"
     model = ChatOpenAI(
         streaming=streaming,
         verbose=verbose,
         callbacks=callbacks,
-        openai_api_key=config.get("api_key", "EMPTY"),
+        openai_api_key=apikey,
         openai_api_base=config.get("api_base_url", fschat_openai_api_address()),
         model_name=model_name,
         temperature=temperature,
