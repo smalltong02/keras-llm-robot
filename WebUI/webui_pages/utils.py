@@ -142,7 +142,7 @@ class ApiRequest:
 
         data = {
             "query": query,
-            "history": [],
+            "history": history,
             "stream": stream,
             "model_name": model,
             "speechmodel": speechmodel,
@@ -154,7 +154,7 @@ class ApiRequest:
         print(f"received input message:")
         pprint(data)
 
-        if modelinfo["mtype"] == ModelType.Local:    
+        if modelinfo["mtype"] == ModelType.Local or modelinfo["mtype"] == ModelType.Online:
             response = self.post("/chat/chat", json=data, stream=True, **kwargs)
             return self._httpx_stream2generator(response, as_json=True)
         

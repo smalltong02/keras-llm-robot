@@ -198,30 +198,39 @@ def get_model_worker_config(model_name: str = None) -> dict:
     if model_name is None or model_name == "":
         return config
 
+    modelinfo = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "config": dict}
     onlinemodel = webui_config.get("ModelConfig").get("OnlineModel")
-    config.update(onlinemodel.get(model_name, {}).copy())
-    if model_name in onlinemodel:
-        config["online_api"] = True
-        if provider := config.get("provider"):
-            try:
-                config["worker_class"] = getattr(workers, provider)
-            except Exception as e:
-                msg = f"Online Model ‘{model_name}’'s provider configuration error."
-                print(f'{e.__class__.__name__}: {msg}')
+    for _, value in onlinemodel.items():
+        modellist = value["modellist"]
+        if model_name in modellist:
+            config["online_model"] = True 
+            config["api_base_url"] = value["baseurl"]
+            config["api_key"] = value["apikey"]
+            config["api_version"] = value["apiversion"]
+            config["api_proxy"] = value["apiproxy"]
+            return config
+    # config.update(onlinemodel.get(model_name, {}).copy())
+    # if model_name in onlinemodel:
+    #     config["online_api"] = True
+    #     if provider := config.get("provider"):
+    #         try:
+    #             config["worker_class"] = getattr(workers, provider)
+    #         except Exception as e:
+    #             msg = f"Online Model '{model_name}''s provider configuration error."
+    #             print(f'{e.__class__.__name__}: {msg}')
 
-    else:
-        modelinfo = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "config": dict}
-        modelinfo["mtype"], modelinfo["msize"], modelinfo["msubtype"] = GetModelInfoByName(webui_config, model_name)
-        if modelinfo["mtype"] == ModelType.Local or modelinfo["mtype"] == ModelType.Multimodal or modelinfo["mtype"] == ModelType.Llamacpp:
-            modelinfo["mname"] = model_name
-            modelinfo["config"] = GetModelConfig(webui_config, modelinfo)
-            if modelinfo["config"]:
-                config["model_path"] = get_model_path(modelinfo["config"])
-                config["device"] = llm_device(modelinfo["config"])
-                config["load_8bit"] = load_8bit(modelinfo["config"])
-                config["max_gpu_memory"] = get_max_gpumem(modelinfo["config"])
-            if modelinfo["mtype"] == ModelType.Llamacpp:
-                config["llamacpp_model"] = True
+    # else:
+    modelinfo["mtype"], modelinfo["msize"], modelinfo["msubtype"] = GetModelInfoByName(webui_config, model_name)
+    if modelinfo["mtype"] == ModelType.Local or modelinfo["mtype"] == ModelType.Multimodal or modelinfo["mtype"] == ModelType.Llamacpp:
+        modelinfo["mname"] = model_name
+        modelinfo["config"] = GetModelConfig(webui_config, modelinfo)
+        if modelinfo["config"]:
+            config["model_path"] = get_model_path(modelinfo["config"])
+            config["device"] = llm_device(modelinfo["config"])
+            config["load_8bit"] = load_8bit(modelinfo["config"])
+            config["max_gpu_memory"] = get_max_gpumem(modelinfo["config"])
+        if modelinfo["mtype"] == ModelType.Llamacpp:
+            config["llamacpp_model"] = True
     return config
 
 def get_vtot_worker_config(model_name: str = None) -> dict:
@@ -504,10 +513,6 @@ def get_ChatOpenAI(
         verbose: bool = True,
         **kwargs: Any,
 ) -> ChatOpenAI:
-    ## 以下模型是Langchain原生支持的模型，这些模型不会走Fschat封装
-    config_models = list_config_llm_models()
-
-    ## 非Langchain原生支持的模型，走Fschat封装
     config = get_model_worker_config(model_name)
     model = ChatOpenAI(
         streaming=streaming,

@@ -115,13 +115,19 @@ def GetOnlineModelList(webui_config, provider: str) -> list:
     return []
 
 def GetModelInfoByName(webui_config: Dict, name : str):
-    localmodel = webui_config.get("ModelConfig").get("LocalModel")
     if name:
+        localmodel = webui_config.get("ModelConfig").get("LocalModel")
         for typekey, typevalue in localmodel.items():
             for sizekey, sizevalue in typevalue.items():
                 for modelkey, _ in sizevalue.items():
                     if modelkey.casefold() == name.casefold():
                         return GetModelType(typekey), GetModelSize(sizekey), GetModelSubType(sizekey)
+        onlinemodel = webui_config.get("ModelConfig").get("OnlineModel")
+        for key, value in onlinemodel.items():
+            modellist = value["modellist"]
+            if name in modellist:
+                    return ModelType.Online, ModelSize.Unknown, ModelSubType.Unknown
+    
     return ModelType.Unknown, ModelSize.Unknown, ModelSubType.Unknown
 
 def GetModeList(webui_config, current_model) -> list:

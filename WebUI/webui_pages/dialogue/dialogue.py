@@ -118,7 +118,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
         running_model = "None"
     else:
         running_model = models_list[0]
-
+    print("running_model: ", running_model)
     webui_config = api.get_webui_config()
     chatconfig = webui_config.get("ChatConfiguration")
     webconfig = webui_config.get("WebConfig")

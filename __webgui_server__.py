@@ -152,7 +152,7 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
                 workerconfig = get_model_worker_config(model_name)
                 worker_address = "http://" + workerconfig["host"] + ":" + str(workerconfig["port"])
         else:
-            workerconfig = get_model_worker_config(model_name)
+            workerconfig = get_model_worker_config()
             worker_address = "http://" + workerconfig["host"] + ":" + str(workerconfig["port"])
 
         with get_httpx_client() as client:
@@ -170,7 +170,7 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
                     models = app._controller.list_models()
                     if new_model_name in models:
                         break
-                elif modelinfo["mtype"] == ModelType.Llamacpp:
+                elif modelinfo["mtype"] == ModelType.Llamacpp or modelinfo["mtype"] == ModelType.Online:
                     with get_httpx_client() as client:
                         try:
                             r = client.post(worker_address + "/get_name",
@@ -181,8 +181,6 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
                         except Exception as e:
                             pass
                 elif modelinfo["mtype"] == ModelType.Multimodal:
-                    break
-                elif modelinfo["mtype"] == ModelType.Online:
                     break
                 time.sleep(1)
                 timer -= 1
@@ -203,7 +201,7 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
                     models = app._controller.list_models()
                     if model_name not in models:
                         break
-                elif modelinfo["mtype"] == ModelType.Llamacpp:
+                elif modelinfo["mtype"] == ModelType.Llamacpp or modelinfo["mtype"] == ModelType.Online:
                     with get_httpx_client() as client:
                         try:
                             r = client.post(worker_address + "/get_name",
@@ -214,8 +212,6 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
                         except Exception as e:
                             break
                 elif modelinfo["mtype"] == ModelType.Multimodal:
-                    break
-                elif modelinfo["mtype"] == ModelType.Online:
                     break
                 time.sleep(1)
                 timer -= 1
@@ -466,13 +462,12 @@ def create_model_worker_app(log_level: str = "INFO", **kwargs) -> Union[FastAPI,
     if worker_class := kwargs.get("langchain_model"):
         worker = ""
     # Online model
-    elif worker_class := kwargs.get("worker_class"):
-        try:
-            worker = worker_class(model_names=args.model_names,
-                              controller_addr=args.controller_address,
-                              worker_addr=args.worker_address)
-        except Exception as e:
-            return None
+    elif kwargs.get("online_model", False):
+        app._model = None
+        app._model_name = args.model_names[0]
+        MakeFastAPIOffline(app)
+        app.title = f"Online Model ({args.model_names[0]})"
+        return app
 
     # Local model
     elif kwargs.get("llamacpp_model", False) == True:
