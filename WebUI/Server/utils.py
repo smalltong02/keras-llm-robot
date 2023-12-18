@@ -256,10 +256,24 @@ def get_speech_worker_config(model_name: str = None) -> dict:
         return config
     ttov_model = webui_config.get("ModelConfig").get("TtoVModel")
     if model_name in ttov_model:
-        config["model_path"] = ttov_model[model_name].get("path")
-        config["device"] = ttov_model[model_name].get("device")
-        config["loadbits"] = ttov_model[model_name].get("loadbits")
-        config["Huggingface"] = ttov_model[model_name].get("Huggingface")
+        if ttov_model[model_name].get("type") == "local":
+            config["model_type"] = "local"
+            config["model_path"] = ttov_model[model_name].get("path")
+            config["device"] = ttov_model[model_name].get("device")
+            config["loadbits"] = ttov_model[model_name].get("loadbits")
+            config["Huggingface"] = ttov_model[model_name].get("Huggingface")
+        elif ttov_model[model_name].get("type") == "cloud":
+            config["model_type"] = "cloud"
+            config["model_path"] = ""
+            config["device"] = "cloud"
+            config["loadbits"] = ""
+            config["Huggingface"] = ""
+        else:
+            config["model_type"] = ""
+            config["model_path"] = ""
+            config["device"] = ""
+            config["loadbits"] = ""
+            config["Huggingface"] = ""
     return config
 
 def MakeFastAPIOffline(

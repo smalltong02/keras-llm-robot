@@ -160,7 +160,7 @@ def mount_app_routes(app: FastAPI, run_mode: str = None):
              summary="Save Speech Model configration information",
              )(save_speech_model_config)
     
-    app.post("/voice_model/stop",
+    app.post("/speech_model/stop",
              tags=["Voice Model Management"],
              summary="Stop Voice Model",
              )(stop_speech_model)

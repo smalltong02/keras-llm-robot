@@ -6,10 +6,11 @@ from langchain.chains import LLMChain
 from langchain.callbacks import AsyncIteratorCallbackHandler
 from typing import AsyncIterable
 import asyncio
-import json
+import json, os
 from langchain.prompts.chat import ChatPromptTemplate
 from typing import List, Optional
 from WebUI.Server.chat.utils import History
+from WebUI.Server.chat.StreamHandler import StreamSpeakHandler
 from WebUI.Server.utils import get_prompt_template
 from WebUI.Server.db.repository import add_chat_history_to_db, update_chat_history
 
@@ -22,6 +23,7 @@ async def chat(query: str = Body(..., description="User input: ", examples=["cha
                                   ),
     stream: bool = Body(False, description="stream output"),
     model_name: str = Body(LLM_MODELS[0], description="model name"),
+    speechmodel: dict = Body({}, description="speech model config"),
     temperature: float = Body(TEMPERATURE, description="LLM Temperature", ge=0.0, le=1.0),
     max_tokens: Optional[int] = Body(None, description="max tokens."),
     prompt_name: str = Body("default", description=""),
@@ -33,12 +35,26 @@ async def chat(query: str = Body(..., description="User input: ", examples=["cha
                             model_name: str = LLM_MODELS[0],
                             prompt_name: str = prompt_name,
                             ) -> AsyncIterable[str]:
-        callback = AsyncIteratorCallbackHandler()
+        async_callback = AsyncIteratorCallbackHandler()
+        callbackslist = [async_callback]
+        if len(speechmodel):
+            modeltype = speechmodel.get("type", "")
+            spmodel = speechmodel.get("model", "")
+            spspeaker = speechmodel.get("speaker", "")
+            speechkey = speechmodel.get("speech_key", "")
+            if speechkey == "":
+                speechkey = os.environ.get('SPEECH_KEY')
+            speechregion = speechmodel.get("speech_region", "")
+            if speechregion == "":
+                speechregion = os.environ.get('SPEECH_REGION')
+            if modeltype == "local" or modeltype == "cloud":
+                speak_handler = StreamSpeakHandler(run_place=modeltype, synthesis=spspeaker, subscription=speechkey, region=speechregion)
+                callbackslist.append(speak_handler)
         model = get_ChatOpenAI(
             model_name=model_name,
             temperature=temperature,
             max_tokens=max_tokens,
-            callbacks=[callback],
+            callbacks=callbackslist,
         )
 
         prompt_template = get_prompt_template("llm_chat", prompt_name)
@@ -51,20 +67,20 @@ async def chat(query: str = Body(..., description="User input: ", examples=["cha
         # Begin a task that runs in the background.
         task = asyncio.create_task(wrap_done(
             chain.acall({"input": query}),
-            callback.done),
+            async_callback.done),
         )
 
         answer = ""
         chat_history_id = add_chat_history_to_db(chat_type="llm_chat", query=query)
         if stream:
-            async for token in callback.aiter():
+            async for token in async_callback.aiter():
                 answer += token
                 # Use server-sent-events to stream the response
                 yield json.dumps(
                     {"text": token, "chat_history_id": chat_history_id},
                     ensure_ascii=False)
         else:
-            async for token in callback.aiter():
+            async for token in async_callback.aiter():
                 answer += token
             yield json.dumps(
                 {"text": answer, "chat_history_id": chat_history_id},

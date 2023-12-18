@@ -11,8 +11,8 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
     if len(models_list):
         running_model = models_list[0]
     webui_config = api.get_webui_config()
-    current_vtot_model = api.get_vtot_model()
-    current_ttov_model = api.get_ttov_model()
+    current_voice_model = api.get_vtot_model()
+    current_speech_model = api.get_ttov_model()
     voicemodel = None
     
     if running_model == "":
@@ -21,7 +21,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
             f"""<h1 style="font-size: 1.5em; text-align: center; color: #3498db;">Running LLM Model: {running_model}</h1>""",
             unsafe_allow_html=True,
         )
-    tabretrieval, tabinterpreter, tabttov, tabvtot, tabimager, tabimageg, tabfunctions = st.tabs(["Retrieval", "Code Interpreter", "Text-to-Voice", "Voice-to-Text", "Image Recognition", "Image Generation", "Functions"])
+    tabretrieval, tabinterpreter, tabspeech, tabvoice, tabimager, tabimageg, tabfunctions = st.tabs(["Retrieval", "Code Interpreter", "Text-to-Voice", "Voice-to-Text", "Image Recognition", "Image Generation", "Functions"])
     with tabretrieval:
         selected_kb = st.selectbox(
             "Knowledge Base:",
@@ -85,15 +85,16 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
     with tabinterpreter:
         pass
 
-    with tabttov:
+    with tabspeech:
         ttovmodel = webui_config.get("ModelConfig").get("TtoVModel")
         ttovmodel_lists = [f"{key}" for key in ttovmodel]
         col1, col2 = st.columns(2)
+        spmodel = current_speech_model.get("model", "")
         with col1:
-            if current_ttov_model == "":
+            if len(spmodel) == 0:
                 index = 0
             else:
-                index = ttovmodel_lists.index(current_vtot_model)
+                index = ttovmodel_lists.index(spmodel)
             speechmodel = st.selectbox(
                     "Please Select Speech Model",
                     ttovmodel_lists,
@@ -105,81 +106,169 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                 use_container_width=True,
             )
             if sple_button:
-                if speechmodel == current_ttov_model:
+                if speechmodel == spmodel:
                     with st.spinner(f"Release Model: {speechmodel}, Please do not perform any actions or refresh the page."):
                         r = api.eject_speech_model(speechmodel)
                         if msg := check_error_msg(r):
                             st.error(msg)
                         elif msg := check_success_msg(r):
                             st.success(msg)
-                            current_ttov_model = ""
+                            current_speech_model = {"model": "", "speaker": ""}
                 else:
                     with st.spinner(f"Loading Model: {speechmodel}, Please do not perform any actions or refresh the page."):
-                        r = api.change_speech_model(current_ttov_model, speechmodel)
+                        speaker = st.session_state["speaker"]
+                        print("speaker: ", speaker)
+                        r = api.change_speech_model(spmodel, speechmodel, speaker)
                         if msg := check_error_msg(r):
                             st.error(msg)
                         elif msg := check_success_msg(r):
                             st.success(msg)
-                            current_ttov_model = speechmodel
+                            current_speech_model = {"model": speechmodel, "speaker": speaker}
+        modelconfig = ttovmodel[speechmodel]
+        synthesisconfig = modelconfig["synthesis"]
+        #print(modelconfig)
         with col2:
-            if speechmodel is not None:
-                pathstr = ttovmodel[speechmodel].get("path")
-            else:
-                pathstr = ""
-            st.text_input("Local Path", pathstr)
-            spsave_path = st.button(
-                "Save Path",
-                key="spsave_btn",
-                use_container_width=True,
-            )
+            if modelconfig["type"] == "local":
+                pathstr = modelconfig.get("path")
+                st.text_input("Local Path", pathstr)
+                spsave_path = st.button(
+                    "Save Path",
+                    key="spsave_btn",
+                    use_container_width=True,
+                )
+                if spsave_path:
+                    with st.spinner(f"Saving Path, Please do not perform any actions or refresh the page."):
+                        modelconfig["path"] = spsave_path
+                        r = api.save_speech_model_config(speechmodel, modelconfig)
+                        if msg := check_error_msg(r):
+                            st.error(msg)
+                        elif msg := check_success_msg(r):
+                            st.success(msg)
+            elif modelconfig["type"] == "cloud":
+                pathstr = modelconfig.get("path")
+                st.text_input("Cloud Path", pathstr, disabled=True)
+                spsave_path = st.button(
+                    "Save Path",
+                    key="spsave_btn",
+                    use_container_width=True,
+                    disabled=True
+                )
 
         st.divider()
-        config = ttovmodel[speechmodel]
-        with st.form("speech_model"):
-            devcol, bitcol = st.columns(2)
-            with devcol:
-                sdevice = config.get("device").lower()
-                if sdevice in training_devices_list:
-                    index = training_devices_list.index(sdevice)
-                else:
-                    index = 0
-                predict_dev = st.selectbox(
-                        "Please select Device",
-                        training_devices_list,
+        if modelconfig["type"] == "local":
+            with st.form("speech_model"):
+                devcol, bitcol = st.columns(2)
+                with devcol:
+                    if modelconfig["type"] == "local":
+                        sdevice = modelconfig.get("device").lower()
+                        if sdevice in training_devices_list:
+                            index = training_devices_list.index(sdevice)
+                        else:
+                            index = 0
+                        predict_dev = st.selectbox(
+                                "Please select Device",
+                                training_devices_list,
+                                index=index
+                            )
+                
+                with bitcol:
+                    nloadbits = modelconfig.get("loadbits")
+                    index = 0 if nloadbits == 32 else (1 if nloadbits == 16 else (2 if nloadbits == 8 else 16))
+                    nloadbits = st.selectbox(
+                        "Load Bits",
+                        loadbits_list,
                         index=index
                     )
-            with bitcol:
-                nloadbits = config.get("loadbits")
-                index = 0 if nloadbits == 32 else (1 if nloadbits == 16 else (2 if nloadbits == 8 else 16))
-                nloadbits = st.selectbox(
-                    "Load Bits",
-                    loadbits_list,
-                    index=index
+                save_parameters = st.form_submit_button(
+                    "Save Parameters",
+                    use_container_width=True
                 )
-            save_parameters = st.form_submit_button(
-                "Save Parameters",
-                use_container_width=True
-            )
-            if save_parameters:
-                config["device"] = predict_dev
-                if nloadbits == "32 bits":
-                    config["loadbits"] = 32
-                elif nloadbits == "16 bits":
-                    config["loadbits"] = 16
-                else:
-                    config["loadbits"] = 8
-                with st.spinner(f"Saving Parameters, Please do not perform any actions or refresh the page."):
-                    pass
+                if save_parameters:
+                    modelconfig["device"] = predict_dev
+                    if nloadbits == "32 bits":
+                        modelconfig["loadbits"] = 32
+                    elif nloadbits == "16 bits":
+                        modelconfig["loadbits"] = 16
+                    else:
+                        modelconfig["loadbits"] = 8
+                    with st.spinner(f"Saving Parameters, Please do not perform any actions or refresh the page."):
+                        r = api.save_speech_model_config(speechmodel, modelconfig)
+                        if msg := check_error_msg(r):
+                            st.error(msg)
+                        elif msg := check_success_msg(r):
+                            st.success(msg)
 
-    with tabvtot:
+        elif modelconfig["type"] == "cloud":
+            with st.form("speech_model"):
+                keycol, regcol = st.columns(2)
+                with keycol:
+                    speechkey = modelconfig.get("speech_key")
+                    speechkey = st.text_input("Speech Key", speechkey)
+                with regcol:
+                    speechregion = modelconfig.get("speech_region")
+                    speechregion = st.text_input("Speech Region", speechregion)
+
+                save_parameters = st.form_submit_button(
+                    "Save Parameters",
+                    use_container_width=True
+                )
+                if save_parameters:
+                    with st.spinner(f"Saving Parameters, Please do not perform any actions or refresh the page."):
+                        if speechkey == "" or speechkey == "[Your Key]" or speechregion == "" or speechregion == "[Your Region]":
+                            st.error("Please enter the correct key and region, save failed!")
+                        else:
+                            r = api.save_speech_model_config(speechmodel, modelconfig)
+                            if msg := check_error_msg(r):
+                                st.error(msg)
+                            elif msg := check_success_msg(r):
+                                st.success(msg)
+
+        st.divider()
+        col1, col2 = st.columns(2)
+
+        with col1:
+            templates_list = [modelconfig.get("CloudTemplates", "")]
+            templates = st.selectbox(
+                "Please Select templates",
+                templates_list,
+                index=0,
+                disabled=True
+            )
+            lang_index = 0
+            language_list = list(synthesisconfig.keys())
+            language = st.selectbox(
+                "Please Select language",
+                language_list,
+                index=lang_index,
+            )
+            
+        with col2:
+            sex_index = 0
+            sex_list = list(synthesisconfig[language].keys())
+            sex = st.selectbox(
+                "Please Select Sex",
+                sex_list,
+                index=sex_index
+            )
+            speaker_index = 0
+            speaker_list = synthesisconfig[language][sex]
+            speaker = st.selectbox(
+                "Please Select Speaker",
+                speaker_list,
+                index=speaker_index,
+            )
+            if speaker:
+                st.session_state["speaker"] = speaker
+
+    with tabvoice:
         vtotmodel = webui_config.get("ModelConfig").get("VtoTModel")
         vtotmodel_lists = [f"{key}" for key in vtotmodel]
         col1, col2 = st.columns(2)
         with col1:
-            if current_vtot_model == "":
+            if current_voice_model == "":
                 index = 0
             else:
-                index = vtotmodel_lists.index(current_vtot_model)
+                index = vtotmodel_lists.index(current_voice_model)
             voicemodel = st.selectbox(
                     "Please Select Voice Model",
                     vtotmodel_lists,
@@ -191,22 +280,22 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                 use_container_width=True,
             )
             if vole_button:
-                if voicemodel == current_vtot_model:
+                if voicemodel == current_voice_model:
                     with st.spinner(f"Release Model: {voicemodel}, Please do not perform any actions or refresh the page."):
                         r = api.eject_voice_model(voicemodel)
                         if msg := check_error_msg(r):
                             st.error(msg)
                         elif msg := check_success_msg(r):
                             st.success(msg)
-                            current_vtot_model = ""
+                            current_voice_model = ""
                 else:
                     with st.spinner(f"Loading Model: {voicemodel}, Please do not perform any actions or refresh the page."):
-                        r = api.change_voice_model(current_vtot_model, voicemodel)
+                        r = api.change_voice_model(current_voice_model, voicemodel)
                         if msg := check_error_msg(r):
                             st.error(msg)
                         elif msg := check_success_msg(r):
                             st.success(msg)
-                            current_vtot_model = voicemodel
+                            current_voice_model = voicemodel
         with col2:
             if voicemodel is not None:
                 pathstr = vtotmodel[voicemodel].get("path")
@@ -218,6 +307,14 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                 key="vosave_btn",
                 use_container_width=True,
             )
+            if vosave_path:
+                with st.spinner(f"Saving Path, Please do not perform any actions or refresh the page."):
+                        vtotmodel[voicemodel]["path"] = vosave_path
+                        r = api.save_vtot_model_config(voicemodel, config)
+                        if msg := check_error_msg(r):
+                            st.error(f"failed to save path for model {voicemodel}.")
+                        elif msg := check_success_msg(r):
+                            st.success(f"success save path for model {voicemodel}.")
 
         st.divider()
         config = vtotmodel[voicemodel]

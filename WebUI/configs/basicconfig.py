@@ -174,3 +174,11 @@ def GetGGUFModelPath(pathstr : str) -> list:
                         file_path = file
                         found_files.append(file_path)
     return found_files
+
+def GetSpeechModelInfo(webui_config: Dict, name : str):
+    speechmodel = webui_config.get("ModelConfig").get("TtoVModel")
+    if name:
+        for modelkey, configvalue in speechmodel.items():
+            if name.casefold() == modelkey.casefold():
+                return configvalue
+    return {}

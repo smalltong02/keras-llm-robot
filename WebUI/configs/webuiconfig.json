@@ -97,10 +97,247 @@
         },
         "TtoVModel": {
             "XTTS-v2": {
+                "type": "local",
                 "path": "models/voices/XTTS-v2",
                 "device": "gpu",
                 "loadbits": 16,
+                "synthesis": {
+                    "en-US": {
+                        "male": [
+                            "en_male-v1",
+                            "en_male-v2"
+                        ],
+                        "female": [
+                            "en_female-v1",
+                            "en_female-v2"
+                        ],
+                        "non-binary": []
+                    },
+                    "zh-CN": {
+                        "male": [
+                            "zh-cn_male-v1",
+                            "zh-cn_male-v2"
+                        ],
+                        "female": [
+                            "zh-cn_female-v1",
+                            "zh-cn_female-v2"
+                        ],
+                        "non-binary": []
+                    }
+                },
+                "CloudTemplates": "",
                 "Huggingface": "coqui/XTTS-v2"
+            },
+            "AzureSpeechService": {
+                "type": "cloud",
+                "speech_key": "[Your Key]",
+                "speech_region": "[Your Region]",
+                "synthesis": {
+                    "en-US": {
+                        "male": [
+                            "en-US-GuyNeural",
+                            "en-US-DavisNeural",
+                            "en-US-AndrewNeural",
+                            "en-US-BrandonNeural",
+                            "en-US-BrianNeural",
+                            "en-US-ChristopherNeural",
+                            "en-US-EricNeural",
+                            "en-US-JacobNeural",
+                            "en-US-JasonNeural",
+                            "en-US-RogerNeural",
+                            "en-US-SteffanNeural",
+                            "en-US-TonyNeural",
+                            "en-US-AIGenerate1Neural",
+                            "en-US-RyanMultilingualNeural"
+                        ],
+                        "female": [
+                            "en-US-JennyMultilingualNeural",
+                            "en-US-JennyNeural",
+                            "en-US-AriaNeural",
+                            "en-US-AmberNeural",
+                            "en-US-AshleyNeural",
+                            "en-US-CoraNeural",
+                            "en-US-ElizabethNeural",
+                            "en-US-EmmaNeural",
+                            "en-US-JaneNeural",
+                            "en-US-MichelleNeural",
+                            "en-US-MonicaNeural",
+                            "en-US-NancyNeural",
+                            "en-US-SaraNeural",
+                            "en-US-AIGenerate2Neural",
+                            "en-US-JennyMultilingualV2Neural"
+                        ],
+                        "non-binary": [
+                            "en-US-BlueNeural"
+                        ]
+                    },
+                    "zh-CN": {
+                        "male": [
+                            "zh-CN-YunxiNeural",
+                            "zh-CN-YunjianNeural",
+                            "zh-CN-YunyangNeural",
+                            "zh-CN-YunfengNeural",
+                            "zh-CN-YunhaoNeural",
+                            "zh-CN-YunxiaNeural",
+                            "zh-CN-YunyeNeural",
+                            "zh-CN-YunzeNeural",
+                            "zh-CN-YunjieNeural"
+                        ],
+                        "female": [
+                            "zh-CN-XiaoxiaoNeural",
+                            "zh-CN-XiaoyiNeural",
+                            "zh-CN-XiaochenNeural",
+                            "zh-CN-XiaohanNeural",
+                            "zh-CN-XiaomengNeural",
+                            "zh-CN-XiaomoNeural",
+                            "zh-CN-XiaoqiuNeural",
+                            "zh-CN-XiaoruiNeural",
+                            "zh-CN-XiaoshuangNeural",
+                            "zh-CN-XiaoxuanNeural",
+                            "zh-CN-XiaoyanNeural",
+                            "zh-CN-XiaoyouNeural",
+                            "zh-CN-XiaozhenNeural",
+                            "zh-CN-XiaorouNeural"
+                        ],
+                        "non-binary": []
+                    },
+                    "yue-CN": {
+                        "male": [
+                            "yue-CN-YunSongNeural"
+                        ],
+                        "female": [
+                            "yue-CN-XiaoMinNeural"
+                        ],
+                        "non-binary": []
+                    },
+                    "zh-TW": {
+                        "male": [
+                            "zh-TW-YunJheNeural"
+                        ],
+                        "female": [
+                            "zh-TW-HsiaoChenNeural",
+                            "zh-TW-HsiaoYuNeural"
+                        ],
+                        "non-binary": []
+                    },
+                    "en-CA": {
+                        "male": [
+                            "en-CA-LiamNeural"
+                        ],
+                        "female": [
+                            "en-CA-ClaraNeural"
+                        ],
+                        "non-binary": []
+                    },
+                    "en-AU": {
+                        "male": [
+                            "en-AU-WilliamNeural",
+                            "en-AU-DarrenNeural",
+                            "en-AU-DuncanNeural",
+                            "en-AU-KenNeural",
+                            "en-AU-NeilNeural",
+                            "en-AU-TimNeural"
+                        ],
+                        "female": [
+                            "en-AU-NatashaNeural",
+                            "en-AU-AnnetteNeural",
+                            "en-AU-CarlyNeural",
+                            "en-AU-ElsieNeural",
+                            "en-AU-FreyaNeural",
+                            "en-AU-JoanneNeural",
+                            "en-AU-KimNeural",
+                            "en-AU-TinaNeural"
+                        ],
+                        "non-binary": []
+                    },
+                    "de-DE": {
+                        "male": [
+                            "de-DE-ConradNeural",
+                            "de-DE-BerndNeural",
+                            "de-DE-ChristophNeural",
+                            "de-DE-KasperNeural",
+                            "de-DE-KillianNeural",
+                            "de-DE-KlausNeural",
+                            "de-DE-RalfNeural"
+                        ],
+                        "female": [
+                            "de-DE-KatjaNeural",
+                            "de-DE-AmalaNeural",
+                            "de-DE-ElkeNeural",
+                            "de-DE-GiselaNeural",
+                            "de-DE-KlarissaNeural",
+                            "de-DE-LouisaNeural",
+                            "de-DE-MajaNeural",
+                            "de-DE-SeraphinaNeural",
+                            "de-DE-TanjaNeural"
+                        ],
+                        "non-binary": []
+                    },
+                    "fr-FR": {
+                        "male": [
+                            "fr-FR-HenriNeural",
+                            "fr-FR-AlainNeural",
+                            "fr-FR-ClaudeNeural",
+                            "fr-FR-JeromeNeural",
+                            "fr-FR-MauriceNeural",
+                            "fr-FR-YvesNeural"
+                        ],
+                        "female": [
+                            "fr-FR-DeniseNeural",
+                            "fr-FR-BrigitteNeural",
+                            "fr-FR-CelesteNeural",
+                            "fr-FR-CoralieNeural",
+                            "fr-FR-EloiseNeural",
+                            "fr-FR-JacquelineNeural",
+                            "fr-FR-JosephineNeural",
+                            "fr-FR-VivienneNeural",
+                            "fr-FR-YvetteNeural"
+                        ],
+                        "non-binary": []
+                    },
+                    "fr-CA": {
+                        "male": [
+                            "fr-CA-JeanNeural",
+                            "fr-CA-AntoineNeural",
+                            "fr-CA-ThierryNeural"
+                        ],
+                        "female": [
+                            "fr-CA-SylvieNeural"
+                        ],
+                        "non-binary": []
+                    },
+                    "ko-KR": {
+                        "male": [
+                            "ko-KR-InJoonNeural",
+                            "ko-KR-BongJinNeural",
+                            "ko-KR-GookMinNeural",
+                            "ko-KR-HyunsuNeural"
+                        ],
+                        "female": [
+                            "ko-KR-SunHiNeural",
+                            "ko-KR-JiMinNeural",
+                            "ko-KR-SeoHyeonNeural",
+                            "ko-KR-SoonBokNeural",
+                            "ko-KR-YuJinNeural"
+                        ],
+                        "non-binary": []
+                    },
+                    "ja-JP": {
+                        "male": [
+                            "ja-JP-KeitaNeural",
+                            "ja-JP-DaichiNeural",
+                            "ja-JP-NaokiNeural"
+                        ],
+                        "female": [
+                            "ja-JP-NanamiNeural",
+                            "ja-JP-AoiNeural",
+                            "ja-JP-MayuNeural",
+                            "ja-JP-ShioriNeural"
+                        ],
+                        "non-binary": []
+                    }
+                },
+                "CloudTemplates": "AzureSpeechTemplate"
             }
         },
         "LocalModel": {
@@ -161,7 +398,7 @@
                         "device": "auto",
                         "maxmemory": 20,
                         "cputhreads": 4,
-                        "loadbits": 16,
+                        "loadbits": 8,
                         "Huggingface": "THUDM/chatglm3-6b"
                     },
                     "tigerbot-7b-chat": {

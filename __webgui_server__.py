@@ -110,7 +110,8 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
             "model_name": ""
         },
         "speechmodel": {
-            "model_name": ""
+            "model_name": "",
+            "speaker": ""
         },
     }
     app = create_controller_app(
@@ -356,15 +357,17 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
     def get_speech_model(
     ) -> Dict:
         model_name = glob_minor_models["speechmodel"]["model_name"]
-        return {"code": 200, "model": model_name}
+        speaker = glob_minor_models["speechmodel"]["speaker"]
+        return {"code": 200, "model": model_name, "speaker": speaker}
     
     @app.post("/release_speech_model")
     def release_vtot_model(
         model_name: str = Body(..., description="Unload the model", samples=""),
         new_model_name: str = Body(None, description="New model"),
+        speaker: str = Body(None, description="Speaker"),
     ) -> Dict:
         if new_model_name:
-            print(f"Change speech model: from {model_name} to {new_model_name}")
+            print(f"Change speech model: from {model_name} to {new_model_name}, speaker({speaker})")
         else:
             print(f"Stoping speech model: {model_name}")
         workerconfig = get_speech_worker_config()
@@ -386,9 +389,10 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
                 print(msg)
                 return {"code": 500, "msg": msg}
             glob_minor_models["speechmodel"]["model_name"] = ""
+            glob_minor_models["speechmodel"]["speaker"] = ""
 
         if new_model_name:
-            q.put([model_name, "start_speech_model", new_model_name])
+            q.put([speaker, "start_speech_model", new_model_name])
             timer = HTTPX_LOAD_VOICE_TIMEOUT  # wait for new vtot_worker register
             while timer > 0:
                 with get_httpx_client() as client:
@@ -405,6 +409,7 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
                 print(msg)
                 return {"code": 500, "msg": msg}
             glob_minor_models["speechmodel"]["model_name"] = new_model_name
+            glob_minor_models["speechmodel"]["speaker"] = speaker
             msg = f"success change speech model from {model_name} to {new_model_name}"
             return {"code": 200, "msg": msg}
         else:
@@ -412,7 +417,7 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
             return {"code": 200, "msg": msg}
 
     @app.post("/get_speech_data")
-    def get_vtot_data(
+    def get_speech_data(
         text_data: str = Body(..., description="speech data", samples=""),
         speech_type: str = Body(None, description="speech type"),
     ) -> Dict:
@@ -426,10 +431,9 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
                 r = client.post(worker_address + "/get_speech_data",
                     json={"text_data": text_data, "speech_type": speech_type},
                     )
-                speech_data = r.json()["speech_data"]
-                return {"code": 200, "speech_data": speech_data}
+                return r.json()
             except Exception as e:
-                return {"code": 500, "speech_data": ""}
+                return {"code": 500, "channels": 0, "sample_width": 0, "frame_rate": 0, "speech_data": ""}
 
     host = FSCHAT_CONTROLLER["host"]
     port = FSCHAT_CONTROLLER["port"]
@@ -674,13 +678,13 @@ def run_voice_worker(
 
 def run_speech_worker(
     model_name: str = "",
+    speaker: str = "",
     controller_address: str = "",
     q: mp.Queue = None,
     started_event: mp.Event = None,
 ):
     import uvicorn
     from fastapi import Body
-    import sys
 
     kwargs = get_speech_worker_config(model_name)
     host = kwargs.pop("host")
@@ -691,12 +695,16 @@ def run_speech_worker(
         config = {
             "model_name": kwargs["model_name"],
             "model_path": kwargs["model_path"],
+            "speaker": speaker,
             "device": kwargs["device"],
             "loadbits": kwargs["loadbits"],
         }
-        speech_model = init_speech_models(config)
-        if speech_model is None:
-                return None
+        if kwargs["model_type"] == "local":
+            speech_model = init_speech_models(config)
+            if speech_model is None:
+                    return None
+        elif kwargs["model_type"] == "cloud":
+            speech_model = None
     except Exception as e:
         print(e)
         return None
@@ -717,8 +725,10 @@ def run_speech_worker(
     ) -> dict:
         if len(text_data) == 0 or speech_model is None:
             return {"code": 500, "speech_data": ""}
-        speech_data = translate_speech_data(speech_model, config, text_data, speech_type)
-        return {"code": 200, "speech_data": speech_data}
+        channels, sample_width, frame_rate, speech_data = translate_speech_data(speech_model, config, text_data, speech_type)
+        if speech_data == "":
+            return {"code": 500, "channels": 0, "sample_width": 0, "frame_rate": 0, "speech_data": ""}
+        return {"code": 200, "channels": channels, "sample_width": sample_width, "frame_rate": frame_rate,  "speech_data": speech_data}
 
     uvicorn.run(app, host=host, port=port)
 
@@ -842,10 +852,10 @@ def main_server():
     
     dump_server_info(args=args)
 
-    processes = {"online_api": {}, "model_worker": {}, "vtot_worker": {}}
+    processes = {"online_api": {}, "model_worker": {}, "vtot_worker": {}, "speech_worker": {}}
 
     def process_count():
-        return len(processes) + len(processes["online_api"]) + len(processes["model_worker"]) + len(processes["vtot_worker"]) - 2
+        return len(processes) + len(processes["online_api"]) + len(processes["model_worker"]) + len(processes["vtot_worker"]) + len(processes["speech_worker"]) - 2
        
     controller_started = manager.Event()
     if args.openai_api:
@@ -1048,11 +1058,12 @@ def main_server():
                         else:
                             print(f"Can not find the model: {model_name}")
                     elif cmd == "start_speech_model":
-                        print(f"Change to new model: {new_model_name}")
+                        print(f"Change to new model: {new_model_name}, speaker: {model_name}")
                         process = Process(
                             target=run_speech_worker,
                             name=f"speech_worker - {new_model_name}",
                             kwargs=dict(model_name=new_model_name,
+                                        speaker=model_name,
                                         controller_address=args.controller_address,
                                         q=queue,
                                         started_event=e),

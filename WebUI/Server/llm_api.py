@@ -397,7 +397,8 @@ def get_speech_model(
         with get_httpx_client() as client:
             r = client.post(controller_address + "/get_speech_model")
             model = r.json()["model"]
-            return BaseResponse(data=model)
+            speaker = r.json()["speaker"]
+            return BaseResponse(data={"model": model, "speaker": speaker})
     except Exception as e:
         print(f'{e.__class__.__name__}: {e}')
         return BaseResponse(
@@ -407,30 +408,28 @@ def get_speech_model(
     
 def get_speech_data(
     text_data: str = Body(..., description="speech data"),
-    controller_address: str = Body(None, description="Fastchat controller adress", examples=[fschat_controller_address()])
+    controller_address: str = Body(None, description="Fastchat controller adress", examples=[fschat_controller_address()]),
+    speech_type: str = Body("", description="synthesis")
 ) -> BaseResponse:
     try:
         controller_address = controller_address or fschat_controller_address()
         with get_httpx_client() as client:
             r = client.post(
                 controller_address + "/get_speech_data",
-                json={"text_data": text_data},
+                json={"text_data": text_data, "speech_type": speech_type},
                 )
-            data = r.json()["speech_data"]
             code = r.json()["code"]
             if code == 200:
-                return BaseResponse(data=data)
+                return r.json()
             else:
-                return BaseResponse(
-                    code=500,
-                    data="",
-                    msg=f"failed to translate voice data, error: {e}")
+                return {
+                    "code": 500,
+                    "speech_data": ""}
     except Exception as e:
         print(f'{e.__class__.__name__}: {e}')
-        return BaseResponse(
-            code=500,
-            data="",
-            msg=f"failed to translate voice data, error: {e}")
+        return {
+            "code": 500,
+            "speech_data": ""}
     
 def stop_speech_model(
     model_name: str = Body(..., description="Stop Model"),
@@ -453,6 +452,7 @@ def stop_speech_model(
 def change_speech_model(
     model_name: str = Body(..., description="Change Model", examples=""),
     new_model_name: str = Body(..., description="Switch to new Model", examples=""),
+    speaker: str = Body(..., description="Speaker", examples=""),
     controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])
 ):
     try:
@@ -460,7 +460,7 @@ def change_speech_model(
         with get_httpx_client() as client:
             r = client.post(
                 controller_address + "/release_speech_model",
-                json={"model_name": model_name, "new_model_name": new_model_name},
+                json={"model_name": model_name, "new_model_name": new_model_name, "speaker": speaker},
                 timeout=HTTPX_DEFAULT_TIMEOUT, # wait for new worker_model
             )
             return r.json()

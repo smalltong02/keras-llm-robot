@@ -116,6 +116,7 @@ class ApiRequest:
         history: List[Dict] = [],
         stream: bool = True,
         model: str = "",
+        speechmodel: dict = {"model": "", "speaker": ""},
         temperature: float = 0.7,
         max_tokens: int = None,
         prompt_name: str = "default",
@@ -125,12 +126,26 @@ class ApiRequest:
         webui_config = configinst.dump()
         modelinfo = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "config": dict}
         modelinfo["mtype"], modelinfo["msize"], modelinfo["msubtype"] = GetModelInfoByName(webui_config, model)
+        config = GetSpeechModelInfo(webui_config, speechmodel.get("model", ""))
+        if len(config):
+            speechmodel["type"] = config["type"]
+            speechmodel["speech_key"] = config.get("speech_key", "")
+            if speechmodel["speech_key"] == "[Your Key]":
+                speechmodel["speech_key"] = ""
+            speechmodel["speech_region"] = config.get("speech_region", "")
+            if speechmodel["speech_region"] == "[Your Region]":
+                speechmodel["speech_region"] = ""
+        else:
+            speechmodel["type"] = ""
+            speechmodel["speech_key"] = ""
+            speechmodel["speech_region"] = ""
 
         data = {
             "query": query,
             "history": [],
             "stream": stream,
             "model_name": model,
+            "speechmodel": speechmodel,
             "temperature": temperature,
             "max_tokens": max_tokens,
             "prompt_name": prompt_name,
@@ -150,10 +165,9 @@ class ApiRequest:
             )
             return self._get_response_value(response, as_json=True, value_func=lambda r: [json.loads(r["data"])] if "data" in r else [{}])
         return [{
-            "chat_history_id": "111",
-            "text": "abc"
+            "chat_history_id": "123",
+            "text": "error!"
         }]
-
 
     def _httpx_stream2generator(
         self,
@@ -539,7 +553,7 @@ class ApiRequest:
             "/speech_model/get_ttov_model",
             json=data,
         )
-        return self._get_response_value(response, as_json=True, value_func=lambda r:r.get("data", []))
+        return self._get_response_value(response, as_json=True, value_func=lambda r:r.get("data", {"model": "", "speaker": ""}))
     
     def eject_speech_model(self,
         model_name: str,
@@ -552,7 +566,7 @@ class ApiRequest:
             }
         
         running_model = self.get_ttov_model()
-        if model_name != running_model:
+        if model_name != running_model.get("model", ""):
             return {
                 "code": 200,
                 "msg": f"the model '{model_name}' is not running."
@@ -576,15 +590,16 @@ class ApiRequest:
     def change_speech_model(self,
         model_name: str,
         new_model_name: str,
+        speaker: str,
         controller_address: str = None,
     ):
-        if not new_model_name:
+        if not new_model_name or not speaker:
             return {
                 "code": 500,
-                "msg": f"name for the new model is None."
+                "msg": f"name or speaker for the new model is None."
             }
         running_model = self.get_ttov_model()
-        if new_model_name == model_name or new_model_name == running_model:
+        if new_model_name == model_name or new_model_name == running_model.get("model", ""):
             return {
                 "code": 200,
                 "msg": "Not necessary to switch models."
@@ -593,6 +608,7 @@ class ApiRequest:
         data = {
             "model_name": model_name,
             "new_model_name": new_model_name,
+            "speaker": speaker,
             "controller_address": controller_address,
         }
 
@@ -621,6 +637,32 @@ class ApiRequest:
             json=data,
         )
         return self._get_response_value(response, as_json=True, value_func=lambda r:r.get("data", ""))
+    
+    def save_speech_model_config(self,
+        model_name: str = "",
+        modelconfig: dict = {},
+        controller_address: str = None,
+    ):
+        if model_name == "" or modelconfig is None:
+            return {
+                "code": 500,
+                "msg": f"modelconfig is None."
+            }
+        data = {
+            "model_name": model_name,
+            "config": modelconfig,
+            "controller_address": controller_address,
+        }
+
+        response = self.post(
+            "/speech_model/save_speech_model_config",
+            json=data,
+        )
+        
+        if self._use_async:
+            return self.ret_async(response)
+        else:
+            return self.ret_sync(response)
 
     def save_chat_config(self,
         chatconfig: dict,

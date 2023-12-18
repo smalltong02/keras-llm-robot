@@ -8,8 +8,9 @@ from WebUI.configs.modelconfig import HISTORY_LEN
 import os, platform
 from pathlib import Path
 from datetime import datetime
-import speech_recognition as sr
-import torch
+from pydub import AudioSegment
+from pydub.playback import play
+import wave
 import time
 import psutil
 import pynvml
@@ -124,6 +125,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
     temperature = chatconfig.get("Temperature")
     bshowstatus = webconfig.get("ShowRunningStatus")
     voicemodel = api.get_vtot_model()
+    speechmodel = api.get_ttov_model()
     imagemodel = ""
 
     disabled = False
@@ -331,6 +333,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
             r = api.chat_chat(prompt,
                             history=history,
                             model=running_model,
+                            speechmodel=speechmodel,
                             prompt_name=prompt_template_name,
                             temperature=temperature)
             print("answer: ", r)
@@ -346,6 +349,23 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                 "chat_history_id": chat_history_id,
                 }
             chat_box.update_msg(text, streaming=False, metadata=metadata)
+            # speech_file = str(TMP_DIR / "speech.wav")
+            # with wave.open(speech_file, 'rb') as wave_file:
+            #     # 获取声音参数
+            #     channels = wave_file.getnchannels()
+            #     sample_width = wave_file.getsampwidth()
+            #     frame_rate = wave_file.getframerate()
+            #     frames = wave_file.getnframes()
+            #     # 读取声音数据
+            #     raw_data = wave_file.readframes(frames)
+            #     sound = AudioSegment(
+            #         raw_data,
+            #         frame_rate=frame_rate,
+            #         sample_width=sample_width,
+            #         channels=channels
+            #     )
+            #     # 播放声音
+            #     play(sound)
             chat_box.show_feedback(**feedback_kwargs,
                                 key=chat_history_id,
                                 on_submit=on_feedback,

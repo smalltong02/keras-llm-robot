@@ -81,26 +81,30 @@ def translate_voice_data(model, config, voice_data: str = "") -> str:
 def init_speech_models(config):
     if isinstance(config, dict):
         model_id = config["model_path"]
+        config_path = model_id + "/config.json"
         device =  'cuda' if config["device"] == 'gpu' else config["device"]
-        tts_model = TTS(model_id)
+        tts_model = TTS(model_path=model_id, config_path=config_path, progress_bar=False)
         tts_model.to(device)
         return tts_model
     return None
 
-def translate_speech_data(model, config, text_data: str = "", speech_type: str = "female-1") -> str:
+def translate_speech_data(model, config, text_data: str = "", speech_type: str = "en-us-female-1") -> str:
     if len(text_data):
-        if isinstance(config, dict):
-            if speech_type == "female-1":
+        if isinstance(config, dict) and speech_type != None:
+            parts = speech_type.split('_')
+            language = parts[0]
+            synthesis = parts[1]
+            if synthesis == "female-v1":
                 speaker_wav = "WebUI/configs/speech_template/female-1.wav"
-            elif speech_type == "female-2":
+            elif synthesis == "female-v2":
                 speaker_wav = "WebUI/configs/speech_template/female-2.wav"
-            elif speech_type == "male-1":
+            elif synthesis == "male-v1":
                 speaker_wav = "WebUI/configs/speech_template/male-1.wav"
-            elif speech_type == "male-2":
+            elif synthesis == "male-v2":
                 speaker_wav = "WebUI/configs/speech_template/male-2.wav"
-            wav_file_path = TMP_DIR / "speech.wav"
+            wav_file_path = str(TMP_DIR / "speech.wav")
 
-            model.tts_to_file(text_data, speaker_wav=speaker_wav, file_path=wav_file_path)
+            model.tts_to_file(text_data, speaker_wav=speaker_wav, language=language, file_path=wav_file_path)
 
             raw_data = None
             with wave.open(wav_file_path, 'rb') as wave_file:
@@ -111,5 +115,5 @@ def translate_speech_data(model, config, text_data: str = "", speech_type: str =
                 raw_data = wave_file.readframes(frames)
             if raw_data != None:
                 base64_data = base64.b64encode(raw_data).decode('utf-8')
-                return base64_data
-            return ""
+                return channels, sample_width, frame_rate, base64_data
+            return 0, 0, 0, 0, ""
