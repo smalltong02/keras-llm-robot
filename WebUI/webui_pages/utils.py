@@ -403,11 +403,6 @@ class ApiRequest:
                 "msg": f"modelconfig is None."
             }
         
-        if modelconfig["mtype"] == ModelType.Online:
-            return {
-                "code": 500,
-                "msg": f"Current only support Local Model save."
-            }
         data = {
             "mtype": modelconfig["mtype"].value,
             "msize": modelconfig["msize"].value,

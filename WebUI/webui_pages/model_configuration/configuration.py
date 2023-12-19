@@ -137,7 +137,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
             pathstr = current_model["config"].get("path")
         else:
             pathstr = ""
-        pathstr = st.text_input("Local Path", pathstr, disabled= disabled)
+        pathstr = st.text_input("Local Path", pathstr, disabled=disabled)
         save_path = st.button(
             "Save Path",
             use_container_width=True,
@@ -344,27 +344,50 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
         elif current_model["mtype"] == ModelType.Online:
             tabparams, tabapiconfig, tabprompt = st.tabs(["Parameters", "API Config", "Prompt"])
             with tabparams:
-                with st.form("Parameter"):
+                with st.form("Parameters"):
                     col1, col2 = st.columns(2)
                     with col1:
                         pass
-
                     with col2:
                         pass
                     submit_params = st.form_submit_button(
                         "Save Parameters",
                         use_container_width=True
                     )
+                    if submit_params:
+                        st.error("Not Support Now!")
 
             with tabapiconfig:
                 with st.form("ApiConfig"):
-                    st.text_input("API Key", "")
-                    st.text_input("API Proxy", "")
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        baseurl = st.text_input("Base URL", current_model["config"].get("baseurl", ""), disabled=disabled)
+                        apikey = st.text_input("API Key", current_model["config"].get("apikey", ""), disabled=disabled)
+                        provider = st.text_input("Provider", current_model["config"].get("provider", ""), disabled=disabled)
 
+                    with col2:
+                        apiversion = st.text_input("API Version", current_model["config"].get("apiversion", ""), disabled=disabled)
+                        apiproxy = st.text_input("API Proxy", current_model["config"].get("apiproxy", ""), disabled=disabled)
                     submit_config = st.form_submit_button(
                         "Save API Config",
                         use_container_width=True
                     )
+                    if submit_config:
+                        current_model["config"]["baseurl"] = baseurl
+                        current_model["config"]["apikey"] = apikey
+                        current_model["config"]["provider"] = provider
+                        current_model["config"]["apiversion"] = apiversion
+                        current_model["config"]["apiproxy"] = apiproxy
+                        savename = current_model["mname"]
+                        current_model["mname"] = onlinemodel
+                        with st.spinner(f"Saving online config, Please do not perform any actions or refresh the page."):
+                            print("current_model: ", current_model)
+                            r = api.save_model_config(current_model)
+                            if msg := check_error_msg(r):
+                                st.error(msg)
+                            elif msg := check_success_msg(r):
+                                st.success(msg)
+                        current_model["mname"] = savename
             
             with tabprompt:
                 pass

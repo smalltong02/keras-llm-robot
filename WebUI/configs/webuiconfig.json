@@ -21,14 +21,15 @@
                 "baseurl": "https://api.openai.com/v1",
                 "apiversion": "",
                 "apikey": "[Your Key]",
-                "apiproxy": ""
+                "apiproxy": "[Private Proxy]",
+                "provider": "OpenAI"
             },
             "azure-api": {
                 "modellist": [],
-                "resourcename": "",
+                "baseurl": "",
                 "apiversion": "",
                 "apikey": "[Your Key]",
-                "apiproxy": "",
+                "apiproxy": "[Private Proxy]",
                 "provider": "AzureWorker"
             }
         },

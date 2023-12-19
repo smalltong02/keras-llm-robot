@@ -211,24 +211,23 @@ def save_model_config(
         elif mtype == ModelType.Multimodal.value:
             msize = GetSubTypeName(ModelSubType(msubtype))
             provider = "Multimodal Model"
-        elif mtype == ModelType.Online.value:
+        elif mtype != ModelType.Online.value:
             return BaseResponse(
                 code=500,
-                msg=f"failed to save local model configration, error mtype!")
-        else:
-            return BaseResponse(
-                code=500,
-                msg=f"failed to save local model configration, error mtype!")
+                msg=f"failed to save model configration, error mtype!")
 
         with open("WebUI/configs/webuiconfig.json", 'r+') as file:
             jsondata = json.load(file)
-            jsondata["ModelConfig"]["LocalModel"][provider][msize][model_name].update(config)
+            if mtype == ModelType.Online.value:
+                jsondata["ModelConfig"]["OnlineModel"][model_name].update(config)
+            else:
+                jsondata["ModelConfig"]["LocalModel"][provider][msize][model_name].update(config)
             file.seek(0)
             json.dump(jsondata, file, indent=4)
             file.truncate()
         return BaseResponse(
             code=200,
-            msg=f"success save local model configration!")
+            msg=f"success save model configration!")
             
     except Exception as e:
         print(f'{e.__class__.__name__}: {e}')
