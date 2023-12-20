@@ -84,8 +84,6 @@ class StreamSpeakHandler(BaseCallbackHandler):
                 speak_this = self.new_sentence
                 if self.run_place =="cloud":
                     self.speak_streamlit_cloud(speak_this)
-                    if len(self.speech_file):
-                        os.remove(self.speech_file)
                 else:
                     self.speak_ssml_async(speak_this)
                 self.new_sentence = ""

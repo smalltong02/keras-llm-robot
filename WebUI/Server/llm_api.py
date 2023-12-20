@@ -1,12 +1,11 @@
 from fastapi import Body
-from configs import LLM_MODELS, TEMPERATURE, HTTPX_DEFAULT_TIMEOUT
+from WebUI.configs import LLM_MODELS, TEMPERATURE, HTTPX_DEFAULT_TIMEOUT
 from WebUI.Server.utils import (BaseResponse, fschat_controller_address, list_config_llm_models,
                           get_httpx_client, get_model_worker_config, get_vtot_worker_config, get_speech_worker_config)
 from copy import deepcopy
 import json
 from WebUI.configs.webuiconfig import *
 from WebUI.configs.basicconfig import *
-from WebUI.Server.chat.utils import History
 
 def list_running_models(
     controller_address: str = Body(None, description="Fastchat controller adress", examples=[fschat_controller_address()]),
@@ -116,7 +115,7 @@ def stop_llm_model(
     
 def chat_llm_model(
     query: str = Body(..., description="User input: ", examples=["chat"]),
-    history: List[History] = Body([],
+    history: List[dict] = Body([],
                                   description="History chat",
                                   examples=[[
                                       {"role": "user", "content": "Who are you?"},
@@ -124,6 +123,7 @@ def chat_llm_model(
                                   ),
     stream: bool = Body(False, description="stream output"),
     model_name: str = Body(LLM_MODELS[0], description="model name"),
+    speechmodel: dict = Body({}, description="speech model"),
     temperature: float = Body(TEMPERATURE, description="LLM Temperature", ge=0.0, le=1.0),
     max_tokens: Optional[int] = Body(None, description="max tokens."),
     prompt_name: str = Body("default", description=""),
@@ -139,6 +139,7 @@ def chat_llm_model(
                     "history": history,
                     "stream": stream,
                     "model_name": model_name,
+                    "speechmodel": speechmodel,
                     "temperature": temperature,
                     "max_tokens": max_tokens,
                     "prompt_name": prompt_name,
@@ -154,11 +155,12 @@ def chat_llm_model(
                 return BaseResponse(
                     code=500,
                     data={},
-                    msg=f"failed to translate voice data, error: {e}")
+                    msg=f"failed to translate data.")
     except Exception as e:
         print(f'{e.__class__.__name__}: {e}')
         return BaseResponse(
             code=500,
+            data={},
             msg=f"failed chat with llm model. error: {e}")
 
 def change_llm_model(
@@ -205,9 +207,9 @@ def save_model_config(
         if mtype == ModelType.Local.value:
             msize = GetSizeName(ModelSize(msize))
             provider = "LLM Model"
-        elif mtype == ModelType.Llamacpp.value:
+        elif mtype == ModelType.Special.value:
             msize = GetSizeName(ModelSize(msize))
-            provider = "Llamacpp(GGUF) Model"
+            provider = "Special Model"
         elif mtype == ModelType.Multimodal.value:
             msize = GetSubTypeName(ModelSubType(msubtype))
             provider = "Multimodal Model"

@@ -9,7 +9,7 @@ TMP_DIR = Path('temp')
 if not TMP_DIR.exists():
     TMP_DIR.mkdir(exist_ok=True, parents=True)
 
-glob_model_type_list = ["LLM Model","Multimodal Model","Llamacpp(GGUF) Model","Online Model"]
+glob_model_type_list = ["LLM Model","Multimodal Model","Special Model","Online Model"]
 glob_model_size_list = ["3B Model","7B Model","13B Model","34B Model","70B Model"]
 glob_model_subtype_list = ["Vision Chat Model","Voice Chat Model","Video Chat Model"]
 
@@ -17,7 +17,7 @@ class ModelType(Enum):
     Unknown = 0
     Local = 1
     Multimodal = 2
-    Llamacpp = 3
+    Special = 3
     Online = 4
 
 class ModelSize(Enum):
@@ -39,8 +39,8 @@ def GetTypeName(type: ModelType) -> str:
         return "LLM Model"
     if type == ModelType.Multimodal:
         return "Multimodal Model"
-    if type == ModelType.Llamacpp:
-        return "Llamacpp(GGUF) Model"
+    if type == ModelType.Special:
+        return "Special Model"
     if type == ModelType.Online:
         return "Online Model"
     return "Unknown"
@@ -72,8 +72,8 @@ def GetModelType(Typestr : str) -> ModelType:
         return ModelType.Local
     if Typestr == "Multimodal Model":
         return ModelType.Multimodal
-    if Typestr == "Llamacpp(GGUF) Model":
-        return ModelType.Llamacpp
+    if Typestr == "Special Model":
+        return ModelType.Special
     if Typestr == "Online Model":
         return ModelType.Online
     return ModelType.Unknown
@@ -123,12 +123,20 @@ def GetModelInfoByName(webui_config: Dict, name : str):
                     if modelkey.casefold() == name.casefold():
                         return GetModelType(typekey), GetModelSize(sizekey), GetModelSubType(sizekey)
         onlinemodel = webui_config.get("ModelConfig").get("OnlineModel")
-        for key, value in onlinemodel.items():
+        for _, value in onlinemodel.items():
             modellist = value["modellist"]
             if name in modellist:
                     return ModelType.Online, ModelSize.Unknown, ModelSubType.Unknown
-    
     return ModelType.Unknown, ModelSize.Unknown, ModelSubType.Unknown
+
+def GetProviderByName(webui_config: Dict, name : str):
+    if name:
+        onlinemodel = webui_config.get("ModelConfig").get("OnlineModel")
+        for key, value in onlinemodel.items():
+            modellist = value["modellist"]
+            if name in modellist:
+                return key
+    return None
 
 def GetModeList(webui_config, current_model) -> list:
     localmodel = webui_config.get("ModelConfig").get("LocalModel")
@@ -136,9 +144,9 @@ def GetModeList(webui_config, current_model) -> list:
     if mtype == ModelType.Local:
         msize = current_model["msize"]
         return [f"{key}" for key in localmodel.get("LLM Model").get(GetSizeName(msize))]
-    elif mtype == ModelType.Llamacpp:
+    elif mtype == ModelType.Special:
         msize = current_model["msize"]
-        return [f"{key}" for key in localmodel.get("Llamacpp(GGUF) Model").get(GetSizeName(msize))]
+        return [f"{key}" for key in localmodel.get("Special Model").get(GetSizeName(msize))]
     elif mtype == ModelType.Multimodal:
         msubtype = current_model["msubtype"]
         return [f"{key}" for key in localmodel.get("Multimodal Model").get(GetSubTypeName(msubtype))]
@@ -147,26 +155,26 @@ def GetModeList(webui_config, current_model) -> list:
     return []
 
 def GetModelConfig(webui_config, current_model) -> Dict:
-    localmodel = webui_config.get("ModelConfig").get("LocalModel")
     mtype = current_model["mtype"]
     if mtype == ModelType.Local:
         msize = GetSizeName(current_model["msize"])
         provider = "LLM Model"
-    elif mtype == ModelType.Llamacpp:
+    elif mtype == ModelType.Special:
         msize = GetSizeName(current_model["msize"])
-        provider = "Llamacpp(GGUF) Model"
+        provider = "Special Model"
     elif mtype == ModelType.Multimodal:
         msize = GetSubTypeName(current_model["msubtype"])
         provider = "Multimodal Model"
     elif mtype == ModelType.Online:
         onlineprovider = webui_config.get("ModelConfig").get("OnlineModel")
-        for key, value in onlineprovider.items():
+        for _, value in onlineprovider.items():
             modellist = value["modellist"]
             if current_model["mname"] in modellist:
                     return value
         return {}
     else:
         return {}
+    localmodel = webui_config.get("ModelConfig").get("LocalModel")
     return localmodel.get(provider).get(msize).get(current_model["mname"])
 
 def GetGGUFModelPath(pathstr : str) -> list:

@@ -24,6 +24,19 @@
                 "apiproxy": "[Private Proxy]",
                 "provider": "OpenAI"
             },
+            "google-api": {
+                "modellist": [
+                    "gemini-pro",
+                    "gemini-pro-vision",
+                    "chat-bison-001",
+                    "text-bison-001"
+                ],
+                "baseurl": "",
+                "apiversion": "",
+                "apikey": "[Your Key]",
+                "apiproxy": "[Private Proxy]",
+                "provider": "Google Cloud Studio"
+            },
             "azure-api": {
                 "modellist": [],
                 "baseurl": "",
@@ -32,6 +45,7 @@
                 "apiproxy": "[Private Proxy]",
                 "provider": "AzureWorker"
             }
+            
         },
         "EmbeddingModel": {
             "jina-embeddings-v2-small-en": {
@@ -69,6 +83,14 @@
             "text-embedding-ada-002": {
                 "path": "",
                 "apikey": "OPENAI_API_KEY"
+            },
+            "embedding-gecko-001": {
+                "path": "",
+                "apikey": "GOOGLE_API_KEY"
+            },
+            "embedding-001": {
+                "path": "",
+                "apikey": "GOOGLE_API_KEY"
             }
         },
         "VtoTModel": {
@@ -577,7 +599,7 @@
                 "Voice Chat Model": {},
                 "Video Chat Model": {}
             },
-            "Llamacpp(GGUF) Model": {
+            "Special Model": {
                 "3B Model": {},
                 "7B Model": {
                     "Yi-6B-Chat-gguf": {

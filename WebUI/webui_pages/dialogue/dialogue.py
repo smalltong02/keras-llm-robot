@@ -6,11 +6,8 @@ from aiortc.contrib.media import MediaRecorder
 from WebUI.configs.prompttemplates import PROMPT_TEMPLATES
 from WebUI.configs.modelconfig import HISTORY_LEN
 import os, platform
-from pathlib import Path
 from datetime import datetime
-from pydub import AudioSegment
 from pydub.playback import play
-import wave
 import time
 import psutil
 import pynvml
@@ -366,6 +363,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
             #     )
             #     # 播放声音
             #     play(sound)
+            print("chat_box.history: ", len(chat_box.history))
             chat_box.show_feedback(**feedback_kwargs,
                                 key=chat_history_id,
                                 on_submit=on_feedback,

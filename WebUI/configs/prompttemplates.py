@@ -15,7 +15,7 @@ PROMPT_TEMPLATES = {
         ,
     },
     "phi2_template": {
-        "chat_template": "Instruct: {{input}} \nOutput:",
+        "chat_template": "Instruct: {input}\n Output:",
 
         "code_template": 
             '''  

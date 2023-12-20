@@ -1,4 +1,3 @@
-import streamlit as st
 import httpx
 import json
 import base64
@@ -113,7 +112,7 @@ class ApiRequest:
     def chat_chat(
         self,
         query: str,
-        history: List[Dict] = [],
+        history: List[dict] = [],
         stream: bool = True,
         model: str = "",
         speechmodel: dict = {"model": "", "speaker": ""},
@@ -154,16 +153,29 @@ class ApiRequest:
         print(f"received input message:")
         pprint(data)
 
-        if modelinfo["mtype"] == ModelType.Local or modelinfo["mtype"] == ModelType.Online:
+        if modelinfo["mtype"] == ModelType.Local:
             response = self.post("/chat/chat", json=data, stream=True, **kwargs)
             return self._httpx_stream2generator(response, as_json=True)
         
-        elif modelinfo["mtype"] == ModelType.Llamacpp:
+        elif modelinfo["mtype"] == ModelType.Special:
             response = self.post(
                "/llm_model/chat",
                json=data,
             )
             return self._get_response_value(response, as_json=True, value_func=lambda r: [json.loads(r["data"])] if "data" in r else [{}])
+        elif modelinfo["mtype"] == ModelType.Online:
+            provider = GetProviderByName(webui_config, model)
+            if provider is not None:
+                if provider == "google-api":
+                    response = self.post(
+                        "/llm_model/chat",
+                        json=data,
+                    )
+                    print("response: ", response)
+                    return self._get_response_value(response, as_json=True, value_func=lambda r: [json.loads(r["data"])] if "data" in r else [{}])
+                else:
+                    response = self.post("/chat/chat", json=data, stream=True, **kwargs)
+                    return self._httpx_stream2generator(response, as_json=True)
         return [{
             "chat_history_id": "123",
             "text": "error!"
@@ -174,9 +186,6 @@ class ApiRequest:
         response: contextlib._GeneratorContextManager,
         as_json: bool = False,
     ):
-        '''
-        将httpx.stream返回的GeneratorContextManager转化为普通生成器
-        '''
         async def ret_async(response, as_json):
             try:
                 async with response as r:
@@ -189,21 +198,21 @@ class ApiRequest:
                                 pprint(data, depth=1)
                                 yield data
                             except Exception as e:
-                                msg = f"接口返回json错误： ‘{chunk}’。错误信息是：{e}。"
+                                msg = f"json failed: '{chunk}'. error: {e}."
                                 print(f'{e.__class__.__name__}: {msg}')
                         else:
                             # print(chunk, end="", flush=True)
                             yield chunk
             except httpx.ConnectError as e:
-                msg = f"无法连接API服务器，请确认 ‘api.py’ 已正常启动。({e})"
+                msg = f"Can't connect to API Server, Please confirm 'api.py' starting。({e})"
                 print(msg)
                 yield {"code": 500, "msg": msg}
             except httpx.ReadTimeout as e:
-                msg = f"API通信超时，请确认已启动FastChat与API服务（详见Wiki '5. 启动 API 服务或 Web UI'）。（{e}）"
+                msg = f"API communication timeout. Please ensure that FastChat and API service have been started (refer to Wiki '5. Start API Service or Web UI'). ({e})"
                 print(msg)
                 yield {"code": 500, "msg": msg}
             except Exception as e:
-                msg = f"API通信遇到错误：{e}"
+                msg = f"API communication error: {e}"
                 print(f'{e.__class__.__name__}: {msg}')
                 yield {"code": 500, "msg": msg}
 
@@ -219,21 +228,21 @@ class ApiRequest:
                                 pprint(data, depth=1)
                                 yield data
                             except Exception as e:
-                                msg = f"接口返回json错误： ‘{chunk}’。错误信息是：{e}。"
+                                msg = f"json failed: '{chunk}'. error: {e}."
                                 print(f'{e.__class__.__name__}: {msg}')
                         else:
                             # print(chunk, end="", flush=True)
                             yield chunk
             except httpx.ConnectError as e:
-                msg = f"无法连接API服务器，请确认 ‘api.py’ 已正常启动。({e})"
+                msg = f"Can't connect to API Server, Please confirm 'api.py' starting。({e})"
                 print(msg)
                 yield {"code": 500, "msg": msg}
             except httpx.ReadTimeout as e:
-                msg = f"API通信超时，请确认已启动FastChat与API服务（详见Wiki '5. 启动 API 服务或 Web UI'）。（{e}）"
+                msg = f"API communication timeout. Please ensure that FastChat and API service have been started (refer to Wiki '5. Start API Service or Web UI'). ({e})"
                 print(msg)
                 yield {"code": 500, "msg": msg}
             except Exception as e:
-                msg = f"API通信遇到错误：{e}"
+                msg = f"API communication error: {e}"
                 print(f'{e.__class__.__name__}: {msg}')
                 yield {"code": 500, "msg": msg}
 
@@ -394,7 +403,7 @@ class ApiRequest:
             return self.ret_sync(response)
         
     def save_model_config(self,
-        modelconfig: {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "mllamacpp": "", "config": dict},
+        modelconfig: {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "mspecial": "", "config": dict},
         controller_address: str = None,
     ):
         if modelconfig is None or all(key in modelconfig for key in ["mtype", "msize", "msubtype", "mname", "config"]) is False:

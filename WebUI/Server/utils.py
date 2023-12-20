@@ -209,19 +209,9 @@ def get_model_worker_config(model_name: str = None) -> dict:
             config["api_version"] = value["apiversion"]
             config["api_proxy"] = value["apiproxy"]
             return config
-    # config.update(onlinemodel.get(model_name, {}).copy())
-    # if model_name in onlinemodel:
-    #     config["online_api"] = True
-    #     if provider := config.get("provider"):
-    #         try:
-    #             config["worker_class"] = getattr(workers, provider)
-    #         except Exception as e:
-    #             msg = f"Online Model '{model_name}''s provider configuration error."
-    #             print(f'{e.__class__.__name__}: {msg}')
 
-    # else:
     modelinfo["mtype"], modelinfo["msize"], modelinfo["msubtype"] = GetModelInfoByName(webui_config, model_name)
-    if modelinfo["mtype"] == ModelType.Local or modelinfo["mtype"] == ModelType.Multimodal or modelinfo["mtype"] == ModelType.Llamacpp:
+    if modelinfo["mtype"] == ModelType.Local or modelinfo["mtype"] == ModelType.Multimodal or modelinfo["mtype"] == ModelType.Special:
         modelinfo["mname"] = model_name
         modelinfo["config"] = GetModelConfig(webui_config, modelinfo)
         if modelinfo["config"]:
@@ -229,13 +219,12 @@ def get_model_worker_config(model_name: str = None) -> dict:
             config["device"] = llm_device(modelinfo["config"])
             config["load_8bit"] = load_8bit(modelinfo["config"])
             config["max_gpu_memory"] = get_max_gpumem(modelinfo["config"])
-        if modelinfo["mtype"] == ModelType.Llamacpp:
-            config["llamacpp_model"] = True
+        if modelinfo["mtype"] == ModelType.Special:
+            config["special_model"] = True
     return config
 
 def get_vtot_worker_config(model_name: str = None) -> dict:
     config = {}
-    
     configinst = InnerJsonConfigWebUIParse()
     webui_config = configinst.dump()
     server_config = webui_config.get("ServerConfig")
@@ -519,6 +508,9 @@ def get_ChatOpenAI(
         apikey = os.environ.get('OPENAI_API_KEY')
     if apikey == None:
         apikey = "EMPTY"
+    proxy = config.get("openai_proxy", "[Private Proxy]")
+    if proxy == "[Private Proxy]":
+        proxy = ""
     model = ChatOpenAI(
         streaming=streaming,
         verbose=verbose,

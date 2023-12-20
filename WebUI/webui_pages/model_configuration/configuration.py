@@ -15,7 +15,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
     localmodel = webui_config.get("ModelConfig").get("LocalModel")
     commonmodel = localmodel.get("LLM Model")
     multimodalmodel = localmodel.get("Multimodal Model")
-    llamacppmodel = localmodel.get("Llamacpp(GGUF) Model")
+    specialmodel = localmodel.get("Special Model")
     onlinemodel = webui_config.get("ModelConfig").get("OnlineModel")
     embeddingmodel = webui_config.get("ModelConfig").get("EmbeddingModel")
     chatconfig = webui_config.get("ChatConfiguration")
@@ -52,7 +52,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
         current_model["mtype"] = GetModelType(modeltype)
         type_index = current_model["mtype"].value - 1
     with col2:
-        if type_index == ModelType.Local.value - 1 or type_index == ModelType.Llamacpp.value - 1:
+        if type_index == ModelType.Local.value - 1 or type_index == ModelType.Special.value - 1:
             modelsize = st.selectbox(
                     "Please Select Model Size",
                     glob_model_size_list,
@@ -157,7 +157,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
 
     st.divider()
     if current_model["config"]:
-        if current_model["mtype"] == ModelType.Local or current_model["mtype"] == ModelType.Multimodal or current_model["mtype"] == ModelType.Llamacpp:
+        if current_model["mtype"] == ModelType.Local or current_model["mtype"] == ModelType.Multimodal or current_model["mtype"] == ModelType.Special:
             tabparams, tabquant, tabembedding, tabtunning, tabprompt = st.tabs(["Parameters", "Quantization", "Embedding Model", "Fine-Tunning", "Prompt Templates"])
             with tabparams:
                 with st.form("Parameter"):

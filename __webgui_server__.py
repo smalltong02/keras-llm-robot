@@ -20,8 +20,8 @@ from WebUI.configs.serverconfig import (FSCHAT_MODEL_WORKERS, FSCHAT_CONTROLLER,
 from WebUI.configs.voicemodels import (init_voice_models, translate_voice_data, init_speech_models, translate_speech_data)
 from WebUI.configs.webuiconfig import *
 from WebUI.configs.basicconfig import *
+from WebUI.configs.specialmodels import *
 from WebUI.configs import LLM_MODELS, TEMPERATURE
-from WebUI.Server.chat.utils import History
 from typing import Union, List, Dict
 
 
@@ -170,7 +170,7 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
                     models = app._controller.list_models()
                     if new_model_name in models:
                         break
-                elif modelinfo["mtype"] == ModelType.Llamacpp or modelinfo["mtype"] == ModelType.Online:
+                elif modelinfo["mtype"] == ModelType.Special or modelinfo["mtype"] == ModelType.Online:
                     with get_httpx_client() as client:
                         try:
                             r = client.post(worker_address + "/get_name",
@@ -201,7 +201,7 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
                     models = app._controller.list_models()
                     if model_name not in models:
                         break
-                elif modelinfo["mtype"] == ModelType.Llamacpp or modelinfo["mtype"] == ModelType.Online:
+                elif modelinfo["mtype"] == ModelType.Special or modelinfo["mtype"] == ModelType.Online:
                     with get_httpx_client() as client:
                         try:
                             r = client.post(worker_address + "/get_name",
@@ -228,7 +228,7 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
     @app.post("/text_chat")
     def text_chat(
         query: str = Body(..., description="User input: ", examples=["chat"]),
-        history: List[History] = Body([],
+        history: List[dict] = Body([],
                                     description="History chat",
                                     examples=[[
                                         {"role": "user", "content": "Who are you?"},
@@ -236,6 +236,7 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
                                     ),
         stream: bool = Body(False, description="stream output"),
         model_name: str = Body(LLM_MODELS[0], description="model name"),
+        speechmodel: dict = Body({}, description="speech model"),
         temperature: float = Body(TEMPERATURE, description="LLM Temperature", ge=0.0, le=1.0),
         max_tokens: Optional[int] = Body(None, description="max tokens."),
         prompt_name: str = Body("default", description=""),
@@ -260,6 +261,7 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
                         "query": query,
                         "history": history,
                         "stream": stream,
+                        "speechmodel": speechmodel,
                         "temperature": temperature,
                         "max_tokens": max_tokens,
                         "prompt_name": prompt_name,
@@ -462,23 +464,27 @@ def create_model_worker_app(log_level: str = "INFO", **kwargs) -> Union[FastAPI,
     if worker_class := kwargs.get("langchain_model"):
         worker = ""
     # Online model
-    elif kwargs.get("online_model", False):
-        app._model = None
+    elif kwargs.get("online_model", False):        
+        google_model = init_cloud_models(args.model_names[0])
+        app._model = google_model
         app._model_name = args.model_names[0]
         MakeFastAPIOffline(app)
         app.title = f"Online Model ({args.model_names[0]})"
         return app
 
     # Local model
-    elif kwargs.get("llamacpp_model", False) == True:
+    elif kwargs.get("special_model", False) == True:
         modellist = GetGGUFModelPath(args.model_path)
         if len(modellist):
             from langchain.llms.ctransformers import CTransformers
-            llm_model = CTransformers(model=args.model_path, model_file=modellist[0], model_type="llama")
+            config = {
+                "threads": 4,
+            }
+            llm_model = CTransformers(model=args.model_path, model_file=modellist[0], model_type="llama", config=config)
             app._model = llm_model
             app._model_name = args.model_names[0]
         MakeFastAPIOffline(app)
-        app.title = f"Llamacpp Model ({args.model_names[0]})"
+        app.title = f"Special Model ({args.model_names[0]})"
         return app
     # fastchat model
     else:
@@ -779,38 +785,20 @@ def run_model_worker(
     @app.post("/text_chat")
     def text_chat(
         query: str = Body(..., description="User input: ", examples=["chat"]),
-        history: List[History] = Body([],
+        history: List[dict] = Body([],
                                     description="History chat",
                                     examples=[[
                                         {"role": "user", "content": "Who are you?"},
                                         {"role": "assistant", "content": "I am AI."}]]
                                     ),
         stream: bool = Body(False, description="stream output"),
+        speechmodel: dict = Body({}, description="speech model"),
         temperature: float = Body(TEMPERATURE, description="LLM Temperature", ge=0.0, le=1.0),
         max_tokens: Optional[int] = Body(None, description="max tokens."),
         prompt_name: str = Body("default", description=""),
     ) -> Dict:
-        from langchain.chains import LLMChain
-        from WebUI.Server.utils import get_prompt_template
-        from langchain.prompts.chat import ChatPromptTemplate
-        from transformers import pipeline
-        from WebUI.Server.db.repository import add_chat_history_to_db, update_chat_history
-
-        prompt_template = get_prompt_template("llm_chat", prompt_name)
-        input_msg = History(role="user", content=prompt_template).to_msg_template(False)
-        chat_prompt = ChatPromptTemplate.from_messages(
-            [i.to_msg_template() for i in history] + [input_msg])
-        print("chat_prompt: ", chat_prompt)
-        chain = LLMChain(prompt=chat_prompt, llm=app._model)
-        chat_history_id = add_chat_history_to_db(chat_type="llm_chat", query=query)
-        answer = chain.run({"input": query})
-        jsdata = json.dumps(
-                    {"text": answer, "chat_history_id": chat_history_id},
-                    ensure_ascii=False)
-        update_chat_history(chat_history_id, response=answer)
-        return {"code": 200, "answer": jsdata}
-
-
+        return special_model_chat(app._model, app._model_name, query, history, stream, speechmodel, temperature, max_tokens, prompt_name)
+    
     uvicorn.run(app, host=host, port=port)
 
 def run_api_server(started_event: mp.Event = None, run_mode: str = None):
