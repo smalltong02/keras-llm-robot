@@ -199,7 +199,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                             st.success(msg)
 
         elif modelconfig["type"] == "cloud":
-            with st.form("speech_model"):
+            with st.form("speech_cloud_model"):
                 keycol, regcol = st.columns(2)
                 with keycol:
                     speechkey = modelconfig.get("speech_key")
@@ -225,7 +225,6 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
 
         st.divider()
         col1, col2 = st.columns(2)
-
         with col1:
             templates_list = [modelconfig.get("CloudTemplates", "")]
             templates = st.selectbox(
@@ -296,111 +295,147 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                         elif msg := check_success_msg(r):
                             st.success(msg)
                             current_voice_model = voicemodel
+            modelconfig = vtotmodel[voicemodel]
         with col2:
-            if voicemodel is not None:
-                pathstr = vtotmodel[voicemodel].get("path")
-            else:
-                pathstr = ""
-            st.text_input("Local Path", pathstr)
-            vosave_path = st.button(
-                "Save Path",
-                key="vosave_btn",
-                use_container_width=True,
-            )
-            if vosave_path:
-                with st.spinner(f"Saving Path, Please do not perform any actions or refresh the page."):
-                        vtotmodel[voicemodel]["path"] = vosave_path
-                        r = api.save_vtot_model_config(voicemodel, config)
-                        if msg := check_error_msg(r):
-                            st.error(f"failed to save path for model {voicemodel}.")
-                        elif msg := check_success_msg(r):
-                            st.success(f"success save path for model {voicemodel}.")
+            if modelconfig["type"] == "local":
+                if voicemodel is not None:
+                    pathstr = vtotmodel[voicemodel].get("path")
+                else:
+                    pathstr = ""
+                st.text_input("Local Path", pathstr)
+                vosave_path = st.button(
+                    "Save Path",
+                    key="vosave_btn",
+                    use_container_width=True,
+                )
+                if vosave_path:
+                    with st.spinner(f"Saving Path, Please do not perform any actions or refresh the page."):
+                            vtotmodel[voicemodel]["path"] = vosave_path
+                            r = api.save_vtot_model_config(voicemodel, config)
+                            if msg := check_error_msg(r):
+                                st.error(f"failed to save path for model {voicemodel}.")
+                            elif msg := check_success_msg(r):
+                                st.success(f"success save path for model {voicemodel}.")
+            elif modelconfig["type"] == "cloud":
+                pathstr = modelconfig.get("path")
+                st.text_input("Cloud Path", pathstr, disabled=True)
+                spsave_path = st.button(
+                    "Save Path",
+                    key="vosave_btn",
+                    use_container_width=True,
+                    disabled=True
+                )
 
         st.divider()
-        config = vtotmodel[voicemodel]
-        if voicemodel == "whisper-large-v3" or voicemodel == "whisper-base" or voicemodel == "whisper-medium":
-            with st.form("whisper_model"):
-                devcol, bitcol = st.columns(2)
-                with devcol:
-                    sdevice = config.get("device").lower()
-                    if sdevice in training_devices_list:
-                        index = training_devices_list.index(sdevice)
-                    else:
-                        index = 0
-                    predict_dev = st.selectbox(
-                            "Please select Device",
-                            training_devices_list,
+        if modelconfig["type"] == "local":
+            if voicemodel == "whisper-large-v3" or voicemodel == "whisper-base" or voicemodel == "whisper-medium":
+                with st.form("whisper_model"):
+                    devcol, bitcol = st.columns(2)
+                    with devcol:
+                        sdevice = modelconfig.get("device").lower()
+                        if sdevice in training_devices_list:
+                            index = training_devices_list.index(sdevice)
+                        else:
+                            index = 0
+                        predict_dev = st.selectbox(
+                                "Please select Device",
+                                training_devices_list,
+                                index=index
+                            )
+                    with bitcol:
+                        nloadbits = modelconfig.get("loadbits")
+                        index = 0 if nloadbits == 32 else (1 if nloadbits == 16 else (2 if nloadbits == 8 else 16))
+                        nloadbits = st.selectbox(
+                            "Load Bits",
+                            loadbits_list,
                             index=index
                         )
-                with bitcol:
-                    nloadbits = config.get("loadbits")
-                    index = 0 if nloadbits == 32 else (1 if nloadbits == 16 else (2 if nloadbits == 8 else 16))
-                    nloadbits = st.selectbox(
-                        "Load Bits",
-                        loadbits_list,
-                        index=index
+                    save_parameters = st.form_submit_button(
+                        "Save Parameters",
+                        use_container_width=True
                     )
+                    if save_parameters:
+                        modelconfig["device"] = predict_dev
+                        if nloadbits == "32 bits":
+                            modelconfig["loadbits"] = 32
+                        elif nloadbits == "16 bits":
+                            modelconfig["loadbits"] = 16
+                        else:
+                            modelconfig["loadbits"] = 8
+                        with st.spinner(f"Saving Parameters, Please do not perform any actions or refresh the page."):
+                            r = api.save_vtot_model_config(voicemodel, modelconfig)
+                            if msg := check_error_msg(r):
+                                st.error(f"failed to save configuration for model {voicemodel}.")
+                            elif msg := check_success_msg(r):
+                                st.success(f"success save configuration for model {voicemodel}.")
+
+            elif voicemodel == "faster-whisper-large-v3":
+                with st.form("faster_whisper_model"):
+                    devcol, bitcol = st.columns(2)
+                    with devcol:
+                        sdevice = modelconfig.get("device").lower()
+                        if sdevice in training_devices_list:
+                            index = training_devices_list.index(sdevice)
+                        else:
+                            index = 0
+                        predict_dev = st.selectbox(
+                                "Please select Device",
+                                training_devices_list,
+                                index=index
+                            )
+                    with bitcol:
+                        nloadbits = modelconfig.get("loadbits")
+                        index = 0 if nloadbits == 32 else (1 if nloadbits == 16 else (2 if nloadbits == 8 else 16))
+                        nloadbits = st.selectbox(
+                            "Load Bits",
+                            loadbits_list,
+                            index=index
+                        )
+                    save_parameters = st.form_submit_button(
+                            "Save Parameters",
+                            use_container_width=True
+                        )
+                    if save_parameters:
+                        modelconfig["device"] = predict_dev
+                        if nloadbits == "32 bits":
+                            modelconfig["loadbits"] = 32
+                        elif nloadbits == "16 bits":
+                            modelconfig["loadbits"] = 16
+                        else:
+                            modelconfig["loadbits"] = 8
+                        with st.spinner(f"Saving Parameters, Please do not perform any actions or refresh the page."):
+                            r = api.save_vtot_model_config(voicemodel, modelconfig)
+                            if msg := check_error_msg(r):
+                                st.error(f"failed to save configuration for model {voicemodel}.")
+                            elif msg := check_success_msg(r):
+                                st.success(f"success save configuration for model {voicemodel}.")
+            else:
+                pass
+        elif modelconfig["type"] == "cloud":
+            with st.form("voice_cloud_model"):
+                keycol, regcol = st.columns(2)
+                with keycol:
+                    voicekey = modelconfig.get("voice_key")
+                    voicekey = st.text_input("Voice Key", voicekey)
+                with regcol:
+                    voiceregion = modelconfig.get("voice_region")
+                    voiceregion = st.text_input("Voice Region", voiceregion)
+
                 save_parameters = st.form_submit_button(
                     "Save Parameters",
                     use_container_width=True
                 )
                 if save_parameters:
-                    config["device"] = predict_dev
-                    if nloadbits == "32 bits":
-                        config["loadbits"] = 32
-                    elif nloadbits == "16 bits":
-                        config["loadbits"] = 16
-                    else:
-                        config["loadbits"] = 8
                     with st.spinner(f"Saving Parameters, Please do not perform any actions or refresh the page."):
-                        r = api.save_vtot_model_config(voicemodel, config)
-                        if msg := check_error_msg(r):
-                            st.error(f"failed to save configuration for model {voicemodel}.")
-                        elif msg := check_success_msg(r):
-                            st.success(f"success save configuration for model {voicemodel}.")
-
-        elif voicemodel == "faster-whisper-large-v3":
-            with st.form("faster_whisper_model"):
-                devcol, bitcol = st.columns(2)
-                with devcol:
-                    sdevice = config.get("device").lower()
-                    if sdevice in training_devices_list:
-                        index = training_devices_list.index(sdevice)
-                    else:
-                        index = 0
-                    predict_dev = st.selectbox(
-                            "Please select Device",
-                            training_devices_list,
-                            index=index
-                        )
-                with bitcol:
-                    nloadbits = config.get("loadbits")
-                    index = 0 if nloadbits == 32 else (1 if nloadbits == 16 else (2 if nloadbits == 8 else 16))
-                    nloadbits = st.selectbox(
-                        "Load Bits",
-                        loadbits_list,
-                        index=index
-                    )
-                save_parameters = st.form_submit_button(
-                        "Save Parameters",
-                        use_container_width=True
-                    )
-                if save_parameters:
-                    config["device"] = predict_dev
-                    if nloadbits == "32 bits":
-                        config["loadbits"] = 32
-                    elif nloadbits == "16 bits":
-                        config["loadbits"] = 16
-                    else:
-                        config["loadbits"] = 8
-                    with st.spinner(f"Saving Parameters, Please do not perform any actions or refresh the page."):
-                        r = api.save_vtot_model_config(voicemodel, config)
-                        if msg := check_error_msg(r):
-                            st.error(f"failed to save configuration for model {voicemodel}.")
-                        elif msg := check_success_msg(r):
-                            st.success(f"success save configuration for model {voicemodel}.")
-        else:
-            pass
+                        if voicekey == "" or voicekey == "[Your Key]" or voiceregion == "" or voiceregion == "[Your Region]":
+                            st.error("Please enter the correct key and region, save failed!")
+                        else:
+                            pass
+                            #r = api.save_voice_model_config(speechmodel, modelconfig)
+                            #if msg := check_error_msg(r):
+                            #    st.error(msg)
+                            #elif msg := check_success_msg(r):
+                            #    st.success(msg)
 
     with tabimager:
         pass
