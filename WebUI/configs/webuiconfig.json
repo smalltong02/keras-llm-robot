@@ -45,7 +45,6 @@
                 "apiproxy": "[Private Proxy]",
                 "provider": "AzureWorker"
             }
-            
         },
         "EmbeddingModel": {
             "jina-embeddings-v2-small-en": {
@@ -95,28 +94,38 @@
         },
         "VtoTModel": {
             "whisper-base": {
+                "type": "local",
                 "path": "models/voices/whisper-base",
                 "device": "gpu",
                 "loadbits": 16,
                 "Huggingface": "openai/whisper-base"
             },
             "whisper-medium": {
+                "type": "local",
                 "path": "models/voices/whisper-medium",
                 "device": "gpu",
                 "loadbits": 16,
                 "Huggingface": "openai/whisper-medium"
             },
             "whisper-large-v3": {
+                "type": "local",
                 "path": "models/voices/whisper-large-v3",
                 "device": "gpu",
                 "loadbits": 16,
                 "Huggingface": "openai/whisper-large-v3"
             },
             "faster-whisper-large-v3": {
+                "type": "local",
                 "path": "models/voices/faster-whisper-large-v3",
                 "device": "gpu",
                 "loadbits": 8,
                 "Huggingface": "bababababooey/faster-whisper-large-v3"
+            },
+            "AzureVoiceService": {
+                "type": "cloud",
+                "voice_key": "[Your Key]",
+                "voice_region": "[Your Region]",
+                "CloudTemplates": "AzureVoiceTemplate"
             }
         },
         "TtoVModel": {
