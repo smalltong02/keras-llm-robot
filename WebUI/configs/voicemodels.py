@@ -1,4 +1,4 @@
-import io
+import io, os
 import torch
 import base64
 from WebUI.configs.basicconfig import TMP_DIR
@@ -77,6 +77,44 @@ def translate_voice_data(model, config, voice_data: str = "") -> str:
             else:
                 pass
     return ""
+
+def cloud_voice_data(config, voice_data: str="") -> str:
+    if len(voice_data):
+        decoded_data = base64.b64decode(voice_data)
+        if isinstance(config, dict):
+            provider = config["provider"]
+            if provider == "AzureCloud":
+                import azure.cognitiveservices.speech as speechsdk
+                voicekey = config.get("voice_key", "[Your Key]")
+                if voicekey == "[Your Key]":
+                    voicekey = os.environ.get('SPEECH_KEY')
+                voiceregion = config.get("voice_region", "[Your Region]")
+                if voiceregion == "[Your Region]":
+                    voiceregion = os.environ.get('SPEECH_REGION')
+                speech_config = speechsdk.SpeechConfig(subscription=voicekey, region=voiceregion)
+                auto_detect_source_language_config = speechsdk.languageconfig.AutoDetectSourceLanguageConfig(languages=["en-US", "zh-CN"])
+                file_name = str(TMP_DIR / "recognizer.wav")
+                with open(file_name, "wb") as file:
+                    file.write(decoded_data)
+                audio_config = speechsdk.audio.AudioConfig(filename=file_name)
+                speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, audio_config=audio_config, auto_detect_source_language_config=auto_detect_source_language_config)
+                
+                speech_recognition_result = speech_recognizer.recognize_once_async().get()
+                if speech_recognition_result.reason == speechsdk.ResultReason.RecognizedSpeech:
+                    print("Recognized: {}".format(speech_recognition_result.text))
+                    return speech_recognition_result.text
+                elif speech_recognition_result.reason == speechsdk.ResultReason.NoMatch:
+                    print("No speech could be recognized: {}".format(speech_recognition_result.no_match_details))
+                elif speech_recognition_result.reason == speechsdk.ResultReason.Canceled:
+                    cancellation_details = speech_recognition_result.cancellation_details
+                    print("Speech Recognition canceled: {}".format(cancellation_details.reason))
+                    if cancellation_details.reason == speechsdk.CancellationReason.Error:
+                        print("Error details: {}".format(cancellation_details.error_details))
+                        print("Did you set the speech resource key and region values?")
+            else:
+                pass
+    return ""
+
 
 def init_speech_models(config):
     if isinstance(config, dict):

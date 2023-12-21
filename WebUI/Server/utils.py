@@ -235,10 +235,24 @@ def get_vtot_worker_config(model_name: str = None) -> dict:
         return config
     vtot_model = webui_config.get("ModelConfig").get("VtoTModel")
     if model_name in vtot_model:
-        config["model_path"] = vtot_model[model_name].get("path")
-        config["device"] = vtot_model[model_name].get("device")
-        config["loadbits"] = vtot_model[model_name].get("loadbits")
-        config["Huggingface"] = vtot_model[model_name].get("Huggingface")
+        if vtot_model[model_name].get("type") == "local":
+            config["model_type"] = "local"
+            config["model_path"] = vtot_model[model_name].get("path")
+            config["device"] = vtot_model[model_name].get("device")
+            config["loadbits"] = vtot_model[model_name].get("loadbits")
+            config["Huggingface"] = vtot_model[model_name].get("Huggingface")
+        elif vtot_model[model_name].get("type") == "cloud":
+            config["model_type"] = "cloud"
+            config["model_path"] = ""
+            config["device"] = "cloud"
+            config["loadbits"] = ""
+            config["Huggingface"] = ""
+        else:
+            config["model_type"] = ""
+            config["model_path"] = ""
+            config["device"] = ""
+            config["loadbits"] = ""
+            config["Huggingface"] = ""
     return config
 
 def get_speech_worker_config(model_name: str = None) -> dict:

@@ -130,7 +130,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
         with col2:
             if modelconfig["type"] == "local":
                 pathstr = modelconfig.get("path")
-                st.text_input("Local Path", pathstr)
+                st.text_input("Local Path", pathstr, key="sp_local_path")
                 spsave_path = st.button(
                     "Save Path",
                     key="spsave_btn",
@@ -146,7 +146,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                             st.success(msg)
             elif modelconfig["type"] == "cloud":
                 pathstr = modelconfig.get("path")
-                st.text_input("Cloud Path", pathstr, disabled=True)
+                st.text_input("Cloud Path", pathstr, key="sp_cloud_path", disabled=True)
                 spsave_path = st.button(
                     "Save Path",
                     key="spsave_btn",
@@ -203,10 +203,10 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                 keycol, regcol = st.columns(2)
                 with keycol:
                     speechkey = modelconfig.get("speech_key")
-                    speechkey = st.text_input("Speech Key", speechkey)
+                    speechkey = st.text_input("Speech Key", speechkey, key="speech_key")
                 with regcol:
                     speechregion = modelconfig.get("speech_region")
-                    speechregion = st.text_input("Speech Region", speechregion)
+                    speechregion = st.text_input("Speech Region", speechregion, key="speech_region")
 
                 save_parameters = st.form_submit_button(
                     "Save Parameters",
@@ -217,6 +217,8 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                         if speechkey == "" or speechkey == "[Your Key]" or speechregion == "" or speechregion == "[Your Region]":
                             st.error("Please enter the correct key and region, save failed!")
                         else:
+                            modelconfig["speech_key"] = speechkey
+                            modelconfig["speech_region"] = speechregion
                             r = api.save_speech_model_config(speechmodel, modelconfig)
                             if msg := check_error_msg(r):
                                 st.error(msg)
@@ -302,7 +304,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                     pathstr = vtotmodel[voicemodel].get("path")
                 else:
                     pathstr = ""
-                st.text_input("Local Path", pathstr)
+                st.text_input("Local Path", pathstr, key="vo_local_path")
                 vosave_path = st.button(
                     "Save Path",
                     key="vosave_btn",
@@ -311,14 +313,14 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                 if vosave_path:
                     with st.spinner(f"Saving Path, Please do not perform any actions or refresh the page."):
                             vtotmodel[voicemodel]["path"] = vosave_path
-                            r = api.save_vtot_model_config(voicemodel, config)
+                            r = api.save_vtot_model_config(voicemodel, modelconfig)
                             if msg := check_error_msg(r):
                                 st.error(f"failed to save path for model {voicemodel}.")
                             elif msg := check_success_msg(r):
                                 st.success(f"success save path for model {voicemodel}.")
             elif modelconfig["type"] == "cloud":
                 pathstr = modelconfig.get("path")
-                st.text_input("Cloud Path", pathstr, disabled=True)
+                st.text_input("Cloud Path", pathstr, key="vo_cloud_path", disabled=True)
                 spsave_path = st.button(
                     "Save Path",
                     key="vosave_btn",
@@ -416,10 +418,10 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                 keycol, regcol = st.columns(2)
                 with keycol:
                     voicekey = modelconfig.get("voice_key")
-                    voicekey = st.text_input("Voice Key", voicekey)
+                    voicekey = st.text_input("Voice Key", voicekey, key="voice_key")
                 with regcol:
                     voiceregion = modelconfig.get("voice_region")
-                    voiceregion = st.text_input("Voice Region", voiceregion)
+                    voiceregion = st.text_input("Voice Region", voiceregion, key="voice_region")
 
                 save_parameters = st.form_submit_button(
                     "Save Parameters",
@@ -430,12 +432,13 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                         if voicekey == "" or voicekey == "[Your Key]" or voiceregion == "" or voiceregion == "[Your Region]":
                             st.error("Please enter the correct key and region, save failed!")
                         else:
-                            pass
-                            #r = api.save_voice_model_config(speechmodel, modelconfig)
-                            #if msg := check_error_msg(r):
-                            #    st.error(msg)
-                            #elif msg := check_success_msg(r):
-                            #    st.success(msg)
+                            modelconfig["voice_key"] = voicekey
+                            modelconfig["voice_region"] = voiceregion
+                            r = api.save_vtot_model_config(voicemodel, modelconfig)
+                            if msg := check_error_msg(r):
+                                st.error(f"failed to save configuration for model {voicemodel}.")
+                            elif msg := check_success_msg(r):
+                                st.success(f"success save configuration for model {voicemodel}.")
 
     with tabimager:
         pass

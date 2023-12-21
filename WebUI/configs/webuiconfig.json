@@ -35,7 +35,7 @@
                 "apiversion": "",
                 "apikey": "[Your Key]",
                 "apiproxy": "[Private Proxy]",
-                "provider": "Google Cloud Studio"
+                "provider": "GoogleCloud"
             },
             "azure-api": {
                 "modellist": [],
@@ -43,7 +43,7 @@
                 "apiversion": "",
                 "apikey": "[Your Key]",
                 "apiproxy": "[Private Proxy]",
-                "provider": "AzureWorker"
+                "provider": "AzureCloud"
             }
         },
         "EmbeddingModel": {
@@ -81,15 +81,18 @@
             },
             "text-embedding-ada-002": {
                 "path": "",
-                "apikey": "OPENAI_API_KEY"
+                "apikey": "OPENAI_API_KEY",
+                "provider": "OpenAI"
             },
             "embedding-gecko-001": {
                 "path": "",
-                "apikey": "GOOGLE_API_KEY"
+                "apikey": "GOOGLE_API_KEY",
+                "provider": "GoogleCloud"
             },
             "embedding-001": {
                 "path": "",
-                "apikey": "GOOGLE_API_KEY"
+                "apikey": "GOOGLE_API_KEY",
+                "provider": "GoogleCloud"
             }
         },
         "VtoTModel": {
@@ -125,6 +128,7 @@
                 "type": "cloud",
                 "voice_key": "[Your Key]",
                 "voice_region": "[Your Region]",
+                "provider": "AzureCloud",
                 "CloudTemplates": "AzureVoiceTemplate"
             }
         },
@@ -165,6 +169,7 @@
                 "type": "cloud",
                 "speech_key": "[Your Key]",
                 "speech_region": "[Your Region]",
+                "provider": "AzureCloud",
                 "synthesis": {
                     "en-US": {
                         "male": [

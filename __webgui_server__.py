@@ -17,7 +17,7 @@ from __about__ import __title__, __summary__, __version__, __author__, __email__
 from webuisrv import InnerLlmAIRobotWebUIServer
 from WebUI.configs.serverconfig import (FSCHAT_MODEL_WORKERS, FSCHAT_CONTROLLER, HTTPX_LOAD_TIMEOUT, HTTPX_RELEASE_TIMEOUT,
                                         HTTPX_LOAD_VOICE_TIMEOUT, HTTPX_RELEASE_VOICE_TIMEOUT, FSCHAT_OPENAI_API, API_SERVER)
-from WebUI.configs.voicemodels import (init_voice_models, translate_voice_data, init_speech_models, translate_speech_data)
+from WebUI.configs.voicemodels import (init_voice_models, translate_voice_data, cloud_voice_data, init_speech_models, translate_speech_data)
 from WebUI.configs.webuiconfig import *
 from WebUI.configs.basicconfig import *
 from WebUI.configs.specialmodels import *
@@ -649,9 +649,14 @@ def run_voice_worker(
             "device": kwargs["device"],
             "loadbits": kwargs["loadbits"],
         }
-        voice_model = init_voice_models(config)
-        if voice_model is None:
-                return None
+        if kwargs["model_type"] == "local":
+            model_type = "local"
+            voice_model = init_voice_models(config)
+            if voice_model is None:
+                    return None
+        elif kwargs["model_type"] == "cloud":
+            model_type = "cloud"
+            voice_model = None
     except Exception as e:
         print(e)
         return None
@@ -670,9 +675,15 @@ def run_voice_worker(
         voice_data: str = Body(..., description="voice data", samples=""),
         voice_type: str = Body(None, description="voice type"),
     ) -> dict:
-        if len(voice_data) == 0 or voice_model is None:
+        if len(voice_data) == 0 or (voice_model is None and model_type == "local"):
             return {"code": 500, "text": ""}
-        text_data = translate_voice_data(voice_model, config, voice_data)
+        text_data = ""
+        if model_type == "local":
+            text_data = translate_voice_data(voice_model, config, voice_data)
+        elif model_type == "cloud":
+            configinst = InnerJsonConfigWebUIParse()
+            webui_config = configinst.dump()
+            text_data = cloud_voice_data(webui_config.get("ModelConfig").get("VtoTModel").get(model_name), voice_data)
         return {"code": 200, "text": text_data}
 
     uvicorn.run(app, host=host, port=port)
