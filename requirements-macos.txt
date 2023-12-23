@@ -19,11 +19,9 @@ blinker==1.7.0
 blis==0.7.11
 bnnumerizer==0.0.2
 bnunicodenormalizer==0.1.6
-Brotli @ file:///Users/ec2-user/ci_py311/brotli-split_1678379922007/work
 cachetools==5.3.2
 catalogue==2.0.10
 certifi==2023.7.22
-cffi @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_44mvycfmuf/croot/cffi_1700254431144/work
 charset-normalizer==3.3.2
 click==8.1.7
 cloudpathlib==0.16.0
@@ -31,7 +29,6 @@ colorama==0.4.6
 confection==0.1.4
 contourpy==1.2.0
 coqpit==0.0.17
-cryptography @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_19sc_35nzq/croot/cryptography_1694211574676/work
 cycler==0.12.1
 cymem==2.0.8
 Cython==3.0.6
@@ -44,7 +41,7 @@ docopt==0.6.2
 einops==0.7.0
 encodec==0.1.1
 fastapi==0.103.2
-filelock @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_cd61an5em3/croot/filelock_1700591192468/work
+filelock==3.9.0
 Flask==3.0.0
 fonttools==4.46.0
 frozenlist==1.4.0
@@ -53,7 +50,6 @@ fsspec==2023.12.2
 g2pkk==0.1.2
 gitdb==4.0.11
 GitPython==3.1.40
-gmpy2 @ file:///Users/ec2-user/ci_py311/gmpy2_1678380831980/work
 google-ai-generativelanguage==0.4.0
 google-api-core==2.15.0
 google-auth==2.25.2
@@ -76,14 +72,14 @@ hangul-romanize==0.1.0
 httpcore==1.0.1
 httpx==0.25.1
 huggingface-hub==0.17.3
-idna @ file:///Users/ec2-user/ci_py311/idna_1678315819133/work
+idna==3.4
 ifaddr==0.2.0
 importlib-metadata==6.8.0
 inflect==7.0.0
 itsdangerous==2.1.2
 jamo==0.4.1
 jieba==0.42.1
-Jinja2 @ file:///Users/ec2-user/ci_py311/jinja2_1678317138271/work
+Jinja2==3.1.2
 joblib==1.3.2
 jsonlines==1.2.0
 jsonpatch==1.33
@@ -100,14 +96,12 @@ llvmlite==0.41.1
 Markdown==3.5.1
 markdown-it-py==3.0.0
 markdown2==2.4.10
-MarkupSafe @ file:///Users/ec2-user/ci_py311/markupsafe_1678316973889/work
+MarkupSafe==2.1.2
 marshmallow==3.20.1
 matplotlib==3.8.2
 mdurl==0.1.2
-mkl-fft @ file:///private/var/folders/c_/qfmhj66j0tn016nkx_th4hxm0000gp/T/abs_af8wl3mjfu/croot/mkl_fft_1695058185839/work
-mkl-random @ file:///private/var/folders/c_/qfmhj66j0tn016nkx_th4hxm0000gp/T/abs_0fq2s894lk/croot/mkl_random_1695059822529/work
 mkl-service==2.4.0
-mpmath @ file:///private/var/folders/c_/qfmhj66j0tn016nkx_th4hxm0000gp/T/abs_8fyoqwupl2/croot/mpmath_1690848275746/work
+mpmath==1.3.0
 msgpack==1.0.7
 multidict==6.0.4
 murmurhash==1.0.10
@@ -117,12 +111,12 @@ nh3==0.2.14
 nltk==3.8.1
 num2words==0.5.13
 numba==0.58.1
-numpy @ file:///private/var/folders/c_/qfmhj66j0tn016nkx_th4hxm0000gp/T/abs_dfryapvjbb/croot/numpy_and_numpy_base_1701362404676/work/dist/numpy-1.26.2-cp311-cp311-macosx_10_9_x86_64.whl#sha256=6c2ae94ce06eb50cf62ae1c3b73f0043bd2835c0fb8b943db65db727cd92c4b6
+numpy==1.26.1
 oauthlib==3.2.2
 openai==0.28.1
 packaging==23.2
 pandas==1.5.3
-Pillow @ file:///private/var/folders/c_/qfmhj66j0tn016nkx_th4hxm0000gp/T/abs_18z8l26k8d/croot/pillow_1696580044342/work
+Pillow==9.3.0
 platformdirs==4.1.0
 pooch==1.8.0
 preshed==3.0.9
@@ -134,7 +128,6 @@ pyarrow==14.0.0
 pyasn1==0.5.1
 pyasn1-modules==0.3.0
 PyAudio==0.2.11
-pycparser @ file:///tmp/build/80754af9/pycparser_1636541352034/work
 pydantic==1.10.13
 pydantic_core==2.10.1
 pydeck==0.8.1b0
@@ -144,18 +137,16 @@ Pygments==2.16.1
 pylibsrtp==0.9.1
 pynndescent==0.5.11
 pynvml==11.5.0
-pyOpenSSL @ file:///private/var/folders/c_/qfmhj66j0tn016nkx_th4hxm0000gp/T/abs_7fwdg30481/croot/pyopenssl_1690223429070/work
 pyparsing==3.1.1
 pypinyin==0.50.0
 pysbd==0.3.4
-PySocks @ file:///Users/ec2-user/ci_py311/pysocks_1678315868424/work
 python-crfsuite==0.9.9
 python-dateutil==2.8.2
 pytz==2023.3.post1
-PyYAML @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_37cfd0k_yi/croot/pyyaml_1698096054183/work
+PyYAML==6.0.1
 referencing==0.30.2
 regex==2023.10.3
-requests @ file:///private/var/folders/c_/qfmhj66j0tn016nkx_th4hxm0000gp/T/abs_fa2zrx4csg/croot/requests_1690400223595/work
+requests==2.31.0
 requests-oauthlib==1.3.1
 rich==13.6.0
 rpds-py==0.10.6
@@ -186,7 +177,7 @@ streamlit-webrtc==0.47.1
 SudachiDict-core==20230927
 SudachiPy==0.6.8
 svgwrite==1.4.3
-sympy @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_94zd__m8ro/croot/sympy_1701397645431/work
+sympy==1.12
 tenacity==8.2.3
 tensorboard==2.15.1
 tensorboard-data-server==0.7.2
@@ -206,12 +197,12 @@ transformers==4.34.1
 TTS==0.22.0
 typer==0.9.0
 typing-inspect==0.9.0
-typing_extensions @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_35a9251r5y/croot/typing_extensions_1690297487409/work
+typing_extensions==4.8.0
 tzdata==2023.3
 tzlocal==5.2
 umap-learn==0.5.5
 Unidecode==1.3.7
-urllib3 @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_62orwr3pr2/croot/urllib3_1698257564351/work
+urllib3==2.0.7
 uvicorn==0.24.0.post1
 validators==0.22.0
 wasabi==1.1.2
