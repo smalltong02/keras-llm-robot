@@ -161,8 +161,10 @@ class ApiRequest:
             response = self.post(
                "/llm_model/chat",
                json=data,
+               stream=True,
+               **kwargs
             )
-            return self._get_response_value(response, as_json=True, value_func=lambda r: [json.loads(r["data"])] if "data" in r else [{}])
+            return self._httpx_stream2generator(response, as_json=True)
         elif modelinfo["mtype"] == ModelType.Online:
             provider = GetProviderByName(webui_config, model)
             if provider is not None:
@@ -170,9 +172,9 @@ class ApiRequest:
                     response = self.post(
                         "/llm_model/chat",
                         json=data,
+                        stream=True
                     )
-                    print("response: ", response)
-                    return self._get_response_value(response, as_json=True, value_func=lambda r: [json.loads(r["data"])] if "data" in r else [{}])
+                    return self._httpx_stream2generator(response, as_json=True)
                 else:
                     response = self.post("/chat/chat", json=data, stream=True, **kwargs)
                     return self._httpx_stream2generator(response, as_json=True)
@@ -201,7 +203,6 @@ class ApiRequest:
                                 msg = f"json failed: '{chunk}'. error: {e}."
                                 print(f'{e.__class__.__name__}: {msg}')
                         else:
-                            # print(chunk, end="", flush=True)
                             yield chunk
             except httpx.ConnectError as e:
                 msg = f"Can't connect to API Server, Please confirm 'api.py' starting。({e})"
@@ -231,7 +232,6 @@ class ApiRequest:
                                 msg = f"json failed: '{chunk}'. error: {e}."
                                 print(f'{e.__class__.__name__}: {msg}')
                         else:
-                            # print(chunk, end="", flush=True)
                             yield chunk
             except httpx.ConnectError as e:
                 msg = f"Can't connect to API Server, Please confirm 'api.py' starting。({e})"
@@ -721,7 +721,6 @@ class ApiRequest:
             else:
                 return value_func(response)
             
-    
 class AsyncApiRequest(ApiRequest):
     def __init__(self, base_url: str = api_address(), timeout: float = HTTPX_DEFAULT_TIMEOUT):
         super().__init__(base_url, timeout)

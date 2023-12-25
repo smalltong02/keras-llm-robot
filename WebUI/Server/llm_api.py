@@ -3,9 +3,11 @@ from WebUI.configs import LLM_MODELS, TEMPERATURE, HTTPX_DEFAULT_TIMEOUT
 from WebUI.Server.utils import (BaseResponse, fschat_controller_address, list_config_llm_models,
                           get_httpx_client, get_model_worker_config, get_vtot_worker_config, get_speech_worker_config)
 from copy import deepcopy
+import time
 import json
 from WebUI.configs.webuiconfig import *
 from WebUI.configs.basicconfig import *
+from fastapi.responses import StreamingResponse
 
 def list_running_models(
     controller_address: str = Body(None, description="Fastchat controller adress", examples=[fschat_controller_address()]),
@@ -113,7 +115,7 @@ def stop_llm_model(
             code=500,
             msg=f"failed to stop LLM model {model_name} from controller: {controller_address}. error: {e}")
     
-def chat_llm_model(
+async def chat_llm_model(
     query: str = Body(..., description="User input: ", examples=["chat"]),
     history: List[dict] = Body([],
                                   description="History chat",
@@ -128,12 +130,15 @@ def chat_llm_model(
     max_tokens: Optional[int] = Body(None, description="max tokens."),
     prompt_name: str = Body("default", description=""),
     controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])
-) -> BaseResponse:
-    try:
-        controller_address = controller_address or fschat_controller_address()
+) -> StreamingResponse:
+    
+    controller_address = controller_address or fschat_controller_address()
+    async def fake_json_streamer() -> AsyncIterable[str]:
+        import asyncio
         with get_httpx_client() as client:
-            r = client.post(
-                controller_address + "/text_chat",
+            response = client.stream(
+                "POST",
+                url=controller_address + "/text_chat",
                 json={
                     "query": query,
                     "history": history,
@@ -145,24 +150,14 @@ def chat_llm_model(
                     "prompt_name": prompt_name,
                     },
             )
-            code = r.json()["code"]
-            if code == 200:
-                return BaseResponse(
-                    code=200,
-                    data=r.json()["answer"]
-                    )
-            else:
-                return BaseResponse(
-                    code=500,
-                    data={},
-                    msg=f"failed to translate data.")
-    except Exception as e:
-        print(f'{e.__class__.__name__}: {e}')
-        return BaseResponse(
-            code=500,
-            data={},
-            msg=f"failed chat with llm model. error: {e}")
-
+            with response as r:
+                for chunk in r.iter_text(None):
+                    if not chunk:
+                        continue
+                    yield chunk
+                    await asyncio.sleep(0.1)
+    return StreamingResponse(fake_json_streamer(), media_type="text/event-stream")
+    
 def change_llm_model(
     model_name: str = Body(..., description="Change Model", examples=""),
     new_model_name: str = Body(..., description="Switch to new Model", examples=""),

@@ -224,7 +224,26 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
             msg = f"failed to release model: {model_name}"
             print(msg)
             return {"code": 500, "msg": msg}
-            
+
+    @app.post("/text_chat1")     
+    def stream(
+        query: str = Body(..., description="User input: ", examples=["chat"]),
+        history: List[dict] = Body([],
+                                    description="History chat",
+                                    examples=[[
+                                        {"role": "user", "content": "Who are you?"},
+                                        {"role": "assistant", "content": "I am AI."}]]
+                                    ),
+        stream: bool = Body(False, description="stream output"),
+        model_name: str = Body(LLM_MODELS[0], description="model name"),
+        speechmodel: dict = Body({}, description="speech model"),
+        temperature: float = Body(TEMPERATURE, description="LLM Temperature", ge=0.0, le=1.0),
+        max_tokens: Optional[int] = Body(None, description="max tokens."),
+        prompt_name: str = Body("default", description=""),
+    ):
+        for i in range(10):
+            yield i
+
     @app.post("/text_chat")
     def text_chat(
         query: str = Body(..., description="User input: ", examples=["chat"]),
@@ -240,23 +259,13 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
         temperature: float = Body(TEMPERATURE, description="LLM Temperature", ge=0.0, le=1.0),
         max_tokens: Optional[int] = Body(None, description="max tokens."),
         prompt_name: str = Body("default", description=""),
-    ) -> Dict:
+    ):
         workerconfig = get_model_worker_config(model_name)
         worker_address = "http://" + workerconfig["host"] + ":" + str(workerconfig["port"])
-        with get_httpx_client() as client:
-            try:
-                r = client.post(worker_address + "/get_name",
-                    json={},
-                    )
-                name = r.json().get("name", "")
-                if model_name != name:
-                    return {"code": 500, "text": ""}
-            except Exception as e:
-                return {"code": 500, "text": ""}
-        
-        with get_httpx_client() as client:
-            try:
-                r = client.post(worker_address + "/text_chat",
+        async def fake_json_streamer() -> AsyncIterable[str]:
+            with get_httpx_client() as client:
+                response = client.stream("POST", 
+                    url=worker_address + "/text_chat",
                     json={
                         "query": query,
                         "history": history,
@@ -267,10 +276,13 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
                         "prompt_name": prompt_name,
                         },
                     )
-                return r.json()
-            except Exception as e:
-                return {"code": 500, "answer": {}}
-        
+                with response as r:
+                    for chunk in r.iter_text(None):
+                        if not chunk:
+                            continue
+                        yield chunk
+                        await asyncio.sleep(0.1)
+        return StreamingResponse(fake_json_streamer(), media_type="text/event-stream")
 
     @app.post("/get_vtot_model")
     def get_vtot_model(
@@ -458,6 +470,7 @@ def create_model_worker_app(log_level: str = "INFO", **kwargs) -> Union[FastAPI,
 
     app_worker = ""
     app._model = None
+    app._async_callback = None
     app._model_name = ""
     for k, v in kwargs.items():
         setattr(args, k, v)
@@ -476,12 +489,24 @@ def create_model_worker_app(log_level: str = "INFO", **kwargs) -> Union[FastAPI,
     elif kwargs.get("special_model", False) == True:
         modellist = GetGGUFModelPath(args.model_path)
         if len(modellist):
-            from langchain.llms.ctransformers import CTransformers
-            config = {
-                "threads": 4,
-            }
-            llm_model = CTransformers(model=args.model_path, model_file=modellist[0], model_type="llama", config=config)
+            from langchain.llms.llamacpp import LlamaCpp
+            from langchain.callbacks.manager import CallbackManager
+            from WebUI.Server.chat.StreamHandler import LlamacppStreamCallbackHandler
+            async_callback = LlamacppStreamCallbackHandler()
+            callback_manager = CallbackManager([async_callback])
+            model_path = args.model_path + "/" + modellist[0]
+            llm_model = LlamaCpp(
+                model_path=model_path,
+                temperature=0.7,
+                max_tokens=2000,
+                top_p=1,
+                callback_manager=callback_manager, 
+                verbose=True,
+                n_threads=4,
+                streaming=True,
+            )
             app._model = llm_model
+            app._async_callback = async_callback
             app._model_name = args.model_names[0]
         MakeFastAPIOffline(app)
         app.title = f"Special Model ({args.model_names[0]})"
@@ -807,8 +832,8 @@ def run_model_worker(
         temperature: float = Body(TEMPERATURE, description="LLM Temperature", ge=0.0, le=1.0),
         max_tokens: Optional[int] = Body(None, description="max tokens."),
         prompt_name: str = Body("default", description=""),
-    ) -> Dict:
-        return special_model_chat(app._model, app._model_name, query, history, stream, speechmodel, temperature, max_tokens, prompt_name)
+    ):
+        return special_model_chat(app._model, app._model_name, app._async_callback, query, history, stream, speechmodel, temperature, max_tokens, prompt_name)
     
     uvicorn.run(app, host=host, port=port)
 

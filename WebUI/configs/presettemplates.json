@@ -1,0 +1,217 @@
+{
+    "templates_lists": [
+        {
+            "name": "default",
+            "inference_params": {
+                "input_prefix": "",
+                "input_suffix": "",
+                "antiprompt": [
+                    ""
+                ],
+                "pre_prompt_prefix": "",
+                "pre_prompt_suffix": ""
+            }
+        },
+
+        {
+            "name": "ChatML",
+            "inference_params": {
+                "input_prefix": "<|im_end|>\n<|im_start|>user\n",
+                "input_suffix": "<|im_end|>\n<|im_start|>assistant\n",
+                "antiprompt": [
+                    "<|im_start|>",
+                    "<|im_end|>"
+                ],
+                "pre_prompt_prefix": "<|im_start|>system\n",
+                "pre_prompt_suffix": "",
+                "pre_prompt": "Perform the task to the best of your ability."
+            }
+        },
+
+        {
+            "name": "Mistral Instruct",
+            "inference_params": {
+              "input_prefix": "[INST]",
+              "input_suffix": "[/INST]",
+              "antiprompt": [
+                "[INST]"
+              ],
+              "pre_prompt_prefix": "",
+              "pre_prompt_suffix": ""
+            }
+        },
+
+        {
+            "name": "CodeLlama Completion",
+            "load_params": {
+              "rope_freq_base": 1000000
+            },
+            "inference_params": {
+              "top_p": 0.9,
+              "temp": 0.2,
+              "input_prefix": "",
+              "input_suffix": "",
+              "pre_prompt": "",
+              "pre_prompt_prefix": "",
+              "pre_prompt_suffix": "",
+              "antiprompt": [
+                ""
+              ]
+            }
+        },
+
+        {
+            "name": "CodeLlama Instruct",
+            "load_params": {
+              "rope_freq_base": 1000000
+            },
+            "inference_params": {
+              "top_p": 0.95,
+              "temp": 0.2,
+              "input_prefix": "[INST]",
+              "input_suffix": "[/INST]",
+              "pre_prompt": "You are a helpful coding AI assistant.",
+              "pre_prompt_prefix": "[INST]<<SYS>>\n",
+              "pre_prompt_suffix": "\n<</SYS>>\n\n[/INST]",
+              "antiprompt": [
+                "[INST]"
+              ]
+            }
+        },
+
+        {
+            "name": "CodeLlama WizardCoder",
+            "load_params": {
+              "rope_freq_base": 1000000
+            },
+            "inference_params": {
+              "input_prefix": "### Instruction:",
+              "input_suffix": "### Response:",
+              "antiprompt": [
+                "### Instruction:"
+              ],
+              "pre_prompt": "Below is an instruction that describes a task. Write a response that appropriately completes the request.",
+              "pre_prompt_prefix": "",
+              "pre_prompt_suffix": "\n\n"
+            }
+        },
+
+        {
+            "name": "Deepseek Coder",
+            "inference_params": {
+              "input_prefix": "### Instruction:\n",
+              "input_suffix": "\n### Response:\n",
+              "antiprompt": [
+                "### Instruction:"
+              ],
+              "pre_prompt": "You are an AI programming assistant, utilizing the Deepseek Coder model, developed by Deepseek Company, and you only answer questions related to computer science.",
+              "pre_prompt_suffix": "\n",
+              "pre_prompt_prefix": ""
+            },
+            "load_params": {
+              "rope_freq_scale": 0,
+              "rope_freq_base": 0
+            }
+        },
+
+        {
+            "name": "MetaAI Llama 2 Chat",
+            "inference_params": {
+              "input_prefix": "[INST]",
+              "input_suffix": "[/INST]",
+              "pre_prompt": "You are a helpful coding AI assistant.",
+              "pre_prompt_prefix": "[INST]<<SYS>>\n",
+              "pre_prompt_suffix": "\n<</SYS>>\n\n[/INST]",
+              "antiprompt": [
+                "[INST]"
+              ]
+            }
+        },
+
+        {
+            "name": "Obsidian Vision",
+            "load_params": {
+              "n_ctx": 2048,
+              "rope_freq_base": 10000,
+              "rope_freq_scale": 1
+            },
+            "inference_params": {
+              "input_prefix": "<|im_start|>user\n",
+              "input_suffix": "\n###\n<|im_start|>assistant:",
+              "antiprompt": [
+                "<|im_start|>",
+                "<|im_end|>",
+                "###"
+              ],
+              "pre_prompt": "",
+              "pre_prompt_suffix": "",
+              "pre_prompt_prefix": ""
+            }
+        },
+
+        {
+            "name": "Phi 2",
+            "inference_params": {
+              "input_prefix": "Instruct: ",
+              "input_suffix": "\nOutput:",
+              "antiprompt": [
+                "Instruct:",
+                "Output:"
+              ],
+              "pre_prompt": "",
+              "pre_prompt_prefix": "",
+              "pre_prompt_suffix": ""
+            },
+            "load_params": {
+              "rope_freq_scale": 0,
+              "rope_freq_base": 0
+            }
+        },
+
+        {
+            "name": "Phind CodeLlama",
+            "inference_params": {
+              "pre_prompt": "You are an intelligent programming assistant.",
+              "pre_prompt_prefix": "### System Prompt\n",
+              "pre_prompt_suffix": "\n",
+              "input_prefix": "### User Message\n",
+              "input_suffix": "### Assistant\n",
+              "antiprompt": [
+                "[INST]"
+              ]
+            }
+        },
+
+        {
+            "name": "Vicuna v1.5 16K",
+            "load_params": {
+              "rope_freq_scale": 0.25
+            },
+            "inference_params": {
+              "input_prefix": "USER:",
+              "input_suffix": "ASSISTANT:",
+              "pre_prompt_prefix": "",
+              "pre_prompt_suffix": "\n\n",
+              "pre_prompt": "A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions.",
+              "antiprompt": [
+                "USER:"
+              ]
+            }
+        },
+
+        {
+            "name": "Zephyr",
+            "inference_params": {
+              "pre_prompt_prefix": "<|system|>\n",
+              "pre_prompt_suffix": "\n",
+              "input_prefix": "\n<|user|>\n",
+              "input_suffix": "\n<|assistant|>\n",
+              "antiprompt": [
+                "<|system|>",
+                "<|user|>",
+                "<|assistant|>"
+              ]
+            }
+        }
+    ]
+}

@@ -3,11 +3,14 @@ import azure.cognitiveservices.speech as speechsdk
 import os
 import io
 import base64
+import multiprocessing
 from WebUI.configs.basicconfig import TMP_DIR
 from WebUI.configs.serverconfig import FSCHAT_CONTROLLER
 from pydub import AudioSegment
 from pydub.playback import play
 from WebUI.Server.llm_api import get_speech_data
+from typing import List, Dict, Any
+from langchain.schema.output import LLMResult
 
 class StreamDisplayHandler(BaseCallbackHandler):
     def __init__(self, container, initial_text="", display_method='markdown'):
@@ -123,3 +126,34 @@ class StreamSpeakHandler(BaseCallbackHandler):
                     audio_segment = AudioSegment.from_wav(io.BytesIO(audio_stream))
                     play(audio_segment)
                     
+class LlamacppStreamCallbackHandler(BaseCallbackHandler):
+
+    @property
+    def always_verbose(self) -> bool:
+        return True
+
+    def __init__(self) -> None:
+        self.queue = multiprocessing.Queue()
+
+    async def on_llm_start(
+        self, serialized: Dict[str, Any], prompts: List[str], **kwargs: Any
+    ) -> None:
+        # If two calls are made in a row, this resets the state
+        pass
+
+    async def on_llm_new_token(self, token: str, **kwargs) -> None:
+        if token is not None and token != "":
+            self.queue.put_nowait(token)
+
+    async def on_llm_end(self, response: LLMResult, **kwargs: Any) -> None:
+        pass
+
+    async def on_llm_error(self, error: BaseException, **kwargs: Any) -> None:
+        pass
+
+    # TODO implement the other methods
+
+    def get_tokens(self) -> str:
+        while not self.queue.empty():
+            return self.queue.get()
+        return None

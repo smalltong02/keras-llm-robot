@@ -93,6 +93,7 @@ langsmith==0.0.56
 lazy_loader==0.3
 librosa==0.10.1
 llvmlite==0.41.1
+llama-cpp-python==0.2.25
 Markdown==3.5.1
 markdown-it-py==3.0.0
 markdown2==2.4.10

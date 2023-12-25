@@ -196,3 +196,18 @@ def GetSpeechModelInfo(webui_config: Dict, name : str):
             if name.casefold() == modelkey.casefold():
                 return configvalue
     return {}
+
+def GetPresetConfig(preset_name : str) -> dict:
+    if preset_name:
+        from WebUI.configs.webuiconfig import InnerJsonConfigPresetTempParse
+        presetinst = InnerJsonConfigPresetTempParse()
+        preset_config = presetinst.dump()
+        tmp_lists = preset_config["templates_lists"]
+        for config in tmp_lists:
+            name = config.get("name", "")
+            if preset_name == name:
+                return config
+    return {}
+
+def GeneratePresetPrompt(config: dict) -> str:
+    pass

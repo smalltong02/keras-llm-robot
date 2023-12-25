@@ -41,6 +41,7 @@ jsonschema==4.19.2
 jsonschema-specifications==2023.7.1
 langchain==0.0.327
 langsmith==0.0.56
+llama-cpp-python==0.2.25
 markdown-it-py==3.0.0
 markdown2==2.4.10
 MarkupSafe==2.1.2
