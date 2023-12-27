@@ -3,7 +3,6 @@ from WebUI.configs import LLM_MODELS, TEMPERATURE, HTTPX_DEFAULT_TIMEOUT
 from WebUI.Server.utils import (BaseResponse, fschat_controller_address, list_config_llm_models,
                           get_httpx_client, get_model_worker_config, get_vtot_worker_config, get_speech_worker_config)
 from copy import deepcopy
-import time
 import json
 from WebUI.configs.webuiconfig import *
 from WebUI.configs.basicconfig import *

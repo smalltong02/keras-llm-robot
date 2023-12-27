@@ -347,12 +347,11 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
             chat_box.update_msg(text, streaming=False, metadata=metadata)
             # speech_file = str(TMP_DIR / "speech.wav")
             # with wave.open(speech_file, 'rb') as wave_file:
-            #     # 获取声音参数
             #     channels = wave_file.getnchannels()
             #     sample_width = wave_file.getsampwidth()
             #     frame_rate = wave_file.getframerate()
             #     frames = wave_file.getnframes()
-            #     # 读取声音数据
+            #
             #     raw_data = wave_file.readframes(frames)
             #     sound = AudioSegment(
             #         raw_data,
@@ -360,7 +359,6 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
             #         sample_width=sample_width,
             #         channels=channels
             #     )
-            #     # 播放声音
             #     play(sound)
             print("chat_box.history: ", len(chat_box.history))
             chat_box.show_feedback(**feedback_kwargs,

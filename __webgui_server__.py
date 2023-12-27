@@ -21,9 +21,7 @@ from WebUI.configs.voicemodels import (init_voice_models, translate_voice_data, 
 from WebUI.configs.webuiconfig import *
 from WebUI.configs.basicconfig import *
 from WebUI.configs.specialmodels import *
-from WebUI.configs import LLM_MODELS, TEMPERATURE
 from typing import Union, List, Dict
-
 
 def parse_args() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
@@ -225,25 +223,6 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
             print(msg)
             return {"code": 500, "msg": msg}
 
-    @app.post("/text_chat1")     
-    def stream(
-        query: str = Body(..., description="User input: ", examples=["chat"]),
-        history: List[dict] = Body([],
-                                    description="History chat",
-                                    examples=[[
-                                        {"role": "user", "content": "Who are you?"},
-                                        {"role": "assistant", "content": "I am AI."}]]
-                                    ),
-        stream: bool = Body(False, description="stream output"),
-        model_name: str = Body(LLM_MODELS[0], description="model name"),
-        speechmodel: dict = Body({}, description="speech model"),
-        temperature: float = Body(TEMPERATURE, description="LLM Temperature", ge=0.0, le=1.0),
-        max_tokens: Optional[int] = Body(None, description="max tokens."),
-        prompt_name: str = Body("default", description=""),
-    ):
-        for i in range(10):
-            yield i
-
     @app.post("/text_chat")
     def text_chat(
         query: str = Body(..., description="User input: ", examples=["chat"]),
@@ -254,9 +233,9 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
                                         {"role": "assistant", "content": "I am AI."}]]
                                     ),
         stream: bool = Body(False, description="stream output"),
-        model_name: str = Body(LLM_MODELS[0], description="model name"),
+        model_name: str = Body("", description="model name"),
         speechmodel: dict = Body({}, description="speech model"),
-        temperature: float = Body(TEMPERATURE, description="LLM Temperature", ge=0.0, le=1.0),
+        temperature: float = Body(0.7, description="LLM Temperature", ge=0.0, le=1.0),
         max_tokens: Optional[int] = Body(None, description="max tokens."),
         prompt_name: str = Body("default", description=""),
     ):
@@ -478,36 +457,16 @@ def create_model_worker_app(log_level: str = "INFO", **kwargs) -> Union[FastAPI,
         worker = ""
     # Online model
     elif kwargs.get("online_model", False):        
-        google_model = init_cloud_models(args.model_names[0])
-        app._model = google_model
+        cloud_model = init_cloud_models(args.model_names[0])
+        app._model = cloud_model
         app._model_name = args.model_names[0]
         MakeFastAPIOffline(app)
         app.title = f"Online Model ({args.model_names[0]})"
         return app
 
-    # Local model
+    # Special model
     elif kwargs.get("special_model", False) == True:
-        modellist = GetGGUFModelPath(args.model_path)
-        if len(modellist):
-            from langchain.llms.llamacpp import LlamaCpp
-            from langchain.callbacks.manager import CallbackManager
-            from WebUI.Server.chat.StreamHandler import LlamacppStreamCallbackHandler
-            async_callback = LlamacppStreamCallbackHandler()
-            callback_manager = CallbackManager([async_callback])
-            model_path = args.model_path + "/" + modellist[0]
-            llm_model = LlamaCpp(
-                model_path=model_path,
-                temperature=0.7,
-                max_tokens=2000,
-                top_p=1,
-                callback_manager=callback_manager, 
-                verbose=True,
-                n_threads=4,
-                streaming=True,
-            )
-            app._model = llm_model
-            app._async_callback = async_callback
-            app._model_name = args.model_names[0]
+        init_special_models(app, args)
         MakeFastAPIOffline(app)
         app.title = f"Special Model ({args.model_names[0]})"
         return app
@@ -829,11 +788,11 @@ def run_model_worker(
                                     ),
         stream: bool = Body(False, description="stream output"),
         speechmodel: dict = Body({}, description="speech model"),
-        temperature: float = Body(TEMPERATURE, description="LLM Temperature", ge=0.0, le=1.0),
+        temperature: float = Body(0.7, description="LLM Temperature", ge=0.0, le=1.0),
         max_tokens: Optional[int] = Body(None, description="max tokens."),
         prompt_name: str = Body("default", description=""),
     ):
-        return special_model_chat(app._model, app._model_name, app._async_callback, query, history, stream, speechmodel, temperature, max_tokens, prompt_name)
+        return special_model_chat(app._model, app._model_name, app._streamer, query, history, stream, speechmodel, temperature, max_tokens, prompt_name)
     
     uvicorn.run(app, host=host, port=port)
 

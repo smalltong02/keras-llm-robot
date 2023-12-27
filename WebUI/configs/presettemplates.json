@@ -17,7 +17,7 @@
             "name": "ChatML",
             "inference_params": {
                 "input_prefix": "<|im_end|>\n<|im_start|>user\n",
-                "input_suffix": "<|im_end|>\n<|im_start|>assistant\n",
+                "input_suffix": "\n<|im_end|>\n<|im_start|>assistant\n",
                 "antiprompt": [
                     "<|im_start|>",
                     "<|im_end|>"
@@ -72,7 +72,7 @@
               "input_suffix": "[/INST]",
               "pre_prompt": "You are a helpful coding AI assistant.",
               "pre_prompt_prefix": "[INST]<<SYS>>\n",
-              "pre_prompt_suffix": "\n<</SYS>>\n\n[/INST]",
+              "pre_prompt_suffix": "\n<</SYS>>\n\n[/INST]\n",
               "antiprompt": [
                 "[INST]"
               ]
@@ -86,13 +86,13 @@
             },
             "inference_params": {
               "input_prefix": "### Instruction:",
-              "input_suffix": "### Response:",
+              "input_suffix": "\n### Response:",
               "antiprompt": [
                 "### Instruction:"
               ],
               "pre_prompt": "Below is an instruction that describes a task. Write a response that appropriately completes the request.",
               "pre_prompt_prefix": "",
-              "pre_prompt_suffix": "\n\n"
+              "pre_prompt_suffix": "\n"
             }
         },
 
@@ -121,7 +121,7 @@
               "input_suffix": "[/INST]",
               "pre_prompt": "You are a helpful coding AI assistant.",
               "pre_prompt_prefix": "[INST]<<SYS>>\n",
-              "pre_prompt_suffix": "\n<</SYS>>\n\n[/INST]",
+              "pre_prompt_suffix": "\n<</SYS>>\n\n[/INST]\n",
               "antiprompt": [
                 "[INST]"
               ]
@@ -152,13 +152,15 @@
         {
             "name": "Phi 2",
             "inference_params": {
-              "input_prefix": "Instruct: ",
-              "input_suffix": "\nOutput:",
+              "input_prefix": "###Instruction: ",
+              "input_suffix": "\nAnswer:",
               "antiprompt": [
-                "Instruct:",
-                "Output:"
+                "User:",
+                "Assistant:",
+                "INPUT:",
+                "OUTPUT:"
               ],
-              "pre_prompt": "",
+              "pre_prompt": "respond to the instruction below. behave like a chatbot and respond to the user. try to be helpful.\n",
               "pre_prompt_prefix": "",
               "pre_prompt_suffix": ""
             },
@@ -189,9 +191,9 @@
             },
             "inference_params": {
               "input_prefix": "USER:",
-              "input_suffix": "ASSISTANT:",
+              "input_suffix": "\nASSISTANT:",
               "pre_prompt_prefix": "",
-              "pre_prompt_suffix": "\n\n",
+              "pre_prompt_suffix": "\n",
               "pre_prompt": "A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions.",
               "antiprompt": [
                 "USER:"

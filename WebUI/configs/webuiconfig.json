@@ -19,8 +19,9 @@
                     "gpt-4-vision-preview"
                 ],
                 "baseurl": "https://api.openai.com/v1",
-                "model_type": "cloud",
+                "load_type": "cloud",
                 "apiversion": "",
+                "preset": "default",
                 "apikey": "[Your Key]",
                 "apiproxy": "[Private Proxy]",
                 "provider": "OpenAI"
@@ -33,8 +34,9 @@
                     "text-bison-001"
                 ],
                 "baseurl": "",
-                "model_type": "cloud",
+                "load_type": "cloud",
                 "apiversion": "",
+                "preset": "default",
                 "apikey": "[Your Key]",
                 "apiproxy": "[Private Proxy]",
                 "provider": "GoogleCloud"
@@ -42,8 +44,9 @@
             "azure-api": {
                 "modellist": [],
                 "baseurl": "",
-                "model_type": "cloud",
+                "load_type": "cloud",
                 "apiversion": "",
+                "preset": "default",
                 "apikey": "[Your Key]",
                 "apiproxy": "[Private Proxy]",
                 "provider": "AzureCloud"
@@ -391,18 +394,8 @@
                         "cputhreads": 4,
                         "loadbits": 16,
                         "preset": "default",
-                        "model_type": "pytorch",
+                        "load_type": "fastchat",
                         "Huggingface": "lmsys/fastchat-t5-3b-v1.0"
-                    },
-                    "phi-2": {
-                        "path": "models/llm/phi-2",
-                        "device": "auto",
-                        "maxmemory": 20,
-                        "cputhreads": 4,
-                        "loadbits": 16,
-                        "preset": "default",
-                        "model_type": "safetensors",
-                        "Huggingface": "microsoft/phi-2"
                     }
                 },
                 "7B Model": {
@@ -413,7 +406,7 @@
                         "cputhreads": 4,
                         "loadbits": 16,
                         "preset": "default",
-                        "model_type": "safetensors",
+                        "load_type": "fastchat",
                         "Huggingface": "meta-llama/llama-2-7b-hf"
                     },
                     "llama-2-7b-chat-hf": {
@@ -423,7 +416,7 @@
                         "cputhreads": 4,
                         "loadbits": 8,
                         "preset": "default",
-                        "model_type": "safetensors",
+                        "load_type": "fastchat",
                         "Huggingface": "meta-llama/Llama-2-7b-chat-hf"
                     },
                     "chatglm2-6b": {
@@ -433,7 +426,7 @@
                         "cputhreads": 4,
                         "loadbits": 8,
                         "preset": "default",
-                        "model_type": "pytorch",
+                        "load_type": "fastchat",
                         "Huggingface": "THUDM/chatglm2-6b"
                     },
                     "chatglm2-6b-32k": {
@@ -443,7 +436,7 @@
                         "cputhreads": 4,
                         "loadbits": 8,
                         "preset": "default",
-                        "model_type": "pytorch",
+                        "load_type": "fastchat",
                         "Huggingface": "THUDM/chatglm2-6b-32k"
                     },
                     "chatglm3-6b": {
@@ -453,7 +446,7 @@
                         "cputhreads": 4,
                         "loadbits": 8,
                         "preset": "default",
-                        "model_type": "pytorch",
+                        "load_type": "fastchat",
                         "Huggingface": "THUDM/chatglm3-6b"
                     },
                     "tigerbot-7b-chat": {
@@ -463,7 +456,7 @@
                         "cputhreads": 4,
                         "loadbits": 16,
                         "preset": "default",
-                        "model_type": "pytorch",
+                        "load_type": "fastchat",
                         "Huggingface": "TigerResearch/tigerbot-7b-chat"
                     },
                     "openchat_3.5": {
@@ -473,7 +466,7 @@
                         "cputhreads": 4,
                         "loadbits": 8,
                         "preset": "default",
-                        "model_type": "pytorch",
+                        "load_type": "fastchat",
                         "Huggingface": "openchat/openchat_3.5"
                     },
                     "Qwen-7B-Chat-Int4": {
@@ -483,7 +476,7 @@
                         "cputhreads": 4,
                         "loadbits": 16,
                         "preset": "default",
-                        "model_type": "safetensors",
+                        "load_type": "fastchat",
                         "Huggingface": "Qwen/Qwen-7B-Chat-Int4"
                     },
                     "fuyu-8b": {
@@ -493,7 +486,7 @@
                         "cputhreads": 4,
                         "loadbits": 16,
                         "preset": "default",
-                        "model_type": "safetensors",
+                        "load_type": "fastchat",
                         "Huggingface": "adept/fuyu-8b"
                     },
                     "Yi-6B-Chat-4bits": {
@@ -503,7 +496,7 @@
                         "cputhreads": 4,
                         "loadbits": 16,
                         "preset": "default",
-                        "model_type": "safetensors",
+                        "load_type": "fastchat",
                         "Huggingface": "01-ai/Yi-6B-Chat-4bits"
                     },
                     "neural-chat-7b-v3-1": {
@@ -513,18 +506,18 @@
                         "cputhreads": 4,
                         "loadbits": 16,
                         "preset": "default",
-                        "model_type": "pytorch",
+                        "load_type": "fastchat",
                         "Huggingface": "Intel/neural-chat-7b-v3-1"
                     },
-                    "OpenHermes-2.5-Mistral-7B": {
-                        "path": "models/llm/OpenHermes-2.5-Mistral-7B",
+                    "Mistral-7B-Instruct-v0.2": {
+                        "path": "models/llm/Mistral-7B-Instruct-v0.2",
                         "device": "auto",
-                        "maxmemory": 24,
+                        "maxmemory": 20,
                         "cputhreads": 4,
                         "loadbits": 16,
                         "preset": "default",
-                        "model_type": "pytorch",
-                        "Huggingface": "teknium/OpenHermes-2.5-Mistral-7B"
+                        "load_type": "fastchat",
+                        "Huggingface": "mistralai/Mistral-7B-Instruct-v0.2"
                     }
                 },
                 "13B Model": {
@@ -535,7 +528,7 @@
                         "cputhreads": 4,
                         "loadbits": 8,
                         "preset": "default",
-                        "model_type": "safetensors",
+                        "load_type": "fastchat",
                         "Huggingface": "meta-llama/llama-2-13b-hf"
                     },
                     "llama-2-13b-chat-hf": {
@@ -545,7 +538,7 @@
                         "cputhreads": 4,
                         "loadbits": 8,
                         "preset": "default",
-                        "model_type": "safetensors",
+                        "load_type": "fastchat",
                         "Huggingface": "meta-llama/Llama-2-13b-chat-hf"
                     },
                     "tigerbot-13b-chat": {
@@ -555,7 +548,7 @@
                         "cputhreads": 4,
                         "loadbits": 8,
                         "preset": "default",
-                        "model_type": "pytorch",
+                        "load_type": "fastchat",
                         "Huggingface": "TigerResearch/tigerbot-13b-chat"
                     },
                     "Qwen-14B-Chat": {
@@ -565,7 +558,7 @@
                         "cputhreads": 4,
                         "loadbits": 8,
                         "preset": "default",
-                        "model_type": "safetensors",
+                        "load_type": "fastchat",
                         "Huggingface": "Qwen/Qwen-14B-Chat"
                     },
                     "Qwen-14B-Chat-Int4": {
@@ -575,7 +568,7 @@
                         "cputhreads": 4,
                         "loadbits": 16,
                         "preset": "default",
-                        "model_type": "safetensors",
+                        "load_type": "fastchat",
                         "Huggingface": "Qwen/Qwen-14B-Chat-Int4"
                     }
                 },
@@ -587,7 +580,7 @@
                         "cputhreads": 4,
                         "loadbits": 16,
                         "preset": "default",
-                        "model_type": "safetensors",
+                        "load_type": "fastchat",
                         "Huggingface": "01-ai/Yi-34B-Chat-4bits"
                     }
                 },
@@ -599,7 +592,7 @@
                         "cputhreads": 8,
                         "loadbits": 8,
                         "preset": "default",
-                        "model_type": "safetensors",
+                        "load_type": "fastchat",
                         "Huggingface": "meta-llama/llama-2-70b-hf"
                     },
                     "llama-2-70b-chat-hf": {
@@ -609,7 +602,7 @@
                         "cputhreads": 8,
                         "loadbits": 8,
                         "preset": "default",
-                        "model_type": "safetensors",
+                        "load_type": "fastchat",
                         "Huggingface": "meta-llama/Llama-2-70b-chat-hf"
                     }
                 }
@@ -623,7 +616,7 @@
                         "cputhreads": 4,
                         "loadbits": 16,
                         "preset": "default",
-                        "model_type": "pytorch",
+                        "load_type": "fastchat",
                         "Huggingface": "THUDM/visualglm-6b"
                     },
                     "cogvlm-chat-hf": {
@@ -633,7 +626,7 @@
                         "cputhreads": 4,
                         "loadbits": 16,
                         "preset": "default",
-                        "model_type": "safetensors",
+                        "load_type": "fastchat",
                         "Huggingface": "THUDM/cogvlm-chat-hf"
                     },
                     "mplug-owl2-llama2-7b": {
@@ -643,7 +636,7 @@
                         "cputhreads": 4,
                         "loadbits": 16,
                         "preset": "default",
-                        "model_type": "pytorch",
+                        "load_type": "fastchat",
                         "Huggingface": "MAGAer13/mplug-owl2-llama2-7b"
                     },
                     "Qwen-VL-Chat-Int4": {
@@ -653,7 +646,7 @@
                         "cputhreads": 4,
                         "loadbits": 4,
                         "preset": "default",
-                        "model_type": "safetensors",
+                        "load_type": "fastchat",
                         "Huggingface": "Qwen/Qwen-VL-Chat-Int4"
                     },
                     "internlm-xcomposer-7b-4bit": {
@@ -663,7 +656,7 @@
                         "cputhreads": 4,
                         "loadbits": 4,
                         "preset": "default",
-                        "model_type": "pytorch",
+                        "load_type": "fastchat",
                         "Huggingface": "internlm/internlm-xcomposer-7b-4bit"
                     }
                 },
@@ -671,7 +664,28 @@
                 "Video Chat Model": {}
             },
             "Special Model": {
-                "3B Model": {},
+                "3B Model": {
+                    "phi-2-gguf": {
+                        "path": "models/llm/phi-2-GGUF",
+                        "device": "auto",
+                        "maxmemory": 6,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "Phi 2",
+                        "load_type": "llamacpp",
+                        "Huggingface": "TheBloke/phi-2-GGUF"
+                    },
+                    "phi-2": {
+                        "path": "models/llm/phi-2",
+                        "device": "auto",
+                        "maxmemory": 10,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "Phi 2",
+                        "load_type": "pipeline",
+                        "Huggingface": "microsoft/phi-2"
+                    }
+                },
                 "7B Model": {
                     "Yi-6B-Chat-gguf": {
                         "path": "models/llm/Yi-6B-Chat-GGUF",
@@ -680,8 +694,18 @@
                         "cputhreads": 4,
                         "loadbits": 16,
                         "preset": "ChatML",
-                        "model_type": "llamacpp",
+                        "load_type": "llamacpp",
                         "Huggingface": "TheBloke/Yi-6B-Chat-GGUF"
+                    },
+                    "OpenHermes-2.5-Mistral-7B": {
+                        "path": "models/llm/OpenHermes-2.5-Mistral-7B",
+                        "device": "auto",
+                        "maxmemory": 24,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "ChatML",
+                        "load_type": "pipeline",
+                        "Huggingface": "teknium/OpenHermes-2.5-Mistral-7B"
                     }
                 },
                 "13B Model": {},
@@ -693,7 +717,7 @@
                         "cputhreads": 4,
                         "loadbits": 16,
                         "preset": "default",
-                        "model_type": "llamacpp",
+                        "load_type": "llamacpp",
                         "Huggingface": "TheBloke/Yi-34B-Chat-GGUF"
                     },
                     "Mixtral-8x7B-v0.1-gguf": {
@@ -702,8 +726,8 @@
                         "maxmemory": 50,
                         "cputhreads": 4,
                         "loadbits": 16,
-                        "preset": "default",
-                        "model_type": "llamacpp",
+                        "preset": "Mistral Instruct",
+                        "load_type": "llamacpp",
                         "Huggingface": "TheBloke/Mixtral-8x7B-v0.1-GGUF"
                     }
                 },

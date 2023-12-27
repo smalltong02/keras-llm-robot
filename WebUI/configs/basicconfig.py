@@ -2,6 +2,7 @@ from enum import Enum
 from typing import *
 from pathlib import Path
 import os
+import copy
 
 SAVE_CHAT_HISTORY = True
 
@@ -111,7 +112,7 @@ def GetOnlineModelList(webui_config, provider: str) -> list:
     onlineprovider = webui_config.get("ModelConfig").get("OnlineModel")
     for key, value in onlineprovider.items():
         if key.casefold() == provider.casefold():
-            return value["modellist"]
+            return copy.deepcopy(value["modellist"])
     return []
 
 def GetModelInfoByName(webui_config: Dict, name : str):
@@ -123,10 +124,14 @@ def GetModelInfoByName(webui_config: Dict, name : str):
                     if modelkey.casefold() == name.casefold():
                         return GetModelType(typekey), GetModelSize(sizekey), GetModelSubType(sizekey)
         onlinemodel = webui_config.get("ModelConfig").get("OnlineModel")
+        provider_size = 1
         for _, value in onlinemodel.items():
             modellist = value["modellist"]
             if name in modellist:
-                    return ModelType.Online, ModelSize.Unknown, ModelSubType.Unknown
+                model_size = ModelSize(provider_size % (len(ModelSize) - 1))
+                return ModelType.Online, model_size, ModelSubType.Unknown
+            provider_size = provider_size+1
+
     return ModelType.Unknown, ModelSize.Unknown, ModelSubType.Unknown
 
 def GetProviderByName(webui_config: Dict, name : str):
@@ -209,5 +214,61 @@ def GetPresetConfig(preset_name : str) -> dict:
                 return config
     return {}
 
-def GeneratePresetPrompt(config: dict) -> str:
-    pass
+def GetPresetPromptList() -> list:
+    from WebUI.configs.webuiconfig import InnerJsonConfigPresetTempParse
+    presetinst = InnerJsonConfigPresetTempParse()
+    preset_config = presetinst.dump()
+    tmp_lists = preset_config["templates_lists"]
+    preset_list = []
+    for config in tmp_lists:
+        name = config.get("name", "")
+        if len(name):
+            preset_list.append(name)
+    return preset_list
+
+def GeneratePresetPrompt(preset_name: str) -> dict:
+    if preset_name:
+        from WebUI.configs.webuiconfig import InnerJsonConfigPresetTempParse
+        presetinst = InnerJsonConfigPresetTempParse()
+        preset_config = presetinst.dump()
+        tmp_lists = preset_config["templates_lists"]
+        input_variables = []
+        prompt_templates = ""
+        for config in tmp_lists:
+            name = config.get("name", "")
+            if preset_name == name:
+                inference_params = config.get("inference_params", "")
+                if len(inference_params):
+                    pre_prompt = inference_params.get("pre_prompt", "")
+                    if pre_prompt:
+                        prompt_templates += pre_prompt + '\n'
+                    pre_prompt_prefix = inference_params.get("pre_prompt_prefix", "")
+                    if pre_prompt_prefix:
+                        input_variables.append("system")
+                        prompt_templates += pre_prompt_prefix + "{system}"
+                    pre_prompt_suffix = inference_params.get("pre_prompt_suffix", "")
+                    if pre_prompt_suffix:
+                        prompt_templates += pre_prompt_suffix
+                    input_prefix = inference_params.get("input_prefix", "")
+                    if input_prefix:
+                        input_variables.append("input")
+                        prompt_templates += input_prefix + "{input}"
+                    input_suffix = inference_params.get("input_suffix", "")
+                    if input_suffix:
+                        prompt_templates += input_suffix
+                    anti_prompt = inference_params.get("antiprompt", [])
+                    return {
+                        "input_variables": input_variables,
+                        "prompt_templates": prompt_templates,
+                        "anti_prompt": anti_prompt
+                    }
+    return {}
+
+def GenerateModelPrompt(inputs: list, input: str) -> Union[str, dict]:
+    if len(inputs):
+        index = len(inputs)
+        prompt_dict = {key: "" for key in inputs}
+        last_key = inputs[-1]
+        prompt_dict[last_key] = input
+        return prompt_dict
+    return input

@@ -3,8 +3,6 @@ from pydantic import BaseModel
 from typing import Dict, Union
 import httpx, os
 from WebUI.configs.serverconfig import (FSCHAT_CONTROLLER, FSCHAT_OPENAI_API, FSCHAT_MODEL_WORKERS, HTTPX_DEFAULT_TIMEOUT)
-import sys
-import json
 import asyncio
 from pathlib import Path
 from WebUI import workers

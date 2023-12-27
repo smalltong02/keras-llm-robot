@@ -13,17 +13,17 @@ def embed_texts(
     to_query: bool = False,
 ) -> BaseResponse:
     '''
-    对文本进行向量化。返回数据格式：BaseResponse(data=List[List[float]])
-    TODO: 也许需要加入缓存机制，减少 token 消耗
+    return: BaseResponse(data=List[List[float]])
+    TODO: Perhaps it's necessary to implement a caching mechanism to reduce token consumption.
     '''
     try:
-        if embed_model in list_embed_models(): # 使用本地Embeddings模型
+        if embed_model in list_embed_models(): # Local Embeddings Models
             from WebUI.Server.utils import load_local_embeddings
 
             embeddings = load_local_embeddings(model=embed_model)
             return BaseResponse(data=embeddings.embed_documents(texts))
 
-        if embed_model in list_online_embed_models(): # 使用在线API
+        if embed_model in list_online_embed_models(): # Online Embeddings Models
             config = get_model_worker_config(embed_model)
             worker_class = config.get("worker_class")
             worker = worker_class()
@@ -32,18 +32,18 @@ def embed_texts(
                 resp = worker.do_embeddings(params)
                 return BaseResponse(**resp)
 
-        return BaseResponse(code=500, msg=f"指定的模型 {embed_model} 不支持 Embeddings 功能。")
+        return BaseResponse(code=500, msg=f"The model {embed_model} not support Embeddings feature.")
     except Exception as e:
         print(e)
-        return BaseResponse(code=500, msg=f"文本向量化过程中出现错误：{e}")
+        return BaseResponse(code=500, msg=f"Embeddings error: {e}")
 
 def embed_texts_endpoint(
-    texts: List[str] = Body(..., description="要嵌入的文本列表", examples=[["hello", "world"]]),
-    embed_model: str = Body(EMBEDDING_MODEL, description=f"使用的嵌入模型，除了本地部署的Embedding模型，也支持在线API({online_embed_models})提供的嵌入服务。"),
-    to_query: bool = Body(False, description="向量是否用于查询。有些模型如Minimax对存储/查询的向量进行了区分优化。"),
+    texts: List[str] = Body(..., description="Text List", examples=[["hello", "world"]]),
+    embed_model: str = Body(EMBEDDING_MODEL, description=""),
+    to_query: bool = Body(False, description="Whether vectors are used for queries. Some models, such as Minimax, optimize the differentiation of vectors for storage and retrieval."),
 ) -> BaseResponse:
     '''
-    对文本进行向量化，返回 BaseResponse(data=List[List[float]])
+    return BaseResponse(data=List[List[float]])
     '''
     return embed_texts(texts=texts, embed_model=embed_model, to_query=to_query)
 
@@ -54,7 +54,7 @@ def embed_documents(
     to_query: bool = False,
 ) -> Dict:
     """
-    将 List[Document] 向量化，转化为 VectorStore.add_embeddings 可以接受的参数
+    Vectorize List[Document] and transform it into parameters acceptable by VectorStore.add_embeddings.
     """
     texts = [x.page_content for x in docs]
     metadatas = [x.metadata for x in docs]

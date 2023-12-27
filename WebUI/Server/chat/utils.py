@@ -4,13 +4,6 @@ from typing import List, Tuple, Dict, Union
 
 
 class History(BaseModel):
-    """
-    对话历史
-    可从dict生成，如
-    h = History(**{"role":"user","content":"你好"})
-    也可转换为tuple，如
-    h.to_msy_tuple = ("human", "你好")
-    """
     role: str = Field(...)
     content: str = Field(...)
 
@@ -23,7 +16,7 @@ class History(BaseModel):
             "human": "user",
         }
         role = role_maps.get(self.role, self.role)
-        if is_raw: # 当前默认历史消息都是没有input_variable的文本。
+        if is_raw:
             content = "{% raw %}" + self.content + "{% endraw %}"
         else:
             content = self.content

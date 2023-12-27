@@ -5,7 +5,7 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from fastapi import Body
 from WebUI.Server.chat.completion import completion
-from WebUI.Server.utils import (FastAPI, MakeFastAPIOffline, BaseResponse, ListResponse)
+from WebUI.Server.utils import (FastAPI, MakeFastAPIOffline, BaseResponse)
 from WebUI.configs.serverconfig import OPEN_CROSS_DOMAIN
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import RedirectResponse
@@ -66,7 +66,7 @@ def mount_app_routes(app: FastAPI, run_mode: str = None):
 
     #app.post("/chat/search_engine_chat",
     #         tags=["Chat"],
-    #         summary="与搜索引擎对话",
+    #         summary="Chat with search engine.",
     #         )(search_engine_chat)
 
     app.post("/chat/feedback",
@@ -177,30 +177,30 @@ def mount_app_routes(app: FastAPI, run_mode: str = None):
              )(get_webui_configs)
     #app.post("/server/configs",
     #         tags=["Server State"],
-    #         summary="获取服务器原始配置信息",
+    #         summary="Get server configration info.",
     #         )(get_server_configs)
 
     #app.post("/server/list_search_engines",
     #         tags=["Server State"],
-    #         summary="获取服务器支持的搜索引擎",
+    #         summary="Get all search engine info.",
     #         )(list_search_engines)
 
     @app.post("/server/get_prompt_template",
              tags=["Server State"],
-             summary="获取服务区配置的 prompt 模板")
+             summary="Get prompt template")
     def get_server_prompt_template(
-        type: Literal["llm_chat", "knowledge_base_chat", "search_engine_chat", "agent_chat"]=Body("llm_chat", description="模板类型，可选值：llm_chat，knowledge_base_chat，search_engine_chat，agent_chat"),
-        name: str = Body("default", description="模板名称"),
+        type: Literal["llm_chat", "knowledge_base_chat", "search_engine_chat", "agent_chat"]=Body("llm_chat", description="Template Type"),
+        name: str = Body("default", description="Template Name"),
     ) -> str:
         return get_prompt_template(type=type, name=name)
 
     # 其它接口
     app.post("/other/completion",
              tags=["Other"],
-             summary="要求llm模型补全(通过LLMChain)",
+             summary="Request LLM model completion (LLMChain)",
              )(completion)
 
     app.post("/other/embed_texts",
             tags=["Other"],
-            summary="将文本向量化，支持本地模型和在线模型",
+            summary="Vectorize text, supporting both local and online models.",
             )(embed_texts_endpoint)

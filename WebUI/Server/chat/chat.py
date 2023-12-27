@@ -87,7 +87,6 @@ async def chat(query: str = Body(..., description="User input: ", examples=["cha
                 ensure_ascii=False)
 
         if SAVE_CHAT_HISTORY and len(chat_history_id) > 0:
-            # 后续可以加入一些其他信息，比如真实的prompt等
             update_chat_history(chat_history_id, response=answer)
         await task
 

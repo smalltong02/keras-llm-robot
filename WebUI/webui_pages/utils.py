@@ -99,7 +99,7 @@ class ApiRequest:
         reason: str = "",
     ) -> int:
         '''
-        反馈对话评价
+        feedback user reviews
         '''
         data = {
             "chat_history_id": chat_history_id,
@@ -180,7 +180,7 @@ class ApiRequest:
                     return self._httpx_stream2generator(response, as_json=True)
         return [{
             "chat_history_id": "123",
-            "text": "error!"
+            "text": "internal error!"
         }]
 
     def _httpx_stream2generator(
@@ -346,13 +346,6 @@ class ApiRequest:
                 "code": 200,
                 "msg": "Not necessary to switch models."
             }
-
-        # config_models = self.list_config_models()
-        # if new_model_name not in config_models["local"]:
-        #     return {
-        #         "code": 500,
-        #         "msg": f"The new Model '{new_model_name}' is not configured in the configs."
-        #     }
 
         data = {
             "model_name": model_name,

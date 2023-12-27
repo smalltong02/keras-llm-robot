@@ -1,7 +1,6 @@
 import streamlit as st
 from WebUI.webui_pages.utils import *
 from WebUI.configs import *
-import streamlit.components.v1 as components
 from WebUI.webui_pages import *
 
 training_devices_list = ["auto","cpu","gpu","mps"]
@@ -75,13 +74,13 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
             onlinemodel = st.selectbox(
                     "Please Select Online Provider",
                     online_model_list,
-                    index=0,
+                    index=size_index,
                 )
             current_model["msubtype"] = ModelSubType.Unknown
             current_model["msize"] = ModelSize.Unknown
             size_index = online_model_list.index(onlinemodel)
             online_model_list = GetOnlineModelList(webui_config, onlinemodel)
-        
+
     if type_index != ModelType.Online.value - 1:
         model_list = GetModeList(webui_config, current_model)
     else:
@@ -93,7 +92,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
             model_list[model_index] += " (running)"
         except ValueError:
             model_index = 0
-
+    
     st.divider()
     col1, col2 = st.columns(2)
     disabled = False
@@ -157,6 +156,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
 
     st.divider()
     if current_model["config"]:
+        preset_list = GetPresetPromptList()
         if current_model["mtype"] == ModelType.Local or current_model["mtype"] == ModelType.Multimodal or current_model["mtype"] == ModelType.Special:
             tabparams, tabquant, tabembedding, tabtunning, tabprompt = st.tabs(["Parameters", "Quantization", "Embedding Model", "Fine-Tunning", "Prompt Templates"])
             with tabparams:
@@ -176,6 +176,15 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                         )
                         nthreads = current_model["config"].get("cputhreads")
                         nthreads = st.number_input("CPU Threads", value = nthreads, min_value=1, max_value=32, disabled=disabled)
+                        st.text("")
+                        spreset = current_model["config"].get("preset", "default")
+                        index = preset_list.index(spreset)
+                        preset_dev = st.selectbox(
+                            "Please select Preset",
+                            preset_list,
+                            index=index,
+                            disabled=disabled
+                        )
                         maxtokens = chatconfig.get("tokens_length")
                         min = maxtokens.get("min")
                         max = maxtokens.get("max")
@@ -202,12 +211,8 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                         cur = length_penalty.get("cur")
                         step = length_penalty.get("step")
                         length_penalty = st.slider("length_penalty", min, max, cur, step, disabled=disabled)
-                        encoder_repetition_penalty = chatconfig.get("encoder_repetition_penalty")
-                        min = encoder_repetition_penalty.get("min")
-                        max = encoder_repetition_penalty.get("max")
-                        cur = encoder_repetition_penalty.get("cur")
-                        step = encoder_repetition_penalty.get("step")
-                        encoder_repetition_penalty = st.slider("encoder_repetition_penalty", min, max, cur, step, disabled=disabled)
+                        do_samples = chatconfig.get("do_samples")
+                        do_samples = st.checkbox('do samples', value=do_samples, disabled=disabled)
                     with col2:
                         seed = chatconfig.get("seed")
                         min = seed.get("min")
@@ -244,11 +249,12 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                         cur = guidance_scale.get("cur")
                         step = guidance_scale.get("step")
                         guidance_scale = st.slider("guidance_scale", min, max, cur, step, disabled=disabled)
-                        st.text("")
-                        st.text("")
-                        st.text("")
-                        do_samples = chatconfig.get("do_samples")
-                        do_samples = st.checkbox('do samples', value=do_samples, disabled=disabled)
+                        encoder_repetition_penalty = chatconfig.get("encoder_repetition_penalty")
+                        min = encoder_repetition_penalty.get("min")
+                        max = encoder_repetition_penalty.get("max")
+                        cur = encoder_repetition_penalty.get("cur")
+                        step = encoder_repetition_penalty.get("step")
+                        encoder_repetition_penalty = st.slider("encoder_repetition_penalty", min, max, cur, step, disabled=disabled)
                     save_parameters = st.form_submit_button(
                         "Save Parameters",
                         use_container_width=True,
@@ -261,6 +267,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                             current_model["config"]["loadbits"] = 16
                         else:
                             current_model["config"]["loadbits"] = 8
+                        current_model["config"]["preset"] = preset_dev
                         chatconfig["seed"]["cur"] = seed
                         chatconfig["tokens_length"]["cur"] = maxtokens
                         chatconfig["temperature"] = temperature
@@ -342,12 +349,19 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                 pass
         
         elif current_model["mtype"] == ModelType.Online:
-            tabparams, tabapiconfig, tabprompt = st.tabs(["Parameters", "API Config", "Prompt"])
+            tabparams, tabapiconfig, tabprompt = st.tabs(["Parameters", "API Config", "Prompt Templates"])
             with tabparams:
                 with st.form("Parameters"):
                     col1, col2 = st.columns(2)
                     with col1:
-                        pass
+                        spreset = current_model["config"].get("preset", "default")
+                        index = preset_list.index(spreset)
+                        preset_dev = st.selectbox(
+                            "Please select Preset",
+                            preset_list,
+                            index=index,
+                            disabled=disabled
+                        )
                     with col2:
                         pass
                     submit_params = st.form_submit_button(

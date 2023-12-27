@@ -10,18 +10,16 @@ from langchain.prompts.chat import PromptTemplate
 from WebUI.Server.utils import get_prompt_template
 
 
-async def completion(query: str = Body(..., description="用户输入", examples=["恼羞成怒"]),
-                     stream: bool = Body(False, description="流式输出"),
-                     echo: bool = Body(False, description="除了输出之外，还回显输入"),
-                     model_name: str = Body(LLM_MODELS[0], description="LLM 模型名称。"),
-                     temperature: float = Body(TEMPERATURE, description="LLM 采样温度", ge=0.0, le=1.0),
-                     max_tokens: Optional[int] = Body(1024, description="限制LLM生成Token数量，默认None代表模型最大值"),
-                     # top_p: float = Body(TOP_P, description="LLM 核采样。勿与temperature同时设置", gt=0.0, lt=1.0),
+async def completion(query: str = Body(..., description="User input: ", examples=["chat"]),
+                     stream: bool = Body(False, description="stream output"),
+                     echo: bool = Body(False, description="echo"),
+                     model_name: str = Body(LLM_MODELS[0], description="LLM model name"),
+                     temperature: float = Body(TEMPERATURE, description="LLM Temperature", ge=0.0, le=1.0),
+                     max_tokens: Optional[int] = Body(1024, description="max tokens."),
                      prompt_name: str = Body("default",
-                                             description="使用的prompt模板名称(在configs/prompt_config.py中配置)"),
+                                             description=""),
                      ):
 
-    #todo 因ApiModelWorker 默认是按chat处理的，会对params["prompt"] 解析为messages，因此ApiModelWorker 使用时需要有相应处理
     async def completion_iterator(query: str,
                                   model_name: str = LLM_MODELS[0],
                                   prompt_name: str = prompt_name,

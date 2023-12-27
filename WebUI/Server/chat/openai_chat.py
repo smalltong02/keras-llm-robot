@@ -48,7 +48,7 @@ async def openai_chat(msg: OpenAiChatMsgIn):
                     print(answer)
                     yield(answer)
         except Exception as e:
-            msg = f"获取ChatCompletion时出错：{e}"
+            msg = f"Get ChatCompletion error: {e}"
             print(f'{e.__class__.__name__}: {msg}')
 
     return StreamingResponse(

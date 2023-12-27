@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 class ApiConfigParams(BaseModel):
     pass

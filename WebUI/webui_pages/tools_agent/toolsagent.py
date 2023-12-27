@@ -44,7 +44,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
             #     cols = st.columns(2)
             #     vs_types = list(kbs_config.keys())
             #     vs_type = cols[0].selectbox(
-            #         "向量库类型",
+            #         "Vector Store Type",
             #         vs_types,
             #         index=vs_types.index(DEFAULT_VS_TYPE),
             #         key="vs_type",
@@ -53,7 +53,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
             #     embed_models = list_embed_models()
 
             #     embed_model = cols[1].selectbox(
-            #         "Embedding 模型",
+            #         "Embedding Model",
             #         embed_models,
             #         index=embed_models.index(EMBEDDING_MODEL),
             #         key="embed_model",
@@ -68,9 +68,9 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
             if submit_create_kb:
                 pass
                 # if not kb_name or not kb_name.strip():
-                #     st.error(f"知识库名称不能为空！")
+                #     st.error(f"KnowledgeBase Name is None!")
                 # elif kb_name in kb_list:
-                #     st.error(f"名为 {kb_name} 的知识库已经存在！")
+                #     st.error(f"The {kb_name} exist!")
                 # else:
                 #     ret = api.create_knowledge_base(
                 #         knowledge_base_name=kb_name,

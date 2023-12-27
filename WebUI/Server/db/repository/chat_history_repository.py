@@ -13,7 +13,7 @@ def _convert_query(query: str) -> str:
 @with_session
 def add_chat_history_to_db(session, chat_type, query, response="", chat_history_id=None, metadata: Dict = {}):
     """
-    新增聊天记录
+    add chat history
     """
     if not chat_history_id:
         chat_history_id = uuid.uuid4().hex
@@ -27,7 +27,7 @@ def add_chat_history_to_db(session, chat_type, query, response="", chat_history_
 @with_session
 def update_chat_history(session, chat_history_id, response: str = None, metadata: Dict = None):
     """
-    更新已有的聊天记录
+    update chat history
     """
     ch = get_chat_history_by_id(chat_history_id)
     if ch is not None:
@@ -42,7 +42,7 @@ def update_chat_history(session, chat_history_id, response: str = None, metadata
 @with_session
 def feedback_chat_history_to_db(session, chat_history_id, feedback_score, feedback_reason):
     """
-    反馈聊天记录
+    feedback chat history
     """
     ch = session.query(ChatHistoryModel).filter_by(id=chat_history_id).first()
     if ch:
@@ -54,7 +54,7 @@ def feedback_chat_history_to_db(session, chat_history_id, feedback_score, feedba
 @with_session
 def get_chat_history_by_id(session, chat_history_id) -> ChatHistoryModel:
     """
-    查询聊天记录
+    query chat history
     """
     ch = session.query(ChatHistoryModel).filter_by(id=chat_history_id).first()
     return ch

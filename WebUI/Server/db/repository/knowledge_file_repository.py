@@ -12,8 +12,8 @@ def list_docs_from_db(session,
                       metadata: Dict = {},
                       ) -> List[Dict]:
     '''
-    列出某知识库某文件对应的所有Document。
-    返回形式：[{"id": str, "metadata": dict}, ...]
+    list all documents in KnowledgeBase.
+    return: [{"id": str, "metadata": dict}, ...]
     '''
     docs = session.query(FileDocModel).filter_by(kb_name=kb_name)
     if file_name:
@@ -30,8 +30,8 @@ def delete_docs_from_db(session,
                       file_name: str = None,
                       ) -> List[Dict]:
     '''
-    删除某知识库某文件对应的所有Document，并返回被删除的Document。
-    返回形式：[{"id": str, "metadata": dict}, ...]
+    delete all document in KnowledgeBase.
+    return: [{"id": str, "metadata": dict}, ...]
     '''
     docs = list_docs_from_db(kb_name=kb_name, file_name=file_name)
     query = session.query(FileDocModel).filter_by(kb_name=kb_name)
@@ -48,12 +48,11 @@ def add_docs_to_db(session,
                    file_name: str,
                    doc_infos: List[Dict]):
     '''
-    将某知识库某文件对应的所有Document信息添加到数据库。
-    doc_infos形式：[{"id": str, "metadata": dict}, ...]
+    add all documents to KnowledgeBase.
+    doc_infos: [{"id": str, "metadata": dict}, ...]
     '''
-    #! 这里会出现doc_infos为None的情况，需要进一步排查
     if doc_infos is None:
-        print("输入的server.db.repository.knowledge_file_repository.add_docs_to_db的doc_infos参数为None")
+        print("The doc_infos is None.")
         return False
     for d in doc_infos:
         obj = FileDocModel(
@@ -83,11 +82,10 @@ def add_file_to_db(session,
                 kb_file: KnowledgeFile,
                 docs_count: int = 0,
                 custom_docs: bool = False,
-                doc_infos: List[str] = [], # 形式：[{"id": str, "metadata": dict}, ...]
+                doc_infos: List[str] = [], # example：[{"id": str, "metadata": dict}, ...]
                 ):
     kb = session.query(KnowledgeBaseModel).filter_by(kb_name=kb_file.kb_name).first()
     if kb:
-        # 如果已经存在该文件，则更新文件信息与版本号
         existing_file: KnowledgeFileModel = (session.query(KnowledgeFileModel)
                                              .filter_by(file_name=kb_file.filename,
                                                         kb_name=kb_file.kb_name)
@@ -101,7 +99,6 @@ def add_file_to_db(session,
             existing_file.docs_count = docs_count
             existing_file.custom_docs = custom_docs
             existing_file.file_version += 1
-        # 否则，添加新文件
         else:
             new_file = KnowledgeFileModel(
                 file_name=kb_file.filename,
