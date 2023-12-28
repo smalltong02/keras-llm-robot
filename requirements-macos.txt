@@ -114,7 +114,7 @@ num2words==0.5.13
 numba==0.58.1
 numpy==1.26.1
 oauthlib==3.2.2
-openai==1.6.1
+openai==0.28.1
 packaging==23.2
 pandas==1.5.3
 Pillow==9.3.0

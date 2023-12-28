@@ -3,7 +3,7 @@ import azure.cognitiveservices.speech as speechsdk
 import os
 import io
 import base64
-from openai import OpenAI
+#from openai import OpenAI
 import multiprocessing
 from WebUI.configs.basicconfig import TMP_DIR
 from WebUI.configs.serverconfig import FSCHAT_CONTROLLER
@@ -137,15 +137,16 @@ class StreamSpeakHandler(BaseCallbackHandler):
                         audio_segment = AudioSegment.from_mp3(io.BytesIO(audio_stream))
                         play(audio_segment)
             elif self.provider == "OpenAICloud":
-                client = OpenAI()
-                response = client.audio.speech.create(
-                    model="tts-1",
-                    voice=self.synthesis,
-                    input=text
-                    )
-                response.stream_to_file(self.speech_file)
-                audio_segment = AudioSegment.from_mp3(file=self.speech_file)
-                play(audio_segment)
+                pass
+                # client = OpenAI()
+                # response = client.audio.speech.create(
+                #     model="tts-1",
+                #     voice=self.synthesis,
+                #     input=text
+                #     )
+                # response.stream_to_file(self.speech_file)
+                # audio_segment = AudioSegment.from_mp3(file=self.speech_file)
+                # play(audio_segment)
                     
 class LlamacppStreamCallbackHandler(BaseCallbackHandler):
 
