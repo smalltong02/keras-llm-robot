@@ -134,10 +134,12 @@ class ApiRequest:
             speechmodel["speech_region"] = config.get("speech_region", "")
             if speechmodel["speech_region"] == "[Your Region]":
                 speechmodel["speech_region"] = ""
+            speechmodel["provider"] = config.get("provider", "")
         else:
             speechmodel["type"] = ""
             speechmodel["speech_key"] = ""
             speechmodel["speech_region"] = ""
+            speechmodel["provider"] = config.get("provider", "")
 
         data = {
             "query": query,

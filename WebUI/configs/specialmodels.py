@@ -84,7 +84,7 @@ def load_llamacpp_model(app: FastAPI, model_name, model_path):
         llm_model = LlamaCpp(
             model_path=path,
             temperature=0.7,
-            max_tokens=2000,
+            max_tokens=512,
             top_p=1,
             verbose=True,
             callback_manager=callback_manager,
@@ -138,16 +138,13 @@ def special_model_chat(
         speak_handler = None
         if len(speechmodel):
                 modeltype = speechmodel.get("type", "")
-                spmodel = speechmodel.get("model", "")
+                provider = speechmodel.get("provider", "")
+                #spmodel = speechmodel.get("model", "")
                 spspeaker = speechmodel.get("speaker", "")
                 speechkey = speechmodel.get("speech_key", "")
-                if speechkey == "":
-                    speechkey = os.environ.get('SPEECH_KEY')
                 speechregion = speechmodel.get("speech_region", "")
-                if speechregion == "":
-                    speechregion = os.environ.get('SPEECH_REGION')
                 if modeltype == "local" or modeltype == "cloud":
-                    speak_handler = StreamSpeakHandler(run_place=modeltype, synthesis=spspeaker, subscription=speechkey, region=speechregion)
+                    speak_handler = StreamSpeakHandler(run_place=modeltype, provider=provider, synthesis=spspeaker, subscription=speechkey, region=speechregion)
 
         answer = ""
         chat_history_id = add_chat_history_to_db(chat_type="llm_chat", query=query)

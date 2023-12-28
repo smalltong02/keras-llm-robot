@@ -39,16 +39,13 @@ async def chat(query: str = Body(..., description="User input: ", examples=["cha
         callbackslist = [async_callback]
         if len(speechmodel):
             modeltype = speechmodel.get("type", "")
-            spmodel = speechmodel.get("model", "")
+            provider = speechmodel.get("provider", "")
+            #spmodel = speechmodel.get("model", "")
             spspeaker = speechmodel.get("speaker", "")
             speechkey = speechmodel.get("speech_key", "")
-            if speechkey == "":
-                speechkey = os.environ.get('SPEECH_KEY')
             speechregion = speechmodel.get("speech_region", "")
-            if speechregion == "":
-                speechregion = os.environ.get('SPEECH_REGION')
             if modeltype == "local" or modeltype == "cloud":
-                speak_handler = StreamSpeakHandler(run_place=modeltype, synthesis=spspeaker, subscription=speechkey, region=speechregion)
+                speak_handler = StreamSpeakHandler(run_place=modeltype, provider=provider, synthesis=spspeaker, subscription=speechkey, region=speechregion)
                 callbackslist.append(speak_handler)
         model = get_ChatOpenAI(
             model_name=model_name,

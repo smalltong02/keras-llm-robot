@@ -382,6 +382,30 @@
                     }
                 },
                 "CloudTemplates": "AzureSpeechTemplate"
+            },
+            "OpenAISpeechService": {
+                "type": "cloud",
+                "speech_key": "[Your Key]",
+                "speech_region": "[Your Region]",
+                "provider": "OpenAICloud",
+                "synthesis": {
+                    "en-US": {
+                        "male": [
+                            "alloy",
+                            "echo",
+                            "fable",
+                            "onyx"
+                        ],
+                        "female": [
+                            "nova",
+                            "shimmer"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    }
+                },
+                "CloudTemplates": "OpenAISpeechTemplate"
             }
         },
         "LocalModel": {
