@@ -3,7 +3,6 @@ import torch
 import base64
 from WebUI.configs.basicconfig import TMP_DIR
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
-from TTS.api import TTS
 import wave
 
 def init_voice_models(config):
@@ -118,6 +117,7 @@ def cloud_voice_data(config, voice_data: str="") -> str:
 
 def init_speech_models(config):
     if isinstance(config, dict):
+        from TTS.api import TTS
         model_id = config["model_path"]
         config_path = model_id + "/config.json"
         device =  'cuda' if config["device"] == 'gpu' else config["device"]

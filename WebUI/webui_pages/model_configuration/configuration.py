@@ -136,9 +136,9 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
             pathstr = current_model["config"].get("path")
         else:
             pathstr = ""
-        pathstr = st.text_input("Local Path", pathstr, disabled=disabled)
+        pathstr = st.text_input("Local Path", pathstr, disabled=True)
         save_path = st.button(
-            "Save Path",
+            "Download",
             use_container_width=True,
             disabled=disabled
         )
