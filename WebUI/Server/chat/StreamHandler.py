@@ -161,12 +161,11 @@ class StreamSpeakHandler(BaseCallbackHandler):
 
                         response.raise_for_status()
                         audio_stream = None
-                        with open("generated_audio.wav", "wb") as audio_file:
-                            for chunk in response.iter_content(chunk_size=8192):
-                                if audio_stream is None:
-                                    audio_stream = chunk
-                                else:
-                                    audio_stream += chunk
+                        for chunk in response.iter_content(chunk_size=8192):
+                            if audio_stream is None:
+                                audio_stream = chunk
+                            else:
+                                audio_stream += chunk
                         audio_segment = AudioSegment.from_mp3(io.BytesIO(audio_stream))
                     except requests.exceptions.RequestException as error:
                         pass
