@@ -248,16 +248,15 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
         imagechatbtn = st.button(label="🎨", use_container_width=True, disabled=imagedisable)
         if imagechatbtn:
             pass
-        if bshowstatus:
-            st.caption(
-                f"""<p style="font-size: 1.5em; text-align: left; color: #3498db;"><b>Running Status:</b></p>""",
-                unsafe_allow_html=True,
-            )
-            st.caption(
-                f"""<p style="font-size: 1em; text-align: center;">Load Model: {running_model}</p>""",
-                unsafe_allow_html=True,
-            )
 
+        model_name = running_model
+        if model_name == "None":
+            model_name = ""
+        st.caption(
+            f"""<p style="font-size: 1.5em; text-align: center; color: #3498db;"><b>{model_name}</b></p>""",
+            unsafe_allow_html=True,
+        )
+        if bshowstatus:
             #cpuname, cpuutil, cpumem = get_cpu_info(False)
             #if cpuname == "":
             #    cpuname = "Unknown"

@@ -57,7 +57,7 @@ class StreamSpeakHandler(BaseCallbackHandler):
         # Initialize the speech synthesizer
         self.synthesis=synthesis
         self.rate=rate
-        if provider == "OpenAICloud":
+        if provider == "AzureCloud":
             if subscription is not None and subscription != "" and region is not None and region != "":
                 self.speech_synthesizer = self.azure_settings(synthesis, subscription, region)
 
@@ -134,7 +134,7 @@ class StreamSpeakHandler(BaseCallbackHandler):
                     self.new_sentence = ""
                     audio_stream = speech_synthesis_result.audio_data
                     if len(audio_stream):
-                        audio_segment = AudioSegment.from_mp3(io.BytesIO(audio_stream))
+                        audio_segment = AudioSegment.from_wav(io.BytesIO(audio_stream))
                         play(audio_segment)
             elif self.provider == "OpenAICloud":
                 pass
