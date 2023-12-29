@@ -158,13 +158,13 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
   1. **`Load Model`**
       
-      General models can be loaded with CPU or GPU, and with 8-bits loading (`4-bits is invalid`). Set the appropriate CPU Threads to improve token output speed when using CPU.
+      **General models** can be loaded with CPU or GPU, and with 8-bits loading (`4-bits is invalid`). Set the appropriate CPU Threads to improve token output speed when using CPU.
       
-      Multimodal models can be loaded with CPU or GPU. For Vision models, users can upload images and text for model interaction. For Voice models, users can interact with the model using a microphone (without the need for auxiliary models). (`Not implemented`)
+      **Multimodal models** can be loaded with CPU or GPU. For Vision models, users can upload images and text for model interaction. For Voice models, users can interact with the model using a microphone (without the need for auxiliary models). (`Not implemented`)
 
-      Special models can be loaded with CPU or GPU, Please prioritize CPU loading of GGUF models.
+      **Special models** can be loaded with CPU or GPU, Please prioritize CPU loading of GGUF models.
 
-      Online models do not require additional local resources and currently support online language models from OpenAI and Google.
+      **Online models** do not require additional local resources and currently support online language models from OpenAI and Google.
 
 
       | Supported Models | Model Type | Size |
