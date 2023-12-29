@@ -449,7 +449,7 @@ def create_model_worker_app(log_level: str = "INFO", **kwargs) -> Union[FastAPI,
 
     app_worker = ""
     app._model = None
-    app._async_callback = None
+    app._streamer = None
     app._model_name = ""
     for k, v in kwargs.items():
         setattr(args, k, v)
