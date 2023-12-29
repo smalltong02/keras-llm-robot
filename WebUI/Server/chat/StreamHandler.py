@@ -3,7 +3,7 @@ import azure.cognitiveservices.speech as speechsdk
 import os
 import io
 import base64
-#from openai import OpenAI
+import requests
 import multiprocessing
 from WebUI.configs.basicconfig import TMP_DIR
 from WebUI.configs.serverconfig import FSCHAT_CONTROLLER
@@ -50,6 +50,7 @@ class StreamSpeakHandler(BaseCallbackHandler):
         if region == None or region == "":
             region=os.environ.get('SPEECH_REGION')
         self.initialize = True
+        self.subscription = subscription
         self.run_place=run_place
         self.provider=provider
         self.speech_file = str(TMP_DIR / "speech.wav")
@@ -137,7 +138,43 @@ class StreamSpeakHandler(BaseCallbackHandler):
                         audio_segment = AudioSegment.from_wav(io.BytesIO(audio_stream))
                         play(audio_segment)
             elif self.provider == "OpenAICloud":
-                pass
+                def generate_openai_speech(synthesis, api_key, text):
+                    audio_segment = None
+                    try:
+                        if api_key == "":
+                            api_key = os.environ.get('OPENAI_API_KEY')
+                        headers = {
+                            "Authorization": f"Bearer {api_key}"
+                        }
+                        payload = {
+                            "model": "tts-1",
+                            "input": text,
+                            "voice": synthesis
+                        }
+
+                        response = requests.post(
+                            "https://api.openai.com/v1/audio/speech",
+                            json=payload,
+                            headers=headers,
+                            stream=True
+                        )
+
+                        response.raise_for_status()
+                        audio_stream = None
+                        with open("generated_audio.wav", "wb") as audio_file:
+                            for chunk in response.iter_content(chunk_size=8192):
+                                if audio_stream is None:
+                                    audio_stream = chunk
+                                else:
+                                    audio_stream += chunk
+                        audio_segment = AudioSegment.from_mp3(io.BytesIO(audio_stream))
+                    except requests.exceptions.RequestException as error:
+                        pass
+                    return audio_segment
+                if self.subscription is not None and self.subscription != "":
+                    audio_segment =generate_openai_speech(self.synthesis, self.subscription, text)
+                    if audio_segment is not None:
+                        play(audio_segment)
                 # client = OpenAI()
                 # response = client.audio.speech.create(
                 #     model="tts-1",
