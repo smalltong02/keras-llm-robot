@@ -1,1 +1,262 @@
-This is a llm project.
+# Keras-llm-robot Web UI
+
+🌍 [READ THIS IN CHINESE](readme-cn.md)
+
+The project inherits from the Langchain-Chatchat project(https://github.com/chatchat-space/Langchain-Chatchat) The underlying architecture uses open-source frameworks such as Langchain and Fastchat, with the top layer implemented in Streamlit. The project is completely open-source, aiming for offline deployment and testing of most open-source models from the Hugging Face website. Additionally, it allows combining multiple models through configuration to achieve multimodal, RAG, Agent, and other functionalities.
+
+---
+
+## Table of Contents
+* [Quick Start](readme.md#Quick-Start)
+* [Project Introduction](readme.md#Project-Introduction)
+* [Environment Setup](readme.md#Environment-Setup)
+* [Feature Overview](readme.md#Feature-Overview)
+    * [Interface Overview](readme.md#Interface-Overview)
+    * [Language Model Features](readme.md#Language-Model-Features)
+      * [1. Load Model](readme.md#1-Load-Model)
+      * [2. Quantization](readme.md#2-Quantization)
+      * [3. Fine-tuning](readme.md#3-Fine-tuning)
+      * [4. Prompt Templates](readme.md#4-Prompt-Templates)
+    * [Auxiliary Model Features](readme.md#Auxiliary-Model-Features)
+      * [1. Retrieval](readme.md#1-Retrieval)
+      * [2. Code Interpreter](readme.md#2-Code-Interpreter)
+      * [3. Speech Recognition](readme.md#3-Speech-Recognition)
+      * [4. Image Recognition](readme.md#4-Image-Recognition)
+      * [5. Function Calling](readme.md#5-Function-Calling)
+
+
+## Quick Start
+  
+  Please first prepare the runtime environment, refer to [Environment Setup](readme.md#Environment-Setup)
+
+  If deploying locally, you can start the Web UI using Python with an HTTP interface at http://127.0.0.1:8818 http://127.0.0.1:8818
+  ```bash
+  python __webgui_server__.py --webui
+  ```
+
+  If deploying on a cloud server and accessing the Web UI locally, Please use reverse proxy and start the Web UI with HTTPS. Access using https://127.0.0.1:4430 on locally, and use the https interface at https://[server ip]:4430 on remotely:
+  ```bash
+  // By default, the batch file uses the virtual environment named keras-llm-robot,
+  // Modify the batch file if using a different virtual environment name.
+
+  webui-startup.bat
+  ```
+
+
+## Project Introduction
+Consists of three main interfaces: the chat interface for language models, the configuration interface for language models, and the tools and agent interface for auxiliary models.
+
+Chat Interface:
+![Image1](./img/WebUI.png)
+The language model is the main model that can be used in chat mode after loading. It also serves as the brain in multimodal features. Auxiliary models, such as voice, image, and retrieval models, require language models to process their input or output text. The voice model like to ear and mouth, the image model like to eye, and the retrieval model provides long-term memory. The project currently supports dozens of language models.
+
+Configuration Interface:
+![Image1](./img/Configuration.png)
+Models can be loaded based on requirements, categorized into general, multimodal, special, and online models.
+
+Tools & Agent Interface：
+![Image1](./img/Tools_Agent.png)
+Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-text, image recognition, and image generation, it can be loaded based on requirements. The tools section includes settings for function calls (requires language model support for function calling).
+
+## Environment Setup
+
+  1. Install Anaconda or Miniconda and Git.
+   
+  2. Create a virtual environment named keras-llm-robot using conda and install Python of 3.8 - 3.12:
+  ```bash
+  conda create -n keras-llm-robot python==3.11.5
+  ```
+
+  3. Clone the repository:
+  ```bash
+  git clone https://github.com/smalltong02/keras-llm-robot.git
+  cd keras-llm-robot
+  ```
+
+  4. Activate the virtual environment:
+  ```bash
+  conda activate keras-llm-robot
+  ```
+
+  5. If you have an NVIDIA GPU, Please install the CUDA Toolkit from (https://developer.nvidia.com/cuda-toolkit-archive), and install the PyTorch CUDA version in the virtual environment (same to the CUDA Toolkit version https://pytorch.org/):
+  ```bash
+  // such as install version 12.1
+  conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
+  ```
+
+  6. Install dependencies, Please choose the appropriate requirements file based on your platform:
+  ```bash
+  // windows
+  pip install -r requirements-windows.txt
+  // MacOS
+  pip install -r requirements-macos.txt
+  ```
+
+  7. If you need to download models from Hugging Face for offline execution, please download the models yourself and place them in the "models" directory. If the models have not been downloaded in advance, the WebUI will automatically download them from the Hugging Face website to the local system cache.
+  ```bash
+  // such as the folder of llama-2-7b-chat model:
+  models\llm\Llama-2-7b-chat-hf
+
+  // such as the folder of XTTS-v2 speech-to-text model:
+  models\voices\XTTS-v2
+
+  // such as the folder of faster-whisper-large-v3 text-to-speech model:
+  models\voices\faster-whisper-large-v3
+  ```
+
+  8. If run locally, start the Web UI using Python at http://127.0.0.1:8818:
+  ```bash
+  python __webgui_server__.py --webui
+  ```
+
+  9. If deploying on a cloud server and accessing the Web UI locally, use reverse proxy and start the Web UI with HTTPS. Access using https://127.0.0.1:4430 on locally, and use the https interface at https://[server ip]:4430 on remotely:
+  ```bash
+  // By default, the batch file uses the virtual environment named keras-llm-robot,
+  // Modify the batch file if using a different virtual environment name.
+
+  webui-startup.bat
+  ```
+
+## Feature Overview
+
+### Interface Overview
+
+- #### Configuration Interface
+
+    In the configuration interface, you can choose suitable language models to load, categorized as `General Models`, `Multimodal Models`, `Special Models`, and `Online Models`.
+
+  1. **`General Models`** Untouched models published on Hugging Face, supporting models with chat templates similar to OpenAI.
+  2. **`Multimodal Models`** (`Not implemented`): Models supporting both voice and text or image and text at the lower level.
+  3. **`Special Models`** Quantized models (GGUF) published on Hugging Face or models requiring special chat templates.
+  4. **`Online Models`** Supports online language models from OpenAI and Google, such as GPT4-Turbo, Gemini-Pro, GPT4-vision, and Gemini-Pro-vision. Requires OpenAI API Key and Google API Key, which can be configured in the system environment variables or in the configuration interface.
+
+
+![Image1](./img/Configuration.png)
+
+
+- #### Tools & Agent Interface
+
+  In the tools & agent interface, you can load auxiliary models such as retrieval, code execution, text-to-speech, speech-to-text, image recognition, image generation, or function calling.
+
+  1. **`Retrieval`** (`Not implemented`)
+  2. **`Code Interpreter`** (`Not implemented`)
+  3. **`Text-to-Speech`** Supports local model XTTS-v2 and Azure online text-to-speech service. Requires Azure API Key, which can be configured in the system environment variables `SPEECH_KEY` and `SPEECH_REGION`, or in the configuration interface.
+  4. **`Speech-to-Text`** Supports local models whisper and fast-whisper and Azure online speech-to-text service. Requires Azure API Key, which can be configured in the system environment variables `SPEECH_KEY` and `SPEECH_REGION`, or in the configuration interface.
+  5. **`Image Recognition`** (`Not implemented`)
+  6. **`Image Generation`** (`Not implemented`)
+  7. **`Function Calling`** (`Not implemented`)
+
+![Image](./img/Tools_Agent.png)
+
+
+  Once the speech-to-text model is loaded, voice and video chat controls will appear in the chat interface. Click the `START` button to record voice via the microphone and the `STOP` button to end the voice recording. The speech model will automatically convert the speech to text and engage in conversation with the language model. When the text-to-speech model is loaded, the text output by the language model will automatically be converted to speech and output through speakers and headphones.
+
+![Image](./img/Chat_by_voice.png)
+
+
+- ### Language Model Features
+
+  1. **`Load Model`**
+      
+      General models can be loaded with CPU or GPU, and with 8-bits loading (`4-bits is invalid`). Set the appropriate CPU Threads to improve token output speed when using CPU.
+      
+      Multimodal models can be loaded with CPU or GPU. For Vision models, users can upload images and text for model interaction. For Voice models, users can interact with the model using a microphone (without the need for auxiliary models). (`Not implemented`)
+
+      Special models can be loaded with CPU or GPU, Please prioritize CPU loading of GGUF models.
+
+      Online models do not require additional local resources and currently support online language models from OpenAI and Google.
+
+
+      | Supported Models | Model Type | Size |
+      | :---- | :---- | :---- |
+      | fastchat-t5-3b-v1.0 | LLM Model | 3B |
+      | llama-2-7b-hf | LLM Model | 7B |
+      | llama-2-7b-chat-hf | LLM Model | 7B |
+      | chatglm2-6b | LLM Model | 7B |
+      | chatglm2-6b-32k | LLM Model | 7B |
+      | chatglm3-6b | LLM Model | 7B |
+      | tigerbot-7b-chat | LLM Model | 7B |
+      | openchat_3.5 | LLM Model | 7B |
+      | Qwen-7B-Chat-Int4 | LLM Model | 7B |
+      | fuyu-8b | LLM Model | 7B |
+      | Yi-6B-Chat-4bits | LLM Model | 7B |
+      | neural-chat-7b-v3-1 | LLM Model | 7B |
+      | Mistral-7B-Instruct-v0.2 | LLM Model | 7B |
+      | llama-2-13b-hf | LLM Model | 13B |
+      | llama-2-13b-chat-hf | LLM Model | 13B |
+      | tigerbot-13b-chat | LLM Model | 13B |
+      | Qwen-14B-Chat | LLM Model | 13B |
+      | Qwen-14B-Chat-Int4 | LLM Model | 13B |
+      | Yi-34B-Chat-4bits | LLM Model | 34B |
+      | llama-2-70b-hf | LLM Model | 70B |
+      | llama-2-70b-chat-hf | LLM Model | 70B |
+      | visualglm-6b| Multimodal Model (image) | 7B |
+      | cogvlm-chat-hf | Multimodal Model (image) | 7B |
+      | mplug-owl2-llama2-7b | Multimodal Model (image) | 7B |
+      | Qwen-VL-Chat-Int4 | Multimodal Model (image) | 7B |
+      | internlm-xcomposer-7b-4bit | Multimodal Model (image) | 7B |
+      | phi-2-gguf | Special Model | 3B |
+      | phi-2 | Special Model | 3B |
+      | Yi-6B-Chat-gguf | Special Model | 7B |
+      | OpenHermes-2.5-Mistral-7B | Special Model | 7B |
+      | Yi-34B-Chat-gguf | Special Model | 34B |
+      | Mixtral-8x7B-v0.1-gguf | Special Model | 8*7B |
+      | gpt-3.5-turbo | Online Model | *B |
+      | gpt-3.5-turbo-16k | Online Model | *B |
+      | gpt-4 | Online Model | *B |
+      | gpt-4-32k | Online Model | *B |
+      | gpt-4-1106-preview | Online Model | *B |
+      | gpt-4-vision-preview | Online Model | *B |
+      | gemini-pro | Online Model | *B |
+      | gemini-pro-vision | Online Model | *B |
+      | chat-bison-001 | Online Model | *B |
+      | text-bison-001 | Online Model | *B |
+      | whisper-base | Voice Model | *B |
+      | whisper-medium | Voice Model | *B |
+      | whisper-large-v3 | Voice Model | *B |
+      | faster-whisper-large-v3 | Voice Model | *B |
+      | AzureVoiceService | Voice Model | *B |
+      | XTTS-v2 | Speech Model | *B |
+      | AzureSpeechService | Speech Model | *B |
+      | OpenAISpeechService | Speech Model | *B |
+
+
+  2. **`Quantization`**
+
+      Use open-source tools like llama.cpp to create quantized versions of general models with 2, 3, 4, 5, 6, and 8 bits. `Not implemented`
+
+  3. **`Fine-tuning`**
+
+      You can fine-tune the language model using a private dataset. `Not implemented`
+
+  4. **`Prompt Templates`**
+
+      Set up a template for prompting the language model in specific scenarios. `Not implemented`
+  
+- ### Auxiliary Model Features
+
+  1. **`Retrieval`**
+
+      RAG functionality requires a vector database and embedding models to provide long-term memory capabilities to the language model. `Not implemented`
+
+  2. **`Code Interpreter`**
+
+      Enable code execution capability for the language model to empower it with actionable functionality for the mind. `Not implemented`
+
+  3. **`Speech Recognition`**
+
+      Provide the language model with speech input and output capabilities, adding the functions of listening and speaking to the mind. Support local models such as XTTS-v2 and Whisper, as well as integration with Azure online speech services.
+
+  4. **`Image Recognition`**
+
+      Provide the language model with input and output capabilities for images and videos, adding the functions of sight and drawing to the mind. `Not implemented`
+
+  5. **`Function Calling`**
+
+      Provide the language model with function calling capability, empowering the mind with the ability to use tools. Anticipated support for automation platforms such as Zapier, n8n, and others. `Not implemented`
+
+## Note
+
+Langchain Project: (https://github.com/langchain-ai/langchain)
+
+Fastchat Project: (https://github.com/lm-sys/FastChat)
