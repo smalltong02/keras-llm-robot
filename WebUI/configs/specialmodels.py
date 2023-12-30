@@ -38,17 +38,7 @@ def init_cloud_models(model_name):
         return None
     if provider != "google-api":
         return None
-    model_config = GetModelConfig(webui_config, modelinfo)
-    if len(model_config) == 0:
-        return None
-    apikey = model_config.get("api_key", "[Your Key]")
-    if apikey == "[Your Key]":
-        apikey = os.environ.get('GOOGLE_API_KEY')
-    if apikey == None:
-        apikey = "EMPTY"
-    genai.configure(api_key=apikey)
-    model = genai.GenerativeModel('gemini-pro')
-    return model
+    return None
 
 def load_pipeline_model(app: FastAPI, model_name, model_path, device):
     from transformers import AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer, pipeline
@@ -204,6 +194,15 @@ def special_model_chat(
         elif modelinfo["mtype"] == ModelType.Online:
             provider = GetProviderByName(webui_config, model_name)
             if provider == "google-api":
+                modelinfo["mname"] = model_name
+                model_config = GetModelConfig(webui_config, modelinfo)
+                apikey = model_config.get("api_key", "[Your Key]")
+                if apikey == "[Your Key]" or apikey == "":
+                    apikey = os.environ.get('GOOGLE_API_KEY')
+                if apikey == None:
+                    apikey = "EMPTY"
+                genai.configure(api_key=apikey)
+                model = genai.GenerativeModel(model_name=model_name)
                 updated_history = [
                     {'parts': entry['content'], **({'role': 'model'} if entry['role'] == 'assistant' else {'role': entry['role']})}
                     for entry in history

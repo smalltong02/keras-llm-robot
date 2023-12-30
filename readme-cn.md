@@ -58,9 +58,9 @@
 
 ## 环境配置
 
-1. 自行安装anaconda或miniconda，以及git
+1. 自行安装anaconda或miniconda，以及git，windows用户还需要安装CMake工具
    
-  2. 使用conda创建虚拟环境keras-llm-robot并安装python, python请使用3.8 - 3.12的版本
+  2. 使用conda创建虚拟环境keras-llm-robot并安装python, python请使用3.10 或者 3.11的版本
   ```bash
   conda create -n keras-llm-robot python==3.11.5
   ```
@@ -253,6 +253,12 @@
       给语言模型提供函数调用功能，为大脑加上使用工具的能力。预计支持Zapier，n8n等自动化平台。`该功能还未实现`
 
 ## 参考
+
+Anaconda：(https://www.anaconda.com/download)
+
+Git：(https://git-scm.com/downloads)
+
+CMake：(https://cmake.org/download/)
 
 Langchain项目地址：(https://github.com/langchain-ai/langchain)
 
