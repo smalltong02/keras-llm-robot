@@ -8,8 +8,8 @@ loadbits_list = ["16 bits","8 bits","4 bits"]
 quantization_list = ["16 bits", "8 bits", "6 bits", "5 bits", "4 bits"]
 
 def configuration_page(api: ApiRequest, is_lite: bool = False):
-    running_model = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str}
-    current_model = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "config": dict}
+    running_model : Dict[str, any] = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str}
+    current_model : Dict[str, any] = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "config": dict}
     webui_config = api.get_webui_config()
     localmodel = webui_config.get("ModelConfig").get("LocalModel")
     commonmodel = localmodel.get("LLM Model")

@@ -127,7 +127,7 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
     ) -> Dict:
         configinst = InnerJsonConfigWebUIParse()
         webui_config = configinst.dump()
-        modelinfo = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "config": dict}
+        modelinfo : Dict[str, any] = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "config": dict}
         modelinfo["mtype"], modelinfo["msize"], modelinfo["msubtype"] = GetModelInfoByName(webui_config, new_model_name)
 
         available_models = []

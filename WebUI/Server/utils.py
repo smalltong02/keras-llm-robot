@@ -196,7 +196,7 @@ def get_model_worker_config(model_name: str = None) -> dict:
     if model_name is None or model_name == "":
         return config
 
-    modelinfo = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "config": dict}
+    modelinfo : Dict[str, any] = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "config": dict}
     onlinemodel = webui_config.get("ModelConfig").get("OnlineModel")
     for _, value in onlinemodel.items():
         modellist = value["modellist"]

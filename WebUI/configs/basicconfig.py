@@ -143,7 +143,7 @@ def GetProviderByName(webui_config: Dict, name : str):
                 return key
     return None
 
-def GetModeList(webui_config, current_model) -> list:
+def GetModeList(webui_config, current_model  : Dict[str, any]) -> list:
     localmodel = webui_config.get("ModelConfig").get("LocalModel")
     mtype = current_model["mtype"]
     if mtype == ModelType.Local:
@@ -159,7 +159,7 @@ def GetModeList(webui_config, current_model) -> list:
         pass
     return []
 
-def GetModelConfig(webui_config, current_model) -> Dict:
+def GetModelConfig(webui_config, current_model : Dict[str, any]) -> Dict:
     mtype = current_model["mtype"]
     if mtype == ModelType.Local:
         msize = GetSizeName(current_model["msize"])

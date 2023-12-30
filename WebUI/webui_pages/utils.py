@@ -123,7 +123,7 @@ class ApiRequest:
     ):
         configinst = InnerJsonConfigWebUIParse()
         webui_config = configinst.dump()
-        modelinfo = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "config": dict}
+        modelinfo : Dict[str, any] = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "config": dict}
         modelinfo["mtype"], modelinfo["msize"], modelinfo["msubtype"] = GetModelInfoByName(webui_config, model)
         config = GetSpeechModelInfo(webui_config, speechmodel.get("model", ""))
         if len(config):
@@ -398,7 +398,7 @@ class ApiRequest:
             return self.ret_sync(response)
         
     def save_model_config(self,
-        modelconfig: {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "mspecial": "", "config": dict},
+        modelconfig: Dict[str, any] = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "mspecial": "", "config": dict},
         controller_address: str = None,
     ):
         if modelconfig is None or all(key in modelconfig for key in ["mtype", "msize", "msubtype", "mname", "config"]) is False:

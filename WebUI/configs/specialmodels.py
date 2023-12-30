@@ -28,7 +28,7 @@ def init_cloud_models(model_name):
         return None
     configinst = InnerJsonConfigWebUIParse()
     webui_config = configinst.dump()
-    modelinfo = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "config": dict}
+    modelinfo : Dict[str, any] = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "config": dict}
     modelinfo["mtype"], modelinfo["msize"], modelinfo["msubtype"] = GetModelInfoByName(webui_config, model_name)
     if modelinfo["mtype"] != ModelType.Online:
         return None
@@ -92,7 +92,7 @@ def init_special_models(app: FastAPI, args):
         return
     configinst = InnerJsonConfigWebUIParse()
     webui_config = configinst.dump()
-    model_info = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "config": dict}
+    model_info : Dict[str, any] = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "config": dict}
     model_info["mtype"], model_info["msize"], model_info["msubtype"] = GetModelInfoByName(webui_config, model_name)
     model_info["mname"] = model_name
     model_config = GetModelConfig(webui_config, model_info)
@@ -123,7 +123,7 @@ def special_model_chat(
     
         configinst = InnerJsonConfigWebUIParse()
         webui_config = configinst.dump()
-        modelinfo = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "config": dict}
+        modelinfo : Dict[str, any] = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "config": dict}
         modelinfo["mtype"], modelinfo["msize"], modelinfo["msubtype"] = GetModelInfoByName(webui_config, model_name)
 
         speak_handler = None
