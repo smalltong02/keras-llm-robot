@@ -29,7 +29,7 @@ The project inherits from the Langchain-Chatchat project(https://github.com/chat
   
   Please first prepare the runtime environment, refer to [Environment Setup](readme.md#Environment-Setup)
 
-  If deploying locally, you can start the Web UI using Python with an HTTP interface at http://127.0.0.1:8818 http://127.0.0.1:8818
+  If deploying locally, you can start the Web UI using Python with an HTTP interface at http://127.0.0.1:8818
   ```bash
   python __webgui_server__.py --webui
   ```
