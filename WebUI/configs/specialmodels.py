@@ -196,7 +196,7 @@ def special_model_chat(
             if provider == "google-api":
                 modelinfo["mname"] = model_name
                 model_config = GetModelConfig(webui_config, modelinfo)
-                apikey = model_config.get("api_key", "[Your Key]")
+                apikey = model_config.get("apikey", "[Your Key]")
                 if apikey == "[Your Key]" or apikey == "":
                     apikey = os.environ.get('GOOGLE_API_KEY')
                 if apikey == None:
