@@ -114,7 +114,8 @@ def special_model_chat(
         max_tokens: Optional[int],
         prompt_name: str,
 ):
-    async def special_chat_iterator(query: str,
+    async def special_chat_iterator(model: Any,
+                            query: str,
                             history: List[dict] = [],
                             model_name: str = "",
                             prompt_name: str = prompt_name,
@@ -230,8 +231,10 @@ def special_model_chat(
         
         update_chat_history(chat_history_id, response=answer)
         
-    return StreamingResponse(special_chat_iterator(query=query,
-                                           history=history,
-                                           model_name=model_name,
-                                           prompt_name=prompt_name),
+    return StreamingResponse(special_chat_iterator(
+                                            model=model,
+                                            query=query,
+                                            history=history,
+                                            model_name=model_name,
+                                            prompt_name=prompt_name),
                              media_type="text/event-stream")
