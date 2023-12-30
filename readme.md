@@ -60,9 +60,9 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
 ## Environment Setup
 
-  1. Install Anaconda or Miniconda and Git.
+  1. Install Anaconda or Miniconda and Git, Windows users also need to install the CMake tool.
    
-  2. Create a virtual environment named keras-llm-robot using conda and install Python of 3.8 - 3.12:
+  2. Create a virtual environment named keras-llm-robot using conda and install Python of 3.10 or 3.11:
   ```bash
   conda create -n keras-llm-robot python==3.11.5
   ```
@@ -84,7 +84,7 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
   conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
   ```
 
-  6. Install dependencies, Please choose the appropriate requirements file based on your platform:
+  6. Install dependencies, Please choose the appropriate requirements file based on your platform, On the Windows, if encounter compilation errors for llama-cpp-python or tts during the installation, please remove these two packages from the requirements:
   ```bash
   // windows
   pip install -r requirements-windows.txt
@@ -92,7 +92,24 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
   pip install -r requirements-macos.txt
   ```
 
-  7. If you need to download models from Hugging Face for offline execution, please download the models yourself and place them in the "models" directory. If the models have not been downloaded in advance, the WebUI will automatically download them from the Hugging Face website to the local system cache.
+  7. If speech feature is required, you also need to install the ffmpeg tool.
+
+    // For Windows:
+    Download the Windows binary package of ffmpeg from (https://www.gyan.dev/ffmpeg/builds/).
+    Add the bin directory to the system PATH environment variable.
+
+    // For MacOS
+    ```bash
+    # Using libav
+    brew install libav
+
+    ####    OR    #####
+
+    # Using ffmpeg
+    brew install ffmpeg
+    ```
+
+  8. If you need to download models from Hugging Face for offline execution, please download the models yourself and place them in the "models" directory. If the models have not been downloaded in advance, the WebUI will automatically download them from the Hugging Face website to the local system cache.
   ```bash
   // such as the folder of llama-2-7b-chat model:
   models\llm\Llama-2-7b-chat-hf
@@ -104,12 +121,12 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
   models\voices\faster-whisper-large-v3
   ```
 
-  8. If run locally, start the Web UI using Python at http://127.0.0.1:8818:
+  9. If run locally, start the Web UI using Python at http://127.0.0.1:8818:
   ```bash
   python __webgui_server__.py --webui
   ```
 
-  9. If deploying on a cloud server and accessing the Web UI locally, use reverse proxy and start the Web UI with HTTPS. Access using https://127.0.0.1:4430 on locally, and use the https interface at https://[server ip]:4430 on remotely:
+  10. If deploying on a cloud server and accessing the Web UI locally, use reverse proxy and start the Web UI with HTTPS. Access using https://127.0.0.1:4430 on locally, and use the https interface at https://[server ip]:4430 on remotely:
   ```bash
   // By default, the batch file uses the virtual environment named keras-llm-robot,
   // Modify the batch file if using a different virtual environment name.
@@ -166,6 +183,8 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
       **Online models** do not require additional local resources and currently support online language models from OpenAI and Google.
 
+
+      **`NOTE`** When the TTS library is not installed, XTTS-2 local speech models cannot be loaded, but other online speech services can still be used. If the llama-cpp-python library is not installed, the GGUF model cannot be loaded. Without a GPU device, AWQ and GPTQ models cannot be loaded.
 
       | Supported Models | Model Type | Size |
       | :---- | :---- | :---- |
@@ -256,6 +275,12 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
       Provide the language model with function calling capability, empowering the mind with the ability to use tools. Anticipated support for automation platforms such as Zapier, n8n, and others. `Not implemented`
 
 ## Note
+
+Anaconda download：(https://www.anaconda.com/download)
+
+Git download：(https://git-scm.com/downloads)
+
+CMake download：(https://cmake.org/download/)
 
 Langchain Project: (https://github.com/langchain-ai/langchain)
 

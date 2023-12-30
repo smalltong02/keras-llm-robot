@@ -84,30 +84,31 @@
 
   6. 安装依赖项, 请按照不同平台选择适当的requirements
   ```bash
-  // windows平台, 安装过程中如果遇到llama-cpp-python和tts的编译错误，请将这两个安装包从requirements中删除掉
+  // windows平台, 安装过程中如果遇到llama-cpp-python和tts的编译错误，请将这两个安装包从requirements中删除掉，但是删除这2个包之后，将失去
+  // 无法加载本地语音模型XTTS-2以及无法加载GGUF的量化模型。
   pip install -r requirements-windows.txt
   // MacOS平台
   pip install -r requirements-macos.txt
   ```
 
-如果需要支持语音功能，还需要安装ffmpeg工具
+  7. 如果需要支持语音功能，还需要安装ffmpeg工具
   
-  // windows平台
+    // windows平台
 
-  下载ffmpeg的windows binrary包 (https://www.gyan.dev/ffmpeg/builds/).
-  
-  添加bin目录到系统的PATH环境变量中
+    下载ffmpeg的windows binrary包 (https://www.gyan.dev/ffmpeg/builds/).
+    
+    添加bin目录到系统的PATH环境变量中
 
-  // MacOS平台
-  ```bash
-  # libav
-  brew install libav
+    // MacOS平台
+    ```bash
+    # libav
+    brew install libav
 
-  ####    OR    #####
+    ####    OR    #####
 
-  # ffmpeg
-  brew install ffmpeg
-  ```
+    # ffmpeg
+    brew install ffmpeg
+    ```
 
   7.  如果需要从Huggingface上下载模型到本地离线运行，请自行下载模型之后，放入到"models"目录中。如果没有提前下载模型，程序会自动从Huggingface网站上下载到本地的系统缓存中。
   ```bash
@@ -182,6 +183,9 @@
 
       在线模型无需占用额外的本地资源，当前支持OpenAI和Google的在线语言模型
 
+      ---
+
+      **`请注意`** 当TTS库未安装，将无法加载XTTS-2本地语音模型，但仍然可以使用其它在线语音服务；llama-cpp-python库未安装，将无法加载GGUF模型；没有GPU设备，将无法加载AWQ和GPTQ模型。
 
       | 支持模型 | 类型 | 大小 |
       | :---- | :---- | :---- |
