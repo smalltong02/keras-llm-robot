@@ -1,36 +1,22 @@
-# This workflow will install Python dependencies, run tests and lint with a single version of Python
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
-
-name: Python application
-
+name: Close inactive issues
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-
-permissions:
-  contents: read
+  schedule:
+    - cron: "30 21 * * *"
 
 jobs:
-  create_release:
-    runs-on: windows-latest
+  close-issues:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set snapshot tag
-        id: set_snapshot_tag
-        run: echo ::set-output name=tag::snapshot-$(date +'%Y-%m-%d')
-
-      - name: Create release
-        id: create_release
-        uses: softprops/action-gh-release@v1
+      - uses: actions/stale@v5
         with:
-          generate_release_notes: true
-          tag_name: ${{ steps.set_snapshot_tag.outputs.tag }}
-          name: ${{ steps.set_snapshot_tag.outputs.tag }}
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          days-before-issue-stale: 30
+          days-before-issue-close: 14
+          stale-issue-label: "stale"
+          stale-issue-message: "This issue has been marked as stale because it has been inactive for more than 30 days."
+          close-issue-message: "This issue has been automatically closed because it has been marked as stale for over 14 days without any activity."
+          days-before-pr-stale: -1
+          days-before-pr-close: -1
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
