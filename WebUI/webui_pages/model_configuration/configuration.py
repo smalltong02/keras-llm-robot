@@ -143,16 +143,17 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
             disabled=disabled
         )
         if save_path:
-            with st.spinner(f"Saving path, Please do not perform any actions or refresh the page."):
-                if current_model["mname"] == None or current_model["mtype"] == ModelType.Online:
-                    st.error("Save path failed!")
-                else:
-                    current_model["config"]["path"] = pathstr
-                    r = api.save_model_config(current_model)
-                    if msg := check_error_msg(r):
-                        st.error(msg)
-                    elif msg := check_success_msg(r):
-                        st.success(msg)
+            pass
+            # with st.spinner(f"Saving path, Please do not perform any actions or refresh the page."):
+            #     if current_model["mname"] == None or current_model["mtype"] == ModelType.Online:
+            #         st.error("Save path failed!")
+            #     else:
+            #         current_model["config"]["path"] = pathstr
+            #         r = api.save_model_config(current_model)
+            #         if msg := check_error_msg(r):
+            #             st.error(msg)
+            #         elif msg := check_success_msg(r):
+            #             st.success(msg)
 
     st.divider()
     if current_model["config"]:
