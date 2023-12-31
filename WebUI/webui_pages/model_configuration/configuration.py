@@ -111,6 +111,11 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
             disabled = True
             current_model["config"] = {}
 
+        if disabled != True and current_model["mtype"] != ModelType.Online:
+            pathstr = current_model["config"].get("path")
+        else:
+            pathstr = ""
+
         le_button = st.button(
             "Load & Eject",
             use_container_width=True,
@@ -126,34 +131,35 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                         st.success(msg)
             else:
                 with st.spinner(f"Loading Model: {current_model['mname']}, Please do not perform any actions or refresh the page."):
-                    r = api.change_llm_model(running_model["mname"], current_model["mname"])
-                    if msg := check_error_msg(r):
-                        st.error(msg)
-                    elif msg := check_success_msg(r):
-                        st.success(msg)
+                    if current_model["mtype"] == ModelType.Online or LocalModelExist(pathstr):
+                        r = api.change_llm_model(running_model["mname"], current_model["mname"])
+                        if msg := check_error_msg(r):
+                            st.error(msg)
+                        elif msg := check_success_msg(r):
+                            st.success(msg)
+                    else:
+                        st.error("Please download the model to your local machine first.")
     with col2:
-        if disabled != True and current_model["mtype"] != ModelType.Online:
-            pathstr = current_model["config"].get("path")
-        else:
-            pathstr = ""
         pathstr = st.text_input("Local Path", pathstr, disabled=True)
-        save_path = st.button(
+        download_path = st.button(
             "Download",
             use_container_width=True,
-            disabled=disabled
+            disabled=True
         )
-        if save_path:
-            pass
-            # with st.spinner(f"Saving path, Please do not perform any actions or refresh the page."):
-            #     if current_model["mname"] == None or current_model["mtype"] == ModelType.Online:
-            #         st.error("Save path failed!")
-            #     else:
-            #         current_model["config"]["path"] = pathstr
-            #         r = api.save_model_config(current_model)
-            #         if msg := check_error_msg(r):
-            #             st.error(msg)
-            #         elif msg := check_success_msg(r):
-            #             st.success(msg)
+        if download_path:
+            with st.spinner(f"Model downloading..., Please do not perform any actions or refresh the page."):
+                if current_model["mname"] == None or current_model["mtype"] == ModelType.Online:
+                    st.error("Download failed!")
+                else:
+                    if LocalModelExist(pathstr):
+                        st.error(f'The model {current_model["mname"]} already exists in the folder {pathstr}')
+                    else:
+                        huggingface_path = current_model["config"]["Huggingface"]
+                        r = api.download_llm_model(current_model["mname"], huggingface_path, pathstr)
+                        if msg := check_error_msg(r):
+                            st.error(msg)
+                        elif msg := check_success_msg(r):
+                            st.success(msg)
 
     st.divider()
     if current_model["config"]:

@@ -3,10 +3,9 @@
         {
             "name": "default",
             "inference_params": {
-                "input_prefix": "",
+                "input_prefix": "\n",
                 "input_suffix": "",
                 "antiprompt": [
-                    ""
                 ],
                 "pre_prompt_prefix": "",
                 "pre_prompt_suffix": ""
@@ -49,13 +48,12 @@
             "inference_params": {
               "top_p": 0.9,
               "temp": 0.2,
-              "input_prefix": "",
+              "input_prefix": "\n",
               "input_suffix": "",
               "pre_prompt": "",
               "pre_prompt_prefix": "",
               "pre_prompt_suffix": "",
               "antiprompt": [
-                ""
               ]
             }
         },

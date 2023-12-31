@@ -272,3 +272,16 @@ def GenerateModelPrompt(inputs: list, input: str) -> Union[str, dict]:
         prompt_dict[last_key] = input
         return prompt_dict
     return input
+
+def LocalModelExist(local_path):
+    total_size_bytes = 0
+    for dirpath, _, filenames in os.walk(local_path):
+        for filename in filenames:
+            filepath = os.path.join(dirpath, filename)
+            total_size_bytes += os.path.getsize(filepath)
+    total_size_gb = total_size_bytes / (1024**3)
+    print("total_size_gb: ", total_size_gb)
+    if total_size_gb > 1:
+        return True
+    return False
+    

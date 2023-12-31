@@ -423,6 +423,27 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
                 return r.json()
             except Exception as e:
                 return {"code": 500, "channels": 0, "sample_width": 0, "frame_rate": 0, "speech_data": ""}
+            
+    @app.post("/download_llm_model")
+    def download_llm_model(
+        model_name: str = Body(..., description="model name"),
+        hugg_path: str = Body("", description="huggingface path"),
+        local_path: str = Body("", description="local path"),
+    ) -> Dict:
+        # import gc
+        # from transformers import AutoModel, AutoTokenizer, AutoConfig
+        # try:
+        #     tokenizer = AutoTokenizer.from_pretrained(hugg_path)
+        #     tokenizer.save_pretrained(local_path)
+        #     config = AutoConfig.from_pretrained(hugg_path)
+        #     config.save_pretrained(local_path)
+        #     model = AutoModel.from_pretrained(hugg_path)
+        #     model.save_pretrained(local_path)
+        #     del model
+        #     gc.collect()
+        #     return {"code": 200, "msg": f'Success download LLM model {model_name} to local path {local_path}.'}
+        # except Exception as e:
+            return {"code": 500, "msg": f'failed to download LLM model {model_name} to local path {local_path}.'}
 
     host = FSCHAT_CONTROLLER["host"]
     port = FSCHAT_CONTROLLER["port"]

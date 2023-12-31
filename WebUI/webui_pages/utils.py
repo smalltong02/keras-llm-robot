@@ -426,6 +426,35 @@ class ApiRequest:
         else:
             return self.ret_sync(response)
         
+    def download_llm_model(self,
+        model_name: str = "",
+        hugg_path: str = "",
+        local_path: str = "",
+        controller_address: str = None,              
+    ):
+        if model_name == "" or hugg_path == "" or local_path == "":
+            return {
+                "code": 500,
+                "msg": f"Parameter is incorrect."
+            }
+        
+        data = {
+            "model_name": model_name,
+            "hugg_path": hugg_path,
+            "local_path": local_path,
+            "controller_address": controller_address,
+        }
+
+        response = self.post(
+            "/llm_model/download_llm_model",
+            json=data,
+        )
+        
+        if self._use_async:
+            return self.ret_async(response)
+        else:
+            return self.ret_sync(response)
+        
     def save_vtot_model_config(self,
         model_name: str = "",
         modelconfig: dict = {},

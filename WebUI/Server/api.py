@@ -14,7 +14,7 @@ from WebUI.Server.chat.feedback import chat_feedback
 from WebUI.Server.embeddings_api import embed_texts_endpoint
 from WebUI.Server.chat.openai_chat import openai_chat
 from WebUI.Server.llm_api import (list_running_models, get_running_models, list_config_models,
-                            change_llm_model, stop_llm_model, chat_llm_model,
+                            change_llm_model, stop_llm_model, chat_llm_model, download_llm_model,
                             get_model_config, save_chat_config, save_model_config, get_webui_configs,
                             get_vtot_model, get_vtot_data, stop_vtot_model, change_vtot_model, save_voice_model_config,
                             get_speech_model, get_speech_data, save_speech_model_config, stop_speech_model, change_speech_model,
@@ -117,6 +117,11 @@ def mount_app_routes(app: FastAPI, run_mode: str = None):
              tags=["LLM Model Management"],
              summary="Chat with LLM Model (Model Worker)",
              )(chat_llm_model)
+    
+    app.post("/llm_model/download_llm_model",
+             tags=["LLM Model Management"],
+             summary="Download LLM Model (Model Worker)",
+             )(download_llm_model)
     
     # Voice Model interface
     app.post("/voice_model/get_vtot_model",

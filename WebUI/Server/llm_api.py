@@ -230,6 +230,29 @@ def save_model_config(
         return BaseResponse(
             code=500,
             msg=f"failed to save local model configration, error: {e}")
+    
+def download_llm_model(
+    model_name: str = Body(..., description="Model Name"),
+    hugg_path: str = Body(..., description="Huggingface Path"),
+    local_path: str = Body(..., description="Local Path"),
+    controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])
+) -> BaseResponse:
+    try:
+        controller_address = controller_address or fschat_controller_address()
+        with get_httpx_client() as client:
+            r = client.post(
+                controller_address + "/download_llm_model",
+                json={"model_name": model_name,
+                      "hugg_path": hugg_path,
+                      "local_path": local_path,
+                      },
+            )
+            return r.json()
+    except Exception as e:
+        print(f'{e.__class__.__name__}: {e}')
+        return BaseResponse(
+            code=500,
+            msg=f"failed to download LLM model {model_name} to local path {local_path}. error: {e}")
 
 def get_vtot_model_config(
         model_name: str = Body(description="Vtot Model name"),
