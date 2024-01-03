@@ -430,19 +430,11 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
         hugg_path: str = Body("", description="huggingface path"),
         local_path: str = Body("", description="local path"),
     ) -> Dict:
-        # import gc
-        # from transformers import AutoModel, AutoTokenizer, AutoConfig
-        # try:
-        #     tokenizer = AutoTokenizer.from_pretrained(hugg_path)
-        #     tokenizer.save_pretrained(local_path)
-        #     config = AutoConfig.from_pretrained(hugg_path)
-        #     config.save_pretrained(local_path)
-        #     model = AutoModel.from_pretrained(hugg_path)
-        #     model.save_pretrained(local_path)
-        #     del model
-        #     gc.collect()
-        #     return {"code": 200, "msg": f'Success download LLM model {model_name} to local path {local_path}.'}
-        # except Exception as e:
+        from huggingface_hub import snapshot_download
+        try:
+            path = snapshot_download(repo_id=hugg_path, local_dir=local_path, local_dir_use_symlinks=False)
+            return {"code": 200, "msg": f'Success download LLM model {model_name} to local path {local_path}.'}
+        except Exception as e:
             return {"code": 500, "msg": f'failed to download LLM model {model_name} to local path {local_path}.'}
 
     host = FSCHAT_CONTROLLER["host"]

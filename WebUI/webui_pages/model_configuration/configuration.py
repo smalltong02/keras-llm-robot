@@ -144,7 +144,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
         download_path = st.button(
             "Download",
             use_container_width=True,
-            disabled=True
+            disabled=disabled
         )
         if download_path:
             with st.spinner(f"Model downloading..., Please do not perform any actions or refresh the page."):
