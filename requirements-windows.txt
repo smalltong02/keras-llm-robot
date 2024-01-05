@@ -39,8 +39,9 @@ jsonpatch==1.33
 jsonpointer==2.4
 jsonschema==4.19.2
 jsonschema-specifications==2023.7.1
-langchain==0.0.327
-langsmith==0.0.56
+langchain==0.0.335
+langchain-experimental==0.0.39
+langsmith==0.0.63
 llama-cpp-python==0.2.25
 markdown-it-py==3.0.0
 markdown2==2.4.10
@@ -53,7 +54,7 @@ mypy-extensions==1.0.0
 networkx==2.8.8
 nh3==0.2.14
 numpy==1.26.1
-openai==0.28.1
+openai==1.1.0
 optimum==1.15.0
 packaging==23.2
 pandas==1.5.3
