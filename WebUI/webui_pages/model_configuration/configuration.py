@@ -412,5 +412,4 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
             
             with tabprompt:
                 pass
-
-    st.session_state["current_page"] = "configuration_page"
+            

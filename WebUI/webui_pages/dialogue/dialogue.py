@@ -4,7 +4,6 @@ from streamlit_chatbox import *
 from streamlit_webrtc import webrtc_streamer, WebRtcMode, ClientSettings
 from aiortc.contrib.media import MediaRecorder
 from WebUI.configs.prompttemplates import PROMPT_TEMPLATES
-from WebUI.configs.modelconfig import HISTORY_LEN
 import os, platform
 from datetime import datetime
 from pydub.playback import play
@@ -124,7 +123,9 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
     voicemodel = api.get_vtot_model()
     speechmodel = api.get_ttov_model()
     imagemodel = ""
+    modelinfo : Dict[str, any] = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str}
 
+    dialogue_turns = chatconfig.get("dialogue_turns", 5)
     disabled = False
     voice_prompt = ""
     with st.sidebar:
@@ -139,6 +140,10 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
 
         if running_model == "None":
             disabled = True
+        else:
+            modelinfo["mtype"], modelinfo["msize"], modelinfo["msubtype"] = GetModelInfoByName(webui_config, running_model)
+            modelinfo["mname"] = running_model
+        print("msubtype: ", modelinfo["msubtype"])
 
         dialogue_modes = ["LLM Chat",
                         "KnowledgeBase Chat",
@@ -178,7 +183,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
             disabled=disabled
         )
         prompt_template_name = st.session_state.prompt_template_select
-        history_len = st.number_input("Dialogue Turns:", 0, 20, HISTORY_LEN, disabled=disabled)
+        history_len = st.number_input("Dialogue Turns:", 0, 20, dialogue_turns, disabled=disabled)
 
         now = datetime.now()
         cols = st.columns(2)
@@ -193,7 +198,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
             use_container_width=True,
         )
 
-        voicedisable = True if voicemodel == "" else False
+        voicedisable = False if voicemodel != "" or modelinfo["msubtype"] == ModelSubType.VoiceChatModel else True
         if voicedisable == False:
             st.divider()
             st.write("Chat by 🎧 and 🎬: ")
@@ -244,10 +249,22 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                 except Exception as e:
                     pass
 
-        imagedisable = True if imagemodel == "" else False
-        imagechatbtn = st.button(label="🎨", use_container_width=True, disabled=imagedisable)
-        if imagechatbtn:
-            pass
+        imagedata = b''
+        imagedisable = False if imagemodel != ""  or modelinfo["msubtype"] == ModelSubType.VisionChatModel else True
+        if imagedisable == False:
+            imagefile = st.file_uploader("Please upload 🎨 | 📰:",
+                accept_multiple_files=False,
+                disabled=imagedisable
+                )
+            if imagefile:
+                from io import BytesIO
+                import PIL.Image
+                print("image_files: ", imagefile)
+                print("image_type: ", imagefile.type)
+                def is_image_type(mime_type):
+                    return mime_type.startswith('image/')
+                if is_image_type(imagefile.type):
+                    imagedata = imagefile.getvalue()
 
         model_name = running_model
         if model_name == "None":
@@ -257,13 +274,6 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
             unsafe_allow_html=True,
         )
         if bshowstatus:
-            #cpuname, cpuutil, cpumem = get_cpu_info(False)
-            #if cpuname == "":
-            #    cpuname = "Unknown"
-            #st.caption(
-            #    f"""<p style="font-size: 1em; text-align: center; color: #333333;">CPU Name: {cpuname}</p>""",
-            #    unsafe_allow_html=True,
-            #)
             placeholder_cpu = st.empty()
             placeholder_ram = st.empty()
             gpuname, _, _ = get_gpu_info()
@@ -311,7 +321,6 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
         "feedback_type": "thumbs",
         "optional_text_label": "Please provide feedback on the reasons for your rating.",
     }
-
     
     prompt = st.chat_input(chat_input_placeholder, key="prompt", disabled=disabled)
     if voice_prompt != "":
@@ -320,13 +329,17 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
     if prompt != None and prompt != "":
         if bshowstatus:
             update_running_status(placeholder_cpu, placeholder_ram, placeholder_gpuutil, placeholder_gpumem)
-        history = get_messages_history(history_len)
+        if imagedata:
+            history = []
+        else:
+            history = get_messages_history(history_len)
         chat_box.user_say(prompt)
         if dialogue_mode == "LLM Chat":
             chat_box.ai_say("Thinking...")
             text = ""
             chat_history_id = ""
             r = api.chat_chat(prompt,
+                            imagedata=imagedata,
                             history=history,
                             model=running_model,
                             speechmodel=speechmodel,
@@ -344,21 +357,6 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                 "chat_history_id": chat_history_id,
                 }
             chat_box.update_msg(text, streaming=False, metadata=metadata)
-            # speech_file = str(TMP_DIR / "speech.wav")
-            # with wave.open(speech_file, 'rb') as wave_file:
-            #     channels = wave_file.getnchannels()
-            #     sample_width = wave_file.getsampwidth()
-            #     frame_rate = wave_file.getframerate()
-            #     frames = wave_file.getnframes()
-            #
-            #     raw_data = wave_file.readframes(frames)
-            #     sound = AudioSegment(
-            #         raw_data,
-            #         frame_rate=frame_rate,
-            #         sample_width=sample_width,
-            #         channels=channels
-            #     )
-            #     play(sound)
             print("chat_box.history: ", len(chat_box.history))
             chat_box.show_feedback(**feedback_kwargs,
                                 key=chat_history_id,

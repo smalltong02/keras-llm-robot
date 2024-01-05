@@ -1,5 +1,6 @@
 import json
 import asyncio
+import base64
 import threading
 from WebUI.Server.utils import wrap_done
 import google.generativeai as genai
@@ -107,6 +108,7 @@ def special_model_chat(
         model_name: str,
         async_callback: Any,
         query: str,
+        imagedata: str,
         history: List[dict],
         stream: bool,
         speechmodel: dict,
@@ -116,6 +118,7 @@ def special_model_chat(
 ):
     async def special_chat_iterator(model: Any,
                             query: str,
+                            imagedata: str,
                             history: List[dict] = [],
                             model_name: str = "",
                             prompt_name: str = prompt_name,
@@ -208,9 +211,17 @@ def special_model_chat(
                     {'parts': entry['content'], **({'role': 'model'} if entry['role'] == 'assistant' else {'role': entry['role']})}
                     for entry in history
                 ]
-                chat = model.start_chat(history=updated_history)
+                
                 generation_config = {'temperature': temperature}
-                response = chat.send_message(query, generation_config=generation_config, stream=stream)
+                if imagedata:
+                    from io import BytesIO
+                    import PIL.Image
+                    decoded_data = base64.b64decode(imagedata)
+                    imagedata = BytesIO(decoded_data)
+                    response = model.generate_content([query, PIL.Image.open(imagedata)], generation_config=generation_config, stream=stream)
+                else:
+                    chat = model.start_chat(history=updated_history)
+                    response = chat.send_message(query, generation_config=generation_config, stream=stream)
                 if stream is True:
                     for chunk in response:
                         if speak_handler: speak_handler.on_llm_new_token(chunk.text)
@@ -234,6 +245,7 @@ def special_model_chat(
     return StreamingResponse(special_chat_iterator(
                                             model=model,
                                             query=query,
+                                            imagedata=imagedata,
                                             history=history,
                                             model_name=model_name,
                                             prompt_name=prompt_name),

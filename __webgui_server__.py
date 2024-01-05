@@ -226,6 +226,7 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
     @app.post("/text_chat")
     def text_chat(
         query: str = Body(..., description="User input: ", examples=["chat"]),
+        imagedata: str = Body("", description="image data", examples=["image"]),
         history: List[dict] = Body([],
                                     description="History chat",
                                     examples=[[
@@ -247,6 +248,7 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
                     url=worker_address + "/text_chat",
                     json={
                         "query": query,
+                        "imagedata": imagedata,
                         "history": history,
                         "stream": stream,
                         "speechmodel": speechmodel,
@@ -793,11 +795,12 @@ def run_model_worker(
     @app.post("/text_chat")
     def text_chat(
         query: str = Body(..., description="User input: ", examples=["chat"]),
+        imagedata: str = Body("", description="image data", examples=["image"]),
         history: List[dict] = Body([],
                                     description="History chat",
                                     examples=[[
                                         {"role": "user", "content": "Who are you?"},
-                                        {"role": "assistant", "content": "I am AI."}]]
+                                        {"role": "assistant", "content": "I am Assistant."}]]
                                     ),
         stream: bool = Body(False, description="stream output"),
         speechmodel: dict = Body({}, description="speech model"),
@@ -805,7 +808,7 @@ def run_model_worker(
         max_tokens: Optional[int] = Body(None, description="max tokens."),
         prompt_name: str = Body("default", description=""),
     ):
-        return special_model_chat(app._model, app._model_name, app._streamer, query, history, stream, speechmodel, temperature, max_tokens, prompt_name)
+        return special_model_chat(app._model, app._model_name, app._streamer, query, imagedata, history, stream, speechmodel, temperature, max_tokens, prompt_name)
     
     uvicorn.run(app, host=host, port=port)
 

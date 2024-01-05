@@ -811,7 +811,7 @@
         }
     },
     "ChatConfiguration": {
-        "history_len": 5,
+        "dialogue_turns": 5,
         "temperature": 0.7,
         "top_p": 0.9,
         "typical_p": 1.0,

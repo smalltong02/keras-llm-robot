@@ -33,7 +33,11 @@ class ModelSubType(Enum):
     Unknown = 0
     VisionChatModel = 1
     VoiceChatModel = 2
-    VideoChatModel = 3
+    VideoChatModel = 4
+
+class ModelAbilityType(Enum):
+    Unknown = 0
+
 
 def GetTypeName(type: ModelType) -> str:
     if type == ModelType.Local:
@@ -129,7 +133,12 @@ def GetModelInfoByName(webui_config: Dict, name : str):
             modellist = value["modellist"]
             if name in modellist:
                 model_size = ModelSize(provider_size % (len(ModelSize) - 1))
-                return ModelType.Online, model_size, ModelSubType.Unknown
+                model_subtype = ModelSubType.Unknown
+                if name == "gpt-4-vision-preview":
+                    model_subtype = ModelSubType.VisionChatModel
+                if name == "gemini-pro-vision":
+                    model_subtype = ModelSubType.VisionChatModel
+                return ModelType.Online, model_size, model_subtype
             provider_size = provider_size+1
 
     return ModelType.Unknown, ModelSize.Unknown, ModelSubType.Unknown
