@@ -16,7 +16,7 @@ from WebUI.Server.utils import get_prompt_template
 from WebUI.Server.db.repository import add_chat_history_to_db, update_chat_history
 
 async def chat(query: str = Body(..., description="User input: ", examples=["chat"]),
-    imagedata: str = Body("", description="image data", examples=["image"]),
+    imagesdata: List[str] = Body([], description="image data", examples=["image"]),
     history: List[History] = Body([],
                                   description="History chat",
                                   examples=[[
@@ -33,7 +33,7 @@ async def chat(query: str = Body(..., description="User input: ", examples=["cha
     history = [History.from_data(h) for h in history]
 
     async def chat_iterator(query: str,
-                            imagedata: str,
+                            imagesdata: List[str] = [],
                             history: List[History] = [],
                             stream: bool = True,
                             model_name: str = LLM_MODELS[0],
@@ -54,7 +54,7 @@ async def chat(query: str = Body(..., description="User input: ", examples=["cha
             if modeltype == "local" or modeltype == "cloud":
                 speak_handler = StreamSpeakHandler(run_place=modeltype, provider=provider, synthesis=spspeaker, subscription=speechkey, region=speechregion)
                 callbackslist.append(speak_handler)
-        if imagedata:
+        if len(imagesdata):
             if max_tokens is None:
                 max_tokens = DEF_TOKENS
         model = get_ChatOpenAI(
@@ -64,23 +64,19 @@ async def chat(query: str = Body(..., description="User input: ", examples=["cha
             callbacks=callbackslist,
         )
 
-        if imagedata:
+        if len(imagesdata):
             from langchain.chat_models import ChatOpenAI
             from langchain.schema import HumanMessage
-            message = HumanMessage(
-                content=[
-                    {
-                        "type": "text",
-                        "text": f"{query}"
-                    },
-                    {
+            content=[{
+                    "type": "text",
+                    "text": f"{query}"}]
+            for imagedata in imagesdata:
+                content.append({
                         "type": "image_url",
                         "image_url": {
-                            "url": f"data:image/jpeg;base64,{imagedata}"
-                        }
-                    }
-                ]
-            )
+                            "url": f"data:image/jpeg;base64,{imagedata}"}})
+            message = HumanMessage(content=content)
+
             task = asyncio.create_task(wrap_done(
                 model.ainvoke([message]),
                 async_callback.done),
@@ -120,7 +116,7 @@ async def chat(query: str = Body(..., description="User input: ", examples=["cha
         await task
 
     return StreamingResponse(chat_iterator(query=query,
-                                           imagedata=imagedata,
+                                           imagesdata=imagesdata,
                                            history=history,
                                            stream=stream,
                                            model_name=model_name,

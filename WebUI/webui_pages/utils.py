@@ -112,7 +112,7 @@ class ApiRequest:
     def chat_chat(
         self,
         query: str,
-        imagedata: bytes,
+        imagesdata: List[bytes] = [],
         history: List[dict] = [],
         stream: bool = True,
         model: str = "",
@@ -142,13 +142,13 @@ class ApiRequest:
             speechmodel["speech_region"] = ""
             speechmodel["provider"] = config.get("provider", "")
 
-        if imagedata:
-            imagedata = base64.b64encode(imagedata).decode('utf-8')
-        else:
-            imagedata = ""
+        dataslist = []
+        if len(imagesdata):
+            for imagedata in imagesdata:
+                dataslist.append(base64.b64encode(imagedata).decode('utf-8'))
         data = {
             "query": query,
-            "imagedata": imagedata,
+            "imagesdata": dataslist,
             "history": history,
             "stream": stream,
             "model_name": model,

@@ -249,22 +249,24 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                 except Exception as e:
                     pass
 
-        imagedata = b''
+        imagesdata = []
         imagedisable = False if imagemodel != ""  or modelinfo["msubtype"] == ModelSubType.VisionChatModel else True
         if imagedisable == False:
-            imagefile = st.file_uploader("Please upload 🎨 | 📰:",
-                accept_multiple_files=False,
+            imagefiles = st.file_uploader("Please upload 🎨 | 📰:",
+                accept_multiple_files=True,
                 disabled=imagedisable
                 )
-            if imagefile:
+            if len(imagefiles):
                 from io import BytesIO
                 import PIL.Image
-                print("image_files: ", imagefile)
-                print("image_type: ", imagefile.type)
-                def is_image_type(mime_type):
-                    return mime_type.startswith('image/')
-                if is_image_type(imagefile.type):
-                    imagedata = imagefile.getvalue()
+                for imagefile in imagefiles:
+                    print("image_file: ", imagefile)
+                    print("image_type: ", imagefile.type)
+                    def is_image_type(mime_type):
+                        return mime_type.startswith('image/')
+                    if is_image_type(imagefile.type):
+                        imagesdata.append(imagefile.getvalue())
+                    print("imagesdata size: ", len(imagesdata))
 
         model_name = running_model
         if model_name == "None":
@@ -329,7 +331,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
     if prompt != None and prompt != "":
         if bshowstatus:
             update_running_status(placeholder_cpu, placeholder_ram, placeholder_gpuutil, placeholder_gpumem)
-        if imagedata:
+        if imagesdata:
             history = []
         else:
             history = get_messages_history(history_len)
@@ -339,7 +341,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
             text = ""
             chat_history_id = ""
             r = api.chat_chat(prompt,
-                            imagedata=imagedata,
+                            imagesdata=imagesdata,
                             history=history,
                             model=running_model,
                             speechmodel=speechmodel,
