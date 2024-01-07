@@ -8,6 +8,7 @@
 
 ## 目录
 * [快速启动](readme-cn.md#快速启动)
+* [视频演示](readme-cn.md#视频演示)
 * [项目介绍](readme-cn.md#项目介绍)
 * [环境配置](readme-cn.md#环境配置)
 * [功能介绍](readme-cn.md#功能介绍)
@@ -29,7 +30,7 @@
   
   在启动之前请先准备好运行环境，请参考 [环境配置](readme-cn.md#环境配置)
 
-  如果仅想在本地进行部署，可以使用python启动WebUI，使用http接口 http://127.0.0.1:8818
+  如果仅在本地进行部署，可以使用python启动WebUI，使用http接口 http://127.0.0.1:8818
   ```bash
   python __webgui_server__.py --webui
   ```
@@ -37,9 +38,14 @@
   如果需要在云服务器上部署，并在本地访问WebUI，请使用反向代理，并以HTTPS协议启动WebUI。在本地请使用 https://127.0.0.1:4430 打开WebUI，在远端使用https接口 https://[server ip]:4430 打开WebUI。
   ```bash
   // 批处理内部默认使用的虚拟环境是 keras-llm-robot，如果想使用其它的虚拟环境名称，请自行修改批处理文件
-  webui-startup.bat
+  webui-startup-windows.bat
   ```
 
+## 视频演示
+
+  1. 演示使用了多模态在线模型gpt-4-vision-preview 加 Azure Speech to Text服务：
+
+  [![Alt text](https://img.youtube.com/vi/7VzZqgg35Ak/0.jpg)](https://www.youtube.com/watch?v=7VzZqgg35Ak)
 
 ## 项目介绍
 由三个主界面组成，语言模型的聊天界面，语言模型的配置界面，辅助模型的工具和代理界面。
@@ -130,7 +136,7 @@
   9. 如果需要在云服务器上部署，并在本地访问WebUI，请使用反向代理，并以HTTPS协议启动WebUI。在本地请使用https://127.0.0.1:4430 打开WebUI，在远端使用 https://[server ip]:4430 打开WebUI。
   ```bash
   // 批处理内部默认使用的虚拟环境是 keras-llm-robot，如果想使用其它的虚拟环境名称，请自行修改批处理文件
-  webui-startup.bat
+  webui-startup-windows.bat
   ```
 
 ## 功能介绍
@@ -139,9 +145,9 @@
 
 - #### 配置界面
 
-    在配置界面中，可以选择合适的语言模型加载，语言模型分为`通用模型`，`多模态模型`，`特殊模型`和`在线模型`
+    在配置界面中，可以选择合适的语言模型加载，语言模型分为`基础模型`，`多模态模型`，`特殊模型`和`在线模型`
 
-  1. **`通用模型`** Huggingface上发布的未经量化和处理过的模型，并且它们需要支持和OpenAI相同聊天模版的模型
+  1. **`基础模型`** Huggingface上发布的未经量化和处理过的模型，并且它们需要支持和OpenAI相同聊天模版的模型
   2. **`多模态模型`**(`当前功能还未实现`) 在底层支持语音和文本，或者图片和文本的模型
   3. **`特殊模型`** Huggingface上发布的量化模型(GGUF)或者需要特殊聊天模版的模型
   4. **`在线模型`** 支持OpenAI和Google的在线语言模型，比如GPT4-Turbo和Gemini-Pro模型，或者在线的多模态模型GPT4-vision和Gemini-Pro-vision。需要提供OpenAI的API Key和Google API Key。可以在系统环境变量中配置OPENAI_API_KEY和GOOGLE_API_KEY，或者在配置界面中单独配置。
@@ -166,7 +172,7 @@
 ![Image](./img/Tools_Agent.png)
 
 
-  当语音转文本模型加载之后，在聊天界面中将会出现语音和视频聊天控件，点击`START`按钮开始通过麦克风录制语音，点击`STOP`按钮结束语音，语音模型将会自动把语音转换成文本之后和语言模型进行对话。当文本转语音模型加载之后，语言模型输出的文本会自动转换成语音并通过扬声器和耳机输出
+  当语音转文本模型加载之后，在聊天界面中将会出现语音和视频聊天控件，点击`START`按钮开始通过麦克风录制语音，点击`STOP`按钮结束语音，语音模型将会自动把语音转换成文本之后和语言模型进行对话。当文本转语音模型加载之后，语言模型输出的文本会自动转换成语音并通过扬声器或耳机输出
 
 ![Image](./img/Chat_by_voice.png)
 
@@ -175,7 +181,7 @@
 
   1. **`加载模型`**
       
-      通用模型可以使用CPU或者GPU加载，以及使用8 bits加载(`4 bits加载无效`)，当使用CPU推理输出的时候，请设置合适的CPU Threads以提高Token输出速度
+      基础模型可以使用CPU或者GPU加载，以及使用8 bits加载(`4 bits加载无效`)，当使用CPU推理输出的时候，请设置合适的CPU Threads以提高Token输出速度
       
       多模态模型可以使用CPU或者GPU加载，Vision模型加载后，用户可以上传图片和文字与模型对话。Voice模型加载后，用户可以通过麦克风(无需通过辅助模型)和模型对话。`该功能还未实现`
 
