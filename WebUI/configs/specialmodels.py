@@ -108,7 +108,7 @@ def special_model_chat(
         model_name: str,
         async_callback: Any,
         query: str,
-        imagedata: str,
+        imagesdata: List[str],
         history: List[dict],
         stream: bool,
         speechmodel: dict,
@@ -118,7 +118,7 @@ def special_model_chat(
 ):
     async def special_chat_iterator(model: Any,
                             query: str,
-                            imagedata: str,
+                            imagesdata: List[str],
                             history: List[dict] = [],
                             model_name: str = "",
                             prompt_name: str = prompt_name,
@@ -213,12 +213,16 @@ def special_model_chat(
                 ]
                 
                 generation_config = {'temperature': temperature}
-                if imagedata:
+                if len(imagesdata):
                     from io import BytesIO
                     import PIL.Image
-                    decoded_data = base64.b64decode(imagedata)
-                    imagedata = BytesIO(decoded_data)
-                    response = model.generate_content([query, PIL.Image.open(imagedata)], generation_config=generation_config, stream=stream)
+                    content=[]
+                    content.append(query)
+                    for imagedata in imagesdata:
+                        decoded_data = base64.b64decode(imagedata)
+                        imagedata = BytesIO(decoded_data)
+                        content.append(PIL.Image.open(imagedata))
+                    response = model.generate_content(content, generation_config=generation_config, stream=stream)
                 else:
                     chat = model.start_chat(history=updated_history)
                     response = chat.send_message(query, generation_config=generation_config, stream=stream)
@@ -245,7 +249,7 @@ def special_model_chat(
     return StreamingResponse(special_chat_iterator(
                                             model=model,
                                             query=query,
-                                            imagedata=imagedata,
+                                            imagesdata=imagesdata,
                                             history=history,
                                             model_name=model_name,
                                             prompt_name=prompt_name),
