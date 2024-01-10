@@ -268,6 +268,9 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                         imagesdata.append(imagefile.getvalue())
                     print("imagesdata size: ", len(imagesdata))
 
+        for image in imagesdata:
+            st.image(image=BytesIO(image))
+
         model_name = running_model
         if model_name == "None":
             model_name = ""
