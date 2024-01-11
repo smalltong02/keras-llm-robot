@@ -454,12 +454,9 @@ class ApiRequest:
         response = self.post(
             "/llm_model/download_llm_model",
             json=data,
+            stream=True,
         )
-        
-        if self._use_async:
-            return self.ret_async(response)
-        else:
-            return self.ret_sync(response)
+        return self._httpx_stream2generator(response, as_json=True)
         
     def save_vtot_model_config(self,
         model_name: str = "",

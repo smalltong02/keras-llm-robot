@@ -233,28 +233,31 @@ def save_model_config(
             code=500,
             msg=f"failed to save local model configration, error: {e}")
     
-def download_llm_model(
+async def download_llm_model(
     model_name: str = Body(..., description="Model Name"),
     hugg_path: str = Body(..., description="Huggingface Path"),
     local_path: str = Body(..., description="Local Path"),
     controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])
-) -> BaseResponse:
-    try:
-        controller_address = controller_address or fschat_controller_address()
+) -> StreamingResponse:
+    controller_address = controller_address or fschat_controller_address()
+    async def fake_json_streamer() -> AsyncIterable[str]:
+        import asyncio
         with get_httpx_client() as client:
-            r = client.post(
-                controller_address + "/download_llm_model",
+            response = client.stream(
+                "POST",
+                url=controller_address + "/download_llm_model",
                 json={"model_name": model_name,
-                      "hugg_path": hugg_path,
-                      "local_path": local_path,
-                      },
+                    "hugg_path": hugg_path,
+                    "local_path": local_path,
+                    },
             )
-            return r.json()
-    except Exception as e:
-        print(f'{e.__class__.__name__}: {e}')
-        return BaseResponse(
-            code=500,
-            msg=f"failed to download LLM model {model_name} to local path {local_path}. error: {e}")
+            with response as r:
+                for chunk in r.iter_text(None):
+                    if not chunk:
+                        continue
+                    yield chunk
+                    await asyncio.sleep(0.1)
+    return StreamingResponse(fake_json_streamer(), media_type="text/event-stream")
 
 def get_vtot_model_config(
         model_name: str = Body(description="Vtot Model name"),

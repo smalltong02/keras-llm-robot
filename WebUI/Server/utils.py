@@ -255,7 +255,6 @@ def get_vtot_worker_config(model_name: str = None) -> dict:
 
 def get_speech_worker_config(model_name: str = None) -> dict:
     config = {}
-    
     configinst = InnerJsonConfigWebUIParse()
     webui_config = configinst.dump()
     server_config = webui_config.get("ServerConfig")

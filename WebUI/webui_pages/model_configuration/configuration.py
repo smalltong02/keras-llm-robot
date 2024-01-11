@@ -156,10 +156,18 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                     else:
                         huggingface_path = current_model["config"]["Huggingface"]
                         r = api.download_llm_model(current_model["mname"], huggingface_path, pathstr)
-                        if msg := check_error_msg(r):
-                            st.error(msg)
-                        elif msg := check_success_msg(r):
-                            st.success(msg)
+                        download_error = False
+                        progress_bar = st.progress(0)
+                        for t in r:
+                            if error_msg := check_error_msg(t):  # check whether error occured
+                                download_error = True
+                                st.error(error_msg)
+                                break
+                            tqdm = t.get("percentage", 0.0) / 100
+                            progress_bar.progress(tqdm)
+                        if download_error == False:
+                            progress_bar.progress(1.0)
+                            st.success("downloading success!")
 
     st.divider()
     if current_model["config"]:
@@ -412,4 +420,6 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
             
             with tabprompt:
                 pass
+    
+    st.session_state["current_page"] = "configuration_page"
             

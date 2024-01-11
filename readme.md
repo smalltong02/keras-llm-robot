@@ -35,7 +35,7 @@ The project inherits from the Langchain-Chatchat project(https://github.com/chat
   python __webgui_server__.py --webui
   ```
 
-  If deploying on a cloud server and accessing the Web UI locally, Please use reverse proxy and start the Web UI with HTTPS. Access using https://127.0.0.1:4430 on locally, and use the https interface at https://[server ip]:4430 on remotely:
+  If deploying on a cloud server and accessing the Web UI locally, Please use reverse proxy and start the Web UI with HTTPS. Access using https://127.0.0.1:4480 on locally, and use the https interface at https://[server ip]:4480 on remotely:
   ```bash
   // By default, the batch file uses the virtual environment named keras-llm-robot,
   // Modify the batch file if using a different virtual environment name.
@@ -133,7 +133,7 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
   python __webgui_server__.py --webui
   ```
 
-  10. If deploying on a cloud server and accessing the Web UI locally, use reverse proxy and start the Web UI with HTTPS. Access using https://127.0.0.1:4430 on locally, and use the https interface at https://[server ip]:4430 on remotely:
+  10. If deploying on a cloud server and accessing the Web UI locally, use reverse proxy and start the Web UI with HTTPS. Access using https://127.0.0.1:4480 on locally, and use the https interface at https://[server ip]:4480 on remotely:
   ```bash
   // By default, the batch file uses the virtual environment named keras-llm-robot,
   // Modify the batch file if using a different virtual environment name.

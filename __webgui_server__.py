@@ -431,13 +431,27 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
         model_name: str = Body(..., description="model name"),
         hugg_path: str = Body("", description="huggingface path"),
         local_path: str = Body("", description="local path"),
-    ) -> Dict:
+    ):
         from huggingface_hub import snapshot_download
-        try:
-            path = snapshot_download(repo_id=hugg_path, local_dir=local_path, local_dir_use_symlinks=False)
-            return {"code": 200, "msg": f'Success download LLM model {model_name} to local path {local_path}.'}
-        except Exception as e:
-            return {"code": 500, "msg": f'failed to download LLM model {model_name} to local path {local_path}.'}
+        async def fake_json_streamer() -> AsyncIterable[str]:
+            def running_download(repo_id, local_dir):
+                snapshot_download(repo_id=repo_id, local_dir=local_dir, local_dir_use_symlinks=False)
+                print("running_download exit!")
+
+            thread = threading.Thread(target=running_download, args=(hugg_path, local_path))
+            thread.start()
+            percentage = 0.0
+            while True:                
+                yield json.dumps(
+                    {"text": "percentage", "percentage": percentage},
+                    ensure_ascii=False)
+                await asyncio.sleep(2)
+                if percentage < 100.0:
+                    percentage += 1.0
+                if not thread.is_alive():
+                    print("async_callback exit!")
+                    break
+        return StreamingResponse(fake_json_streamer(), media_type="text/event-stream")
 
     host = FSCHAT_CONTROLLER["host"]
     port = FSCHAT_CONTROLLER["port"]

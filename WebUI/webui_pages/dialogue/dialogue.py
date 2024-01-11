@@ -128,6 +128,9 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
     dialogue_turns = chatconfig.get("dialogue_turns", 5)
     disabled = False
     voice_prompt = ""
+    binit = True
+    if st.session_state.get("current_page", "") == "dialogue_page":
+        binit = False
     with st.sidebar:
         def on_mode_change():
             mode = st.session_state.dialogue_mode
@@ -290,22 +293,24 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
             )
             placeholder_gpuutil = st.empty()
             placeholder_gpumem = st.empty()
-            binit = True
-            if st.session_state.get("current_page", "") == "dialogue_page":
-                binit = False
             update_running_status(placeholder_cpu, placeholder_ram, placeholder_gpuutil, placeholder_gpumem, bshowstatus, binit, True)
 
     if not chat_box.chat_inited:
+        chat_box.init_session()
+
+    if binit:
         if running_model == "" or running_model == "None":
             st.toast(
                 f"Currently, no models are configured. Please select model on the Model Configuration tab.\n"
                 )
         else:
+            type_name = GetTypeName(modelinfo["mtype"])
             st.toast(
-                f"Welcome to use [`Langchain-KERAS-llm-Robot`](https://github.com/smalltong02/keras-llm-robot).\n"
-                f"The model `{running_model}` has been loaded."
+                f"Welcome to use [`KERAS-llm-Robot`](https://github.com/smalltong02/keras-llm-robot).\n"
+                f"The {type_name} `{running_model}` has been loaded."
             )
-        chat_box.init_session()
+
+    st.session_state["current_page"] = "dialogue_page"   
     # Display chat messages from history on app rerun
     chat_box.output_messages()
     chat_input_placeholder = "Enter a user message, new line: Shift+Enter "
@@ -372,7 +377,6 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                 st.session_state["need_rerun"] = False
                 st.rerun()
                 
-            st.session_state["current_page"] = "dialogue_page"
             if bshowstatus:
                 while True:
                     update_running_status(placeholder_cpu, placeholder_ram, placeholder_gpuutil, placeholder_gpumem)
