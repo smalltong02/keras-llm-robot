@@ -87,9 +87,10 @@ jsonpointer==2.4
 jsonschema==4.19.2
 jsonschema-specifications==2023.7.1
 kiwisolver==1.4.5
-langchain==0.0.327
+langchain==0.0.335
+langchain-experimental==0.0.39
 langcodes==3.3.0
-langsmith==0.0.56
+langsmith==0.0.63
 lazy_loader==0.3
 librosa==0.10.1
 llvmlite==0.41.1
@@ -113,7 +114,7 @@ num2words==0.5.13
 numba==0.58.1
 numpy==1.26.1
 oauthlib==3.2.2
-openai==0.28.1
+openai==1.1.0
 packaging==23.2
 pandas==1.5.3
 Pillow==9.3.0
