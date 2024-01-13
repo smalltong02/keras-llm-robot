@@ -206,6 +206,10 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
 ![Image](./img/Chat_by_voice.png)
 
+  Once the Multimodal model is loaded(such as Gemini-Pro-Vision)，upload controls will appear in the chat interface, The restrictions on uploading files depend on the loaded model. After sending text in the chatbox, both uploaded files and text will be forwarded to the multimodal model for processing.
+
+![Image](./img/Chat_by_upload.png)
+
 
 - ### Language Model Features
 
