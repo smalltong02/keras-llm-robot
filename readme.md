@@ -176,9 +176,9 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
 - #### Configuration Interface
 
-    In the configuration interface, you can choose suitable language models to load, categorized as `Fundamental Models`, `Multimodal Models`, `Special Models`, and `Online Models`.
+    In the configuration interface, you can choose suitable language models to load, categorized as `Foundation Models`, `Multimodal Models`, `Special Models`, and `Online Models`.
 
-  1. **`Fundamental Models`** Untouched models published on Hugging Face, supporting models with chat templates similar to OpenAI.
+  1. **`Foundation Models`** Untouched models published on Hugging Face, supporting models with chat templates similar to OpenAI.
   2. **`Multimodal Models`** (`Not implemented`): Models supporting both voice and text or image and text at the lower level.
   3. **`Special Models`** Quantized models (GGUF) published on Hugging Face or models requiring special chat templates.
   4. **`Online Models`** Supports online language models from OpenAI and Google, such as GPT4-Turbo, Gemini-Pro, GPT4-vision, and Gemini-Pro-vision. Requires OpenAI API Key and Google API Key, which can be configured in the system environment variables or in the configuration interface.
@@ -211,7 +211,7 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
   1. **`Load Model`**
       
-      **Fundamental models** can be loaded with CPU or GPU, and with 8-bits loading (`4-bits is invalid`). Set the appropriate CPU Threads to improve token output speed when using CPU.
+      **Foundation Models** can be loaded with CPU or GPU, and with 8-bits loading (`4-bits is invalid`). Set the appropriate CPU Threads to improve token output speed when using CPU.
       
       **Multimodal models** can be loaded with CPU or GPU. For Vision models, users can upload images and text for model interaction. For Voice models, users can interact with the model using a microphone (without the need for auxiliary models). (`Not implemented`)
 
