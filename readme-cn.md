@@ -2,7 +2,7 @@
 
 🌍 [READ THIS IN ENGLISH](readme.md)
 
-这个项目基础代码继承自 Langchain-Chatchat项目(https://github.com/chatchat-space/Langchain-Chatchat) 底层架构使用Langchain和Fastchat等开源框架，顶层使用streamlit实现。本项目完全开源，目标是可离线部署和测试Huggingface网站上的大部分开源模型，并且可以通过配置将多个模型组合起来，实现多模态，RAG，Agent等功能。
+这个项目基础代码继承自 Langchain-Chatchat项目(https://github.com/chatchat-space/Langchain-Chatchat) 底层架构使用Langchain和Fastchat等开源框架，顶层使用streamlit实现。本项目完全开源，目标是可离线部署和测试Huggingface网站上的大部分开源模型，并且可以通过配置将多个模型组合起来，实现多模态，RAG，Agent等功能。项目支持Ubuntu, MacOS和Windows平台。
 
 ---
 
@@ -38,7 +38,16 @@
   如果需要在云服务器上部署，并在本地访问WebUI，请使用反向代理，并以HTTPS协议启动WebUI。在本地请使用 https://127.0.0.1:4480 打开WebUI，在远端使用https接口 https://[server ip]:4480 打开WebUI。
   ```bash
   // 批处理内部默认使用的虚拟环境是 keras-llm-robot，如果想使用其它的虚拟环境名称，请自行修改批处理文件
+  // windows平台
   webui-startup-windows.bat
+  
+  // ubuntu(linux)平台
+  python __webgui_server__.py --webui
+  sh ./tools/ssl-proxy-linux -from 0.0.0.0:4480 -to 127.0.0.1:8818
+
+  // MacOS平台
+  python __webgui_server__.py --webui
+  sh ./tools/ssl-proxy-darwin -from 0.0.0.0:4480 -to 127.0.0.1:8818
   ```
 
 ## 视频演示
@@ -47,12 +56,16 @@
 
   [![Alt text](https://img.youtube.com/vi/7VzZqgg35Ak/0.jpg)](https://www.youtube.com/watch?v=7VzZqgg35Ak)
 
+  2. 对多模态模型gpt-4-vision-preview 和 Gemini-pro-vision：
+   
+  [![Alt text](https://img.youtube.com/vi/yFK62Tn_f4Q/0.jpg)](https://www.youtube.com/watch?v=yFK62Tn_f4Q)
+
 ## 项目介绍
 由三个主界面组成，语言模型的聊天界面，语言模型的配置界面，辅助模型的工具和代理界面。
 
 聊天界面如下图：
 ![Image1](./img/WebUI.png)
-语言模型是主要模型，当它被加载之后就可以使用聊天模式。语言模型也是多模态特性中的大脑。辅助模型当中的语音，图像和向量等模型，它们的输入或者输出数据都需要语言模型来处理。语音模型可以为语言模型提供耳朵和嘴的功能，图像模型可以提供眼睛的功能，而向量模型则提供了长期记忆的功能。目前本项目支持几十种语言模型。
+语言模型是基础模型，当它被加载之后就可以使用聊天模式。语言模型也是多模态特性中的大脑。辅助模型当中的语音，图像和向量等模型，它们的输入或者输出数据都需要语言模型来处理。语音模型可以为语言模型提供耳朵和嘴的功能，图像模型可以提供眼睛的功能，而向量模型则提供了长期记忆的功能。目前本项目支持几十种语言模型。
 
 配置界面如下图：
 ![Image1](./img/Configuration.png)
@@ -64,46 +77,52 @@
 
 ## 环境配置
 
-1. 自行安装anaconda或miniconda，以及git，windows用户还需要安装CMake工具
+  1. 自行安装anaconda或miniconda，以及git。windows用户还需要安装CMake工具，ubuntu用户请安装gcc
    
   2. 使用conda创建虚拟环境keras-llm-robot并安装python, python请使用3.10 或者 3.11的版本
   ```bash
   conda create -n keras-llm-robot python==3.11.5
   ```
 
-  3. 拉取仓库
+  1. 拉取仓库
   ```bash
   git clone https://github.com/smalltong02/keras-llm-robot.git
   cd keras-llm-robot
   ```
 
-  4. 激活虚拟环境
+  1. 激活虚拟环境
   ```bash
   conda activate keras-llm-robot
   ```
 
-  5. 如果拥有NVIDIA GPU，请首先安装CUDA Toolkit (https://developer.nvidia.com/cuda-toolkit-archive) ，并在虚拟环境中安装pytorch CUDA版本 (版本号请和CUDA Toolkit版本相同 https://pytorch.org/)
+  1. 如果拥有NVIDIA GPU，请首先安装CUDA Toolkit (https://developer.nvidia.com/cuda-toolkit-archive) ，并在虚拟环境中安装pytorch CUDA版本 (版本号请和CUDA Toolkit版本相同 https://pytorch.org/)
   ```bash
   // 例如安装12.1版本
   conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
   ```
 
-  6. 安装依赖项, 请按照不同平台选择适当的requirements
+  1. 安装依赖项, 请按照不同平台选择适当的requirements
   ```bash
   // windows平台, 安装过程中如果遇到llama-cpp-python和tts的编译错误，请将这两个安装包从requirements中删除掉，但是删除这2个包之后，将失去
   // 无法加载本地语音模型XTTS-2以及无法加载GGUF的量化模型。
   pip install -r requirements-windows.txt
+  // Ubuntu平台
+  pip install -r requirements-ubuntu.txt
   // MacOS平台
   pip install -r requirements-macos.txt
   ```
 
-  7. 如果需要支持语音功能，还需要安装ffmpeg工具
+  1. 如果需要支持语音功能，还需要安装ffmpeg工具
   
     // windows平台
 
     下载ffmpeg的windows binrary包 (https://www.gyan.dev/ffmpeg/builds/).
     
     添加bin目录到系统的PATH环境变量中
+
+    // ubuntu平台，安装 pyaudio
+    sudo apt install ffmpeg
+    sudo apt-get install portaudio19-dev
 
     // MacOS平台
     ```bash
@@ -116,7 +135,7 @@
     brew install ffmpeg
     ```
 
-  7.  如果需要从Huggingface上下载模型到本地离线运行，请自行下载模型之后，放入到"models"目录中。如果没有提前下载模型，程序会自动从Huggingface网站上下载到本地的系统缓存中。
+  2.  如果需要从Huggingface上下载模型到本地离线运行，请自行下载模型之后，放入到"models"目录中。如果没有提前下载模型，程序会自动从Huggingface网站上下载到本地的系统缓存中。
   ```bash
   // 比如llama-2-7b-chat语言模型的目录是
   models\llm\Llama-2-7b-chat-hf
@@ -137,6 +156,14 @@
   ```bash
   // 批处理内部默认使用的虚拟环境是 keras-llm-robot，如果想使用其它的虚拟环境名称，请自行修改批处理文件
   webui-startup-windows.bat
+  
+  // ubuntu(linux)平台
+  python __webgui_server__.py --webui
+  sh ./tools/ssl-proxy-linux -from 0.0.0.0:4480 -to 127.0.0.1:8818
+
+  // MacOS平台
+  python __webgui_server__.py --webui
+  sh ./tools/ssl-proxy-darwin -from 0.0.0.0:4480 -to 127.0.0.1:8818
   ```
 
 ## 功能介绍

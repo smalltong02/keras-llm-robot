@@ -40,7 +40,16 @@ The project inherits from the Langchain-Chatchat project(https://github.com/chat
   // By default, the batch file uses the virtual environment named keras-llm-robot,
   // Modify the batch file if using a different virtual environment name.
 
+  // windows platform
   webui-startup-windows.bat
+
+  // ubuntu(linux) platform
+  python __webgui_server__.py --webui
+  sh ./tools/ssl-proxy-linux -from 0.0.0.0:4480 -to 127.0.0.1:8818
+
+  // MacOS platform
+  python __webgui_server__.py --webui
+  sh ./tools/ssl-proxy-darwin -from 0.0.0.0:4480 -to 127.0.0.1:8818
   ```
 
 ## Video Demonstration
@@ -49,13 +58,17 @@ The project inherits from the Langchain-Chatchat project(https://github.com/chat
 
   [![Alt text](https://img.youtube.com/vi/7VzZqgg35Ak/0.jpg)](https://www.youtube.com/watch?v=7VzZqgg35Ak)
 
+  2. The demonstration gpt-4-vision-preview VS Gemini-pro-vision：
+   
+  [![Alt text](https://img.youtube.com/vi/yFK62Tn_f4Q/0.jpg)](https://www.youtube.com/watch?v=yFK62Tn_f4Q)
+
 
 ## Project Introduction
 Consists of three main interfaces: the chat interface for language models, the configuration interface for language models, and the tools and agent interface for auxiliary models.
 
 Chat Interface:
 ![Image1](./img/WebUI.png)
-The language model is the main model that can be used in chat mode after loading. It also serves as the brain in multimodal features. Auxiliary models, such as voice, image, and retrieval models, require language models to process their input or output text. The voice model like to ear and mouth, the image model like to eye, and the retrieval model provides long-term memory. The project currently supports dozens of language models.
+The language model is the foundation model that can be used in chat mode after loading. It also serves as the brain in multimodal features. Auxiliary models, such as voice, image, and retrieval models, require language models to process their input or output text. The voice model like to ear and mouth, the image model like to eye, and the retrieval model provides long-term memory. The project currently supports dozens of language models.
 
 Configuration Interface:
 ![Image1](./img/Configuration.png)
@@ -67,7 +80,7 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
 ## Environment Setup
 
-  1. Install Anaconda or Miniconda and Git, Windows users also need to install the CMake tool.
+  1. Install Anaconda or Miniconda and Git. Windows users also need to install the CMake tool, Ubuntu users need to install gcc tools.
    
   2. Create a virtual environment named keras-llm-robot using conda and install Python of 3.10 or 3.11:
   ```bash
@@ -95,6 +108,8 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
   ```bash
   // windows
   pip install -r requirements-windows.txt
+  // Ubuntu
+  pip install -r requirements-ubuntu.txt
   // MacOS
   pip install -r requirements-macos.txt
   ```
@@ -104,6 +119,10 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
     // For Windows:
     Download the Windows binary package of ffmpeg from (https://www.gyan.dev/ffmpeg/builds/).
     Add the bin directory to the system PATH environment variable.
+
+    // for ubuntu, install ffmpeg and pyaudio
+    sudo apt install ffmpeg
+    sudo apt-get install portaudio19-dev
 
     // For MacOS
     ```bash
@@ -138,7 +157,17 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
   // By default, the batch file uses the virtual environment named keras-llm-robot,
   // Modify the batch file if using a different virtual environment name.
 
-  webui-startup.bat
+  webui-startup-windows.bat
+  
+  // ubuntu(linux)平台
+
+  python __webgui_server__.py --webui
+  sh ./tools/ssl-proxy-linux -from 0.0.0.0:4480 -to 127.0.0.1:8818
+
+  // MacOS平台
+
+  python __webgui_server__.py --webui
+  sh ./tools/ssl-proxy-darwin -from 0.0.0.0:4480 -to 127.0.0.1:8818
   ```
 
 ## Feature Overview
