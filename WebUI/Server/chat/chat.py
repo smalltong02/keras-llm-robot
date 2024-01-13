@@ -7,13 +7,15 @@ from langchain.callbacks import AsyncIteratorCallbackHandler
 from typing import AsyncIterable
 import asyncio
 import json
-from langchain.prompts import PromptTemplate, HumanMessagePromptTemplate, MessagesPlaceholder
+from WebUI.configs import *
+#from langchain.prompts import PromptTemplate, HumanMessagePromptTemplate, MessagesPlaceholder
 from langchain.prompts.chat import ChatPromptTemplate
 from typing import List, Optional
 from WebUI.Server.chat.utils import History
 from WebUI.Server.chat.StreamHandler import StreamSpeakHandler
 from WebUI.Server.utils import get_prompt_template
 from WebUI.Server.db.repository import add_chat_history_to_db, update_chat_history
+from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
 
 async def chat(query: str = Body(..., description="User input: ", examples=["chat"]),
     imagesdata: List[str] = Body([], description="image data", examples=["image"]),
@@ -42,6 +44,8 @@ async def chat(query: str = Body(..., description="User input: ", examples=["cha
                             max_tokens: Optional[int] = None,
                             prompt_name: str = prompt_name,
                             ) -> AsyncIterable[str]:
+        configinst = InnerJsonConfigWebUIParse()
+        webui_config = configinst.dump()
         async_callback = AsyncIteratorCallbackHandler()
         callbackslist = [async_callback]
         if len(speechmodel):
@@ -57,7 +61,9 @@ async def chat(query: str = Body(..., description="User input: ", examples=["cha
         if len(imagesdata):
             if max_tokens is None:
                 max_tokens = DEF_TOKENS
+        provider = GetProviderByName(webui_config, model_name)
         model = get_ChatOpenAI(
+            provider=provider,
             model_name=model_name,
             temperature=temperature,
             max_tokens=max_tokens,

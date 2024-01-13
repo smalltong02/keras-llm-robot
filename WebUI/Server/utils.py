@@ -9,6 +9,7 @@ from WebUI import workers
 import urllib.request
 from fastapi import FastAPI
 from langchain.chat_models import ChatOpenAI, AzureChatOpenAI, ChatAnthropic
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.llms import OpenAI, AzureOpenAI, Anthropic
 from typing import Dict, Union, Optional, Literal, Any, List, Callable, Awaitable
 from WebUI.configs.webuiconfig import *
@@ -507,6 +508,7 @@ def list_online_embed_models() -> List[str]:
 def get_ChatOpenAI(
         model_name: str,
         temperature: float,
+        provider: str = None,
         max_tokens: int = None,
         streaming: bool = True,
         callbacks: List[Callable] = [],
@@ -514,12 +516,14 @@ def get_ChatOpenAI(
         **kwargs: Any,
 ) -> ChatOpenAI:
     config = get_model_worker_config(model_name)
-    apikey = config.get("api_key", "[Your Key]")
-    if apikey == "[Your Key]":
-        apikey = os.environ.get('OPENAI_API_KEY')
+    apikey = None
+    if provider != None and provider == "openai-api":
+        apikey = config.get("api_key", "[Your Key]")
+        if apikey == "[Your Key]":
+            apikey = os.environ.get('OPENAI_API_KEY')
     if apikey == None:
         apikey = "EMPTY"
-    proxy = config.get("openai_proxy", "[Private Proxy]")
+    proxy = config.get("api_proxy", "[Private Proxy]")
     if proxy == "[Private Proxy]":
         proxy = ""
     model = ChatOpenAI(
@@ -531,8 +535,37 @@ def get_ChatOpenAI(
         model_name=model_name,
         temperature=temperature,
         max_tokens=max_tokens,
-        openai_proxy=config.get("openai_proxy"),
+        openai_proxy=proxy,
         **kwargs
+    )
+
+    return model
+
+def get_ChatGoogleAI(
+        model_name: str,
+        temperature: float,
+        provider: str = None,
+        max_tokens: int = None,
+        callbacks: List[Callable] = [],
+        verbose: bool = True,
+) -> ChatOpenAI:
+    config = get_model_worker_config(model_name)
+    apikey = None
+    if provider != None and provider == "google-api":
+        apikey = config.get("api_key", "[Your Key]")
+        if apikey == "[Your Key]":
+            apikey = os.environ.get('GOOGLE_API_KEY')
+    if apikey == None:
+        apikey = "EMPTY"
+    proxy = config.get("api_proxy", "[Private Proxy]")
+    if proxy == "[Private Proxy]":
+        proxy = ""
+    model = ChatGoogleGenerativeAI(
+        verbose=verbose,
+        callbacks=callbacks,
+        google_api_key=apikey,
+        model=model_name,
+        temperature=temperature,
     )
 
     return model
