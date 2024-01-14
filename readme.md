@@ -45,11 +45,13 @@ The project inherits from the Langchain-Chatchat project(https://github.com/chat
 
   // ubuntu(linux) platform
   python __webgui_server__.py --webui
-  sh ./tools/ssl-proxy-linux -from 0.0.0.0:4480 -to 127.0.0.1:8818
+  chmod +x ./tools/ssl-proxy-linux
+  ./tools/ssl-proxy-linux -from 0.0.0.0:4480 -to 127.0.0.1:8818
 
   // MacOS platform
   python __webgui_server__.py --webui
-  sh ./tools/ssl-proxy-darwin -from 0.0.0.0:4480 -to 127.0.0.1:8818
+  chmod +x ./tools/ssl-proxy-darwin
+  ./tools/ssl-proxy-darwin -from 0.0.0.0:4480 -to 127.0.0.1:8818
   ```
 
 ## Video Demonstration
@@ -162,12 +164,14 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
   // ubuntu(linux)平台
 
   python __webgui_server__.py --webui
-  sh ./tools/ssl-proxy-linux -from 0.0.0.0:4480 -to 127.0.0.1:8818
+  chmod +x ./tools/ssl-proxy-linux
+  ./tools/ssl-proxy-linux -from 0.0.0.0:4480 -to 127.0.0.1:8818
 
   // MacOS平台
 
   python __webgui_server__.py --webui
-  sh ./tools/ssl-proxy-darwin -from 0.0.0.0:4480 -to 127.0.0.1:8818
+  chmod +x ./tools/ssl-proxy-darwin
+  ./tools/ssl-proxy-darwin -from 0.0.0.0:4480 -to 127.0.0.1:8818
   ```
 
 ## Feature Overview
