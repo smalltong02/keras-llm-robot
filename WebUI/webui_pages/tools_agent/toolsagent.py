@@ -1,5 +1,6 @@
 import streamlit as st
 from WebUI.webui_pages.utils import *
+from WebUI.Server.knowledge_base.kb_service.base import get_kb_details
 
 training_devices_list = ["auto","cpu","gpu","mps"]
 loadbits_list = ["32 bits","16 bits","8 bits"]
@@ -23,6 +24,14 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
         )
     tabretrieval, tabinterpreter, tabspeech, tabvoice, tabimager, tabimageg, tabfunctions = st.tabs(["Retrieval", "Code Interpreter", "Text-to-Voice", "Voice-to-Text", "Image Recognition", "Image Generation", "Functions"])
     with tabretrieval:
+        try:
+            pass
+            #kb_list = {x["kb_name"]: x for x in get_kb_details()}
+        except Exception as e:
+            st.error("Get Knowledge Base failed!")
+            st.stop()
+        #kb_names = list(kb_list.keys())
+
         selected_kb = st.selectbox(
             "Knowledge Base:",
             ["[Create New...]"],
