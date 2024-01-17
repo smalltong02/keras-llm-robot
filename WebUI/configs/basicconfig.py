@@ -293,4 +293,46 @@ def LocalModelExist(local_path):
     if total_size_gb > 1:
         return True
     return False
-    
+
+def GetKbConfig():
+    from WebUI.configs.webuiconfig import InnerJsonConfigKnowledgeBaseParse
+    knowledgeinst = InnerJsonConfigKnowledgeBaseParse()
+    kb_config = knowledgeinst.dump()
+    return kb_config
+
+def GetKbRootPath(kb_config: dict):
+    if isinstance(kb_config, dict):
+        return kb_config.get("kb_root_path", "")
+    return ""
+
+def GetDbUri(kb_config: dict):
+    if isinstance(kb_config, dict):
+        return kb_config.get("sqlalchemy_db_uri", "")
+    return ""
+
+def GetDbRootPath(kb_config: dict):
+    if isinstance(kb_config, dict):
+        return kb_config.get("db_root_path", "")
+    return ""
+
+def GetKbInfo(kb_name: str):
+    pass
+
+def GetKbPath(kb_name: str):
+    pass
+
+def GetDocPath(kb_name: str):
+    pass
+
+def GetKbsList():
+    kb_list = []
+    kb_config = GetKbConfig()
+    kbs_config = kb_config.get("kbs_config", {})
+    for key, _ in kbs_config.items():
+        kb_list.append(key)
+    return kb_list
+
+def GetTextSplitterDict():
+    kb_config = GetKbConfig()
+    text_splitter_dict = kb_config.get("text_splitter_dict", {})
+    return text_splitter_dict

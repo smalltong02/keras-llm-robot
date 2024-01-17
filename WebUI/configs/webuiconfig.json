@@ -53,6 +53,10 @@
             }
         },
         "EmbeddingModel": {
+            "bge-large-en-v1.5": {
+                "path": "models/embeddings/bge-large-en-v1.5",
+                "Huggingface": "BAAI/bge-large-en-v1.5"
+            },
             "jina-embeddings-v2-small-en": {
                 "path": "models/embeddings/jina-embeddings-v2-small-en",
                 "Huggingface": "jinaai/jina-embeddings-v2-small-en"
@@ -80,10 +84,6 @@
             "bge-base-en-v1.5": {
                 "path": "models/embeddings/bge-base-en-v1.5",
                 "Huggingface": "BAAI/bge-base-en-v1.5"
-            },
-            "bge-large-en-v1.5": {
-                "path": "models/embeddings/bge-large-en-v1.5",
-                "Huggingface": "BAAI/bge-large-en-v1.5"
             },
             "text-embedding-ada-002": {
                 "path": "",

@@ -5,6 +5,8 @@ from WebUI.Server.knowledge_base.kb_service.base import get_kb_details
 training_devices_list = ["auto","cpu","gpu","mps"]
 loadbits_list = ["32 bits","16 bits","8 bits"]
 
+KB_CREATE_NEW = "[Create New...]"
+
 def tools_agent_page(api: ApiRequest, is_lite: bool = False):
     
     running_model = ""
@@ -24,23 +26,29 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
         )
     tabretrieval, tabinterpreter, tabspeech, tabvoice, tabimager, tabimageg, tabfunctions = st.tabs(["Retrieval", "Code Interpreter", "Text-to-Voice", "Voice-to-Text", "Image Recognition", "Image Generation", "Functions"])
     with tabretrieval:
+        kb_list = {}
         try:
-            pass
-            #kb_list = {x["kb_name"]: x for x in get_kb_details()}
+            kb_details = get_kb_details()
+            if len(kb_details):
+                kb_list = {x["kb_name"]: x for x in kb_details}
         except Exception as e:
             st.error("Get Knowledge Base failed!")
             st.stop()
-        #kb_names = list(kb_list.keys())
+        kb_names = []
+        if len(kb_list):
+            kb_names = list(kb_list.keys())
 
+        kb_names.append(KB_CREATE_NEW)
         selected_kb = st.selectbox(
             "Knowledge Base:",
-            ["[Create New...]"],
+            kb_names,
             index=0
         )
 
-        if selected_kb == "[Create New...]":
-            with st.form("Create Knowledge Base"):
+        if selected_kb == KB_CREATE_NEW:
+            embeddingmodel = webui_config.get("ModelConfig").get("EmbeddingModel")
 
+            with st.form("Create Knowledge Base"):
                 kb_name = st.text_input(
                     "Knowledge Base Name:",
                     key="kb_name",
@@ -50,46 +58,43 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                     key="kb_info",
                 )
 
-            #     cols = st.columns(2)
-            #     vs_types = list(kbs_config.keys())
-            #     vs_type = cols[0].selectbox(
-            #         "Vector Store Type",
-            #         vs_types,
-            #         index=vs_types.index(DEFAULT_VS_TYPE),
-            #         key="vs_type",
-            #     )
+                cols = st.columns(2)
+                vs_types = GetKbsList()
+                vs_type = cols[0].selectbox(
+                    "Vector Store Type",
+                    vs_types,
+                    index=0,
+                    key="vs_type",
+                )
 
-            #     embed_models = list_embed_models()
+                embed_models = [f"{key}" for key in embeddingmodel]
 
-            #     embed_model = cols[1].selectbox(
-            #         "Embedding Model",
-            #         embed_models,
-            #         index=embed_models.index(EMBEDDING_MODEL),
-            #         key="embed_model",
-            #     )
-
+                embed_model = cols[1].selectbox(
+                    "Embedding Model",
+                    embed_models,
+                    index=0,
+                    key="embed_model",
+                )
                 submit_create_kb = st.form_submit_button(
                     "Create",
-                    # disabled=not bool(kb_name),
                     use_container_width=True,
                 )
 
             if submit_create_kb:
-                pass
-                # if not kb_name or not kb_name.strip():
-                #     st.error(f"KnowledgeBase Name is None!")
-                # elif kb_name in kb_list:
-                #     st.error(f"The {kb_name} exist!")
-                # else:
-                #     ret = api.create_knowledge_base(
-                #         knowledge_base_name=kb_name,
-                #         vector_store_type=vs_type,
-                #         embed_model=embed_model,
-                #     )
-                #     st.toast(ret.get("msg", " "))
-                #     st.session_state["selected_kb_name"] = kb_name
-                #     st.session_state["selected_kb_info"] = kb_info
-                #     st.experimental_rerun()
+                if not kb_name or not kb_name.strip():
+                    st.error(f"KnowledgeBase Name is None!")
+                elif kb_name in kb_list:
+                    st.error(f"The {kb_name} exist!")
+                else:
+                    ret = api.create_knowledge_base(
+                        knowledge_base_name=kb_name,
+                        vector_store_type=vs_type,
+                        embed_model=embed_model,
+                    )
+                    st.toast(ret.get("msg", " "))
+                    st.session_state["selected_kb_name"] = kb_name
+                    st.session_state["selected_kb_info"] = kb_info
+                    st.experimental_rerun()
 
     with tabinterpreter:
         pass

@@ -1,5 +1,4 @@
 from langchain.docstore.document import Document
-from configs import EMBEDDING_MODEL
 from WebUI.Server.model_workers.base import ApiEmbeddingsParams
 from WebUI.Server.utils import BaseResponse, get_model_worker_config, list_embed_models, list_online_embed_models
 from fastapi import Body
@@ -9,7 +8,7 @@ online_embed_models = list_online_embed_models()
 
 def embed_texts(
     texts: List[str],
-    embed_model: str = EMBEDDING_MODEL,
+    embed_model: str = "",
     to_query: bool = False,
 ) -> BaseResponse:
     '''
@@ -39,7 +38,7 @@ def embed_texts(
 
 def embed_texts_endpoint(
     texts: List[str] = Body(..., description="Text List", examples=[["hello", "world"]]),
-    embed_model: str = Body(EMBEDDING_MODEL, description=""),
+    embed_model: str = Body("", description=""),
     to_query: bool = Body(False, description="Whether vectors are used for queries. Some models, such as Minimax, optimize the differentiation of vectors for storage and retrieval."),
 ) -> BaseResponse:
     '''
@@ -47,10 +46,24 @@ def embed_texts_endpoint(
     '''
     return embed_texts(texts=texts, embed_model=embed_model, to_query=to_query)
 
+async def aembed_texts(
+    texts: List[str],
+    embed_model: str = "",
+    to_query: bool = False,
+) -> BaseResponse:
+    pass
+
+def embed_texts_endpoint(
+        texts: List[str] = Body(..., description="test list", examples=[["hello", "world"]]),
+        embed_model: str = Body("",
+                                description=f"embedding model"),
+        to_query: bool = Body(False, description="query?"),
+) -> BaseResponse:
+    pass
 
 def embed_documents(
     docs: List[Document],
-    embed_model: str = EMBEDDING_MODEL,
+    embed_model: str = "",
     to_query: bool = False,
 ) -> Dict:
     """

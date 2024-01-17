@@ -1,6 +1,7 @@
 import sys
 import os
-
+import argparse
+import uvicorn
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from fastapi import Body
@@ -19,7 +20,8 @@ from WebUI.Server.llm_api import (list_running_models, get_running_models, list_
                             get_vtot_model, get_vtot_data, stop_vtot_model, change_vtot_model, save_voice_model_config,
                             get_speech_model, get_speech_data, save_speech_model_config, stop_speech_model, change_speech_model,
                             list_search_engines)
-from WebUI.Server.utils import(get_prompt_template)
+from WebUI.Server.utils import(BaseResponse, ListResponse, FastAPI, MakeFastAPIOffline,
+                          get_server_configs, get_prompt_template)
 from typing import List, Literal
 from __about__ import __version__
 
@@ -75,7 +77,7 @@ def mount_app_routes(app: FastAPI, run_mode: str = None):
              )(chat_feedback)
 
     #knowledge interface
-    #mount_knowledge_routes(app)
+    mount_knowledge_routes(app)
 
     # LLM Model interface
     app.post("/llm_model/list_running_models",
@@ -199,7 +201,7 @@ def mount_app_routes(app: FastAPI, run_mode: str = None):
     ) -> str:
         return get_prompt_template(type=type, name=name)
 
-    # 其它接口
+    # other interface
     app.post("/other/completion",
              tags=["Other"],
              summary="Request LLM model completion (LLMChain)",
@@ -209,3 +211,130 @@ def mount_app_routes(app: FastAPI, run_mode: str = None):
             tags=["Other"],
             summary="Vectorize text, supporting both local and online models.",
             )(embed_texts_endpoint)
+    
+def mount_knowledge_routes(app: FastAPI):
+    from WebUI.Server.chat.knowledge_base_chat import knowledge_base_chat
+    from WebUI.Server.chat.file_chat import upload_temp_docs, file_chat
+    from WebUI.Server.chat.agent_chat import agent_chat
+    from WebUI.Server.knowledge_base.kb_api import list_kbs, create_kb, delete_kb
+    from WebUI.Server.knowledge_base.kb_doc_api import (list_files, upload_docs, delete_docs,
+                                                update_docs, download_doc, recreate_vector_store,
+                                                search_docs, DocumentWithVSId, update_info,
+                                                update_docs_by_id,)
+    app.post("/chat/knowledge_base_chat",
+            tags=["Chat"],
+            summary="chat with Knowledge base")(knowledge_base_chat)
+
+    app.post("/chat/file_chat",
+            tags=["Knowledge Base Management"],
+            summary="chat with file"
+            )(file_chat)
+
+    app.post("/chat/agent_chat",
+            tags=["Chat"],
+            summary="chat with agent")(agent_chat)
+
+    # Tag: Knowledge Base Management
+    app.get("/knowledge_base/list_knowledge_bases",
+            tags=["Knowledge Base Management"],
+            response_model=ListResponse,
+            summary="get knowledge base list")(list_kbs)
+
+    app.post("/knowledge_base/create_knowledge_base",
+            tags=["Knowledge Base Management"],
+            response_model=BaseResponse,
+            summary="create knowledge base"
+            )(create_kb)
+
+    app.post("/knowledge_base/delete_knowledge_base",
+            tags=["Knowledge Base Management"],
+            response_model=BaseResponse,
+            summary="delete knowledge base"
+            )(delete_kb)
+
+    app.get("/knowledge_base/list_files",
+            tags=["Knowledge Base Management"],
+            response_model=ListResponse,
+            summary="get file list from knowledge base"
+            )(list_files)
+
+    app.post("/knowledge_base/search_docs",
+            tags=["Knowledge Base Management"],
+            response_model=List[DocumentWithVSId],
+            summary="search from knowledge base"
+            )(search_docs)
+
+    app.post("/knowledge_base/update_docs_by_id",
+            tags=["Knowledge Base Management"],
+            response_model=BaseResponse,
+            summary="update doc for knowledge base"
+            )(update_docs_by_id)
+
+
+    app.post("/knowledge_base/upload_docs",
+            tags=["Knowledge Base Management"],
+            response_model=BaseResponse,
+            summary="upload docs to knowledge base"
+            )(upload_docs)
+
+    app.post("/knowledge_base/delete_docs",
+            tags=["Knowledge Base Management"],
+            response_model=BaseResponse,
+            summary="delete docs from knowledge base"
+            )(delete_docs)
+
+    app.post("/knowledge_base/update_info",
+            tags=["Knowledge Base Management"],
+            response_model=BaseResponse,
+            summary="update knowledge base information"
+            )(update_info)
+    app.post("/knowledge_base/update_docs",
+            tags=["Knowledge Base Management"],
+            response_model=BaseResponse,
+            summary="update docs to knowledge base"
+            )(update_docs)
+
+    app.get("/knowledge_base/download_doc",
+            tags=["Knowledge Base Management"],
+            summary="download doc file")(download_doc)
+
+    app.post("/knowledge_base/recreate_vector_store",
+            tags=["Knowledge Base Management"],
+            summary="recreate vector store"
+            )(recreate_vector_store)
+
+    app.post("/knowledge_base/upload_temp_docs",
+            tags=["Knowledge Base Management"],
+            summary="upload docs to temp folder for chat"
+            )(upload_temp_docs)
+        
+
+def run_api(host, port, **kwargs):
+    if kwargs.get("ssl_keyfile") and kwargs.get("ssl_certfile"):
+        uvicorn.run(app,
+                    host=host,
+                    port=port,
+                    ssl_keyfile=kwargs.get("ssl_keyfile"),
+                    ssl_certfile=kwargs.get("ssl_certfile"),
+                    )
+    else:
+        uvicorn.run(app, host=host, port=port)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(prog='Keras-llm-Robot',
+                                    description='About Keras-llm-Robot, local knowledge based LLM Model with langchain')
+    parser.add_argument("--host", type=str, default="0.0.0.0")
+    parser.add_argument("--port", type=int, default=7861)
+    parser.add_argument("--ssl_keyfile", type=str)
+    parser.add_argument("--ssl_certfile", type=str)
+    args = parser.parse_args()
+    args_dict = vars(args)
+
+    app = create_app()
+
+    run_api(host=args.host,
+            port=args.port,
+            ssl_keyfile=args.ssl_keyfile,
+            ssl_certfile=args.ssl_certfile,
+            )

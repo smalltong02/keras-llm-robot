@@ -16,7 +16,6 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
     multimodalmodel = localmodel.get("Multimodal Model")
     specialmodel = localmodel.get("Special Model")
     onlinemodel = webui_config.get("ModelConfig").get("OnlineModel")
-    embeddingmodel = webui_config.get("ModelConfig").get("EmbeddingModel")
     chatconfig = webui_config.get("ChatConfiguration")
     quantconfig = webui_config.get("QuantizationConfiguration")
     finetunning = webui_config.get("Fine-Tunning")
@@ -173,7 +172,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
     if current_model["config"]:
         preset_list = GetPresetPromptList()
         if current_model["mtype"] == ModelType.Local or current_model["mtype"] == ModelType.Multimodal or current_model["mtype"] == ModelType.Special:
-            tabparams, tabquant, tabembedding, tabtunning, tabprompt = st.tabs(["Parameters", "Quantization", "Embedding Model", "Fine-Tunning", "Prompt Templates"])
+            tabparams, tabquant, tabtunning, tabprompt = st.tabs(["Parameters", "Quantization", "Fine-Tunning", "Prompt Templates"])
             with tabparams:
                 with st.form("Parameter"):
                     col1, col2 = st.columns(2)
@@ -344,14 +343,6 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                     )
                     if submit_quantization:
                         st.success("The model quantization has been successful, and the quantized file path is model/llama-2-7b-hf-16bit.bin.")
-
-            with tabembedding:
-                embedding_lists = [f"{key}" for key in embeddingmodel]
-                st.selectbox(
-                    "Please Select Embedding Model",
-                    embedding_lists,
-                    index=0
-                )
 
             with tabtunning:
                 st.selectbox(

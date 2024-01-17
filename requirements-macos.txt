@@ -143,6 +143,7 @@ pypinyin==0.50.0
 pysbd==0.3.4
 python-crfsuite==0.9.9
 python-dateutil==2.8.2
+python-multipart==0.0.6
 pytz==2023.3.post1
 PyYAML==6.0.1
 referencing==0.30.2
@@ -170,6 +171,7 @@ spacy-loggers==1.0.5
 SpeechRecognition==3.10.0
 SQLAlchemy==2.0.22
 srsly==2.4.8
+sse-starlette==1.8.2
 starlette==0.27.0
 streamlit==1.28.0
 streamlit-chatbox==1.1.11

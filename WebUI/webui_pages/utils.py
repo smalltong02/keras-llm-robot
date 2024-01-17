@@ -279,7 +279,8 @@ class ApiRequest:
         }
         response = self.post("/server/get_prompt_template", json=data, **kwargs)
         return self._get_response_value(response, value_func=lambda r: r.text)
-    
+
+    # llm model api    
 
     def get_running_models(self, controller_address: str = None):
         data = {
@@ -457,6 +458,8 @@ class ApiRequest:
             stream=True,
         )
         return self._httpx_stream2generator(response, as_json=True)
+    
+    # voice & speech model api
         
     def save_vtot_model_config(self,
         model_name: str = "",
@@ -719,6 +722,43 @@ class ApiRequest:
             return self.ret_async(response)
         else:
             return self.ret_sync(response)
+        
+    # Knowledge base api
+    def list_knowledge_bases(
+        self,
+    ):
+        response = self.get("/knowledge_base/list_knowledge_bases")
+        return self._get_response_value(response,
+                                        as_json=True,
+                                        value_func=lambda r: r.get("data", []))
+
+    def create_knowledge_base(
+        self,
+        knowledge_base_name: str,
+        vector_store_type: str = "",
+        embed_model: str = "",
+    ):
+        data = {
+            "knowledge_base_name": knowledge_base_name,
+            "vector_store_type": vector_store_type,
+            "embed_model": embed_model,
+        }
+
+        response = self.post(
+            "/knowledge_base/create_knowledge_base",
+            json=data,
+        )
+        return self._get_response_value(response, as_json=True)
+
+    def delete_knowledge_base(
+        self,
+        knowledge_base_name: str,
+    ):
+        response = self.post(
+            "/knowledge_base/delete_knowledge_base",
+            json=f"{knowledge_base_name}",
+        )
+        return self._get_response_value(response, as_json=True)
 
     
     def _get_response_value(self, response: httpx.Response, as_json: bool = False, value_func: Callable = None,):

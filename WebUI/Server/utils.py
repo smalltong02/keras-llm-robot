@@ -8,6 +8,7 @@ from pathlib import Path
 from WebUI import workers
 import urllib.request
 from fastapi import FastAPI
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from langchain.chat_models import ChatOpenAI, AzureChatOpenAI, ChatAnthropic
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.llms import OpenAI, AzureOpenAI, Anthropic
@@ -569,3 +570,19 @@ def get_ChatGoogleAI(
     )
 
     return model
+
+def run_in_thread_pool(
+        func: Callable,
+        params: List[Dict] = [],
+) -> Generator:
+    tasks = []
+    with ThreadPoolExecutor() as pool:
+        for kwargs in params:
+            thread = pool.submit(func, **kwargs)
+            tasks.append(thread)
+
+        for obj in as_completed(tasks):  # TODO: Ctrl+c can not stop
+            yield obj.result()
+
+def get_server_configs() -> Dict:
+    pass
