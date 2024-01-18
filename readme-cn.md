@@ -192,7 +192,7 @@
 
   在工具和代理界面中，可以加载辅助模型比如向量检索模型，代码执行模型，文本转语音模型，语音转文本模型，图像识别模型，图像生成模型，或者配置功能调用
 
-  1. **`向量检索模型`** (`当前功能还未实现`)
+  1. **`向量检索模型`** 支持本地和在线向量数据库，支持本地和在线向量模型，并且支持多种文档类型。可以为基础模型提供长期记忆力。
   2. **`代码执行模型`** (`当前功能还未实现`)
   3. **`文本转语音模型`** 支持本地模型XTTS-v2，支持Azure在线文本转语音服务，需要提供Azure的API Key。也可以在系统环境变量中配置SPEECH_KEY和SPEECH_REGION，或者在配置界面中单独配置。
   4. **`语音转文本模型`** 支持本地模型whisper，fast-whisper，支持Azure在线语音转文本服务，需要提供Azure的API Key。也可以在系统环境变量中配置SPEECH_KEY和SPEECH_REGION，或者在配置界面中单独配置。
@@ -299,7 +299,39 @@
 
   1. **`知识库检索`**
 
-      RAG功能，需要向量数据库和向量模型，给语言模型提供长期记忆能力。`该功能还未实现`
+      RAG功能，需要向量数据库和向量模型，可以给语言模型提供长期记忆能力。
+
+      目前支持以下向量数据库：
+
+      | 向量数据库 | 类型 |
+      | :---- | :---- |
+      | Faiss | Local |
+      | Milvus | Local |
+      | PGVector | Local |
+      | ElasticsearchStore | Local |
+      | ZILLIZ | Online |
+
+      可以选择以下向量模型：
+
+      | 向量模型 | 类型 | 大小 |
+      | :---- | :---- | :---- |
+      | bge-small-en-v1.5 | Local | 130MB |
+      | bge-base-en-v1.5 | Local | 430MB |
+      | bge-large-en-v1.5 | Local | 1.3GB |
+      | jina-embeddings-v2-small-en | Local | 63MB |
+      | jina-embeddings-v2-base-en | Local | 260MB |
+      | m3e-small | Local | 93MB |
+      | m3e-base | Local | 400MB |
+      | m3e-large | Local | 1.3GB |
+      | text2vec-base-chinese | Local | 400MB |
+      | text2vec-bge-large-chinese | Local | 1.3GB |
+      | text-embedding-ada-002 | Online | *B |
+      | embedding-gecko-001 | Online | *B |
+      | embedding-001 | Online | *B |
+
+      支持的文档类型：
+
+      html, mhtml, md, json, jsonl, csv, pdf, png, jpg, jpeg, bmp, eml, msg, epub, xlsx, xls, xlsd, ipynb, odt, py, rst, rtf, srt, toml, tsv, docx, doc, xml, ppt, pptx, enex, txt
 
   2. **`代码解释器`**
 

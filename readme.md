@@ -195,7 +195,7 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
   In the tools & agent interface, you can load auxiliary models such as retrieval, code execution, text-to-speech, speech-to-text, image recognition, image generation, or function calling.
 
-  1. **`Retrieval`** (`Not implemented`)
+  1. **`Retrieval`** Supports both local and online vector databases, local and online embedding models, and various document types. Can provide long-term memory for the Foundation model.
   2. **`Code Interpreter`** (`Not implemented`)
   3. **`Text-to-Speech`** Supports local model XTTS-v2 and Azure online text-to-speech service. Requires Azure API Key, which can be configured in the system environment variables `SPEECH_KEY` and `SPEECH_REGION`, or in the configuration interface.
   4. **`Speech-to-Text`** Supports local models whisper and fast-whisper and Azure online speech-to-text service. Requires Azure API Key, which can be configured in the system environment variables `SPEECH_KEY` and `SPEECH_REGION`, or in the configuration interface.
@@ -300,7 +300,39 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
   1. **`Retrieval`**
 
-      RAG functionality requires a vector database and embedding models to provide long-term memory capabilities to the language model. `Not implemented`
+      RAG functionality requires a vector database and embedding models to provide long-term memory capabilities to the language model. 
+
+      Support the following Vector Database:
+
+      | Databases | Type |
+      | :---- | :---- |
+      | Faiss | Local |
+      | Milvus | Local |
+      | PGVector | Local |
+      | ElasticsearchStore | Local |
+      | ZILLIZ | Online |
+
+      Support the following Embedding Models:
+
+      | Model | Type | Size |
+      | :---- | :---- | :---- |
+      | bge-small-en-v1.5 | Local | 130MB |
+      | bge-base-en-v1.5 | Local | 430MB |
+      | bge-large-en-v1.5 | Local | 1.3GB |
+      | jina-embeddings-v2-small-en | Local | 63MB |
+      | jina-embeddings-v2-base-en | Local | 260MB |
+      | m3e-small | Local | 93MB |
+      | m3e-base | Local | 400MB |
+      | m3e-large | Local | 1.3GB |
+      | text2vec-base-chinese | Local | 400MB |
+      | text2vec-bge-large-chinese | Local | 1.3GB |
+      | text-embedding-ada-002 | Online | *B |
+      | embedding-gecko-001 | Online | *B |
+      | embedding-001 | Online | *B |
+
+      Support the following Documents:
+
+      html, mhtml, md, json, jsonl, csv, pdf, png, jpg, jpeg, bmp, eml, msg, epub, xlsx, xls, xlsd, ipynb, odt, py, rst, rtf, srt, toml, tsv, docx, doc, xml, ppt, pptx, enex, txt
 
   2. **`Code Interpreter`**
 
