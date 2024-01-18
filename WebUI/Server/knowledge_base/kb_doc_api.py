@@ -9,13 +9,10 @@ from WebUI.Server.utils import BaseResponse, ListResponse, run_in_thread_pool
 from WebUI.Server.knowledge_base.utils import (validate_kb_name, get_file_path, list_files_from_folder, files2docs_in_thread, KnowledgeFile)
 from WebUI.Server.db.repository.knowledge_file_repository import get_file_detail
 from WebUI.Server.knowledge_base.kb_service.base import KBServiceFactory
+from WebUI.Server.knowledge_base.utils import (CHUNK_SIZE, OVERLAP_SIZE, ZH_TITLE_ENHANCE)
 from WebUI.Server.knowledge_base.model.kb_document_model import DocumentWithVSId
 from langchain.docstore.document import Document
 from typing import List, Dict
-
-CHUNK_SIZE = 250
-OVERLAP_SIZE = 50
-ZH_TITLE_ENHANCE = False
 
 def update_docs_by_id(
         knowledge_base_name: str = Body(..., description="Knowledge base name", examples=["samples"]),
@@ -299,7 +296,7 @@ def recreate_vector_store(
     """
 
     def output():
-        kb = KBServiceFactory.get_service(knowledge_base_name, vs_type, embed_model)
+        kb = KBServiceFactory.get_service(kb_name=knowledge_base_name, vector_store_type=vs_type, embed_model=embed_model)
         if not kb.exists() and not allow_empty_kb:
             yield {"code": 404, "msg": f"Not found Knowledge base '{knowledge_base_name}'"}
         else:

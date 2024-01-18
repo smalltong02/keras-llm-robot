@@ -316,13 +316,13 @@ def GetDbRootPath(kb_config: dict):
     return ""
 
 def GetKbInfo(kb_name: str):
-    pass
+    return f"about '{kb_name}' knowledge base."
 
 def GetKbPath(kb_name: str):
-    pass
+    return os.path.join(GetKbRootPath(GetKbConfig()), kb_name)
 
 def GetDocPath(kb_name: str):
-    pass
+    return os.path.join(GetKbPath(kb_name), "content")
 
 def GetKbsList():
     kb_list = []

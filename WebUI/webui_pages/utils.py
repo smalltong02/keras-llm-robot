@@ -9,6 +9,7 @@ from WebUI.Server.utils import get_httpx_client
 from WebUI.configs.serverconfig import API_SERVER
 from WebUI.configs import HTTPX_DEFAULT_TIMEOUT
 from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
+from WebUI.Server.knowledge_base.utils import (CHUNK_SIZE, OVERLAP_SIZE, ZH_TITLE_ENHANCE)
 
 def api_address() -> str:
     host = API_SERVER["host"]
@@ -734,12 +735,14 @@ class ApiRequest:
 
     def create_knowledge_base(
         self,
-        knowledge_base_name: str,
+        knowledge_base_name: str = "",
+        knowledge_base_info: str = "",
         vector_store_type: str = "",
         embed_model: str = "",
     ):
         data = {
             "knowledge_base_name": knowledge_base_name,
+            "knowledge_base_info": knowledge_base_info,
             "vector_store_type": vector_store_type,
             "embed_model": embed_model,
         }
@@ -759,7 +762,164 @@ class ApiRequest:
             json=f"{knowledge_base_name}",
         )
         return self._get_response_value(response, as_json=True)
+    
+    def list_kb_docs(
+        self,
+        knowledge_base_name: str,
+    ):
+        response = self.get(
+            "/knowledge_base/list_files",
+            params={"knowledge_base_name": knowledge_base_name}
+        )
+        return self._get_response_value(response,
+                                        as_json=True,
+                                        value_func=lambda r: r.get("data", []))
 
+    def search_kb_docs(
+        self,
+        knowledge_base_name: str,
+        query: str = "",
+        top_k: int = 3,
+        score_threshold: int = 0.6,
+        file_name: str = "",
+        metadata: dict = {},
+    ) -> List:
+        data = {
+            "query": query,
+            "knowledge_base_name": knowledge_base_name,
+            "top_k": top_k,
+            "score_threshold": score_threshold,
+            "file_name": file_name,
+            "metadata": metadata,
+        }
+
+        response = self.post(
+            "/knowledge_base/search_docs",
+            json=data,
+        )
+        return self._get_response_value(response, as_json=True)
+
+    def update_docs_by_id(
+        self,
+        knowledge_base_name: str,
+        docs: Dict[str, Dict],
+    ) -> bool:
+        data = {
+            "knowledge_base_name": knowledge_base_name,
+            "docs": docs,
+        }
+        response = self.post(
+            "/knowledge_base/update_docs_by_id",
+            json=data
+        )
+        return self._get_response_value(response)
+    
+    def upload_kb_docs(
+        self,
+        files: List[Union[str, Path, bytes]],
+        knowledge_base_name: str,
+        override: bool = False,
+        to_vector_store: bool = True,
+        chunk_size=CHUNK_SIZE,
+        chunk_overlap=OVERLAP_SIZE,
+        zh_title_enhance=ZH_TITLE_ENHANCE,
+        docs: Dict = {},
+        not_refresh_vs_cache: bool = False,
+    ):
+        def convert_file(file, filename=None):
+            from io import BytesIO
+            if isinstance(file, bytes): # raw bytes
+                file = BytesIO(file)
+            elif hasattr(file, "read"): # a file io like object
+                filename = filename or file.name
+            else: # a local path
+                file = Path(file).absolute().open("rb")
+                filename = filename or os.path.split(file.name)[-1]
+            return filename, file
+
+        files = [convert_file(file) for file in files]
+        data={
+            "knowledge_base_name": knowledge_base_name,
+            "override": override,
+            "to_vector_store": to_vector_store,
+            "chunk_size": chunk_size,
+            "chunk_overlap": chunk_overlap,
+            "zh_title_enhance": zh_title_enhance,
+            "docs": docs,
+            "not_refresh_vs_cache": not_refresh_vs_cache,
+        }
+
+        if isinstance(data["docs"], dict):
+            data["docs"] = json.dumps(data["docs"], ensure_ascii=False)
+        response = self.post(
+            "/knowledge_base/upload_docs",
+            data=data,
+            files=[("files", (filename, file)) for filename, file in files],
+        )
+        return self._get_response_value(response, as_json=True)
+
+    def delete_kb_docs(
+        self,
+        knowledge_base_name: str,
+        file_names: List[str],
+        delete_content: bool = False,
+        not_refresh_vs_cache: bool = False,
+    ):
+        data = {
+            "knowledge_base_name": knowledge_base_name,
+            "file_names": file_names,
+            "delete_content": delete_content,
+            "not_refresh_vs_cache": not_refresh_vs_cache,
+        }
+
+        response = self.post(
+            "/knowledge_base/delete_docs",
+            json=data,
+        )
+        return self._get_response_value(response, as_json=True)
+    
+    def update_kb_info(self,knowledge_base_name,kb_info):
+        data = {
+            "knowledge_base_name": knowledge_base_name,
+            "kb_info": kb_info,
+        }
+
+        response = self.post(
+            "/knowledge_base/update_info",
+            json=data,
+        )
+        return self._get_response_value(response, as_json=True)
+
+    def update_kb_docs(
+        self,
+        knowledge_base_name: str,
+        file_names: List[str],
+        override_custom_docs: bool = False,
+        chunk_size=CHUNK_SIZE,
+        chunk_overlap=OVERLAP_SIZE,
+        zh_title_enhance=ZH_TITLE_ENHANCE,
+        docs: Dict = {},
+        not_refresh_vs_cache: bool = False,
+    ):
+        data = {
+            "knowledge_base_name": knowledge_base_name,
+            "file_names": file_names,
+            "override_custom_docs": override_custom_docs,
+            "chunk_size": chunk_size,
+            "chunk_overlap": chunk_overlap,
+            "zh_title_enhance": zh_title_enhance,
+            "docs": docs,
+            "not_refresh_vs_cache": not_refresh_vs_cache,
+        }
+
+        if isinstance(data["docs"], dict):
+            data["docs"] = json.dumps(data["docs"], ensure_ascii=False)
+
+        response = self.post(
+            "/knowledge_base/update_docs",
+            json=data,
+        )
+        return self._get_response_value(response, as_json=True)
     
     def _get_response_value(self, response: httpx.Response, as_json: bool = False, value_func: Callable = None,):
         

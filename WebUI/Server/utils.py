@@ -146,15 +146,33 @@ def set_httpx_config(timeout: float = HTTPX_DEFAULT_TIMEOUT, proxy: Union[str, D
         
     urllib.request.getproxies = _get_proxies
 
-def get_model_path(modelinfo: dict) -> Optional[str]:   
+def get_model_path(modelinfo: dict) -> Optional[str]:
     local_path = modelinfo.get("path", "")
     hugg_path = modelinfo.get("Huggingface", "")
-
-
     if Path(local_path).is_dir():
         return local_path
     return hugg_path
-        
+
+def get_embed_model_config(model: str) -> Optional[dict]:
+    if model is None or model == "":
+        return {}
+    configinst = InnerJsonConfigWebUIParse()
+    webui_config = configinst.dump()
+    embeddingmodel = webui_config.get("ModelConfig").get("EmbeddingModel")
+    embed_list = list(embeddingmodel)
+    if model in embed_list:
+        local_path = embeddingmodel.get(model).get("path", "")
+        hugg_path = embeddingmodel.get(model).get("Huggingface", "")
+        api_key = embeddingmodel.get(model).get("apikey", "")
+        provider = embeddingmodel.get(model).get("provider", "")
+        return {
+                "local_path": local_path,
+                "hugg_path": hugg_path,
+                "api_key": api_key,
+                "provider": provider,
+               }
+    return {}
+    
 def detect_device() -> Literal["cuda", "mps", "cpu"]:
     try:
         import torch
@@ -571,6 +589,23 @@ def get_ChatGoogleAI(
 
     return model
 
+def torch_gc():
+    try:
+        import torch
+        if torch.cuda.is_available():
+            # with torch.cuda.device(DEVICE):
+            torch.cuda.empty_cache()
+            torch.cuda.ipc_collect()
+        elif torch.backends.mps.is_available():
+            try:
+                from torch.mps import empty_cache
+                empty_cache()
+            except Exception as e:
+                msg = ("Please upgrade pytorch to 2.0.0 when platform is MacOS.")
+                print(msg)
+    except Exception:
+        ...
+
 def run_in_thread_pool(
         func: Callable,
         params: List[Dict] = [],
@@ -586,3 +621,33 @@ def run_in_thread_pool(
 
 def get_server_configs() -> Dict:
     pass
+
+def list_online_embed_models() -> List[str]:
+    from WebUI.Server import model_workers
+
+    ret = []
+    for k, v in list_config_llm_models()["online"].items():
+        if provider := v.get("provider"):
+            worker_class = getattr(model_workers, provider, None)
+            if worker_class is not None and worker_class.can_embedding():
+                ret.append(k)
+    return ret
+
+
+def load_local_embeddings(model: str = None, device: str = detect_device()):
+    from WebUI.Server.knowledge_base.kb_cache.base import embeddings_pool
+    if model is None:
+        return None
+    return embeddings_pool.load_embeddings(model=model, device=device)
+
+def get_temp_dir(id: str = None) -> Tuple[str, str]:
+    import tempfile
+    BASE_TEMP_DIR = os.path.join(tempfile.gettempdir(), "keras_tempdir")
+
+    if id is not None:
+        path = os.path.join(BASE_TEMP_DIR, id)
+        if os.path.isdir(path):
+            return path, id
+
+    path = tempfile.mkdtemp(dir=BASE_TEMP_DIR)
+    return path, os.path.basename(path)

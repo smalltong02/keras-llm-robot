@@ -413,4 +413,8 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                 pass
     
     st.session_state["current_page"] = "configuration_page"
+
+    if st.session_state.get("need_rerun"):
+        st.session_state["need_rerun"] = False
+        st.rerun()
             

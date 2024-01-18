@@ -10,6 +10,7 @@ def list_kbs():
     return ListResponse(data=list_kbs_from_db())
 
 def create_kb(knowledge_base_name: str = Body(..., examples=["samples"]),
+            knowledge_base_info: str = Body(""),
             vector_store_type: str = Body("faiss"),
             embed_model: str = Body(""),
             ) -> BaseResponse:
@@ -23,7 +24,7 @@ def create_kb(knowledge_base_name: str = Body(..., examples=["samples"]),
     if kb is not None:
         return BaseResponse(code=404, msg=f"The Knowledge base '{knowledge_base_name}' has existed!")
 
-    kb = KBServiceFactory.get_service(knowledge_base_name, vector_store_type, embed_model)
+    kb = KBServiceFactory.get_service(knowledge_base_name, vector_store_type, knowledge_base_info, embed_model)
     try:
         kb.create_kb()
     except Exception as e:

@@ -1,6 +1,6 @@
 import operator
 from abc import ABC, abstractmethod
-from WebUI.Server.knowledge_base.utils import KnowledgeFile, list_kbs_from_folder
+from WebUI.Server.knowledge_base.utils import (KnowledgeFile, list_kbs_from_folder, list_files_from_folder)
 from WebUI.configs import *
 
 import os
@@ -40,10 +40,13 @@ class KBService(ABC):
 
     def __init__(self,
                  knowledge_base_name: str,
+                 kb_info: str = "",
                  embed_model: str = "",
                  ):
         self.kb_name = knowledge_base_name
-        self.kb_info = GetKbInfo(knowledge_base_name)
+        self.kb_info = kb_info
+        if self.kb_info == "":
+            self.kb_info = GetKbInfo(knowledge_base_name)
         self.embed_model = embed_model
         self.kb_path = GetKbPath(self.kb_name)
         self.doc_path = GetDocPath(self.kb_name)
@@ -240,42 +243,44 @@ class KBServiceFactory:
     @staticmethod
     def get_service(kb_name: str,
                     vector_store_type: Union[str, SupportedVSType],
+                    kb_info: str = "",
                     embed_model: str = "",
                     ) -> KBService:
         if isinstance(vector_store_type, str):
             vector_store_type = getattr(SupportedVSType, vector_store_type.upper())
         if SupportedVSType.FAISS == vector_store_type:
             from WebUI.Server.knowledge_base.kb_service.faiss_kb_service import FaissKBService
-            return FaissKBService(kb_name, embed_model=embed_model)
+            return FaissKBService(kb_name, kb_info, embed_model=embed_model)
         elif SupportedVSType.PG == vector_store_type:
             from server.knowledge_base.kb_service.pg_kb_service import PGKBService
-            return PGKBService(kb_name, embed_model=embed_model)
+            return PGKBService(kb_name, kb_info, embed_model=embed_model)
         elif SupportedVSType.MILVUS == vector_store_type:
             from server.knowledge_base.kb_service.milvus_kb_service import MilvusKBService
-            return MilvusKBService(kb_name,embed_model=embed_model)
+            return MilvusKBService(kb_name, kb_info, embed_model=embed_model)
         elif SupportedVSType.ZILLIZ == vector_store_type:
             from server.knowledge_base.kb_service.zilliz_kb_service import ZillizKBService
-            return ZillizKBService(kb_name, embed_model=embed_model)
+            return ZillizKBService(kb_name, kb_info, embed_model=embed_model)
         elif SupportedVSType.DEFAULT == vector_store_type:
             return MilvusKBService(kb_name,
+                                   kb_info,
                                    embed_model=embed_model)  # other milvus parameters are set in model_config.kbs_config
         elif SupportedVSType.ES == vector_store_type:
             from server.knowledge_base.kb_service.es_kb_service import ESKBService
-            return ESKBService(kb_name, embed_model=embed_model)
+            return ESKBService(kb_name, kb_info, embed_model=embed_model)
         elif SupportedVSType.DEFAULT == vector_store_type:  # kb_exists of default kbservice is False, to make validation easier.
             from server.knowledge_base.kb_service.default_kb_service import DefaultKBService
-            return DefaultKBService(kb_name)
+            return DefaultKBService(kb_name, kb_info)
 
     @staticmethod
     def get_service_by_name(kb_name: str) -> KBService:
         _, vs_type, embed_model = load_kb_from_db(kb_name)
         if _ is None:  # kb not in db, just return None
             return None
-        return KBServiceFactory.get_service(kb_name, vs_type, embed_model)
+        return KBServiceFactory.get_service(kb_name=kb_name, vector_store_type=vs_type, embed_model=embed_model)
 
     @staticmethod
     def get_default():
-        return KBServiceFactory.get_service("default", SupportedVSType.DEFAULT)
+        return KBServiceFactory.get_service(kb_name="default", vector_store_type=SupportedVSType.DEFAULT)
 
 def get_kb_details() -> List[Dict]:
     folder = list_kbs_from_folder()
@@ -308,6 +313,46 @@ def get_kb_details() -> List[Dict]:
     for i, v in enumerate(result.values()):
         v['No'] = i + 1
         data.append(v)
+    return data
+
+def get_kb_file_details(kb_name: str) -> List[Dict]:
+    kb = KBServiceFactory.get_service_by_name(kb_name)
+    if kb is None:
+        return []
+
+    files_in_folder = list_files_from_folder(kb_name)
+    files_in_db = kb.list_files()
+    result = {}
+
+    for doc in files_in_folder:
+        result[doc] = {
+            "kb_name": kb_name,
+            "file_name": doc,
+            "file_ext": os.path.splitext(doc)[-1],
+            "file_version": 0,
+            "document_loader": "",
+            "docs_count": 0,
+            "text_splitter": "",
+            "create_time": None,
+            "in_folder": True,
+            "in_db": False,
+        }
+    lower_names = {x.lower(): x for x in result}
+    for doc in files_in_db:
+        doc_detail = get_file_detail(kb_name, doc)
+        if doc_detail:
+            doc_detail["in_db"] = True
+            if doc.lower() in lower_names:
+                result[lower_names[doc.lower()]].update(doc_detail)
+            else:
+                doc_detail["in_folder"] = False
+                result[doc] = doc_detail
+
+    data = []
+    for i, v in enumerate(result.values()):
+        v['No'] = i + 1
+        data.append(v)
+
     return data
 
 class EmbeddingsFunAdapter(Embeddings):

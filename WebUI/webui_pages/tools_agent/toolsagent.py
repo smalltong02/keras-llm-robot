@@ -1,11 +1,52 @@
 import streamlit as st
+import pandas as pd
+from st_aggrid import AgGrid, JsCode
+from st_aggrid.grid_options_builder import GridOptionsBuilder
 from WebUI.webui_pages.utils import *
-from WebUI.Server.knowledge_base.kb_service.base import get_kb_details
+from WebUI.Server.knowledge_base.kb_service.base import (get_kb_details, get_kb_file_details)
+from WebUI.Server.knowledge_base.utils import (get_file_path, LOADER_DICT, CHUNK_SIZE, OVERLAP_SIZE, ZH_TITLE_ENHANCE)
 
 training_devices_list = ["auto","cpu","gpu","mps"]
 loadbits_list = ["32 bits","16 bits","8 bits"]
 
 KB_CREATE_NEW = "[Create New...]"
+
+cell_renderer = JsCode("""function(params) {if(params.value==true){return '✓'}else{return '×'}}""")
+
+
+def config_aggrid(
+        df: pd.DataFrame,
+        columns: Dict[Tuple[str, str], Dict] = {},
+        selection_mode: Literal["single", "multiple", "disabled"] = "single",
+        use_checkbox: bool = False,
+) -> GridOptionsBuilder:
+    gb = GridOptionsBuilder.from_dataframe(df)
+    gb.configure_column("No", width=40)
+    for (col, header), kw in columns.items():
+        gb.configure_column(col, header, wrapHeaderText=True, **kw)
+    gb.configure_selection(
+        selection_mode=selection_mode,
+        use_checkbox=use_checkbox,
+        # pre_selected_rows=st.session_state.get("selected_rows", [0]),
+    )
+    gb.configure_pagination(
+        enabled=True,
+        paginationAutoPageSize=False,
+        paginationPageSize=10
+    )
+    return gb
+
+def file_exists(kb: str, selected_rows: List) -> Tuple[str, str]:
+    """
+    check whether a doc file exists in local knowledge base folder.
+    return the file's name and path if it exists.
+    """
+    if selected_rows:
+        file_name = selected_rows[0]["file_name"]
+        file_path = get_file_path(kb, file_name)
+        if os.path.isfile(file_path):
+            return file_name, file_path
+    return "", ""
 
 def tools_agent_page(api: ApiRequest, is_lite: bool = False):
     
@@ -37,7 +78,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
         kb_names = []
         if len(kb_list):
             kb_names = list(kb_list.keys())
-
+        print("kb_list: ", kb_list)
         kb_names.append(KB_CREATE_NEW)
         selected_kb = st.selectbox(
             "Knowledge Base:",
@@ -88,13 +129,198 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                 else:
                     ret = api.create_knowledge_base(
                         knowledge_base_name=kb_name,
+                        knowledge_base_info=kb_info,
                         vector_store_type=vs_type,
                         embed_model=embed_model,
                     )
                     st.toast(ret.get("msg", " "))
                     st.session_state["selected_kb_name"] = kb_name
                     st.session_state["selected_kb_info"] = kb_info
-                    st.experimental_rerun()
+                    st.session_state["need_rerun"] = True
+        
+        elif selected_kb:
+            kb = selected_kb
+            st.session_state["selected_kb_name"] = kb
+            st.session_state["selected_kb_info"] = kb_list[kb]['kb_info']
+
+            # upload documents
+            docs = st.file_uploader("upload files: ",
+                                    [i for ls in LOADER_DICT.values() for i in ls],
+                                    accept_multiple_files=True,
+                                    )
+            kb_info = st.text_area("Introduction to the Knowledge Base:", value=st.session_state["selected_kb_info"], max_chars=None, key=None,
+                                help=None, on_change=None, args=None, kwargs=None)
+
+            if kb_info != st.session_state["selected_kb_info"]:
+                st.session_state["selected_kb_info"] = kb_info
+                api.update_kb_info(kb, kb_info)
+
+            # with st.sidebar:
+            with st.expander(
+                    "Embedding Configuration",
+                    expanded=True,
+            ):
+                cols = st.columns(3)
+                chunk_size = cols[0].number_input("Maximum length of a single piece of text:", 1, 1000, CHUNK_SIZE)
+                chunk_overlap = cols[1].number_input("Length of overlap between adjacent texts:", 0, chunk_size, OVERLAP_SIZE)
+                cols[2].write("")
+                cols[2].write("")
+                zh_title_enhance = cols[2].checkbox("Enable Chinese title enhancement:", ZH_TITLE_ENHANCE)
+
+            if st.button(
+                    "Add Documents to Knowledge Base",
+                    # use_container_width=True,
+                    disabled=len(docs) == 0,
+            ):
+                ret = api.upload_kb_docs(docs,
+                                        knowledge_base_name=kb,
+                                        override=True,
+                                        chunk_size=chunk_size,
+                                        chunk_overlap=chunk_overlap,
+                                        zh_title_enhance=zh_title_enhance)
+                if msg := check_success_msg(ret):
+                    st.toast(msg, icon="✔")
+                elif msg := check_error_msg(ret):
+                    st.toast(msg, icon="✖")
+
+            st.divider()
+
+            doc_details = pd.DataFrame(get_kb_file_details(kb))
+            selected_rows = []
+            if not len(doc_details):
+                st.info(f"Knowledge Base `{kb}` no any files.")
+            else:
+                st.write(f"Knowledge Base `{kb}` have files:")
+                st.info("The knowledge base includes source files and a vector library. Please select a file from the table below for further actions.")
+                doc_details.drop(columns=["kb_name"], inplace=True)
+                doc_details = doc_details[[
+                    "No", "file_name", "document_loader", "text_splitter", "docs_count", "in_folder", "in_db",
+                ]]
+                gb = config_aggrid(
+                    doc_details,
+                    {
+                        ("No", "Serial Number"): {},
+                        ("file_name", "Document Name"): {},
+                        # ("file_ext", "Document Type"): {},
+                        # ("file_version", "File Version"): {},
+                        ("document_loader", "Document Loader"): {},
+                        ("docs_count", "Document Count"): {},
+                        ("text_splitter", "Text Splitter"): {},
+                        # ("create_time", "Create Time"): {},
+                        ("in_folder", "Source Files"): {"cellRenderer": cell_renderer},
+                        ("in_db", "Vector Database"): {"cellRenderer": cell_renderer},
+                    },
+                    "multiple",
+                )
+
+                doc_grid = AgGrid(
+                    doc_details,
+                    gb.build(),
+                    columns_auto_size_mode="FIT_CONTENTS",
+                    theme="alpine",
+                    custom_css={
+                        "#gridToolBar": {"display": "none"},
+                    },
+                    allow_unsafe_jscode=True,
+                    enable_enterprise_modules=False
+                )
+
+                selected_rows = doc_grid.get("selected_rows", [])
+
+                cols = st.columns(4)
+                file_name, file_path = file_exists(kb, selected_rows)
+                if file_path:
+                    with open(file_path, "rb") as fp:
+                        cols[0].download_button(
+                            "Download Document",
+                            fp,
+                            file_name=file_name,
+                            use_container_width=True, )
+                else:
+                    cols[0].download_button(
+                        "Download Document",
+                        "",
+                        disabled=True,
+                        use_container_width=True, )
+
+                st.write()
+                # Tokenize the file and load it into the vector database
+                if cols[1].button(
+                        "Reload to Vector Database" if selected_rows and (pd.DataFrame(selected_rows)["in_db"]).any() else "Add to Vector Database",
+                        disabled=not file_exists(kb, selected_rows)[0],
+                        use_container_width=True,
+                ):
+                    file_names = [row["file_name"] for row in selected_rows]
+                    api.update_kb_docs(kb,
+                                    file_names=file_names,
+                                    chunk_size=chunk_size,
+                                    chunk_overlap=chunk_overlap,
+                                    zh_title_enhance=zh_title_enhance)
+                    st.rerun()
+
+                if cols[2].button(
+                        "Delete from Vector Database",
+                        disabled=not (selected_rows and selected_rows[0]["in_db"]),
+                        use_container_width=True,
+                ):
+                    file_names = [row["file_name"] for row in selected_rows]
+                    api.delete_kb_docs(kb, file_names=file_names)
+                    st.rerun()
+
+                if cols[3].button(
+                        "Delete from Knowledge Base",
+                        type="primary",
+                        use_container_width=True,
+                ):
+                    file_names = [row["file_name"] for row in selected_rows]
+                    api.delete_kb_docs(kb, file_names=file_names, delete_content=True)
+                    st.rerun()
+
+            st.divider()
+
+            st.write("Document list in the file. Double-click to modify, enter Y in the delete column to remove the corresponding row.")
+            docs = []
+            df = pd.DataFrame([], columns=["seq", "id", "content", "source"])
+            if selected_rows:
+                file_name = selected_rows[0]["file_name"]
+                docs = api.search_kb_docs(knowledge_base_name=selected_kb, file_name=file_name)
+                data = [{"seq": i+1, "id": x["id"], "page_content": x["page_content"], "source": x["metadata"].get("source"),
+                        "type": x["type"],
+                        "metadata": json.dumps(x["metadata"], ensure_ascii=False),
+                        "to_del": "",
+                        } for i, x in enumerate(docs)]
+                df = pd.DataFrame(data)
+
+                gb = GridOptionsBuilder.from_dataframe(df)
+                gb.configure_columns(["id", "source", "type", "metadata"], hide=True)
+                gb.configure_column("seq", "No.", width=50)
+                gb.configure_column("page_content", "Content", editable=True, autoHeight=True, wrapText=True, flex=1,
+                                    cellEditor="agLargeTextCellEditor", cellEditorPopup=True)
+                gb.configure_column("to_del", "Delete", editable=True, width=50, wrapHeaderText=True,
+                                    cellEditor="agCheckboxCellEditor", cellRender="agCheckboxCellRenderer")
+                gb.configure_selection()
+                edit_docs = AgGrid(df, gb.build())
+
+                if st.button("Save"):
+                    # origin_docs = {x["id"]: {"page_content": x["page_content"], "type": x["type"], "metadata": x["metadata"]} for x in docs}
+                    changed_docs = []
+                    for index, row in edit_docs.data.iterrows():
+                        # origin_doc = origin_docs[row["id"]]
+                        # if row["page_content"] != origin_doc["page_content"]:
+                        if row["to_del"] not in ["Y", "y", 1]:
+                            changed_docs.append({
+                                "page_content": row["page_content"],
+                                "type": row["type"],
+                                "metadata": json.loads(row["metadata"]),
+                            })
+
+                    if changed_docs:
+                        if api.update_kb_docs(knowledge_base_name=selected_kb,
+                                            file_names=[file_name],
+                                            docs={file_name: changed_docs}):
+                            st.toast("Update Document Success!")
+                        else:
+                            st.toast("Update Document Failed!")
 
     with tabinterpreter:
         pass
@@ -464,3 +690,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
         pass
 
     st.session_state["current_page"] = "retrieval_agent_page"
+
+    if st.session_state.get("need_rerun"):
+        st.session_state["need_rerun"] = False
+        st.rerun()

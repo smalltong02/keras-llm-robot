@@ -87,17 +87,17 @@
             },
             "text-embedding-ada-002": {
                 "path": "",
-                "apikey": "OPENAI_API_KEY",
+                "apikey": "[Your Key]",
                 "provider": "OpenAI"
             },
             "embedding-gecko-001": {
                 "path": "",
-                "apikey": "GOOGLE_API_KEY",
+                "apikey": "[Your Key]",
                 "provider": "GoogleCloud"
             },
             "embedding-001": {
                 "path": "",
-                "apikey": "GOOGLE_API_KEY",
+                "apikey": "[Your Key]",
                 "provider": "GoogleCloud"
             }
         },

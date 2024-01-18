@@ -1,14 +1,15 @@
-from configs import CACHED_VS_NUM, CACHED_MEMO_VS_NUM
-from server.knowledge_base.kb_cache.base import *
-from server.knowledge_base.kb_service.base import EmbeddingsFunAdapter
-from server.utils import load_local_embeddings
-from server.knowledge_base.utils import get_vs_path
+from WebUI.Server.knowledge_base.kb_cache.base import *
+from WebUI.Server.knowledge_base.kb_service.base import EmbeddingsFunAdapter
+from WebUI.Server.utils import load_local_embeddings
+from WebUI.Server.knowledge_base.utils import get_vs_path
 from langchain.vectorstores.faiss import FAISS
 from langchain.docstore.in_memory import InMemoryDocstore
 from langchain.schema import Document
 import os
 from langchain.schema import Document
 
+CACHED_VS_NUM = 1
+CACHED_MEMO_VS_NUM = 10
 
 # patch FAISS to include doc id in Document.metadata
 def _new_ds_search(self, search: str) -> Union[str, Document]:
@@ -35,7 +36,7 @@ class ThreadSafeFaiss(ThreadSafeObject):
             if not os.path.isdir(path) and create_path:
                 os.makedirs(path)
             ret = self._obj.save_local(path)
-            logger.info(f"已将向量库 {self.key} 保存到磁盘")
+            print(f"Save '{self.key}' to disk.")
         return ret
 
     def clear(self):
@@ -45,17 +46,16 @@ class ThreadSafeFaiss(ThreadSafeObject):
             if ids:
                 ret = self._obj.delete(ids)
                 assert len(self._obj.docstore._dict) == 0
-            logger.info(f"已将向量库 {self.key} 清空")
+            print(f"Clear '{self.key}'!")
         return ret
 
 
 class _FaissPool(CachePool):
     def new_vector_store(
         self,
-        embed_model: str = EMBEDDING_MODEL,
-        embed_device: str = embedding_device(),
+        embed_model: str = "",
+        embed_device: str = detect_device(),
     ) -> FAISS:
-        # TODO: 整个Embeddings加载逻辑有些混乱，待清理
         # create an empty vector store
         embeddings = EmbeddingsFunAdapter(embed_model)
         doc = Document(page_content="init", metadata={})
@@ -71,7 +71,7 @@ class _FaissPool(CachePool):
     def unload_vector_store(self, kb_name: str):
         if cache := self.get(kb_name):
             self.pop(kb_name)
-            logger.info(f"成功释放向量库：{kb_name}")
+            print(f"free '{kb_name}' successful!")
 
 
 class KBFaissPool(_FaissPool):
@@ -80,18 +80,18 @@ class KBFaissPool(_FaissPool):
             kb_name: str,
             vector_name: str = None,
             create: bool = True,
-            embed_model: str = EMBEDDING_MODEL,
-            embed_device: str = embedding_device(),
+            embed_model: str = "",
+            embed_device: str = detect_device(),
     ) -> ThreadSafeFaiss:
         self.atomic.acquire()
         vector_name = vector_name or embed_model
-        cache = self.get((kb_name, vector_name)) # 用元组比拼接字符串好一些
+        cache = self.get((kb_name, vector_name))
         if cache is None:
             item = ThreadSafeFaiss((kb_name, vector_name), pool=self)
             self.set((kb_name, vector_name), item)
-            with item.acquire(msg="初始化"):
+            with item.acquire(msg="Initialize"):
                 self.atomic.release()
-                logger.info(f"loading vector store in '{kb_name}/vector_store/{vector_name}' from disk.")
+                print(f"loading vector store in '{kb_name}/vector_store/{vector_name}' from disk.")
                 vs_path = get_vs_path(kb_name, vector_name)
 
                 if os.path.isfile(os.path.join(vs_path, "index.faiss")):
@@ -116,17 +116,17 @@ class MemoFaissPool(_FaissPool):
     def load_vector_store(
         self,
         kb_name: str,
-        embed_model: str = EMBEDDING_MODEL,
-        embed_device: str = embedding_device(),
+        embed_model: str = "",
+        embed_device: str = detect_device(),
     ) -> ThreadSafeFaiss:
         self.atomic.acquire()
         cache = self.get(kb_name)
         if cache is None:
             item = ThreadSafeFaiss(kb_name, pool=self)
             self.set(kb_name, item)
-            with item.acquire(msg="初始化"):
+            with item.acquire(msg="Initialize"):
                 self.atomic.release()
-                logger.info(f"loading vector store in '{kb_name}' to memory.")
+                print(f"loading vector store in '{kb_name}' to memory.")
                 # create an empty vector store
                 vector_store = self.new_vector_store(embed_model=embed_model, embed_device=embed_device)
                 item.obj = vector_store
@@ -162,7 +162,7 @@ if __name__ == "__main__":
                 docs = vs.similarity_search_with_score(f"{name}", k=3, score_threshold=1.0)
                 pprint(docs)
         if r == 3: # delete docs
-            logger.warning(f"清除 {vs_name} by {name}")
+            print(f"Clear {vs_name} by {name}")
             kb_faiss_pool.get(vs_name).clear()
 
     threads = []
