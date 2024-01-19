@@ -20,6 +20,8 @@ TEMPERATURE = 0.7
 # TOP_K = 50
 # TOP_P = 0.95
 
+USE_RERANKER = False
+
 ONLINE_LLM_MODEL = {
     "openai-api": {
         "model_list" : ["gpt-3.5-turbo", "gpt-3.5-turbo-16k", "gpt-4", "gpt-4-1106-preview", "gpt-4-vision-preview"],

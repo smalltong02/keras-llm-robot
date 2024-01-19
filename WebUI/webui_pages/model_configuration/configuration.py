@@ -125,17 +125,17 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                 with st.spinner(f"Release Model: {current_model['mname']}, Please do not perform any actions or refresh the page."):
                     r = api.eject_llm_model(current_model["mname"])
                     if msg := check_error_msg(r):
-                        st.error(msg)
+                        st.toast(msg, icon="✖")
                     elif msg := check_success_msg(r):
-                        st.success(msg)
+                        st.toast(msg, icon="✔")
             else:
                 with st.spinner(f"Loading Model: {current_model['mname']}, Please do not perform any actions or refresh the page."):
                     if current_model["mtype"] == ModelType.Online or LocalModelExist(pathstr):
                         r = api.change_llm_model(running_model["mname"], current_model["mname"])
                         if msg := check_error_msg(r):
-                            st.error(msg)
+                            st.toast(msg, icon="✖")
                         elif msg := check_success_msg(r):
-                            st.success(msg)
+                            st.toast(msg, icon="✔")
                     else:
                         st.error("Please download the model to your local machine first.")
     with col2:
@@ -160,13 +160,13 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                         for t in r:
                             if error_msg := check_error_msg(t):  # check whether error occured
                                 download_error = True
-                                st.error(error_msg)
+                                st.toast(msg, icon="✖")
                                 break
                             tqdm = t.get("percentage", 0.0) / 100
                             progress_bar.progress(tqdm)
                         if download_error == False:
                             progress_bar.progress(1.0)
-                            st.success("downloading success!")
+                            st.toast("downloading success!", icon="✔")
 
     st.divider()
     if current_model["config"]:
@@ -306,13 +306,13 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                         with st.spinner(f"Saving Parameters, Please do not perform any actions or refresh the page."):
                             r = api.save_model_config(current_model)
                             if msg := check_error_msg(r):
-                                st.error(msg)
+                                st.toast(msg, icon="✖")
                             elif msg := check_success_msg(r):
                                 r = api.save_chat_config(chatconfig)
                                 if msg := check_error_msg(r):
-                                    st.error("failed to save configuration for model and chat.")
+                                    st.toast("failed to save configuration for model and chat.", icon="✖")
                                 elif msg := check_success_msg(r):
-                                    st.success("success save configuration for model and chat.")
+                                    st.toast("success save configuration for model and chat.", icon="✔")
 
             with tabquant:
                 with st.form("Quantization"):
@@ -342,7 +342,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                         disabled=disabled
                     )
                     if submit_quantization:
-                        st.success("The model quantization has been successful, and the quantized file path is model/llama-2-7b-hf-16bit.bin.")
+                        st.toast("The model quantization has been successful, and the quantized file path is model/llama-2-7b-hf-16bit.bin.", icon="✔")
 
             with tabtunning:
                 st.selectbox(
@@ -375,7 +375,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                         use_container_width=True
                     )
                     if submit_params:
-                        st.error("Not Support Now!")
+                        st.toast("Not Support Now!", icon="✖")
 
             with tabapiconfig:
                 with st.form("ApiConfig"):
@@ -404,9 +404,9 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                             print("current_model: ", current_model)
                             r = api.save_model_config(current_model)
                             if msg := check_error_msg(r):
-                                st.error(msg)
+                                st.toast(msg, icon="✖")
                             elif msg := check_success_msg(r):
-                                st.success(msg)
+                                st.toast(msg, icon="✔")
                         current_model["mname"] = savename
             
             with tabprompt:

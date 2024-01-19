@@ -116,6 +116,7 @@ def update_docs(
                           examples=[{"test.txt": [Document(page_content="custom doc")]}]),
         not_refresh_vs_cache: bool = Body(False, description=""),
 ) -> BaseResponse:
+    print("update docs: ", file_names)
     if not validate_kb_name(knowledge_base_name):
         return BaseResponse(code=403, msg="Don't attack me")
 
@@ -157,7 +158,7 @@ def update_docs(
             kb_file = KnowledgeFile(filename=file_name, knowledge_base_name=knowledge_base_name)
             kb.update_doc(kb_file, docs=v, not_refresh_vs_cache=True)
         except Exception as e:
-            msg = f"为 {file_name} add docs error: {e}"
+            msg = f"for {file_name} add docs error: {e}"
             failed_files[file_name] = msg
 
     if not not_refresh_vs_cache:

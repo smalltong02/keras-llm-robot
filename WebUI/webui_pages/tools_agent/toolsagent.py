@@ -122,21 +122,22 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                 )
 
             if submit_create_kb:
-                if not kb_name or not kb_name.strip():
-                    st.error(f"KnowledgeBase Name is None!")
-                elif kb_name in kb_list:
-                    st.error(f"The {kb_name} exist!")
-                else:
-                    ret = api.create_knowledge_base(
-                        knowledge_base_name=kb_name,
-                        knowledge_base_info=kb_info,
-                        vector_store_type=vs_type,
-                        embed_model=embed_model,
-                    )
-                    st.toast(ret.get("msg", " "))
-                    st.session_state["selected_kb_name"] = kb_name
-                    st.session_state["selected_kb_info"] = kb_info
-                    st.session_state["need_rerun"] = True
+                with st.spinner(f"Create new Knowledge Base '{kb_name}', Please do not perform any actions or refresh the page."):
+                    if not kb_name or not kb_name.strip():
+                        st.error(f"Knowledge Base Name is None!")
+                    elif kb_name in kb_list:
+                        st.error(f"The {kb_name} exist!")
+                    else:
+                        ret = api.create_knowledge_base(
+                            knowledge_base_name=kb_name,
+                            knowledge_base_info=kb_info,
+                            vector_store_type=vs_type,
+                            embed_model=embed_model,
+                        )
+                        st.toast(ret.get("msg", " "))
+                        st.session_state["selected_kb_name"] = kb_name
+                        st.session_state["selected_kb_info"] = kb_info
+                        st.session_state["need_rerun"] = True
         
         elif selected_kb:
             kb = selected_kb
@@ -161,37 +162,38 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                     expanded=True,
             ):
                 cols = st.columns(3)
-                chunk_size = cols[0].number_input("Maximum length of a single piece of text:", 1, 1000, CHUNK_SIZE)
-                chunk_overlap = cols[1].number_input("Length of overlap between adjacent texts:", 0, chunk_size, OVERLAP_SIZE)
+                chunk_size = cols[0].number_input("Chunk Size", 1, 1000, CHUNK_SIZE, help="Maximum length of a single piece of text")
+                chunk_overlap = cols[1].number_input("Overlap Size", 0, chunk_size, OVERLAP_SIZE, help="Length of overlap between adjacent texts")
                 cols[2].write("")
                 cols[2].write("")
-                zh_title_enhance = cols[2].checkbox("Enable Chinese title enhancement:", ZH_TITLE_ENHANCE)
+                zh_title_enhance = cols[2].checkbox("Title Enh.", ZH_TITLE_ENHANCE, help="Enable Chinese title enhancement")
 
             if st.button(
                     "Add Documents to Knowledge Base",
                     # use_container_width=True,
                     disabled=len(docs) == 0,
             ):
-                ret = api.upload_kb_docs(docs,
-                                        knowledge_base_name=kb,
-                                        override=True,
-                                        chunk_size=chunk_size,
-                                        chunk_overlap=chunk_overlap,
-                                        zh_title_enhance=zh_title_enhance)
-                if msg := check_success_msg(ret):
-                    st.toast(msg, icon="✔")
-                elif msg := check_error_msg(ret):
-                    st.toast(msg, icon="✖")
-
-            st.divider()
+                with st.spinner(f"Add docs to '{kb}', Please do not perform any actions or refresh the page."):
+                    ret = api.upload_kb_docs(docs,
+                                            knowledge_base_name=kb,
+                                            override=True,
+                                            chunk_size=chunk_size,
+                                            chunk_overlap=chunk_overlap,
+                                            zh_title_enhance=zh_title_enhance)
+                    if msg := check_success_msg(ret):
+                        st.toast(msg, icon="✔")
+                    elif msg := check_error_msg(ret):
+                        st.toast(msg, icon="✖")
 
             doc_details = pd.DataFrame(get_kb_file_details(kb))
             selected_rows = []
             if not len(doc_details):
-                st.info(f"Knowledge Base `{kb}` no any files.")
+                pass
+                #st.write(f"Knowledge Base `{kb}` no any files.")
             else:
+                st.divider()
                 st.write(f"Knowledge Base `{kb}` have files:")
-                st.info("The knowledge base includes source files and a vector library. Please select a file from the table below for further actions.")
+                st.info("The knowledge base includes source files and a vector database. Please select a file from the table below for further actions.")
                 doc_details.drop(columns=["kb_name"], inplace=True)
                 doc_details = doc_details[[
                     "No", "file_name", "document_loader", "text_splitter", "docs_count", "in_folder", "in_db",
@@ -251,12 +253,17 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                         use_container_width=True,
                 ):
                     file_names = [row["file_name"] for row in selected_rows]
-                    api.update_kb_docs(kb,
-                                    file_names=file_names,
-                                    chunk_size=chunk_size,
-                                    chunk_overlap=chunk_overlap,
-                                    zh_title_enhance=zh_title_enhance)
-                    st.rerun()
+                    with st.spinner(f"Reload '{file_names[0]}' to Vector Database, Please do not perform any actions or refresh the page."):
+                        ret = api.update_kb_docs(kb,
+                                        file_names=file_names,
+                                        chunk_size=chunk_size,
+                                        chunk_overlap=chunk_overlap,
+                                        zh_title_enhance=zh_title_enhance)
+                        if msg := check_success_msg(ret):
+                            st.toast(msg, icon="✔")
+                            #st.rerun()
+                        elif msg := check_error_msg(ret):
+                            st.toast(msg, icon="✖")
 
                 if cols[2].button(
                         "Delete from Vector Database",
@@ -264,8 +271,13 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                         use_container_width=True,
                 ):
                     file_names = [row["file_name"] for row in selected_rows]
-                    api.delete_kb_docs(kb, file_names=file_names)
-                    st.rerun()
+                    with st.spinner(f"Delete '{file_names[0]}' from Vector Database, Please do not perform any actions or refresh the page."):
+                        ret = api.delete_kb_docs(kb, file_names=file_names)
+                        if msg := check_success_msg(ret):
+                            st.toast(msg, icon="✔")
+                            #st.rerun()
+                        elif msg := check_error_msg(ret):
+                            st.toast(msg, icon="✖")
 
                 if cols[3].button(
                         "Delete from Knowledge Base",
@@ -273,16 +285,23 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                         use_container_width=True,
                 ):
                     file_names = [row["file_name"] for row in selected_rows]
-                    api.delete_kb_docs(kb, file_names=file_names, delete_content=True)
-                    st.rerun()
+                    if len(file_names):
+                        with st.spinner(f"Delete '{file_names[0]}' from Knowledge Base, Please do not perform any actions or refresh the page."):
+                            ret = api.delete_kb_docs(kb, file_names=file_names, delete_content=True)
+                            if msg := check_success_msg(ret):
+                                st.toast(msg, icon="✔")
+                                st.rerun()
+                            elif msg := check_error_msg(ret):
+                                st.toast(msg, icon="✖")
+                    else:
+                        st.toast("Please select delete files.", icon="✖")
 
-            st.divider()
-
-            st.write("Document list in the file. Double-click to modify, enter Y in the delete column to remove the corresponding row.")
             docs = []
             df = pd.DataFrame([], columns=["seq", "id", "content", "source"])
             if selected_rows:
+                st.divider()
                 file_name = selected_rows[0]["file_name"]
+                st.write(f'Document View in the `{file_name}`:') # Document list in the file. Double-click to modify, enter Y in the delete column to remove the corresponding row.
                 docs = api.search_kb_docs(knowledge_base_name=selected_kb, file_name=file_name)
                 data = [{"seq": i+1, "id": x["id"], "page_content": x["page_content"], "source": x["metadata"].get("source"),
                         "type": x["type"],
@@ -294,33 +313,33 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                 gb = GridOptionsBuilder.from_dataframe(df)
                 gb.configure_columns(["id", "source", "type", "metadata"], hide=True)
                 gb.configure_column("seq", "No.", width=50)
-                gb.configure_column("page_content", "Content", editable=True, autoHeight=True, wrapText=True, flex=1,
+                gb.configure_column("page_content", "Content", editable=False, autoHeight=True, wrapText=True, flex=1,
                                     cellEditor="agLargeTextCellEditor", cellEditorPopup=True)
-                gb.configure_column("to_del", "Delete", editable=True, width=50, wrapHeaderText=True,
+                gb.configure_column("to_del", "Delete", editable=False, width=50, wrapHeaderText=True,
                                     cellEditor="agCheckboxCellEditor", cellRender="agCheckboxCellRenderer")
                 gb.configure_selection()
                 edit_docs = AgGrid(df, gb.build())
 
-                if st.button("Save"):
-                    # origin_docs = {x["id"]: {"page_content": x["page_content"], "type": x["type"], "metadata": x["metadata"]} for x in docs}
-                    changed_docs = []
-                    for index, row in edit_docs.data.iterrows():
-                        # origin_doc = origin_docs[row["id"]]
-                        # if row["page_content"] != origin_doc["page_content"]:
-                        if row["to_del"] not in ["Y", "y", 1]:
-                            changed_docs.append({
-                                "page_content": row["page_content"],
-                                "type": row["type"],
-                                "metadata": json.loads(row["metadata"]),
-                            })
+                # if st.button("Save"):
+                #     # origin_docs = {x["id"]: {"page_content": x["page_content"], "type": x["type"], "metadata": x["metadata"]} for x in docs}
+                #     changed_docs = []
+                #     for index, row in edit_docs.data.iterrows():
+                #         # origin_doc = origin_docs[row["id"]]
+                #         # if row["page_content"] != origin_doc["page_content"]:
+                #         if row["to_del"] not in ["Y", "y", 1]:
+                #             changed_docs.append({
+                #                 "page_content": row["page_content"],
+                #                 "type": row["type"],
+                #                 "metadata": json.loads(row["metadata"]),
+                #             })
 
-                    if changed_docs:
-                        if api.update_kb_docs(knowledge_base_name=selected_kb,
-                                            file_names=[file_name],
-                                            docs={file_name: changed_docs}):
-                            st.toast("Update Document Success!")
-                        else:
-                            st.toast("Update Document Failed!")
+                #     if changed_docs:
+                #         if api.update_kb_docs(knowledge_base_name=selected_kb,
+                #                             file_names=[file_name],
+                #                             docs={file_name: changed_docs}):
+                #             st.toast("Update Document Success!")
+                #         else:
+                #             st.toast("Update Document Failed!")
 
     with tabinterpreter:
         pass

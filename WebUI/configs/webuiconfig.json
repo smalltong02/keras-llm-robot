@@ -101,6 +101,16 @@
                 "provider": "GoogleCloud"
             }
         },
+        "RerankerModel": {
+            "bge-reranker-base": {
+                "path": "models/reranker/bge-reranker-base",
+                "Huggingface": "BAAI/bge-reranker-base"
+            },
+            "bge-reranker-large": {
+                "path": "models/reranker/bge-reranker-large",
+                "Huggingface": "BAAI/bge-reranker-large"
+            }
+        },
         "VtoTModel": {
             "whisper-base": {
                 "type": "local",

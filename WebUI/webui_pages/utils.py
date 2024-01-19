@@ -59,14 +59,21 @@ class ApiRequest:
         json: Dict = None,
         retry: int = 3,
         stream: bool = False,
+        timeout: Union[None, int] = None,
         **kwargs: Any
     ) -> Union[httpx.Response, Iterator[httpx.Response], None]:
         while retry > 0:
             try:
                 if stream:
-                    return self.client.stream("POST", url, data=data, json=json, **kwargs)
+                    if timeout == 0:
+                        return self.client.stream("POST", url, data=data, json=json, timeout=None, **kwargs)
+                    elif timeout is None:
+                        return self.client.stream("POST", url, data=data, json=json, **kwargs)
                 else:
-                    return self.client.post(url, data=data, json=json, **kwargs)
+                    if timeout == 0:
+                        return self.client.post(url, data=data, json=json, timeout=None, **kwargs)
+                    elif timeout is None:
+                        return self.client.post(url, data=data, json=json, **kwargs)
             except Exception as e:
                 print(self._client)
                 msg = f"error when post {url}: {e}"
@@ -191,6 +198,71 @@ class ApiRequest:
             "chat_history_id": "123",
             "text": "internal error!"
         }]
+    
+    def knowledge_base_chat(
+        self,
+        query: str,
+        knowledge_base_name: str,
+        top_k: int,
+        score_threshold: float,
+        history: List[Dict] = [],
+        stream: bool = True,
+        model: str = "",
+        imagesdata: List[bytes] = [],
+        speechmodel: dict = {"model": "", "speaker": ""},
+        temperature: float = 0.7,
+        max_tokens: int = None,
+        prompt_name: str = "default",
+    ):
+        configinst = InnerJsonConfigWebUIParse()
+        webui_config = configinst.dump()
+        modelinfo : Dict[str, any] = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "config": dict}
+        modelinfo["mtype"], modelinfo["msize"], modelinfo["msubtype"] = GetModelInfoByName(webui_config, model)
+        config = GetSpeechModelInfo(webui_config, speechmodel.get("model", ""))
+        if len(config):
+            speechmodel["type"] = config["type"]
+            speechmodel["speech_key"] = config.get("speech_key", "")
+            if speechmodel["speech_key"] == "[Your Key]":
+                speechmodel["speech_key"] = ""
+            speechmodel["speech_region"] = config.get("speech_region", "")
+            if speechmodel["speech_region"] == "[Your Region]":
+                speechmodel["speech_region"] = ""
+            speechmodel["provider"] = config.get("provider", "")
+        else:
+            speechmodel["type"] = ""
+            speechmodel["speech_key"] = ""
+            speechmodel["speech_region"] = ""
+            speechmodel["provider"] = config.get("provider", "")
+
+        dataslist = []
+        if len(imagesdata):
+            for imagedata in imagesdata:
+                dataslist.append(base64.b64encode(imagedata).decode('utf-8'))
+
+        data = {
+            "query": query,
+            "knowledge_base_name": knowledge_base_name,
+            "top_k": top_k,
+            "score_threshold": score_threshold,
+            "history": history,
+            "stream": stream,
+            "model_name": model,
+            "imagesdata": dataslist,
+            "speechmodel": speechmodel,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "prompt_name": prompt_name,
+        }
+
+        print(f"received input message:")
+        pprint(data)
+
+        response = self.post(
+            "/chat/knowledge_base_chat",
+            json=data,
+            stream=True,
+        )
+        return self._httpx_stream2generator(response, as_json=True)
 
     def _httpx_stream2generator(
         self,
@@ -456,6 +528,8 @@ class ApiRequest:
         response = self.post(
             "/llm_model/download_llm_model",
             json=data,
+            retry=1,
+            timeout=0,
             stream=True,
         )
         return self._httpx_stream2generator(response, as_json=True)
@@ -854,6 +928,8 @@ class ApiRequest:
         response = self.post(
             "/knowledge_base/upload_docs",
             data=data,
+            retry=1,
+            timeout=0,
             files=[("files", (filename, file)) for filename, file in files],
         )
         return self._get_response_value(response, as_json=True)
@@ -917,6 +993,8 @@ class ApiRequest:
 
         response = self.post(
             "/knowledge_base/update_docs",
+            retry=1,
+            timeout=0,
             json=data,
         )
         return self._get_response_value(response, as_json=True)

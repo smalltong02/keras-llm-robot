@@ -1,6 +1,6 @@
 from WebUI.Server.knowledge_base.kb_cache.base import *
 from WebUI.Server.knowledge_base.kb_service.base import EmbeddingsFunAdapter
-from WebUI.Server.utils import load_local_embeddings
+from WebUI.Server.utils import load_embeddings
 from WebUI.Server.knowledge_base.utils import get_vs_path
 from langchain.vectorstores.faiss import FAISS
 from langchain.docstore.in_memory import InMemoryDocstore
@@ -151,7 +151,7 @@ if __name__ == "__main__":
     def worker(vs_name: str, name: str):
         vs_name = "samples"
         time.sleep(random.randint(1, 5))
-        embeddings = load_local_embeddings()
+        embeddings = load_embeddings()
         r = random.randint(1, 3)
 
         with kb_faiss_pool.load_vector_store(vs_name).acquire(name) as vs:

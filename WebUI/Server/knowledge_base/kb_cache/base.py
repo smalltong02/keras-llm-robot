@@ -101,8 +101,8 @@ class CachePool:
             embed_device: str = detect_device(),
             default_embed_model: str = "",
     ) -> Embeddings:
-        from server.db.repository.knowledge_base_repository import get_kb_detail
-        from server.knowledge_base.kb_service.base import EmbeddingsFunAdapter
+        from WebUI.Server.db.repository.knowledge_base_repository import get_kb_detail
+        from WebUI.Server.knowledge_base.kb_service.base import EmbeddingsFunAdapter
 
         kb_detail = get_kb_detail(kb_name)
         embed_model = kb_detail.get("embed_model", default_embed_model)

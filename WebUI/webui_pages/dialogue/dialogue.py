@@ -139,7 +139,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                 cur_kb = st.session_state.get("selected_kb")
                 if cur_kb:
                     text = f"{text} Current Knowledge Base: `{cur_kb}`."
-            st.toast(text)
+            #st.toast(text)
 
         if running_model == "None":
             disabled = True
@@ -175,7 +175,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
 
         def prompt_change():
             text = f"Switch to {prompt_template_name} Template。"
-            st.toast(text)
+            #st.toast(text)
 
         prompt_template_select = st.selectbox(
             "Please Select Prompt Template:",
@@ -187,6 +187,26 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
         )
         prompt_template_name = st.session_state.prompt_template_select
         history_len = st.number_input("Dialogue Turns:", 0, 20, dialogue_turns, disabled=disabled)
+
+        kb_top_k = 0
+        selected_kb = ""
+        score_threshold = 0.6
+        if dialogue_mode == "KnowledgeBase Chat":
+            from WebUI.Server.knowledge_base.utils import VECTOR_SEARCH_TOP_K
+            def on_kb_change():
+                st.toast(f"Current Knowledge Base: {st.session_state.selected_kb}")
+            with st.expander("Knowledge Base", True):
+                kb_list = api.list_knowledge_bases()
+                index = 0
+                selected_kb = st.selectbox(
+                    "Please Select KB:",
+                    kb_list,
+                    index=index,
+                    on_change=on_kb_change,
+                    key="selected_kb",
+                )
+                kb_top_k = st.number_input("Knowledge Counts:", 1, 20, VECTOR_SEARCH_TOP_K)
+                score_threshold = st.slider("Score Threshold:", 0.0, 2.0, 0.6, 0.01)
 
         now = datetime.now()
         cols = st.columns(2)
@@ -372,15 +392,36 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                                 key=chat_history_id,
                                 on_submit=on_feedback,
                                 kwargs={"chat_history_id": chat_history_id, "history_index": len(chat_box.history) - 1})
-                
-            if st.session_state.get("need_rerun"):
-                st.session_state["need_rerun"] = False
-                st.rerun()
-                
-            if bshowstatus:
-                while True:
-                    update_running_status(placeholder_cpu, placeholder_ram, placeholder_gpuutil, placeholder_gpumem)
-                    time.sleep(1)
+
+        elif dialogue_mode == "KnowledgeBase Chat":
+            if len(selected_kb):
+                chat_box.ai_say([
+                    f"Querying from knowledge base `{selected_kb}` ...",
+                    Markdown("...", in_expander=True, title="Knowledge base match results", state="complete"),
+                ])
+                text = ""
+                for d in api.knowledge_base_chat(prompt,
+                                                knowledge_base_name=selected_kb,
+                                                top_k=kb_top_k,
+                                                score_threshold=score_threshold,
+                                                history=history,
+                                                model=running_model,
+                                                imagesdata=imagesdata,
+                                                speechmodel=speechmodel,
+                                                prompt_name=prompt_template_name,
+                                                temperature=temperature):
+                    if error_msg := check_error_msg(d):  # check whether error occured
+                        st.error(error_msg)
+                    elif chunk := d.get("answer"):
+                        text += chunk
+                        chat_box.update_msg(text, element_index=0)
+                chat_box.update_msg(text, element_index=0, streaming=False)
+                chat_box.update_msg("\n\n".join(d.get("docs", [])), element_index=1, streaming=False)
+            
+        if bshowstatus:
+            while True:
+                update_running_status(placeholder_cpu, placeholder_ram, placeholder_gpuutil, placeholder_gpumem)
+                time.sleep(1)
         
     if st.session_state.get("need_rerun"):
         st.session_state["need_rerun"] = False

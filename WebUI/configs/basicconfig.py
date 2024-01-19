@@ -282,6 +282,9 @@ def GenerateModelPrompt(inputs: list, input: str) -> Union[str, dict]:
         return prompt_dict
     return input
 
+def GetRerankerModelPath() -> Union[str, None]:
+    return "models/reranker/bge-reranker-large"
+
 def LocalModelExist(local_path):
     total_size_bytes = 0
     for dirpath, _, filenames in os.walk(local_path):

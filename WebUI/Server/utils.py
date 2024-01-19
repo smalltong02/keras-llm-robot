@@ -622,19 +622,19 @@ def run_in_thread_pool(
 def get_server_configs() -> Dict:
     pass
 
-def list_online_embed_models() -> List[str]:
-    from WebUI.Server import model_workers
+# def list_online_embed_models() -> List[str]:
+#     from WebUI.Server import model_workers
 
-    ret = []
-    for k, v in list_config_llm_models()["online"].items():
-        if provider := v.get("provider"):
-            worker_class = getattr(model_workers, provider, None)
-            if worker_class is not None and worker_class.can_embedding():
-                ret.append(k)
-    return ret
+#     ret = []
+#     for k, v in list_config_llm_models()["online"].items():
+#         if provider := v.get("provider"):
+#             worker_class = getattr(model_workers, provider, None)
+#             if worker_class is not None and worker_class.can_embedding():
+#                 ret.append(k)
+#     return ret
 
 
-def load_local_embeddings(model: str = None, device: str = detect_device()):
+def load_embeddings(model: str = None, device: str = detect_device()):
     from WebUI.Server.knowledge_base.kb_cache.base import embeddings_pool
     if model is None:
         return None

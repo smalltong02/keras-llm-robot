@@ -4,17 +4,20 @@ import chardet
 import importlib
 from pathlib import Path
 from WebUI.text_splitter import zh_title_enhance as func_zh_title_enhance
+from WebUI.Server.document_loaders import RapidOCRPDFLoader, RapidOCRLoader
 import langchain.document_loaders
 from langchain.docstore.document import Document
 from langchain.text_splitter import TextSplitter
 from WebUI.configs.basicconfig import (GetKbConfig, GetKbRootPath, GetTextSplitterDict)
 from WebUI.Server.utils import run_in_thread_pool, get_model_worker_config
+from WebUI.Server.document_loaders import *
 from typing import List, Union,Dict, Tuple, Generator
 
 TEXT_SPLITTER_NAME = "ChineseRecursiveTextSplitter"
 CHUNK_SIZE = 250
 OVERLAP_SIZE = 50
 ZH_TITLE_ENHANCE = False
+VECTOR_SEARCH_TOP_K = 5
 
 LOADER_DICT = {"UnstructuredHTMLLoader": ['.html'],
                "MHTMLLoader": ['.mhtml'],
@@ -108,11 +111,13 @@ def get_LoaderClass(file_extension):
 def get_loader(loader_name: str, file_path: str, loader_kwargs: Dict = None):
     loader_kwargs = loader_kwargs or {}
     try:
-        if loader_name in ["RapidOCRPDFLoader", "RapidOCRLoader","FilteredCSVLoader"]:
-            document_loaders_module = importlib.import_module('document_loaders')
+        if loader_name == "RapidOCRPDFLoader":
+            DocumentLoader = RapidOCRPDFLoader
+        elif loader_name == "RapidOCRLoader":
+            DocumentLoader = RapidOCRLoader
         else:
             document_loaders_module = importlib.import_module('langchain.document_loaders')
-        DocumentLoader = getattr(document_loaders_module, loader_name)
+            DocumentLoader = getattr(document_loaders_module, loader_name)
     except Exception as e:
         msg = f"for file {file_path} search loader {loader_name} failed: {e}"
         print(f'{e.__class__.__name__}: {msg}')
