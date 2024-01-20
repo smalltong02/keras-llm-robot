@@ -318,6 +318,9 @@
       | bge-small-en-v1.5 | Local | 130MB |
       | bge-base-en-v1.5 | Local | 430MB |
       | bge-large-en-v1.5 | Local | 1.3GB |
+      | bge-small-zh-v1.5 | Local | 93MB |
+      | bge-base-zh-v1.5 | Local | 400MB |
+      | bge-large-zh-v1.5 | Local | 1.3GB |
       | jina-embeddings-v2-small-en | Local | 63MB |
       | jina-embeddings-v2-base-en | Local | 260MB |
       | m3e-small | Local | 93MB |
@@ -332,6 +335,24 @@
       支持的文档类型：
 
       html, mhtml, md, json, jsonl, csv, pdf, png, jpg, jpeg, bmp, eml, msg, epub, xlsx, xls, xlsd, ipynb, odt, py, rst, rtf, srt, toml, tsv, docx, doc, xml, ppt, pptx, enex, txt
+
+
+      创建知识库界面：
+      ![Image1](./img/KnowledgeBase.png)
+      创建新知识库的时候，请输入知识库的名称和介绍，并选择合适的向量存储数据库和Embedding模型。如果知识库的文档内容是英文，推荐选择本地模型`bge-large-en-v1.5`；如果是中文为主英文为辅，推荐选择`bge-large-zh-v1.5`或者`m3e-large`
+
+      上传文档到知识库界面：
+      ![Image1](./img/Upload_Docs.png)
+      一次可以选择上传一个或多个文档，上传文档时候会对文档做内容提取，分割，向量化并添加到向量库中，时间可能会很长，请耐心等待。
+
+      查看文档内容界面：
+      ![Image1](./img/Docs_Content.png)
+      可以检查文档切片的内容，并可以导出。将会添加修改和删除切片的功能。
+
+      知识库聊天界面：
+      ![Image1](./img/Knowledge_base_chat.png)
+      在聊天主界面中，可以选择已经创建的知识库，基础语言模型将会根据知识库中的内容，来回答用户提问。
+
 
   2. **`代码解释器`**
 

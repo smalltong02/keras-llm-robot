@@ -334,6 +334,23 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
       html, mhtml, md, json, jsonl, csv, pdf, png, jpg, jpeg, bmp, eml, msg, epub, xlsx, xls, xlsd, ipynb, odt, py, rst, rtf, srt, toml, tsv, docx, doc, xml, ppt, pptx, enex, txt
 
+      Knowledge Base Interface:
+      ![Image1](./img/KnowledgeBase.png)
+      When creating a new knowledge base, please enter the name and introduction of the knowledge base, and select an appropriate vector database and embedding model. If the document content of the knowledge base is in English, it is recommended to choose the local model `bge-large-en-v1.5`; if the content is predominantly in Chinese with some English, it is recommended to choose `bge-large-zh-v1.5 or m3e-large`.
+
+      Upload Documents Interface:
+      ![Image1](./img/Upload_Docs.png)
+      You can choose to upload one or multiple documents at a time. During the document upload, content extraction, split, vectorization, and addition to the vector database will be performed. The process may take a considerable amount of time, so please be patient.
+
+      Documents Content Interface:
+      ![Image1](./img/Docs_Content.png)
+      You can inspect the content of document slices and export them.
+
+      Knowledge Base Chat Interface:
+      ![Image1](./img/Knowledge_base_chat.png)
+      In the chat interface, you can select a knowledge base, and the Foundation model will answer user queries based on the content within the selected knowledge base.
+
+
   2. **`Code Interpreter`**
 
       Enable code execution capability for the language model to empower it with actionable functionality for the mind. `Not implemented`
