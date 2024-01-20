@@ -14,10 +14,11 @@ from WebUI.Server.document_loaders import *
 from typing import List, Union,Dict, Tuple, Generator
 
 TEXT_SPLITTER_NAME = "ChineseRecursiveTextSplitter"
-CHUNK_SIZE = 250
-OVERLAP_SIZE = 50
+CHUNK_SIZE = 500
+OVERLAP_SIZE = 100
 ZH_TITLE_ENHANCE = False
 VECTOR_SEARCH_TOP_K = 5
+SCORE_THRESHOLD = 1.5
 
 LOADER_DICT = {"UnstructuredHTMLLoader": ['.html'],
                "MHTMLLoader": ['.mhtml'],
@@ -157,8 +158,11 @@ def make_text_splitter(
             headers_to_split_on = text_splitter_dict[splitter_name]['headers_to_split_on']
             text_splitter = langchain.text_splitter.MarkdownHeaderTextSplitter(
                 headers_to_split_on=headers_to_split_on)
+        elif splitter_name == "ChineseRecursiveTextSplitter":
+            text_splitter_module = importlib.import_module('text_splitter')
+            TextSplitter = getattr(text_splitter_module, splitter_name)
+            text_splitter = TextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
         else:
-
             try:
                 text_splitter_module = importlib.import_module('text_splitter')
                 TextSplitter = getattr(text_splitter_module, splitter_name)
@@ -217,7 +221,8 @@ def make_text_splitter(
         text_splitter_module = importlib.import_module('langchain.text_splitter')
         TextSplitter = getattr(text_splitter_module, "RecursiveCharacterTextSplitter")
         text_splitter = TextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
-    return text_splitter
+        splitter_name = "RecursiveCharacterTextSplitter"
+    return text_splitter, splitter_name
 
 def list_kbs_from_folder():
     kb_config = GetKbConfig()
@@ -274,8 +279,10 @@ class KnowledgeFile:
             return []
         if self.ext not in [".csv"]:
             if text_splitter is None:
-                text_splitter = make_text_splitter(splitter_name=self.text_splitter_name, chunk_size=chunk_size,
+                text_splitter, new_text_splitter_name = make_text_splitter(splitter_name=self.text_splitter_name, chunk_size=chunk_size,
                                                    chunk_overlap=chunk_overlap)
+                if new_text_splitter_name != self.text_splitter_name:
+                    self.text_splitter_name = new_text_splitter_name
             if self.text_splitter_name == "MarkdownHeaderTextSplitter":
                 docs = text_splitter.split_text(docs[0].page_content)
             else:

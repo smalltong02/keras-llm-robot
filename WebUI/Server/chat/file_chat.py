@@ -2,7 +2,7 @@ from fastapi import Body, File, Form, UploadFile
 from WebUI.Server.chat.utils import History
 from WebUI.Server.utils import (wrap_done, get_ChatOpenAI,
                         BaseResponse, get_prompt_template, run_in_thread_pool)
-from WebUI.Server.knowledge_base.utils import (CHUNK_SIZE, OVERLAP_SIZE, ZH_TITLE_ENHANCE)
+from WebUI.Server.knowledge_base.utils import (CHUNK_SIZE, OVERLAP_SIZE, ZH_TITLE_ENHANCE, SCORE_THRESHOLD)
 from typing import AsyncIterable, List, Optional
 
 def upload_temp_docs(
@@ -18,7 +18,7 @@ def upload_temp_docs(
 async def file_chat(query: str = Body(..., description="User input: ", examples=["chat"]),
         knowledge_id: str = Body(..., description="Knowledge ID"),
         top_k: int = Body(3, description="matching vector count"),
-        score_threshold: float = Body(0.6, description="Knowledge base matching relevance threshold, with a range between 0 and 1. A smaller SCORE indicates higher relevance, and setting it to 1 is equivalent to no filtering. It is recommended to set it around 0.5", ge=0, le=2),
+        score_threshold: float = Body(SCORE_THRESHOLD, description="Knowledge base matching relevance threshold, with a range between 0 and 1. A smaller SCORE indicates higher relevance, and setting it to 1 is equivalent to no filtering. It is recommended to set it around 0.5"),
         history: List[History] = Body([],
                                     description="History chat",
                                     examples=[[

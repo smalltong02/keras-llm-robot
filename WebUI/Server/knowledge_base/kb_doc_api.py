@@ -9,7 +9,7 @@ from WebUI.Server.utils import BaseResponse, ListResponse, run_in_thread_pool
 from WebUI.Server.knowledge_base.utils import (validate_kb_name, get_file_path, list_files_from_folder, files2docs_in_thread, KnowledgeFile)
 from WebUI.Server.db.repository.knowledge_file_repository import get_file_detail
 from WebUI.Server.knowledge_base.kb_service.base import KBServiceFactory
-from WebUI.Server.knowledge_base.utils import (CHUNK_SIZE, OVERLAP_SIZE, ZH_TITLE_ENHANCE)
+from WebUI.Server.knowledge_base.utils import (CHUNK_SIZE, OVERLAP_SIZE, ZH_TITLE_ENHANCE, SCORE_THRESHOLD)
 from WebUI.Server.knowledge_base.model.kb_document_model import DocumentWithVSId
 from langchain.docstore.document import Document
 from typing import List, Dict
@@ -89,9 +89,8 @@ def search_docs(
         query: str = Body("", description="User input: ", examples=["chat"]),
         knowledge_base_name: str = Body(..., description="Knowledge base name", examples=["samples"]),
         top_k: int = Body(3, description="Vector count"),
-        score_threshold: float = Body(0.6,
-                                      description="Knowledge base matching relevance threshold, with a range between 0 and 1. A smaller SCORE indicates higher relevance, and setting it to 1 is equivalent to no filtering. It is recommended to set it around 0.5",
-                                      ge=0, le=1),
+        score_threshold: float = Body(SCORE_THRESHOLD,
+                                      description="Knowledge base matching relevance threshold, with a range between 0 and 1. A smaller SCORE indicates higher relevance, and setting it to 1 is equivalent to no filtering. It is recommended to set it around 0.5"),
         file_name: str = Body("", description="file name"),
         metadata: dict = Body({}, description=""),
 ) -> List[DocumentWithVSId]:

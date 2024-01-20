@@ -6,6 +6,7 @@ from WebUI.Server.knowledge_base.kb_cache.faiss_cache import kb_faiss_pool, Thre
 from WebUI.Server.knowledge_base.utils import KnowledgeFile, get_kb_path, get_vs_path
 from WebUI.Server.utils import torch_gc
 from langchain.docstore.document import Document
+from WebUI.Server.knowledge_base.utils import SCORE_THRESHOLD
 from typing import List, Dict, Optional
 
 class FaissKBService(KBService):
@@ -58,7 +59,7 @@ class FaissKBService(KBService):
     def do_search(self,
                   query: str,
                   top_k: int,
-                  score_threshold: float = 0.6,
+                  score_threshold: float = SCORE_THRESHOLD,
                   ) -> List[Document]:
         embed_func = EmbeddingsFunAdapter(self.embed_model)
         embeddings = embed_func.embed_query(query)

@@ -24,6 +24,15 @@ def _split_text_with_regex_from_end(
         splits = list(text)
     return [s for s in splits if s != ""]
 
+def _handle_special_characters_in_doc(
+    split_list: List[str],        
+) -> List[str]:
+    def replace_special_characters(test):
+        test = test.replace('\x0b', ' ')
+        test = test.replace('\xa0', ' ')
+        return test
+    split_list = [replace_special_characters(s) for s in split_list]
+    return split_list
 
 class ChineseRecursiveTextSplitter(RecursiveCharacterTextSplitter):
     def __init__(
@@ -81,6 +90,7 @@ class ChineseRecursiveTextSplitter(RecursiveCharacterTextSplitter):
                     other_info = self._split_text(s, new_separators)
                     final_chunks.extend(other_info)
         if _good_splits:
+            _good_splits = _handle_special_characters_in_doc(_good_splits)
             merged_text = self._merge_splits(_good_splits, _separator)
             final_chunks.extend(merged_text)
         return [re.sub(r"\n{2,}", "\n", chunk.strip()) for chunk in final_chunks if chunk.strip()!=""]

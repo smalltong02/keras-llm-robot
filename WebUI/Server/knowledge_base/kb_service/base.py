@@ -2,7 +2,7 @@ import operator
 from abc import ABC, abstractmethod
 from WebUI.Server.knowledge_base.utils import (KnowledgeFile, list_kbs_from_folder, list_files_from_folder)
 from WebUI.configs import *
-
+from WebUI.Server.knowledge_base.utils import SCORE_THRESHOLD
 import os
 from pathlib import Path
 import numpy as np
@@ -148,7 +148,7 @@ class KBService(ABC):
     def search_docs(self,
                     query: str,
                     top_k: int = 3,
-                    score_threshold: float = 0.6,
+                    score_threshold: float = SCORE_THRESHOLD,
                     ) ->List[Document]:
         docs = self.do_search(query, top_k, score_threshold)
         return docs

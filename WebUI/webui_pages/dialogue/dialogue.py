@@ -153,9 +153,12 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                         "Search Engine Chat",
                         "Agent Chat",
                         ]
+        mode_index = 0
+        if st.session_state.get("selected_kb_name"):
+            mode_index = 1
         dialogue_mode = st.selectbox("Please Select Chat Mode:",
                                     dialogue_modes,
-                                    index=0,
+                                    index=mode_index,
                                     on_change=on_mode_change,
                                     key="dialogue_mode",
                                     disabled = disabled,
@@ -190,23 +193,24 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
 
         kb_top_k = 0
         selected_kb = ""
-        score_threshold = 0.6
+        score_threshold = 0
         if dialogue_mode == "KnowledgeBase Chat":
-            from WebUI.Server.knowledge_base.utils import VECTOR_SEARCH_TOP_K
+            from WebUI.Server.knowledge_base.utils import VECTOR_SEARCH_TOP_K, SCORE_THRESHOLD
             def on_kb_change():
-                st.toast(f"Current Knowledge Base: {st.session_state.selected_kb}")
+                st.toast(f"Current Knowledge Base: `{st.session_state.selected_kb}`")
             with st.expander("Knowledge Base", True):
                 kb_list = api.list_knowledge_bases()
-                index = 0
+                kb_index = kb_list.index(st.session_state.get("selected_kb_name"))
                 selected_kb = st.selectbox(
                     "Please Select KB:",
                     kb_list,
-                    index=index,
+                    index=kb_index,
                     on_change=on_kb_change,
                     key="selected_kb",
+                    disabled=disabled
                 )
-                kb_top_k = st.number_input("Knowledge Counts:", 1, 20, VECTOR_SEARCH_TOP_K)
-                score_threshold = st.slider("Score Threshold:", 0.0, 2.0, 0.6, 0.01)
+                kb_top_k = st.number_input("Knowledge Counts:", 1, 20, VECTOR_SEARCH_TOP_K, disabled=disabled)
+                score_threshold = st.slider("Score Threshold:", 0.0, 2.0, SCORE_THRESHOLD, 0.01, disabled=disabled)
 
         now = datetime.now()
         cols = st.columns(2)

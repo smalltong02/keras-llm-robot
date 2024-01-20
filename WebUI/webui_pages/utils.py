@@ -9,7 +9,7 @@ from WebUI.Server.utils import get_httpx_client
 from WebUI.configs.serverconfig import API_SERVER
 from WebUI.configs import HTTPX_DEFAULT_TIMEOUT
 from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
-from WebUI.Server.knowledge_base.utils import (CHUNK_SIZE, OVERLAP_SIZE, ZH_TITLE_ENHANCE)
+from WebUI.Server.knowledge_base.utils import (CHUNK_SIZE, OVERLAP_SIZE, ZH_TITLE_ENHANCE, SCORE_THRESHOLD)
 
 def api_address() -> str:
     host = API_SERVER["host"]
@@ -854,7 +854,7 @@ class ApiRequest:
         knowledge_base_name: str,
         query: str = "",
         top_k: int = 3,
-        score_threshold: int = 0.6,
+        score_threshold: float = SCORE_THRESHOLD,
         file_name: str = "",
         metadata: dict = {},
     ) -> List:
@@ -866,7 +866,6 @@ class ApiRequest:
             "file_name": file_name,
             "metadata": metadata,
         }
-
         response = self.post(
             "/knowledge_base/search_docs",
             json=data,

@@ -75,18 +75,21 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
         except Exception as e:
             st.error("Get Knowledge Base failed!")
             st.stop()
-        kb_names = []
+        kb_names = [KB_CREATE_NEW]
         if len(kb_list):
-            kb_names = list(kb_list.keys())
-        print("kb_list: ", kb_list)
-        kb_names.append(KB_CREATE_NEW)
+            kb_names.extend(list(kb_list.keys()))
+        print("kb_names: ", kb_names)
+        kb_index = 0
+        if st.session_state.get("selected_kb_name"):
+            kb_index = kb_names.index(st.session_state.get("selected_kb_name"))
         selected_kb = st.selectbox(
             "Knowledge Base:",
             kb_names,
-            index=0
+            index=kb_index
         )
 
         if selected_kb == KB_CREATE_NEW:
+            st.session_state["selected_kb_name"] = ""
             embeddingmodel = webui_config.get("ModelConfig").get("EmbeddingModel")
 
             with st.form("Create Knowledge Base"):
@@ -122,7 +125,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                 )
 
             if submit_create_kb:
-                with st.spinner(f"Create new Knowledge Base '{kb_name}', Please do not perform any actions or refresh the page."):
+                with st.spinner(f"Create new Knowledge Base `{kb_name}`, Please do not perform any actions or refresh the page."):
                     if not kb_name or not kb_name.strip():
                         st.error(f"Knowledge Base Name is None!")
                     elif kb_name in kb_list:
@@ -167,25 +170,38 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                 cols[2].write("")
                 cols[2].write("")
                 zh_title_enhance = cols[2].checkbox("Title Enh.", ZH_TITLE_ENHANCE, help="Enable Chinese title enhancement")
-
+            kb_details = get_kb_file_details(kb)
+            brepeat = False
+            if len(docs) and len(kb_details):
+                doc_names = [doc.name for doc in docs]
+                docs_lower = [name.lower() for name in doc_names]
+                file_name_list_lower = [entry["file_name"].lower() for entry in kb_details]
+                duplicate_names = set(docs_lower) & set(file_name_list_lower)
+                if len(duplicate_names):
+                    print("duplicate_names: ", duplicate_names)
+                    brepeat = True
             if st.button(
                     "Add Documents to Knowledge Base",
                     # use_container_width=True,
                     disabled=len(docs) == 0,
             ):
-                with st.spinner(f"Add docs to '{kb}', Please do not perform any actions or refresh the page."):
-                    ret = api.upload_kb_docs(docs,
-                                            knowledge_base_name=kb,
-                                            override=True,
-                                            chunk_size=chunk_size,
-                                            chunk_overlap=chunk_overlap,
-                                            zh_title_enhance=zh_title_enhance)
-                    if msg := check_success_msg(ret):
-                        st.toast(msg, icon="✔")
-                    elif msg := check_error_msg(ret):
-                        st.toast(msg, icon="✖")
-
-            doc_details = pd.DataFrame(get_kb_file_details(kb))
+                with st.spinner(f"Add docs to `{kb}`, Please do not perform any actions or refresh the page."):
+                    if brepeat:
+                        st.toast("There are duplicate documents, please extract the duplicate ones first.", icon="✖")
+                    else:
+                        ret = api.upload_kb_docs(docs,
+                                                knowledge_base_name=kb,
+                                                override=True,
+                                                chunk_size=chunk_size,
+                                                chunk_overlap=chunk_overlap,
+                                                zh_title_enhance=zh_title_enhance)
+                        if msg := check_success_msg(ret):
+                            st.toast(msg, icon="✔")
+                            st.rerun()
+                        elif msg := check_error_msg(ret):
+                            st.toast(msg, icon="✖")
+            
+            doc_details = pd.DataFrame(kb_details)
             selected_rows = []
             if not len(doc_details):
                 pass
@@ -253,7 +269,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                         use_container_width=True,
                 ):
                     file_names = [row["file_name"] for row in selected_rows]
-                    with st.spinner(f"Reload '{file_names[0]}' to Vector Database, Please do not perform any actions or refresh the page."):
+                    with st.spinner(f"Reload `{file_names[0]}` to Vector Database, Please do not perform any actions or refresh the page."):
                         ret = api.update_kb_docs(kb,
                                         file_names=file_names,
                                         chunk_size=chunk_size,
@@ -271,7 +287,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                         use_container_width=True,
                 ):
                     file_names = [row["file_name"] for row in selected_rows]
-                    with st.spinner(f"Delete '{file_names[0]}' from Vector Database, Please do not perform any actions or refresh the page."):
+                    with st.spinner(f"Delete `{file_names[0]}` from Vector Database, Please do not perform any actions or refresh the page."):
                         ret = api.delete_kb_docs(kb, file_names=file_names)
                         if msg := check_success_msg(ret):
                             st.toast(msg, icon="✔")
@@ -286,7 +302,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                 ):
                     file_names = [row["file_name"] for row in selected_rows]
                     if len(file_names):
-                        with st.spinner(f"Delete '{file_names[0]}' from Knowledge Base, Please do not perform any actions or refresh the page."):
+                        with st.spinner(f"Delete `{file_names[0]}` from Knowledge Base, Please do not perform any actions or refresh the page."):
                             ret = api.delete_kb_docs(kb, file_names=file_names, delete_content=True)
                             if msg := check_success_msg(ret):
                                 st.toast(msg, icon="✔")
@@ -303,6 +319,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                 file_name = selected_rows[0]["file_name"]
                 st.write(f'Document View in the `{file_name}`:') # Document list in the file. Double-click to modify, enter Y in the delete column to remove the corresponding row.
                 docs = api.search_kb_docs(knowledge_base_name=selected_kb, file_name=file_name)
+                print("docs: ", docs)
                 data = [{"seq": i+1, "id": x["id"], "page_content": x["page_content"], "source": x["metadata"].get("source"),
                         "type": x["type"],
                         "metadata": json.dumps(x["metadata"], ensure_ascii=False),
@@ -366,7 +383,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
             )
             if sple_button:
                 if speechmodel == spmodel:
-                    with st.spinner(f"Release Model: {speechmodel}, Please do not perform any actions or refresh the page."):
+                    with st.spinner(f"Release Model: `{speechmodel}`, Please do not perform any actions or refresh the page."):
                         r = api.eject_speech_model(speechmodel)
                         if msg := check_error_msg(r):
                             st.error(msg)
@@ -374,7 +391,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                             st.success(msg)
                             current_speech_model = {"model": "", "speaker": ""}
                 else:
-                    with st.spinner(f"Loading Model: {speechmodel}, Please do not perform any actions or refresh the page."):
+                    with st.spinner(f"Loading Model: `{speechmodel}`, Please do not perform any actions or refresh the page."):
                         speaker = st.session_state["speaker"]
                         print("speaker: ", speaker)
                         r = api.change_speech_model(spmodel, speechmodel, speaker)
@@ -541,7 +558,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
             )
             if vole_button:
                 if voicemodel == current_voice_model:
-                    with st.spinner(f"Release Model: {voicemodel}, Please do not perform any actions or refresh the page."):
+                    with st.spinner(f"Release Model: `{voicemodel}`, Please do not perform any actions or refresh the page."):
                         r = api.eject_voice_model(voicemodel)
                         if msg := check_error_msg(r):
                             st.error(msg)
@@ -549,7 +566,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                             st.success(msg)
                             current_voice_model = ""
                 else:
-                    with st.spinner(f"Loading Model: {voicemodel}, Please do not perform any actions or refresh the page."):
+                    with st.spinner(f"Loading Model: `{voicemodel}`, Please do not perform any actions or refresh the page."):
                         r = api.change_voice_model(current_voice_model, voicemodel)
                         if msg := check_error_msg(r):
                             st.error(msg)

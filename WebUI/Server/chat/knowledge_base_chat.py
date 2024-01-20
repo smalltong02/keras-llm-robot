@@ -1,6 +1,7 @@
 from fastapi import Body, Request
 from fastapi.responses import StreamingResponse
 from WebUI.configs import (DEF_TOKENS, USE_RERANKER, SAVE_CHAT_HISTORY, GetProviderByName, GetRerankerModelPath)
+from WebUI.Server.knowledge_base.utils import SCORE_THRESHOLD
 from WebUI.Server.utils import wrap_done, get_ChatOpenAI
 from langchain.chains import LLMChain
 import asyncio
@@ -24,11 +25,8 @@ async def knowledge_base_chat(
         knowledge_base_name: str = Body(..., description="kb name", examples=["samples"]),
         top_k: int = Body(3, description="matching vector count"),
         score_threshold: float = Body(
-            0.6,
-            description="Knowledge base matching relevance threshold, with a range between 0 and 1. A smaller SCORE indicates higher relevance, and setting it to 1 is equivalent to no filtering. It is recommended to set it around 0.5",
-            ge=0,
-            le=2
-        ),
+            SCORE_THRESHOLD,
+            description="Knowledge base matching relevance threshold, with a range between 0 and 1. A smaller SCORE indicates higher relevance, and setting it to 1 is equivalent to no filtering. It is recommended to set it around 0.5"),
         history: List[History] = Body(
             [],
             description="History chat",

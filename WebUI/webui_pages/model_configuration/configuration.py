@@ -122,19 +122,23 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
         )
         if le_button:
             if current_model["mname"] == running_model["mname"]:
-                with st.spinner(f"Release Model: {current_model['mname']}, Please do not perform any actions or refresh the page."):
+                with st.spinner(f"Release Model: `{current_model['mname']}`, Please do not perform any actions or refresh the page."):
                     r = api.eject_llm_model(current_model["mname"])
                     if msg := check_error_msg(r):
+                        st.error(msg)
                         st.toast(msg, icon="✖")
                     elif msg := check_success_msg(r):
+                        st.success(msg)
                         st.toast(msg, icon="✔")
             else:
-                with st.spinner(f"Loading Model: {current_model['mname']}, Please do not perform any actions or refresh the page."):
+                with st.spinner(f"Loading Model: `{current_model['mname']}`, Please do not perform any actions or refresh the page."):
                     if current_model["mtype"] == ModelType.Online or LocalModelExist(pathstr):
                         r = api.change_llm_model(running_model["mname"], current_model["mname"])
                         if msg := check_error_msg(r):
+                            st.error(msg)
                             st.toast(msg, icon="✖")
                         elif msg := check_success_msg(r):
+                            st.success(msg)
                             st.toast(msg, icon="✔")
                     else:
                         st.error("Please download the model to your local machine first.")
@@ -160,12 +164,14 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                         for t in r:
                             if error_msg := check_error_msg(t):  # check whether error occured
                                 download_error = True
+                                st.error(msg)
                                 st.toast(msg, icon="✖")
                                 break
                             tqdm = t.get("percentage", 0.0) / 100
                             progress_bar.progress(tqdm)
                         if download_error == False:
                             progress_bar.progress(1.0)
+                            st.success("downloading success!")
                             st.toast("downloading success!", icon="✔")
 
     st.divider()
