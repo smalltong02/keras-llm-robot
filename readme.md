@@ -319,6 +319,9 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
       | bge-small-en-v1.5 | Local | 130MB |
       | bge-base-en-v1.5 | Local | 430MB |
       | bge-large-en-v1.5 | Local | 1.3GB |
+      | bge-small-zh-v1.5 | Local | 93MB |
+      | bge-base-zh-v1.5 | Local | 400MB |
+      | bge-large-zh-v1.5 | Local | 1.3GB |
       | jina-embeddings-v2-small-en | Local | 63MB |
       | jina-embeddings-v2-base-en | Local | 260MB |
       | m3e-small | Local | 93MB |
@@ -336,7 +339,7 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
       Knowledge Base Interface:
       ![Image1](./img/KnowledgeBase.png)
-      When creating a new knowledge base, please enter the name and introduction of the knowledge base, and select an appropriate vector database and embedding model. If the document content of the knowledge base is in English, it is recommended to choose the local model `bge-large-en-v1.5`; if the content is predominantly in Chinese with some English, it is recommended to choose `bge-large-zh-v1.5 or m3e-large`.
+      When creating a new knowledge base, please enter the name and introduction of the knowledge base, and select an appropriate vector database and embedding model. If the document content of the knowledge base is in English, it is recommended to choose the local model `bge-large-en-v1.5`; if the content is predominantly in Chinese with some English, it is recommended to choose `bge-large-zh-v1.5` or `m3e-large`.
 
       Upload Documents Interface:
       ![Image1](./img/Upload_Docs.png)
