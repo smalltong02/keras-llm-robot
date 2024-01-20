@@ -200,8 +200,8 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                 st.toast(f"Current Knowledge Base: `{st.session_state.selected_kb}`")
             with st.expander("Knowledge Base", True):
                 kb_index = 0
+                kb_list = api.list_knowledge_bases()
                 if st.session_state.get("selected_kb_name"):
-                    kb_list = api.list_knowledge_bases()
                     kb_index = kb_list.index(st.session_state.get("selected_kb_name"))
                 selected_kb = st.selectbox(
                     "Please Select KB:",
