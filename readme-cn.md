@@ -321,8 +321,6 @@
       | bge-small-zh-v1.5 | Local | 93MB |
       | bge-base-zh-v1.5 | Local | 400MB |
       | bge-large-zh-v1.5 | Local | 1.3GB |
-      | jina-embeddings-v2-small-en | Local | 63MB |
-      | jina-embeddings-v2-base-en | Local | 260MB |
       | m3e-small | Local | 93MB |
       | m3e-base | Local | 400MB |
       | m3e-large | Local | 1.3GB |

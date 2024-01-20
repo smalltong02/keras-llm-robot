@@ -3,6 +3,7 @@ from WebUI.Server.utils import BaseResponse, ListResponse
 from WebUI.Server.knowledge_base.utils import validate_kb_name
 from WebUI.Server.knowledge_base.kb_service.base import KBServiceFactory
 from fastapi import Body
+from WebUI.configs.basicconfig import EmbeddingModelExist
 from WebUI.Server.db.repository.knowledge_base_repository import list_kbs_from_db
 
 def list_kbs():
@@ -16,7 +17,9 @@ def create_kb(knowledge_base_name: str = Body(..., examples=["samples"]),
             ) -> BaseResponse:
     # Create selected knowledge base
     if not validate_kb_name(knowledge_base_name):
-        return BaseResponse(code=403, msg="Don't attack me")
+        return BaseResponse(code=403, msg="Don't attack me.")
+    if not EmbeddingModelExist(embed_model):
+        return BaseResponse(code=403, msg="Embedding model not found, please download it in advance.")
     if knowledge_base_name is None or knowledge_base_name.strip() == "":
         return BaseResponse(code=404, msg="Knowledge base name is NULL.")
 

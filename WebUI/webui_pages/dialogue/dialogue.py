@@ -393,7 +393,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                 "chat_history_id": chat_history_id,
                 }
             chat_box.update_msg(text, streaming=False, metadata=metadata)
-            print("chat_box.history: ", len(chat_box.history))
+            #print("chat_box.history: ", len(chat_box.history))
             chat_box.show_feedback(**feedback_kwargs,
                                 key=chat_history_id,
                                 on_submit=on_feedback,

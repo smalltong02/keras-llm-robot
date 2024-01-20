@@ -61,14 +61,6 @@
                 "path": "models/embeddings/bge-large-zh-v1.5",
                 "Huggingface": "BAAI/bge-large-zh-v1.5"
             },
-            "jina-embeddings-v2-small-en": {
-                "path": "models/embeddings/jina-embeddings-v2-small-en",
-                "Huggingface": "jinaai/jina-embeddings-v2-small-en"
-            },
-            "jina-embeddings-v2-base-en": {
-                "path": "models/embeddings/jina-embeddings-v2-base-en",
-                "Huggingface": "jinaai/jina-embeddings-v2-base-en"
-            },
             "m3e-small": {
                 "path": "models/embeddings/m3e-small",
                 "Huggingface": "moka-ai/m3e-small"

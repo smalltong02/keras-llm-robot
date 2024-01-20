@@ -5,6 +5,8 @@ import os
 import copy
 
 SAVE_CHAT_HISTORY = True
+MIN_LLMMODEL_SIZE = 1024**3 # 1G
+MIN_EMBEDMODEL_SIZE = 1024**2 # 1MB
 
 TMP_DIR = Path('temp')
 if not TMP_DIR.exists():
@@ -291,10 +293,37 @@ def LocalModelExist(local_path):
         for filename in filenames:
             filepath = os.path.join(dirpath, filename)
             total_size_bytes += os.path.getsize(filepath)
-    total_size_gb = total_size_bytes / (1024**3)
+    total_size_gb = total_size_bytes / (MIN_LLMMODEL_SIZE)
     print("total_size_gb: ", total_size_gb)
     if total_size_gb > 1:
         return True
+    return False
+
+def EmbeddingModelExist(embed_model: str):
+    if embed_model:
+        from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
+        configinst = InnerJsonConfigWebUIParse()
+        webui_config = configinst.dump()
+        embeddingmodel = webui_config.get("ModelConfig").get("EmbeddingModel")
+        config = None
+        for key, value in embeddingmodel.items():
+            if embed_model == key:
+                    config = value
+        if config:
+            provider = config.get("provider", "")
+            if provider: # online model
+                return False
+            else:
+                local_path = config.get("path", "")
+                total_size_bytes = 0
+                for dirpath, _, filenames in os.walk(local_path):
+                    for filename in filenames:
+                        filepath = os.path.join(dirpath, filename)
+                        total_size_bytes += os.path.getsize(filepath)
+                total_size_mb = total_size_bytes / (MIN_EMBEDMODEL_SIZE)
+                print("total_size_mb: ", total_size_mb)
+                if total_size_mb > 50:
+                    return True
     return False
 
 def GetKbConfig():
