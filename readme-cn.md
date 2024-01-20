@@ -332,6 +332,9 @@
       | embedding-gecko-001 | Online | *B |
       | embedding-001 | Online | *B |
 
+      **`请注意`** 请提前下载向量模型，并放入指定的目录中，否则无法对文档进行向量化并且放入知识库也将失败。
+
+
       支持的文档类型：
 
       html, mhtml, md, json, jsonl, csv, pdf, png, jpg, jpeg, bmp, eml, msg, epub, xlsx, xls, xlsd, ipynb, odt, py, rst, rtf, srt, toml, tsv, docx, doc, xml, ppt, pptx, enex, txt

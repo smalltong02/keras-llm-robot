@@ -103,7 +103,8 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                 )
 
                 cols = st.columns(2)
-                vs_types = GetKbsList()
+                #vs_types = GetKbsList()
+                vs_types = ["faiss"]  # current just support faiss.
                 vs_type = cols[0].selectbox(
                     "Vector Store Type",
                     vs_types,
@@ -137,10 +138,14 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                             vector_store_type=vs_type,
                             embed_model=embed_model,
                         )
-                        st.toast(ret.get("msg", " "))
-                        st.session_state["selected_kb_name"] = kb_name
-                        st.session_state["selected_kb_info"] = kb_info
-                        st.session_state["need_rerun"] = True
+                        if msg := check_success_msg(ret):
+                            st.toast(msg, icon="✔")
+                            st.session_state["selected_kb_name"] = kb_name
+                            st.session_state["selected_kb_info"] = kb_info
+                            st.session_state["need_rerun"] = True
+                        elif msg := check_error_msg(ret):
+                            st.error(msg)
+                            st.toast(msg, icon="✖")
         
         elif selected_kb:
             kb = selected_kb

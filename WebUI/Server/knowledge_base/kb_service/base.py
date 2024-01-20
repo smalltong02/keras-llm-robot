@@ -252,24 +252,25 @@ class KBServiceFactory:
             from WebUI.Server.knowledge_base.kb_service.faiss_kb_service import FaissKBService
             return FaissKBService(kb_name, kb_info, embed_model=embed_model)
         elif SupportedVSType.PG == vector_store_type:
-            from server.knowledge_base.kb_service.pg_kb_service import PGKBService
+            from WebUI.Server.knowledge_base.kb_service.pg_kb_service import PGKBService
             return PGKBService(kb_name, kb_info, embed_model=embed_model)
         elif SupportedVSType.MILVUS == vector_store_type:
-            from server.knowledge_base.kb_service.milvus_kb_service import MilvusKBService
+            from WebUI.Server.knowledge_base.kb_service.milvus_kb_service import MilvusKBService
             return MilvusKBService(kb_name, kb_info, embed_model=embed_model)
-        elif SupportedVSType.ZILLIZ == vector_store_type:
-            from server.knowledge_base.kb_service.zilliz_kb_service import ZillizKBService
-            return ZillizKBService(kb_name, kb_info, embed_model=embed_model)
-        elif SupportedVSType.DEFAULT == vector_store_type:
-            return MilvusKBService(kb_name,
-                                   kb_info,
-                                   embed_model=embed_model)  # other milvus parameters are set in model_config.kbs_config
-        elif SupportedVSType.ES == vector_store_type:
-            from server.knowledge_base.kb_service.es_kb_service import ESKBService
-            return ESKBService(kb_name, kb_info, embed_model=embed_model)
+        #elif SupportedVSType.ZILLIZ == vector_store_type:
+        #    from WebUI.Server.knowledge_base.kb_service.zilliz_kb_service import ZillizKBService
+        #    return ZillizKBService(kb_name, kb_info, embed_model=embed_model)
+        #elif SupportedVSType.DEFAULT == vector_store_type:
+        #    return MilvusKBService(kb_name,
+        #                           kb_info,
+        #                           embed_model=embed_model)  # other milvus parameters are set in model_config.kbs_config
+        #elif SupportedVSType.ES == vector_store_type:
+        #    from WebUI.Server.knowledge_base.kb_service.es_kb_service import ESKBService
+        #    return ESKBService(kb_name, kb_info, embed_model=embed_model)
         elif SupportedVSType.DEFAULT == vector_store_type:  # kb_exists of default kbservice is False, to make validation easier.
-            from server.knowledge_base.kb_service.default_kb_service import DefaultKBService
+            from WebUI.Server.knowledge_base.kb_service.default_kb_service import DefaultKBService
             return DefaultKBService(kb_name, kb_info)
+        return None
 
     @staticmethod
     def get_service_by_name(kb_name: str) -> KBService:
@@ -380,3 +381,15 @@ class EmbeddingsFunAdapter(Embeddings):
         query_embed_2d = np.reshape(query_embed, (1, -1))
         normalized_query_embed = normalize(query_embed_2d)
         return normalized_query_embed[0].tolist()
+    
+def score_threshold_process(score_threshold, k, docs):
+    if score_threshold is not None:
+        cmp = (
+            operator.le
+        )
+        docs = [
+            (doc, similarity)
+            for doc, similarity in docs
+            if cmp(similarity, score_threshold)
+        ]
+    return docs[:k]

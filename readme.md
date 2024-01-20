@@ -333,6 +333,9 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
       | embedding-gecko-001 | Online | *B |
       | embedding-001 | Online | *B |
 
+      **`NOTE`** Please download the embedding model in advance and place it in the specified folder, otherwise the document vectorization will not be possible, and uploading to the knowledge base will also fail.
+
+
       Support the following Documents:
 
       html, mhtml, md, json, jsonl, csv, pdf, png, jpg, jpeg, bmp, eml, msg, epub, xlsx, xls, xlsd, ipynb, odt, py, rst, rtf, srt, toml, tsv, docx, doc, xml, ppt, pptx, enex, txt

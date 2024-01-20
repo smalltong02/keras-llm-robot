@@ -335,6 +335,14 @@ def GetKbsList():
         kb_list.append(key)
     return kb_list
 
+def GetKbsConfig(kbs_name: str) -> dict:
+    if kbs_name:
+        kb_config = GetKbConfig()
+        kbs_config = kb_config.get("kbs_config", {})
+        kbs_config = kbs_config.get(kbs_name, {})
+        return kbs_config
+    return {}
+
 def GetTextSplitterDict():
     kb_config = GetKbConfig()
     text_splitter_dict = kb_config.get("text_splitter_dict", {})
