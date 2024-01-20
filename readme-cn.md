@@ -80,7 +80,22 @@
 ## 环境配置
 
   1. 自行安装anaconda或miniconda，以及git。windows用户还需要安装CMake工具，ubuntu用户请安装gcc
-   
+  ```bash
+  // 在Ubuntu干净环境下，请按照一下流程预安装数据包:
+  // install gcc
+    sudo apt update
+    sudo apt install build-essential
+
+  // install for ffmpeg
+    sudo apt install ffmpeg
+
+  // install for pyaudio
+    sudo apt-get install portaudio19-dev
+
+  // requestment默认安装faiss-cpu版，如果需要安装faiss-gpu版
+    pip3 install faiss-gpu
+  ```
+
   2. 使用conda创建虚拟环境keras-llm-robot并安装python, python请使用3.10 或者 3.11的版本
   ```bash
   conda create -n keras-llm-robot python==3.11.5

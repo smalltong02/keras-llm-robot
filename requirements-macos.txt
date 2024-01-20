@@ -41,6 +41,7 @@ docopt==0.6.2
 einops==0.7.0
 encodec==0.1.1
 fastapi==0.103.2
+faiss-cpu==1.7.4
 filelock==3.9.0
 pymupdf==1.23.15
 pymilvus==2.3.5

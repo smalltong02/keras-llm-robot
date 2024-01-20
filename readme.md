@@ -83,30 +83,46 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 ## Environment Setup
 
   1. Install Anaconda or Miniconda and Git. Windows users also need to install the CMake tool, Ubuntu users need to install gcc tools.
+
+  ```bash
+  // In a clean environment on Ubuntu, follow the steps below to pre-install the packages:
+  // install gcc
+    sudo apt update
+    sudo apt install build-essential
+
+  // install for ffmpeg
+    sudo apt install ffmpeg
+
+  // install for pyaudio
+    sudo apt-get install portaudio19-dev
+
+  // The default installation of requestment is for the faiss-cpu. If you need to install the faiss-gpu
+    pip3 install faiss-gpu
+  ```
    
   2. Create a virtual environment named keras-llm-robot using conda and install Python of 3.10 or 3.11:
   ```bash
   conda create -n keras-llm-robot python==3.11.5
   ```
 
-  3. Clone the repository:
+  1. Clone the repository:
   ```bash
   git clone https://github.com/smalltong02/keras-llm-robot.git
   cd keras-llm-robot
   ```
 
-  4. Activate the virtual environment:
+  1. Activate the virtual environment:
   ```bash
   conda activate keras-llm-robot
   ```
 
-  5. If you have an NVIDIA GPU, Please install the CUDA Toolkit from (https://developer.nvidia.com/cuda-toolkit-archive), and install the PyTorch CUDA version in the virtual environment (same to the CUDA Toolkit version https://pytorch.org/):
+  1. If you have an NVIDIA GPU, Please install the CUDA Toolkit from (https://developer.nvidia.com/cuda-toolkit-archive), and install the PyTorch CUDA version in the virtual environment (same to the CUDA Toolkit version https://pytorch.org/):
   ```bash
   // such as install version 12.1
   conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
   ```
 
-  6. Install dependencies, Please choose the appropriate requirements file based on your platform, On the Windows, if encounter compilation errors for llama-cpp-python or tts during the installation, please remove these two packages from the requirements:
+  1. Install dependencies, Please choose the appropriate requirements file based on your platform, On the Windows, if encounter compilation errors for llama-cpp-python or tts during the installation, please remove these two packages from the requirements:
   ```bash
   // windows
   pip install -r requirements-windows.txt
@@ -116,7 +132,7 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
   pip install -r requirements-macos.txt
   ```
 
-  7. If speech feature is required, you also need to install the ffmpeg tool.
+  1. If speech feature is required, you also need to install the ffmpeg tool.
 
     // For Windows:
     Download the Windows binary package of ffmpeg from (https://www.gyan.dev/ffmpeg/builds/).
@@ -137,7 +153,7 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
     brew install ffmpeg
     ```
 
-  8. If you need to download models from Hugging Face for offline execution, please download the models yourself and place them in the "models" directory. If the models have not been downloaded in advance, the WebUI will automatically download them from the Hugging Face website to the local system cache.
+  2. If you need to download models from Hugging Face for offline execution, please download the models yourself and place them in the "models" directory. If the models have not been downloaded in advance, the WebUI will automatically download them from the Hugging Face website to the local system cache.
   ```bash
   // such as the folder of llama-2-7b-chat model:
   models\llm\Llama-2-7b-chat-hf

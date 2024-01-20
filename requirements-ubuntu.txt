@@ -18,6 +18,7 @@ colorama==0.4.6
 ctransformers==0.2.27
 dataclasses-json==0.6.1
 fastapi==0.104.1
+faiss-cpu==1.7.4
 filelock==3.9.0
 pymupdf==1.23.15
 pymilvus==2.3.5
