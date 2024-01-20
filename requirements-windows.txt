@@ -18,6 +18,7 @@ colorama==0.4.6
 ctransformers==0.2.27
 dataclasses-json==0.6.1
 fastapi==0.104.1
+faiss-cpu==1.7.4
 filelock==3.9.0
 pymupdf==1.23.15
 frozenlist==1.4.0
@@ -45,7 +46,7 @@ langchain-experimental==0.0.39
 langchain-google-genai==0.0.5
 langsmith==0.0.63
 llama-cpp-python==0.2.25
-llama-index==0.9.33
+llama-index==0.9.25
 markdown-it-py==3.0.0
 markdown2==2.4.10
 MarkupSafe==2.1.2
