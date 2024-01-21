@@ -38,7 +38,7 @@ async def chat(query: str = Body(..., description="User input: ", examples=["cha
                             imagesdata: List[str] = [],
                             history: List[History] = [],
                             stream: bool = True,
-                            model_name: str = LLM_MODELS[0],
+                            model_name: str = "",
                             speechmodel: dict = {},
                             temperature: float = TEMPERATURE,
                             max_tokens: Optional[int] = None,

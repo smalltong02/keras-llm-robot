@@ -20,5 +20,5 @@ __version__ = KERAS_LLM_VERSION
 __author__ = "YIN MA and individual contributors"
 __email__ = "yinma@fortinet.com"
 
-__license__ = "The MIT License"
+__license__ = "The Apache-2.0 License"
 __copyright__ = "Copyright 2023-2030 {0}".format(__author__)

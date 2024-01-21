@@ -80,7 +80,22 @@
 ## 环境配置
 
   1. 自行安装anaconda或miniconda，以及git。windows用户还需要安装CMake工具，ubuntu用户请安装gcc
-   
+  ```bash
+  // 在Ubuntu干净环境下，请按照一下流程预安装数据包:
+  // install gcc
+    sudo apt update
+    sudo apt install build-essential
+
+  // install for ffmpeg
+    sudo apt install ffmpeg
+
+  // install for pyaudio
+    sudo apt-get install portaudio19-dev
+
+  // requestment默认安装faiss-cpu版，如果需要安装faiss-gpu版
+    pip3 install faiss-gpu
+  ```
+
   2. 使用conda创建虚拟环境keras-llm-robot并安装python, python请使用3.10 或者 3.11的版本
   ```bash
   conda create -n keras-llm-robot python==3.11.5
@@ -192,7 +207,7 @@
 
   在工具和代理界面中，可以加载辅助模型比如向量检索模型，代码执行模型，文本转语音模型，语音转文本模型，图像识别模型，图像生成模型，或者配置功能调用
 
-  1. **`向量检索模型`** (`当前功能还未实现`)
+  1. **`向量检索模型`** 支持本地和在线向量数据库，支持本地和在线向量模型，并且支持多种文档类型。可以为基础模型提供长期记忆力。
   2. **`代码执行模型`** (`当前功能还未实现`)
   3. **`文本转语音模型`** 支持本地模型XTTS-v2，支持Azure在线文本转语音服务，需要提供Azure的API Key。也可以在系统环境变量中配置SPEECH_KEY和SPEECH_REGION，或者在配置界面中单独配置。
   4. **`语音转文本模型`** 支持本地模型whisper，fast-whisper，支持Azure在线语音转文本服务，需要提供Azure的API Key。也可以在系统环境变量中配置SPEECH_KEY和SPEECH_REGION，或者在配置界面中单独配置。
@@ -217,17 +232,17 @@
 
   1. **`加载模型`**
       
-      基础模型可以使用CPU或者GPU加载，以及使用8 bits加载(`4 bits加载无效`)，当使用CPU推理输出的时候，请设置合适的CPU Threads以提高Token输出速度
+      基础模型可以使用CPU或者GPU加载，以及使用8 bits加载(`4 bits加载无效`)，当使用CPU推理输出的时候，请设置合适的CPU Threads以提高Token输出速度。当加载GPTQ模型遇到错误“Using Exllama backend requires all the modules to be on GPU.”，请在模型config.json的"quantization_config"中添加"disable_exllama": true
       
       多模态模型可以使用CPU或者GPU加载，Vision模型加载后，用户可以上传图片和文字与模型对话。Voice模型加载后，用户可以通过麦克风(无需通过辅助模型)和模型对话。`该功能还未实现`
 
-      特殊模型可以使用CPU或者GPU加载，GGUF模型优先使用CPU设备加载
+      特殊模型可以使用CPU或者GPU加载，GGUF模型优先使用CPU设备加载。
 
       在线模型无需占用额外的本地资源，当前支持OpenAI和Google的在线语言模型
 
       ---
 
-      **`请注意`** 当TTS库未安装，将无法加载XTTS-2本地语音模型，但仍然可以使用其它在线语音服务；llama-cpp-python库未安装，将无法加载GGUF模型；没有GPU设备，将无法加载AWQ和GPTQ模型。
+      **`请注意`** 当TTS库未安装，将无法加载XTTS-2本地语音模型，但仍然可以使用其它在线语音服务；llama-cpp-python库未安装，将无法加载GGUF模型；没有GPU设备，将无法加载AWQ和GPTQ模型。对于
 
       | 支持模型 | 类型 | 大小 |
       | :---- | :---- | :---- |
@@ -299,7 +314,61 @@
 
   1. **`知识库检索`**
 
-      RAG功能，需要向量数据库和向量模型，给语言模型提供长期记忆能力。`该功能还未实现`
+      RAG功能，需要向量数据库和向量模型，可以给语言模型提供长期记忆能力。
+
+      目前支持以下向量数据库：
+
+      | 向量数据库 | 类型 |
+      | :---- | :---- |
+      | Faiss | Local |
+      | Milvus | Local |
+      | PGVector | Local |
+      | ElasticsearchStore | Local |
+      | ZILLIZ | Online |
+
+      可以选择以下向量模型：
+
+      | 向量模型 | 类型 | 大小 |
+      | :---- | :---- | :---- |
+      | bge-small-en-v1.5 | Local | 130MB |
+      | bge-base-en-v1.5 | Local | 430MB |
+      | bge-large-en-v1.5 | Local | 1.3GB |
+      | bge-small-zh-v1.5 | Local | 93MB |
+      | bge-base-zh-v1.5 | Local | 400MB |
+      | bge-large-zh-v1.5 | Local | 1.3GB |
+      | m3e-small | Local | 93MB |
+      | m3e-base | Local | 400MB |
+      | m3e-large | Local | 1.3GB |
+      | text2vec-base-chinese | Local | 400MB |
+      | text2vec-bge-large-chinese | Local | 1.3GB |
+      | text-embedding-ada-002 | Online | *B |
+      | embedding-gecko-001 | Online | *B |
+      | embedding-001 | Online | *B |
+
+      **`请注意`** 请提前下载向量模型，并放入指定的目录中，否则无法对文档进行向量化并且放入知识库也将失败。
+
+
+      支持的文档类型：
+
+      html, mhtml, md, json, jsonl, csv, pdf, png, jpg, jpeg, bmp, eml, msg, epub, xlsx, xls, xlsd, ipynb, odt, py, rst, rtf, srt, toml, tsv, docx, doc, xml, ppt, pptx, enex, txt
+
+
+      创建知识库界面：
+      ![Image1](./img/KnowledgeBase.png)
+      创建新知识库的时候，请输入知识库的名称和介绍，并选择合适的向量存储数据库和Embedding模型。如果知识库的文档内容是英文，推荐选择本地模型`bge-large-en-v1.5`；如果是中文为主英文为辅，推荐选择`bge-large-zh-v1.5`或者`m3e-large`
+
+      上传文档到知识库界面：
+      ![Image1](./img/Upload_Docs.png)
+      一次可以选择上传一个或多个文档，上传文档时候会对文档做内容提取，分割，向量化并添加到向量库中，时间可能会很长，请耐心等待。
+
+      查看文档内容界面：
+      ![Image1](./img/Docs_Content.png)
+      可以检查文档切片的内容，并可以导出。将会添加修改和删除切片的功能。
+
+      知识库聊天界面：
+      ![Image1](./img/Knowledge_base_chat.png)
+      在聊天主界面中，可以选择已经创建的知识库，基础语言模型将会根据知识库中的内容，来回答用户提问。
+
 
   2. **`代码解释器`**
 

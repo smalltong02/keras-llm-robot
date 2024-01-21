@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime, Float, Boolean, JSON, func
 
-from WebUI.Server.db.base import Base
+from WebUI.Server.db.base import Base, engine
 
 
 class KnowledgeFileModel(Base):
@@ -24,7 +24,6 @@ class KnowledgeFileModel(Base):
     def __repr__(self):
         return f"<KnowledgeFile(id='{self.id}', file_name='{self.file_name}', file_ext='{self.file_ext}', kb_name='{self.kb_name}', document_loader_name='{self.document_loader_name}', text_splitter_name='{self.text_splitter_name}', file_version='{self.file_version}', create_time='{self.create_time}')>"
 
-
 class FileDocModel(Base):
     """
     File Document Model
@@ -38,3 +37,5 @@ class FileDocModel(Base):
 
     def __repr__(self):
         return f"<FileDoc(id='{self.id}', kb_name='{self.kb_name}', file_name='{self.file_name}', doc_id='{self.doc_id}', metadata='{self.meta_data}')>"
+    
+Base.metadata.create_all(bind=engine)

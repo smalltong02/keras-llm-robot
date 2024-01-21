@@ -83,30 +83,46 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 ## Environment Setup
 
   1. Install Anaconda or Miniconda and Git. Windows users also need to install the CMake tool, Ubuntu users need to install gcc tools.
+
+  ```bash
+  // In a clean environment on Ubuntu, follow the steps below to pre-install the packages:
+  // install gcc
+    sudo apt update
+    sudo apt install build-essential
+
+  // install for ffmpeg
+    sudo apt install ffmpeg
+
+  // install for pyaudio
+    sudo apt-get install portaudio19-dev
+
+  // The default installation of requestment is for the faiss-cpu. If you need to install the faiss-gpu
+    pip3 install faiss-gpu
+  ```
    
   2. Create a virtual environment named keras-llm-robot using conda and install Python of 3.10 or 3.11:
   ```bash
   conda create -n keras-llm-robot python==3.11.5
   ```
 
-  3. Clone the repository:
+  1. Clone the repository:
   ```bash
   git clone https://github.com/smalltong02/keras-llm-robot.git
   cd keras-llm-robot
   ```
 
-  4. Activate the virtual environment:
+  1. Activate the virtual environment:
   ```bash
   conda activate keras-llm-robot
   ```
 
-  5. If you have an NVIDIA GPU, Please install the CUDA Toolkit from (https://developer.nvidia.com/cuda-toolkit-archive), and install the PyTorch CUDA version in the virtual environment (same to the CUDA Toolkit version https://pytorch.org/):
+  1. If you have an NVIDIA GPU, Please install the CUDA Toolkit from (https://developer.nvidia.com/cuda-toolkit-archive), and install the PyTorch CUDA version in the virtual environment (same to the CUDA Toolkit version https://pytorch.org/):
   ```bash
   // such as install version 12.1
   conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
   ```
 
-  6. Install dependencies, Please choose the appropriate requirements file based on your platform, On the Windows, if encounter compilation errors for llama-cpp-python or tts during the installation, please remove these two packages from the requirements:
+  1. Install dependencies, Please choose the appropriate requirements file based on your platform, On the Windows, if encounter compilation errors for llama-cpp-python or tts during the installation, please remove these two packages from the requirements:
   ```bash
   // windows
   pip install -r requirements-windows.txt
@@ -116,7 +132,7 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
   pip install -r requirements-macos.txt
   ```
 
-  7. If speech feature is required, you also need to install the ffmpeg tool.
+  1. If speech feature is required, you also need to install the ffmpeg tool.
 
     // For Windows:
     Download the Windows binary package of ffmpeg from (https://www.gyan.dev/ffmpeg/builds/).
@@ -137,7 +153,7 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
     brew install ffmpeg
     ```
 
-  8. If you need to download models from Hugging Face for offline execution, please download the models yourself and place them in the "models" directory. If the models have not been downloaded in advance, the WebUI will automatically download them from the Hugging Face website to the local system cache.
+  2. If you need to download models from Hugging Face for offline execution, please download the models yourself and place them in the "models" directory. If the models have not been downloaded in advance, the WebUI will automatically download them from the Hugging Face website to the local system cache.
   ```bash
   // such as the folder of llama-2-7b-chat model:
   models\llm\Llama-2-7b-chat-hf
@@ -195,7 +211,7 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
   In the tools & agent interface, you can load auxiliary models such as retrieval, code execution, text-to-speech, speech-to-text, image recognition, image generation, or function calling.
 
-  1. **`Retrieval`** (`Not implemented`)
+  1. **`Retrieval`** Supports both local and online vector databases, local and online embedding models, and various document types. Can provide long-term memory for the Foundation model.
   2. **`Code Interpreter`** (`Not implemented`)
   3. **`Text-to-Speech`** Supports local model XTTS-v2 and Azure online text-to-speech service. Requires Azure API Key, which can be configured in the system environment variables `SPEECH_KEY` and `SPEECH_REGION`, or in the configuration interface.
   4. **`Speech-to-Text`** Supports local models whisper and fast-whisper and Azure online speech-to-text service. Requires Azure API Key, which can be configured in the system environment variables `SPEECH_KEY` and `SPEECH_REGION`, or in the configuration interface.
@@ -219,7 +235,7 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
   1. **`Load Model`**
       
-      **Foundation Models** can be loaded with CPU or GPU, and with 8-bits loading (`4-bits is invalid`). Set the appropriate CPU Threads to improve token output speed when using CPU.
+      **Foundation Models** can be loaded with CPU or GPU, and with 8-bits loading (`4-bits is invalid`). Set the appropriate CPU Threads to improve token output speed when using CPU. When encountering the error 'Using Exllama backend requires all the modules to be on GPU' while loading the GPTQ model, please add "'disable_exllama': true" in the 'quantization_config' section of the model's config.json.
       
       **Multimodal models** can be loaded with CPU or GPU. For Vision models, users can upload images and text for model interaction. For Voice models, users can interact with the model using a microphone (without the need for auxiliary models). (`Not implemented`)
 
@@ -300,7 +316,60 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
   1. **`Retrieval`**
 
-      RAG functionality requires a vector database and embedding models to provide long-term memory capabilities to the language model. `Not implemented`
+      RAG functionality requires a vector database and embedding models to provide long-term memory capabilities to the language model. 
+
+      Support the following Vector Database:
+
+      | Databases | Type |
+      | :---- | :---- |
+      | Faiss | Local |
+      | Milvus | Local |
+      | PGVector | Local |
+      | ElasticsearchStore | Local |
+      | ZILLIZ | Online |
+
+      Support the following Embedding Models:
+
+      | Model | Type | Size |
+      | :---- | :---- | :---- |
+      | bge-small-en-v1.5 | Local | 130MB |
+      | bge-base-en-v1.5 | Local | 430MB |
+      | bge-large-en-v1.5 | Local | 1.3GB |
+      | bge-small-zh-v1.5 | Local | 93MB |
+      | bge-base-zh-v1.5 | Local | 400MB |
+      | bge-large-zh-v1.5 | Local | 1.3GB |
+      | m3e-small | Local | 93MB |
+      | m3e-base | Local | 400MB |
+      | m3e-large | Local | 1.3GB |
+      | text2vec-base-chinese | Local | 400MB |
+      | text2vec-bge-large-chinese | Local | 1.3GB |
+      | text-embedding-ada-002 | Online | *B |
+      | embedding-gecko-001 | Online | *B |
+      | embedding-001 | Online | *B |
+
+      **`NOTE`** Please download the embedding model in advance and place it in the specified folder, otherwise the document vectorization will not be possible, and uploading to the knowledge base will also fail.
+
+
+      Support the following Documents:
+
+      html, mhtml, md, json, jsonl, csv, pdf, png, jpg, jpeg, bmp, eml, msg, epub, xlsx, xls, xlsd, ipynb, odt, py, rst, rtf, srt, toml, tsv, docx, doc, xml, ppt, pptx, enex, txt
+
+      Knowledge Base Interface:
+      ![Image1](./img/KnowledgeBase.png)
+      When creating a new knowledge base, please enter the name and introduction of the knowledge base, and select an appropriate vector database and embedding model. If the document content of the knowledge base is in English, it is recommended to choose the local model `bge-large-en-v1.5`; if the content is predominantly in Chinese with some English, it is recommended to choose `bge-large-zh-v1.5` or `m3e-large`.
+
+      Upload Documents Interface:
+      ![Image1](./img/Upload_Docs.png)
+      You can choose to upload one or multiple documents at a time. During the document upload, content extraction, split, vectorization, and addition to the vector database will be performed. The process may take a considerable amount of time, so please be patient.
+
+      Documents Content Interface:
+      ![Image1](./img/Docs_Content.png)
+      You can inspect the content of document slices and export them.
+
+      Knowledge Base Chat Interface:
+      ![Image1](./img/Knowledge_base_chat.png)
+      In the chat interface, you can select a knowledge base, and the Foundation model will answer user queries based on the content within the selected knowledge base.
+
 
   2. **`Code Interpreter`**
 

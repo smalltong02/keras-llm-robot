@@ -184,7 +184,7 @@ def get_webui_configs(
 ) -> BaseResponse:
     try:
         configinst = InnerJsonConfigWebUIParse()
-        return BaseResponse(data = configinst.dump())    
+        return BaseResponse(data = configinst.dump())
     except Exception as e:
         print(f'{e.__class__.__name__}: {e}')
         return BaseResponse(

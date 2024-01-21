@@ -1,0 +1,63 @@
+{
+    "kb_root_path": "./WebUI/knowledge_base",
+    "db_root_path": "./WebUI/knowledge_base/info.db",
+    "sqlalchemy_db_uri": "sqlite:///",
+
+    "kbs_config": {
+        "faiss": {
+        },
+        "milvus": {
+            "host": "127.0.0.1",
+            "port": "19530",
+            "user": "",
+            "password": "",
+            "secure": false
+        },
+        "zilliz": {
+            "host": "in01-a7ce524e41e3935.ali-cn-hangzhou.vectordb.zilliz.com.cn",
+            "port": "19530",
+            "user": "",
+            "password": "",
+            "secure": true
+            },
+        "pg": {
+            "connection_uri": "postgresql://postgres:postgres@127.0.0.1:5432/keras-llm-robot"
+        },
+    
+        "es": {
+            "host": "127.0.0.1",
+            "port": "9200",
+            "index_name": "test_index",
+            "user": "",
+            "password": ""
+        },
+        "milvus_kwargs":{
+            "search_params":{"metric_type": "L2"},
+            "index_params":{"metric_type": "L2","index_type": "HNSW"}
+        }
+    },
+
+    "text_splitter_dict": {
+        "ChineseRecursiveTextSplitter": {
+            "source": "huggingface",
+            "tokenizer_name_or_path": ""
+        },
+        "SpacyTextSplitter": {
+            "source": "huggingface",
+            "tokenizer_name_or_path": "gpt2"
+        },
+        "RecursiveCharacterTextSplitter": {
+            "source": "tiktoken",
+            "tokenizer_name_or_path": "cl100k_base"
+        },
+        "MarkdownHeaderTextSplitter": {
+            "headers_to_split_on":
+                [
+                    {"#": "head1"},
+                    {"##": "head2"},
+                    {"###": "head3"},
+                    {"####": "head4"}
+                ]
+        }
+    }
+}

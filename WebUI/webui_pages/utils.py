@@ -9,6 +9,7 @@ from WebUI.Server.utils import get_httpx_client
 from WebUI.configs.serverconfig import API_SERVER
 from WebUI.configs import HTTPX_DEFAULT_TIMEOUT
 from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
+from WebUI.Server.knowledge_base.utils import (CHUNK_SIZE, OVERLAP_SIZE, ZH_TITLE_ENHANCE, SCORE_THRESHOLD)
 
 def api_address() -> str:
     host = API_SERVER["host"]
@@ -58,14 +59,21 @@ class ApiRequest:
         json: Dict = None,
         retry: int = 3,
         stream: bool = False,
+        timeout: Union[None, int] = None,
         **kwargs: Any
     ) -> Union[httpx.Response, Iterator[httpx.Response], None]:
         while retry > 0:
             try:
                 if stream:
-                    return self.client.stream("POST", url, data=data, json=json, **kwargs)
+                    if timeout == 0:
+                        return self.client.stream("POST", url, data=data, json=json, timeout=None, **kwargs)
+                    elif timeout is None:
+                        return self.client.stream("POST", url, data=data, json=json, **kwargs)
                 else:
-                    return self.client.post(url, data=data, json=json, **kwargs)
+                    if timeout == 0:
+                        return self.client.post(url, data=data, json=json, timeout=None, **kwargs)
+                    elif timeout is None:
+                        return self.client.post(url, data=data, json=json, **kwargs)
             except Exception as e:
                 print(self._client)
                 msg = f"error when post {url}: {e}"
@@ -190,6 +198,71 @@ class ApiRequest:
             "chat_history_id": "123",
             "text": "internal error!"
         }]
+    
+    def knowledge_base_chat(
+        self,
+        query: str,
+        knowledge_base_name: str,
+        top_k: int,
+        score_threshold: float,
+        history: List[Dict] = [],
+        stream: bool = True,
+        model: str = "",
+        imagesdata: List[bytes] = [],
+        speechmodel: dict = {"model": "", "speaker": ""},
+        temperature: float = 0.7,
+        max_tokens: int = None,
+        prompt_name: str = "default",
+    ):
+        configinst = InnerJsonConfigWebUIParse()
+        webui_config = configinst.dump()
+        modelinfo : Dict[str, any] = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "config": dict}
+        modelinfo["mtype"], modelinfo["msize"], modelinfo["msubtype"] = GetModelInfoByName(webui_config, model)
+        config = GetSpeechModelInfo(webui_config, speechmodel.get("model", ""))
+        if len(config):
+            speechmodel["type"] = config["type"]
+            speechmodel["speech_key"] = config.get("speech_key", "")
+            if speechmodel["speech_key"] == "[Your Key]":
+                speechmodel["speech_key"] = ""
+            speechmodel["speech_region"] = config.get("speech_region", "")
+            if speechmodel["speech_region"] == "[Your Region]":
+                speechmodel["speech_region"] = ""
+            speechmodel["provider"] = config.get("provider", "")
+        else:
+            speechmodel["type"] = ""
+            speechmodel["speech_key"] = ""
+            speechmodel["speech_region"] = ""
+            speechmodel["provider"] = config.get("provider", "")
+
+        dataslist = []
+        if len(imagesdata):
+            for imagedata in imagesdata:
+                dataslist.append(base64.b64encode(imagedata).decode('utf-8'))
+
+        data = {
+            "query": query,
+            "knowledge_base_name": knowledge_base_name,
+            "top_k": top_k,
+            "score_threshold": score_threshold,
+            "history": history,
+            "stream": stream,
+            "model_name": model,
+            "imagesdata": dataslist,
+            "speechmodel": speechmodel,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "prompt_name": prompt_name,
+        }
+
+        print(f"received input message:")
+        pprint(data)
+
+        response = self.post(
+            "/chat/knowledge_base_chat",
+            json=data,
+            stream=True,
+        )
+        return self._httpx_stream2generator(response, as_json=True)
 
     def _httpx_stream2generator(
         self,
@@ -279,7 +352,8 @@ class ApiRequest:
         }
         response = self.post("/server/get_prompt_template", json=data, **kwargs)
         return self._get_response_value(response, value_func=lambda r: r.text)
-    
+
+    # llm model api    
 
     def get_running_models(self, controller_address: str = None):
         data = {
@@ -454,9 +528,13 @@ class ApiRequest:
         response = self.post(
             "/llm_model/download_llm_model",
             json=data,
+            retry=1,
+            timeout=0,
             stream=True,
         )
         return self._httpx_stream2generator(response, as_json=True)
+    
+    # voice & speech model api
         
     def save_vtot_model_config(self,
         model_name: str = "",
@@ -719,7 +797,206 @@ class ApiRequest:
             return self.ret_async(response)
         else:
             return self.ret_sync(response)
+        
+    # Knowledge base api
+    def list_knowledge_bases(
+        self,
+    ):
+        response = self.get("/knowledge_base/list_knowledge_bases")
+        return self._get_response_value(response,
+                                        as_json=True,
+                                        value_func=lambda r: r.get("data", []))
 
+    def create_knowledge_base(
+        self,
+        knowledge_base_name: str = "",
+        knowledge_base_info: str = "",
+        vector_store_type: str = "",
+        embed_model: str = "",
+    ):
+        data = {
+            "knowledge_base_name": knowledge_base_name,
+            "knowledge_base_info": knowledge_base_info,
+            "vector_store_type": vector_store_type,
+            "embed_model": embed_model,
+        }
+
+        response = self.post(
+            "/knowledge_base/create_knowledge_base",
+            json=data,
+        )
+        return self._get_response_value(response, as_json=True)
+
+    def delete_knowledge_base(
+        self,
+        knowledge_base_name: str,
+    ):
+        response = self.post(
+            "/knowledge_base/delete_knowledge_base",
+            json=f"{knowledge_base_name}",
+        )
+        return self._get_response_value(response, as_json=True)
+    
+    def list_kb_docs(
+        self,
+        knowledge_base_name: str,
+    ):
+        response = self.get(
+            "/knowledge_base/list_files",
+            params={"knowledge_base_name": knowledge_base_name}
+        )
+        return self._get_response_value(response,
+                                        as_json=True,
+                                        value_func=lambda r: r.get("data", []))
+
+    def search_kb_docs(
+        self,
+        knowledge_base_name: str,
+        query: str = "",
+        top_k: int = 3,
+        score_threshold: float = SCORE_THRESHOLD,
+        file_name: str = "",
+        metadata: dict = {},
+    ) -> List:
+        data = {
+            "query": query,
+            "knowledge_base_name": knowledge_base_name,
+            "top_k": top_k,
+            "score_threshold": score_threshold,
+            "file_name": file_name,
+            "metadata": metadata,
+        }
+        response = self.post(
+            "/knowledge_base/search_docs",
+            json=data,
+        )
+        return self._get_response_value(response, as_json=True)
+
+    def update_docs_by_id(
+        self,
+        knowledge_base_name: str,
+        docs: Dict[str, Dict],
+    ) -> bool:
+        data = {
+            "knowledge_base_name": knowledge_base_name,
+            "docs": docs,
+        }
+        response = self.post(
+            "/knowledge_base/update_docs_by_id",
+            json=data
+        )
+        return self._get_response_value(response)
+    
+    def upload_kb_docs(
+        self,
+        files: List[Union[str, Path, bytes]],
+        knowledge_base_name: str,
+        override: bool = False,
+        to_vector_store: bool = True,
+        chunk_size=CHUNK_SIZE,
+        chunk_overlap=OVERLAP_SIZE,
+        zh_title_enhance=ZH_TITLE_ENHANCE,
+        docs: Dict = {},
+        not_refresh_vs_cache: bool = False,
+    ):
+        def convert_file(file, filename=None):
+            from io import BytesIO
+            if isinstance(file, bytes): # raw bytes
+                file = BytesIO(file)
+            elif hasattr(file, "read"): # a file io like object
+                filename = filename or file.name
+            else: # a local path
+                file = Path(file).absolute().open("rb")
+                filename = filename or os.path.split(file.name)[-1]
+            return filename, file
+
+        files = [convert_file(file) for file in files]
+        data={
+            "knowledge_base_name": knowledge_base_name,
+            "override": override,
+            "to_vector_store": to_vector_store,
+            "chunk_size": chunk_size,
+            "chunk_overlap": chunk_overlap,
+            "zh_title_enhance": zh_title_enhance,
+            "docs": docs,
+            "not_refresh_vs_cache": not_refresh_vs_cache,
+        }
+
+        if isinstance(data["docs"], dict):
+            data["docs"] = json.dumps(data["docs"], ensure_ascii=False)
+        response = self.post(
+            "/knowledge_base/upload_docs",
+            data=data,
+            retry=1,
+            timeout=0,
+            files=[("files", (filename, file)) for filename, file in files],
+        )
+        return self._get_response_value(response, as_json=True)
+
+    def delete_kb_docs(
+        self,
+        knowledge_base_name: str,
+        file_names: List[str],
+        delete_content: bool = False,
+        not_refresh_vs_cache: bool = False,
+    ):
+        data = {
+            "knowledge_base_name": knowledge_base_name,
+            "file_names": file_names,
+            "delete_content": delete_content,
+            "not_refresh_vs_cache": not_refresh_vs_cache,
+        }
+
+        response = self.post(
+            "/knowledge_base/delete_docs",
+            json=data,
+        )
+        return self._get_response_value(response, as_json=True)
+    
+    def update_kb_info(self,knowledge_base_name,kb_info):
+        data = {
+            "knowledge_base_name": knowledge_base_name,
+            "kb_info": kb_info,
+        }
+
+        response = self.post(
+            "/knowledge_base/update_info",
+            json=data,
+        )
+        return self._get_response_value(response, as_json=True)
+
+    def update_kb_docs(
+        self,
+        knowledge_base_name: str,
+        file_names: List[str],
+        override_custom_docs: bool = False,
+        chunk_size=CHUNK_SIZE,
+        chunk_overlap=OVERLAP_SIZE,
+        zh_title_enhance=ZH_TITLE_ENHANCE,
+        docs: Dict = {},
+        not_refresh_vs_cache: bool = False,
+    ):
+        data = {
+            "knowledge_base_name": knowledge_base_name,
+            "file_names": file_names,
+            "override_custom_docs": override_custom_docs,
+            "chunk_size": chunk_size,
+            "chunk_overlap": chunk_overlap,
+            "zh_title_enhance": zh_title_enhance,
+            "docs": docs,
+            "not_refresh_vs_cache": not_refresh_vs_cache,
+        }
+
+        if isinstance(data["docs"], dict):
+            data["docs"] = json.dumps(data["docs"], ensure_ascii=False)
+
+        response = self.post(
+            "/knowledge_base/update_docs",
+            retry=1,
+            timeout=0,
+            json=data,
+        )
+        return self._get_response_value(response, as_json=True)
     
     def _get_response_value(self, response: httpx.Response, as_json: bool = False, value_func: Callable = None,):
         

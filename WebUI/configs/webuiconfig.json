@@ -53,13 +53,13 @@
             }
         },
         "EmbeddingModel": {
-            "jina-embeddings-v2-small-en": {
-                "path": "models/embeddings/jina-embeddings-v2-small-en",
-                "Huggingface": "jinaai/jina-embeddings-v2-small-en"
+            "bge-large-en-v1.5": {
+                "path": "models/embeddings/bge-large-en-v1.5",
+                "Huggingface": "BAAI/bge-large-en-v1.5"
             },
-            "jina-embeddings-v2-base-en": {
-                "path": "models/embeddings/jina-embeddings-v2-base-en",
-                "Huggingface": "jinaai/jina-embeddings-v2-base-en"
+            "bge-large-zh-v1.5": {
+                "path": "models/embeddings/bge-large-zh-v1.5",
+                "Huggingface": "BAAI/bge-large-zh-v1.5"
             },
             "m3e-small": {
                 "path": "models/embeddings/m3e-small",
@@ -81,24 +81,38 @@
                 "path": "models/embeddings/bge-base-en-v1.5",
                 "Huggingface": "BAAI/bge-base-en-v1.5"
             },
-            "bge-large-en-v1.5": {
-                "path": "models/embeddings/bge-large-en-v1.5",
-                "Huggingface": "BAAI/bge-large-en-v1.5"
+            "bge-small-zh-v1.5": {
+                "path": "models/embeddings/bge-small-zh-v1.5",
+                "Huggingface": "BAAI/bge-small-zh-v1.5"
+            },
+            "bge-base-zh-v1.5": {
+                "path": "models/embeddings/bge-base-zh-v1.5",
+                "Huggingface": "BAAI/bge-base-zh-v1.5"
             },
             "text-embedding-ada-002": {
                 "path": "",
-                "apikey": "OPENAI_API_KEY",
+                "apikey": "[Your Key]",
                 "provider": "OpenAI"
             },
             "embedding-gecko-001": {
                 "path": "",
-                "apikey": "GOOGLE_API_KEY",
+                "apikey": "[Your Key]",
                 "provider": "GoogleCloud"
             },
             "embedding-001": {
                 "path": "",
-                "apikey": "GOOGLE_API_KEY",
+                "apikey": "[Your Key]",
                 "provider": "GoogleCloud"
+            }
+        },
+        "RerankerModel": {
+            "bge-reranker-base": {
+                "path": "models/reranker/bge-reranker-base",
+                "Huggingface": "BAAI/bge-reranker-base"
+            },
+            "bge-reranker-large": {
+                "path": "models/reranker/bge-reranker-large",
+                "Huggingface": "BAAI/bge-reranker-large"
             }
         },
         "VtoTModel": {
