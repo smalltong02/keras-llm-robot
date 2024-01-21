@@ -59,7 +59,7 @@ class _FaissPool(CachePool):
         # create an empty vector store
         embeddings = EmbeddingsFunAdapter(embed_model)
         doc = Document(page_content="init", metadata={})
-        vector_store = FAISS.from_documents([doc], embeddings, normalize_L2=True,distance_strategy="METRIC_INNER_PRODUCT")
+        vector_store = FAISS.from_documents([doc], embeddings)
         ids = list(vector_store.docstore._dict.keys())
         vector_store.delete(ids)
         return vector_store
