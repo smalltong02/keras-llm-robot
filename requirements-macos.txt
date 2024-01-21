@@ -62,8 +62,6 @@ google-generativeai==0.3.1
 googleapis-common-protos==1.62.0
 GPUtil==1.4.0
 greenlet==3.0.1
-grpcio==1.60.0
-grpcio-status==1.60.0
 gruut==2.2.3
 gruut-ipa==0.13.0
 gruut-lang-de==2.0.0
