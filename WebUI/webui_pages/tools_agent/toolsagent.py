@@ -104,7 +104,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
 
                 cols = st.columns(2)
                 #vs_types = GetKbsList()
-                vs_types = ["faiss", "milvus"]  # current just support faiss.
+                vs_types = ["faiss", "milvus", "pg"]  # current just support faiss.
                 vs_type = cols[0].selectbox(
                     "Vector Store Type",
                     vs_types,
@@ -324,7 +324,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                 file_name = selected_rows[0]["file_name"]
                 st.write(f'Document View in the `{file_name}`:') # Document list in the file. Double-click to modify, enter Y in the delete column to remove the corresponding row.
                 docs = api.search_kb_docs(knowledge_base_name=selected_kb, file_name=file_name)
-                print("docs: ", docs)
+                #print("docs: ", docs)
                 data = [{"seq": i+1, "id": x["id"], "page_content": x["page_content"], "source": x["metadata"].get("source"),
                         "type": x["type"],
                         "metadata": json.dumps(x["metadata"], ensure_ascii=False),

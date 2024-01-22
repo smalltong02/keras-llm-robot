@@ -20,9 +20,10 @@ class PGKBService(KBService):
 
     def get_doc_by_ids(self, ids: List[str]) -> List[Document]:
         with self.pg_vector.connect() as connect:
-            stmt = text("SELECT document, cmetadata FROM langchain_pg_embedding WHERE collection_id in :ids")
+            ids_string = "('" + "','".join(ids) + "')"
+            stmt = text("SELECT document, cmetadata FROM langchain_pg_embedding WHERE custom_id in " + ids_string)
             results = [Document(page_content=row[0], metadata=row[1]) for row in
-                       connect.execute(stmt, parameters={'ids': ids}).fetchall()]
+                       connect.execute(stmt).fetchall()]
             return results
 
     # TODO:
@@ -41,12 +42,10 @@ class PGKBService(KBService):
     def do_drop_kb(self):
         with self.pg_vector.connect() as connect:
             connect.execute(text(f'''
-                    -- 删除 langchain_pg_embedding 表中关联到 langchain_pg_collection 表中 的记录
                     DELETE FROM langchain_pg_embedding
                     WHERE collection_id IN (
                       SELECT uuid FROM langchain_pg_collection WHERE name = '{self.kb_name}'
                     );
-                    -- 删除 langchain_pg_collection 表中 记录
                     DELETE FROM langchain_pg_collection WHERE name = '{self.kb_name}';
             '''))
             connect.commit()

@@ -349,7 +349,31 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
       **`NOTE`** Please download the embedding model in advance and place it in the specified folder, otherwise the document vectorization will not be possible, and uploading to the knowledge base will also fail.
 
-      **`NOTE`** When using the Milvus database, it is recommended to deploy it locally or on a Kubernetes (k8s) cluster using Docker. Please refer to the official Milvus documentation and download the docker file at https://github.com/milvus-io/milvus/releases/download/v2.3.0/milvus-standalone-docker-compose.yml for deployment.
+      **`NOTE`** When using the Milvus database, it is recommended to deploy it locally or on a Kubernetes (k8s) cluster using Docker. Please refer to the official Milvus documentation and download the docker file at https://github.com/milvus-io/milvus/releases/download/v2.3.0/milvus-standalone-docker-compose.yml .
+
+      ```bash
+        1. please rename it to docker-compose.yml When download was finished.
+
+        2. Create local folder for Milvus and copy the file docker-compose.yml into it.
+
+        3. create sub folder conf, db, logs, pic, volumes, wal
+
+        4. Execute the command in that folder
+           docker-compose up -d
+
+        5. Please check whether the image deployment is successful in the Docker interface. and ensure that the image is running and listening on ports 19530 and 9091.
+      ```
+
+      **`NOTE`** When using the PGVector database，it is recommended to deploy it locally using Docker.
+      ```bash
+        1. Execute the command for download image.
+           docker pull ankane/pgvector
+
+        2. Deploy the container using the following command, and modify the DB name, username, and password as needed. (Please also update the 'connection_uri' configuration in kbconfig.json under 'pg').
+           docker run --name pgvector -e POSTGRES_DB=keras-llm-robot -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d ankane/pgvector
+
+        3. Please check whether the image deployment is successful in the Docker interface. and ensure that the image is running and listening on ports 5432.
+      ```
 
       Support the following Documents:
 

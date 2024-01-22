@@ -20,6 +20,7 @@ dataclasses-json==0.6.1
 fastapi==0.104.1
 faiss-cpu==1.7.4
 filelock==3.9.0
+psycopg2==2.9.9
 pymupdf==1.23.15
 pymilvus==2.3.5
 frozenlist==1.4.0
