@@ -64,6 +64,10 @@ The project inherits from the Langchain-Chatchat project(https://github.com/chat
    
   [![Alt text](https://img.youtube.com/vi/yFK62Tn_f4Q/0.jpg)](https://www.youtube.com/watch?v=yFK62Tn_f4Q)
 
+  3. The demonstration of the Retrieval Augmented Generation (RAG) feature：
+  
+  [![Alt text](https://img.youtube.com/vi/dyIFLISlskI/0.jpg)](https://www.youtube.com/watch?v=dyIFLISlskI) 
+
 
 ## Project Introduction
 Consists of three main interfaces: the chat interface for language models, the configuration interface for language models, and the tools and agent interface for auxiliary models.
