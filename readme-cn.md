@@ -347,6 +347,32 @@
 
       **`请注意`** 请提前下载向量模型，并放入指定的目录中，否则无法对文档进行向量化并且放入知识库也将失败。
 
+      **`请注意`** 当使用Milvus数据库时，推荐使用Docker来进行本机部署或者k8集群部署，请检查Milvus的官方文档并下载 https://github.com/milvus-io/milvus/releases/download/v2.3.0/milvus-standalone-docker-compose.yml ，
+      ```bash
+        1. 下载完成后请把它重命名为 docker-compose.yml
+
+        2. 为Milvus创建一个本地数据库目录并把文件docker-compose.yml拷贝进来
+
+        3. 在这个目录下创建conf,db,logs,pic,volumes,wal六个目录
+
+        4. 在该目录下执行命令 
+           docker-compose up -d
+
+        5. 在Docker主界面中检查镜像部署是否成功，并确保镜像已经启动，并在端口19530和9091上监听
+      ```
+
+      **`请注意`** 当使用PGVector数据库时，推荐使用Docker来进行本机部署
+      ```bash
+        1. 执行命令下载镜像 
+           docker pull ankane/pgvector
+
+        2. 使用以下命令部署容器，请根据需要修改数据库名称，用户名和密码。（修改之后也需要同时修改kbconfig.json中pg的connection_uri配置）
+           docker run --name pgvector -e POSTGRES_DB=keras-llm-robot -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d ankane/pgvector
+
+        3. 在Docker主界面中检查镜像部署是否成功，并确保镜像已经启动，并在端口5432上监听
+      ```
+
+
 
       支持的文档类型：
 
