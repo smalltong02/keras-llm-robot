@@ -347,6 +347,7 @@
 
       **`请注意`** 请提前下载向量模型，并放入指定的目录中，否则无法对文档进行向量化并且放入知识库也将失败。
 
+      **`请注意`** 当使用Milvus数据库时，推荐使用Docker来进行本机部署或者k8集群部署，请检查Milvus的官方文档并下载 https://github.com/milvus-io/milvus/releases/download/v2.3.0/milvus-standalone-docker-compose.yml 进行部署。
 
       支持的文档类型：
 

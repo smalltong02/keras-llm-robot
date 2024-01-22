@@ -349,6 +349,7 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
       **`NOTE`** Please download the embedding model in advance and place it in the specified folder, otherwise the document vectorization will not be possible, and uploading to the knowledge base will also fail.
 
+      **`NOTE`** When using the Milvus database, it is recommended to deploy it locally or on a Kubernetes (k8s) cluster using Docker. Please refer to the official Milvus documentation and download the docker file at https://github.com/milvus-io/milvus/releases/download/v2.3.0/milvus-standalone-docker-compose.yml for deployment.
 
       Support the following Documents:
 
