@@ -104,7 +104,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
 
                 cols = st.columns(2)
                 #vs_types = GetKbsList()
-                vs_types = ["faiss"]  # current just support faiss.
+                vs_types = ["faiss", "milvus"]  # current just support faiss.
                 vs_type = cols[0].selectbox(
                     "Vector Store Type",
                     vs_types,
