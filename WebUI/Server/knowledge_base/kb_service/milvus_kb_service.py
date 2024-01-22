@@ -3,8 +3,8 @@ from typing import List, Dict, Optional
 from langchain.schema import Document
 from langchain.vectorstores.milvus import Milvus
 from WebUI.configs.basicconfig import GetKbsConfig
-from server.knowledge_base.kb_service.base import KBService, SupportedVSType, EmbeddingsFunAdapter, score_threshold_process
-from server.knowledge_base.utils import KnowledgeFile
+from WebUI.Server.knowledge_base.kb_service.base import KBService, SupportedVSType, EmbeddingsFunAdapter, score_threshold_process
+from WebUI.Server.knowledge_base.utils import KnowledgeFile
 
 
 class MilvusKBService(KBService):
@@ -22,10 +22,12 @@ class MilvusKBService(KBService):
     def get_doc_by_ids(self, ids: List[str]) -> List[Document]:
         result = []
         if self.milvus.col:
-            data_list = self.milvus.col.query(expr=f'pk in {ids}', output_fields=["*"])
+            int_ids = [int(id) for id in ids]
+            data_list = self.milvus.col.query(expr=f'pk in {int_ids}', output_fields=["*"])
             for data in data_list:
                 text = data.pop("text")
-                result.append(Document(page_content=text, metadata=data))
+                source = {"source": data["source"]}
+                result.append(Document(page_content=text, metadata=source))
         return result
 
     def del_doc_by_ids(self, ids: List[str]) -> bool:
@@ -97,8 +99,8 @@ class MilvusKBService(KBService):
 
 
 if __name__ == '__main__':
-    # 测试建表使用
-    from server.db.base import Base, engine
+    # test
+    from WebUI.Server.db.base import Base, engine
 
     Base.metadata.create_all(bind=engine)
     milvusService = MilvusKBService("test")
@@ -107,4 +109,4 @@ if __name__ == '__main__':
     print(milvusService.get_doc_by_ids(["444022434274215486"]))
     # milvusService.delete_doc(KnowledgeFile("README.md", "test"))
     # milvusService.do_drop_kb()
-    # print(milvusService.search_docs("如何启动api服务"))
+    # print(milvusService.search_docs("How to start api Service"))
