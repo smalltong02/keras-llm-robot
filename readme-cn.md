@@ -52,6 +52,18 @@
   ./tools/ssl-proxy-darwin -from 0.0.0.0:4480 -to 127.0.0.1:8818
   ```
 
+  以Ubuntu为例, 你可以通过启动反向代理ssl-proxy-darwin，并在同一局域网内的其它设备上访问服务:
+
+  ![Image1](./img/Start_Server_Ubuntu.png)
+  在Ubuntu上启动服务
+
+  ![Image1](./img/Reverse_Proxy_Ubuntu.png)
+  在Ubuntu上启动反向代理
+
+  ![Image1](./img/Https_Access_Windows.png)
+  在windows机器上，听过Https访问服务
+
+
 ## 视频演示
 
   1. 演示使用了多模态在线模型gpt-4-vision-preview 加 Azure Speech to Text服务：
@@ -376,6 +388,9 @@
         3. 在Docker主界面中检查镜像部署是否成功，并确保镜像已经启动，并在端口5432上监听
       ```
 
+      以Ubuntu为例，成功启动Milvus和PGVector的服务器端之后，在Docker Desktop中可以检查它们，您也可以安装attu或者pgAdmin等客户端来管理这些数据库:
+
+      ![Image1](./img/Ubuntu-Docker.png)
 
 
       支持的文档类型：

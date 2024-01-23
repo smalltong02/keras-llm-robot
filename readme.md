@@ -54,6 +54,17 @@ The project inherits from the Langchain-Chatchat project(https://github.com/chat
   ./tools/ssl-proxy-darwin -from 0.0.0.0:4480 -to 127.0.0.1:8818
   ```
 
+  As an example with Ubuntu, You can access the service from other PCs on the local network after starting the reverse proxy with ssl-proxy-darwin:
+
+  ![Image1](./img/Start_Server_Ubuntu.png)
+  Start Server on Ubuntu.
+
+  ![Image1](./img/Reverse_Proxy_Ubuntu.png)
+  Start Reverse Proxy on Ubuntu.
+
+  ![Image1](./img/Https_Access_Windows.png)
+  Access Server on Windows PC by Https.
+
 ## Video Demonstration
 
   1. The demonstration utilizes a multimodal online model GPT-4-vision-preview along with Azure Speech to Text services:
@@ -378,6 +389,11 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
         3. Please check whether the image deployment is successful in the Docker interface. and ensure that the image is running and listening on ports 5432.
       ```
+
+      As an example with Ubuntu, after successfully launching the server-side of Milvus and PGVector, you can check them in Docker Desktop. Additionally, you can install clients such as attu or pgAdmin to manage vector DB:
+
+      ![Image1](./img/Ubuntu-Docker.png)
+
 
       Support the following Documents:
 

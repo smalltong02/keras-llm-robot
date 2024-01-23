@@ -254,3 +254,21 @@ def special_model_chat(
                                             model_name=model_name,
                                             prompt_name=prompt_name),
                              media_type="text/event-stream")
+
+def special_model_knowledge_base_chat(
+        model: Any,
+        model_name: str,
+        async_callback: Any,
+        query: str,
+        knowledge_base_name: str,
+        top_k: int,
+        score_threshold: float,
+        history: List[dict],
+        stream: bool,
+        imagesdata: List[str],
+        speechmodel: dict,
+        temperature: float,
+        max_tokens: Optional[int],
+        prompt_name: str,
+):
+    pass

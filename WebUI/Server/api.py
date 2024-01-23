@@ -19,7 +19,7 @@ from WebUI.Server.llm_api import (list_running_models, get_running_models, list_
                             get_model_config, save_chat_config, save_model_config, get_webui_configs,
                             get_vtot_model, get_vtot_data, stop_vtot_model, change_vtot_model, save_voice_model_config,
                             get_speech_model, get_speech_data, save_speech_model_config, stop_speech_model, change_speech_model,
-                            list_search_engines)
+                            llm_knowledge_base_chat, list_search_engines)
 from WebUI.Server.utils import(BaseResponse, ListResponse, FastAPI, MakeFastAPIOffline,
                           get_server_configs, get_prompt_template)
 from typing import List, Literal
@@ -224,6 +224,10 @@ def mount_knowledge_routes(app: FastAPI):
     app.post("/chat/knowledge_base_chat",
             tags=["Chat"],
             summary="chat with Knowledge base")(knowledge_base_chat)
+    
+    app.post("/llm_model/knowledge_base_chat",
+            tags=["Chat"],
+            summary="chat with Knowledge base")(llm_knowledge_base_chat)
 
     app.post("/chat/file_chat",
             tags=["Knowledge Base Management"],
