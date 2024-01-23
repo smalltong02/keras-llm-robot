@@ -57,12 +57,15 @@ The project inherits from the Langchain-Chatchat project(https://github.com/chat
   As an example with Ubuntu, You can access the Server from other PCs on the local network after starting the reverse proxy with ssl-proxy-darwin:
 
   ![Image1](./img/Start_Server_Ubuntu.png)
+  
   Start Server on Ubuntu.
 
   ![Image1](./img/Reverse_Proxy_Ubuntu.png)
+  
   Start Reverse Proxy on Ubuntu.
 
   ![Image1](./img/Https_Access_Windows.png)
+  
   Access Server on Windows PC by https service.
 
 ## Video Demonstration

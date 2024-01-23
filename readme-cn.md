@@ -55,12 +55,15 @@
   以Ubuntu为例, 你可以通过启动反向代理ssl-proxy-darwin，并在同一局域网内的其它设备上访问服务器:
 
   ![Image1](./img/Start_Server_Ubuntu.png)
+  
   在Ubuntu上启动服务器
 
   ![Image1](./img/Reverse_Proxy_Ubuntu.png)
+  
   在Ubuntu上启动反向代理
 
   ![Image1](./img/Https_Access_Windows.png)
+  
   在windows机器上，通过Https服务访问服务器
 
 
