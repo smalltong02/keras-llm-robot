@@ -15,6 +15,7 @@ from WebUI.Server.utils import (set_httpx_config, get_model_worker_config, get_h
                                 fschat_model_worker_address, get_vtot_worker_config, get_speech_worker_config)
 from __about__ import __title__, __summary__, __version__, __author__, __email__, __license__, __copyright__
 from webuisrv import InnerLlmAIRobotWebUIServer
+from WebUI.Server.knowledge_base.utils import SCORE_THRESHOLD
 from WebUI.configs.serverconfig import (FSCHAT_MODEL_WORKERS, FSCHAT_CONTROLLER, HTTPX_LOAD_TIMEOUT, HTTPX_RELEASE_TIMEOUT,
                                         HTTPX_LOAD_VOICE_TIMEOUT, HTTPX_RELEASE_VOICE_TIMEOUT, FSCHAT_OPENAI_API, API_SERVER)
 from WebUI.configs.voicemodels import (init_voice_models, translate_voice_data, cloud_voice_data, init_speech_models, translate_speech_data)
@@ -251,6 +252,56 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
                         "imagesdata": imagesdata,
                         "history": history,
                         "stream": stream,
+                        "speechmodel": speechmodel,
+                        "temperature": temperature,
+                        "max_tokens": max_tokens,
+                        "prompt_name": prompt_name,
+                        },
+                    )
+                with response as r:
+                    for chunk in r.iter_text(None):
+                        if not chunk:
+                            continue
+                        yield chunk
+                        await asyncio.sleep(0.1)
+        return StreamingResponse(fake_json_streamer(), media_type="text/event-stream")
+    
+    @app.post("/knowledge_base_chat")
+    def knowledge_base_chat(
+        query: str = Body(..., description="User input: ", examples=["chat"]),
+        knowledge_base_name: str = Body(..., description="knowledge base name"),
+        top_k: int = Body(3, description="matching vector count"),
+        score_threshold: float = Body(
+                SCORE_THRESHOLD,
+                description="Knowledge base matching relevance threshold, with a range between 0 and 1. A smaller SCORE indicates higher relevance, and setting it to 1 is equivalent to no filtering. It is recommended to set it around 0.5"),
+        history: List[dict] = Body([],
+                                    description="History chat",
+                                    examples=[[
+                                        {"role": "user", "content": "Who are you?"},
+                                        {"role": "assistant", "content": "I am AI."}]]
+                                    ),
+        stream: bool = Body(False, description="stream output"),
+        model_name: str = Body("", description="model name"),
+        imagesdata: List[str] = Body([], description="image data", examples=["image"]),
+        speechmodel: dict = Body({}, description="speech model"),
+        temperature: float = Body(0.7, description="LLM Temperature", ge=0.0, le=1.0),
+        max_tokens: Optional[int] = Body(None, description="max tokens."),
+        prompt_name: str = Body("default", description=""),
+    ):
+        workerconfig = get_model_worker_config(model_name)
+        worker_address = "http://" + workerconfig["host"] + ":" + str(workerconfig["port"])
+        async def fake_json_streamer() -> AsyncIterable[str]:
+            with get_httpx_client() as client:
+                response = client.stream("POST", 
+                    url=worker_address + "/knowledge_base_chat",
+                    json={
+                        "query": query,
+                        "knowledge_base_name": knowledge_base_name,
+                        "top_k": top_k,
+                        "score_threshold": score_threshold,
+                        "history": history,
+                        "stream": stream,
+                        "imagesdata": imagesdata,
                         "speechmodel": speechmodel,
                         "temperature": temperature,
                         "max_tokens": max_tokens,
@@ -823,6 +874,29 @@ def run_model_worker(
         prompt_name: str = Body("default", description=""),
     ):
         return special_model_chat(app._model, app._model_name, app._streamer, query, imagesdata, history, stream, speechmodel, temperature, max_tokens, prompt_name)
+    
+    @app.post("/knowledge_base_chat")
+    def knowledge_base_chat(
+        query: str = Body(..., description="User input: ", examples=["chat"]),
+        knowledge_base_name: str = Body(..., description="knowledge base name"),
+        top_k: int = Body(3, description="matching vector count"),
+        score_threshold: float = Body(
+                SCORE_THRESHOLD,
+                description="Knowledge base matching relevance threshold, with a range between 0 and 1. A smaller SCORE indicates higher relevance, and setting it to 1 is equivalent to no filtering. It is recommended to set it around 0.5"),
+        history: List[dict] = Body([],
+                                    description="History chat",
+                                    examples=[[
+                                        {"role": "user", "content": "Who are you?"},
+                                        {"role": "assistant", "content": "I am AI."}]]
+                                    ),
+        stream: bool = Body(False, description="stream output"),
+        imagesdata: List[str] = Body([], description="image data", examples=["image"]),
+        speechmodel: dict = Body({}, description="speech model"),
+        temperature: float = Body(0.7, description="LLM Temperature", ge=0.0, le=1.0),
+        max_tokens: Optional[int] = Body(None, description="max tokens."),
+        prompt_name: str = Body("default", description=""),
+    ):
+        return special_model_knowledge_base_chat(app._model, app._model_name, app._streamer, query, knowledge_base_name, top_k, score_threshold, history, stream, imagesdata, speechmodel, temperature, max_tokens, prompt_name)
     
     uvicorn.run(app, host=host, port=port)
 

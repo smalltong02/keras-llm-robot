@@ -1,5 +1,6 @@
 from fastapi import Body
-from WebUI.configs import LLM_MODELS, TEMPERATURE, HTTPX_DEFAULT_TIMEOUT
+from WebUI.Server.knowledge_base.utils import SCORE_THRESHOLD
+from WebUI.configs import HTTPX_DEFAULT_TIMEOUT
 from WebUI.Server.utils import (BaseResponse, fschat_controller_address, list_config_llm_models,
                           get_httpx_client, get_model_worker_config, get_vtot_worker_config, get_speech_worker_config)
 from copy import deepcopy
@@ -97,7 +98,7 @@ def get_model_config(
 
 
 def stop_llm_model(
-    model_name: str = Body(..., description="Stop Model", examples=[LLM_MODELS[0]]),
+    model_name: str = Body(..., description="Stop Model", examples=[""]),
     controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])
 ) -> BaseResponse:
     try:
@@ -124,9 +125,9 @@ async def chat_llm_model(
                                       {"role": "assistant", "content": "I am AI."}]]
                                   ),
     stream: bool = Body(False, description="stream output"),
-    model_name: str = Body(LLM_MODELS[0], description="model name"),
+    model_name: str = Body("", description="model name"),
     speechmodel: dict = Body({}, description="speech model"),
-    temperature: float = Body(TEMPERATURE, description="LLM Temperature", ge=0.0, le=1.0),
+    temperature: float = Body(0.7, description="LLM Temperature", ge=0.0, le=1.0),
     max_tokens: Optional[int] = Body(None, description="max tokens."),
     prompt_name: str = Body("default", description=""),
     controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])
@@ -145,6 +146,58 @@ async def chat_llm_model(
                     "history": history,
                     "stream": stream,
                     "model_name": model_name,
+                    "speechmodel": speechmodel,
+                    "temperature": temperature,
+                    "max_tokens": max_tokens,
+                    "prompt_name": prompt_name,
+                    },
+            )
+            with response as r:
+                for chunk in r.iter_text(None):
+                    if not chunk:
+                        continue
+                    yield chunk
+                    await asyncio.sleep(0.1)
+    return StreamingResponse(fake_json_streamer(), media_type="text/event-stream")
+
+async def llm_knowledge_base_chat(
+    query: str = Body(..., description="User input: ", examples=["chat"]),
+    knowledge_base_name: str = Body(..., description="knowledge base name"),
+    top_k: int = Body(3, description="matching vector count"),
+    score_threshold: float = Body(
+            SCORE_THRESHOLD,
+            description="Knowledge base matching relevance threshold, with a range between 0 and 1. A smaller SCORE indicates higher relevance, and setting it to 1 is equivalent to no filtering. It is recommended to set it around 0.5"),
+    history: List[dict] = Body([],
+                                  description="History chat",
+                                  examples=[[
+                                      {"role": "user", "content": "Who are you?"},
+                                      {"role": "assistant", "content": "I am AI."}]]
+                                  ),
+    stream: bool = Body(False, description="stream output"),
+    model_name: str = Body("", description="model name"),
+    imagesdata: List[str] = Body([], description="image data", examples=["image"]),
+    speechmodel: dict = Body({}, description="speech model"),
+    temperature: float = Body(0.7, description="LLM Temperature", ge=0.0, le=1.0),
+    max_tokens: Optional[int] = Body(None, description="max tokens."),
+    prompt_name: str = Body("default", description=""),
+    controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])
+) -> StreamingResponse:
+    controller_address = controller_address or fschat_controller_address()
+    async def fake_json_streamer() -> AsyncIterable[str]:
+        import asyncio
+        with get_httpx_client() as client:
+            response = client.stream(
+                "POST",
+                url=controller_address + "/knowledge_base_chat",
+                json={
+                    "query": query,
+                    "knowledge_base_name": knowledge_base_name,
+                    "top_k": top_k,
+                    "score_threshold": score_threshold,
+                    "history": history,
+                    "stream": stream,
+                    "model_name": model_name,
+                    "imagesdata": imagesdata,
                     "speechmodel": speechmodel,
                     "temperature": temperature,
                     "max_tokens": max_tokens,

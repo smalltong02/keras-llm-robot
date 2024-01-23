@@ -257,12 +257,50 @@ class ApiRequest:
         print(f"received input message:")
         pprint(data)
 
-        response = self.post(
-            "/chat/knowledge_base_chat",
-            json=data,
-            stream=True,
-        )
-        return self._httpx_stream2generator(response, as_json=True)
+        if modelinfo["mtype"] == ModelType.Local:
+            response = self.post(
+                "/chat/knowledge_base_chat",
+                json=data,
+                stream=True,
+            )
+            return self._httpx_stream2generator(response, as_json=True)
+        elif modelinfo["mtype"] == ModelType.Special:
+            return [{
+                "code": 500,
+                "msg": "Unsupport RAG feature for Special Model!"
+            }]
+            # response = self.post(
+            #    "/llm_model/knowledge_base_chat",
+            #    json=data,
+            #    stream=True,
+            # )
+            # return self._httpx_stream2generator(response, as_json=True)
+        elif modelinfo["mtype"] == ModelType.Online:
+            provider = GetProviderByName(webui_config, model)
+            if provider is not None:
+                if provider == "google-api":
+                    return [{
+                        "code": 500,
+                        "msg": f"Unsupport RAG feature for {provider}",
+                    }]
+                    # response = self.post(
+                    #     "/llm_model/knowledge_base_chat",
+                    #     json=data,
+                    #     stream=True
+                    # )
+                    # return self._httpx_stream2generator(response, as_json=True)
+                else:
+                    response = self.post("/chat/knowledge_base_chat", json=data, stream=True,)
+                    return self._httpx_stream2generator(response, as_json=True)
+        elif modelinfo["mtype"] == ModelType.Multimodal:
+            return [{
+                "code": 500,
+                "msg": "Unsupport RAG feature for Multimodal Model!"
+            }]
+        return [{
+                "code": 500,
+                "msg": f"internal error!",
+            }]
 
     def _httpx_stream2generator(
         self,
