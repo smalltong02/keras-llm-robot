@@ -44,7 +44,7 @@ fastapi==0.103.2
 faiss-cpu==1.7.4
 filelock==3.9.0
 pgvector==0.2.4
-psycopg2==2.9.9
+psycopg2-binary==2.9.9
 pymupdf==1.23.15
 pymilvus==2.3.5
 Flask==3.0.0
