@@ -219,9 +219,27 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
         export_btn = cols[0]
         if cols[1].button('New chat', use_container_width=True):
             chat_box.reset_history()
+
+        def md_callback(msg: Any):
+            user_avatar : str = "User"
+            ai_avatar : str = "AI"
+            user_bg_color : str = "#DCFDC8"
+            ai_bg_color : str = "#E0F7FA"
+            def set_bg_color(text, bg_color):
+                text = text.replace("\n", "<br>")
+                return f"<div style=\"background-color:{bg_color}\">{text}</div>"
+            contents = [e.content for e in msg["elements"]]
+            if msg["role"] == "user":
+                content = "<br><br>".join(set_bg_color(c, user_bg_color) for c in contents if isinstance(c, str))
+                avatar = set_bg_color(user_avatar, user_bg_color)
+            else:
+                avatar = set_bg_color(ai_avatar, ai_bg_color)
+                content = "<br><br>".join(set_bg_color(c, ai_bg_color) for c in contents if isinstance(c, str))
+            line = f"|{avatar}|{content}|\n"
+            return line
         export_btn.download_button(
             "Export chat",
-            "".join(chat_box.export2md()),
+            "".join(chat_box.export2md(callback=md_callback)),
             file_name=f"{now:%Y-%m-%d %H.%M}_chatrecord.md",
             mime="text/markdown",
             use_container_width=True,
@@ -363,13 +381,20 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
         prompt = voice_prompt
     
     if prompt != None and prompt != "":
+        print("prompt: ", prompt)
         if bshowstatus:
             update_running_status(placeholder_cpu, placeholder_ram, placeholder_gpuutil, placeholder_gpumem)
         if imagesdata:
             history = []
         else:
             history = get_messages_history(history_len)
-        chat_box.user_say(prompt)
+        prompt_list = [prompt]
+        if imagesdata:
+            for image in imagesdata:
+                prompt_list.append(Image(image))
+        chat_box.user_say(prompt_list)
+        #if imagesdata:
+        #    st.image(imagesdata)
         if dialogue_mode == "LLM Chat":
             chat_box.ai_say("Thinking...")
             text = ""
