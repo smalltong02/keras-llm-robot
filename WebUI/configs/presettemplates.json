@@ -153,6 +153,7 @@
               "input_prefix": "###Instruction: ",
               "input_suffix": "\nAnswer:",
               "antiprompt": [
+                "INSTRUCTION:",
                 "User:",
                 "Assistant:",
                 "INPUT:",

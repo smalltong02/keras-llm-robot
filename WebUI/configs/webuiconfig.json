@@ -657,16 +657,6 @@
             },
             "Multimodal Model": {
                 "Vision Chat Model": {
-                    "visualglm-6b": {
-                        "path": "models/multimodal/image-chat/visualglm-6b",
-                        "device": "auto",
-                        "maxmemory": 20,
-                        "cputhreads": 4,
-                        "loadbits": 16,
-                        "preset": "default",
-                        "load_type": "fastchat",
-                        "Huggingface": "THUDM/visualglm-6b"
-                    },
                     "cogvlm-chat-hf": {
                         "path": "models/multimodal/image-chat/cogvlm-chat-hf",
                         "device": "auto",
@@ -674,18 +664,18 @@
                         "cputhreads": 4,
                         "loadbits": 16,
                         "preset": "default",
-                        "load_type": "fastchat",
+                        "load_type": "causallm",
                         "Huggingface": "THUDM/cogvlm-chat-hf"
                     },
-                    "mplug-owl2-llama2-7b": {
-                        "path": "models/multimodal/image-chat/mplug-owl2-llama2-7b",
+                    "Qwen-VL-Chat": {
+                        "path": "models/multimodal/image-chat/Qwen-VL-Chat",
                         "device": "auto",
                         "maxmemory": 20,
                         "cputhreads": 4,
-                        "loadbits": 16,
+                        "loadbits": 4,
                         "preset": "default",
-                        "load_type": "fastchat",
-                        "Huggingface": "MAGAer13/mplug-owl2-llama2-7b"
+                        "load_type": "causallm",
+                        "Huggingface": "Qwen/Qwen-VL-Chat"
                     },
                     "Qwen-VL-Chat-Int4": {
                         "path": "models/multimodal/image-chat/Qwen-VL-Chat-Int4",
@@ -694,21 +684,22 @@
                         "cputhreads": 4,
                         "loadbits": 4,
                         "preset": "default",
-                        "load_type": "fastchat",
+                        "load_type": "causallm",
                         "Huggingface": "Qwen/Qwen-VL-Chat-Int4"
-                    },
-                    "internlm-xcomposer-7b-4bit": {
-                        "path": "models/multimodal/image-chat/internlm-xcomposer-7b-4bit",
-                        "device": "auto",
-                        "maxmemory": 20,
-                        "cputhreads": 4,
-                        "loadbits": 4,
-                        "preset": "default",
-                        "load_type": "fastchat",
-                        "Huggingface": "internlm/internlm-xcomposer-7b-4bit"
                     }
                 },
-                "Voice Chat Model": {},
+                "Voice Chat Model": {
+                    "Qwen-Audio-Chat": {
+                        "path": "models/multimodal/voice-chat/Qwen-Audio-Chat",
+                        "device": "auto",
+                        "maxmemory": 24,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "causallm",
+                        "Huggingface": "Qwen/Qwen-Audio-Chat"
+                    }
+                },
                 "Video Chat Model": {}
             },
             "Special Model": {

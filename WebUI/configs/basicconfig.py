@@ -31,6 +31,10 @@ class ModelSize(Enum):
     Mod34B = 4
     Mod70B = 5
 
+glob_multimodal_vision_list = ['.png', '.jpg', '.jpeg', '.bmp']
+glob_multimodal_voice_list = ['.mp3', '.flac', '.wav', '.m4a']
+glob_multimodal_video_list = ['.mp4', '.wmv', '.m4v', '.mov', '.avi', '.mkv', '.flv']
+
 class ModelSubType(Enum):
     Unknown = 0
     VisionChatModel = 1

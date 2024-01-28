@@ -169,7 +169,7 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
                     models = app._controller.list_models()
                     if new_model_name in models:
                         break
-                elif modelinfo["mtype"] == ModelType.Special or modelinfo["mtype"] == ModelType.Online:
+                else:
                     with get_httpx_client() as client:
                         try:
                             r = client.post(worker_address + "/get_name",
@@ -179,8 +179,6 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
                                 break
                         except Exception as e:
                             pass
-                elif modelinfo["mtype"] == ModelType.Multimodal:
-                    break
                 time.sleep(1)
                 timer -= 1
                 app._controller.refresh_all_workers()
@@ -228,6 +226,8 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
     def text_chat(
         query: str = Body(..., description="User input: ", examples=["chat"]),
         imagesdata: List[str] = Body([], description="image data", examples=["image"]),
+        audiosdata: List[str] = Body([], description="audio data", examples=["audio"]),
+        videosdata: List[str] = Body([], description="video data", examples=["video"]),
         history: List[dict] = Body([],
                                     description="History chat",
                                     examples=[[
@@ -250,6 +250,8 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
                     json={
                         "query": query,
                         "imagesdata": imagesdata,
+                        "audiosdata": audiosdata,
+                        "videosdata": videosdata,
                         "history": history,
                         "stream": stream,
                         "speechmodel": speechmodel,
@@ -530,6 +532,7 @@ def create_model_worker_app(log_level: str = "INFO", **kwargs) -> Union[FastAPI,
     app_worker = ""
     app._model = None
     app._streamer = None
+    app._tokenizer = None
     app._model_name = ""
     for k, v in kwargs.items():
         setattr(args, k, v)
@@ -543,7 +546,12 @@ def create_model_worker_app(log_level: str = "INFO", **kwargs) -> Union[FastAPI,
         MakeFastAPIOffline(app)
         app.title = f"Online Model ({args.model_names[0]})"
         return app
-
+    # Multimodal model
+    elif kwargs.get("multimodal_model", False) == True:
+        init_multimodal_models(app, args)
+        MakeFastAPIOffline(app)
+        app.title = f"Multimodal Model ({args.model_names[0]})"
+        return app
     # Special model
     elif kwargs.get("special_model", False) == True:
         init_special_models(app, args)
@@ -861,6 +869,8 @@ def run_model_worker(
     def text_chat(
         query: str = Body(..., description="User input: ", examples=["chat"]),
         imagesdata: List[str] = Body([], description="image data", examples=["image"]),
+        audiosdata: List[str] = Body([], description="audio data", examples=["audio"]),
+        videosdata: List[str] = Body([], description="video data", examples=["video"]),
         history: List[dict] = Body([],
                                     description="History chat",
                                     examples=[[
@@ -873,7 +883,7 @@ def run_model_worker(
         max_tokens: Optional[int] = Body(None, description="max tokens."),
         prompt_name: str = Body("default", description=""),
     ):
-        return special_model_chat(app._model, app._model_name, app._streamer, query, imagesdata, history, stream, speechmodel, temperature, max_tokens, prompt_name)
+        return model_chat(app, query, imagesdata, audiosdata, videosdata, history, stream, speechmodel, temperature, max_tokens, prompt_name)
     
     @app.post("/knowledge_base_chat")
     def knowledge_base_chat(

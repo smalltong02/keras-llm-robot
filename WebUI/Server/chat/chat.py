@@ -19,6 +19,8 @@ from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
 
 async def chat(query: str = Body(..., description="User input: ", examples=["chat"]),
     imagesdata: List[str] = Body([], description="image data", examples=["image"]),
+    audiosdata: List[str] = Body([], description="audio data", examples=["audio"]),
+    videosdata: List[str] = Body([], description="video data", examples=["video"]),
     history: List[History] = Body([],
                                   description="History chat",
                                   examples=[[
@@ -36,6 +38,8 @@ async def chat(query: str = Body(..., description="User input: ", examples=["cha
 
     async def chat_iterator(query: str,
                             imagesdata: List[str] = [],
+                            audiosdata: List[str] = [],
+                            videosdata: List[str] = [],
                             history: List[History] = [],
                             stream: bool = True,
                             model_name: str = "",
@@ -123,6 +127,8 @@ async def chat(query: str = Body(..., description="User input: ", examples=["cha
 
     return StreamingResponse(chat_iterator(query=query,
                                            imagesdata=imagesdata,
+                                           audiosdata=audiosdata,
+                                           videosdata=videosdata,
                                            history=history,
                                            stream=stream,
                                            model_name=model_name,

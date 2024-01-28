@@ -121,6 +121,8 @@ class ApiRequest:
         self,
         query: str,
         imagesdata: List[bytes] = [],
+        audiosdata: List[bytes] = [],
+        videosdata: List[bytes] = [],
         history: List[dict] = [],
         stream: bool = True,
         model: str = "",
@@ -150,13 +152,23 @@ class ApiRequest:
             speechmodel["speech_region"] = ""
             speechmodel["provider"] = config.get("provider", "")
 
-        dataslist = []
+        imageslist = []
+        audioslist = []
+        videoslist = []
         if len(imagesdata):
             for imagedata in imagesdata:
-                dataslist.append(base64.b64encode(imagedata).decode('utf-8'))
+                imageslist.append(base64.b64encode(imagedata).decode('utf-8'))
+        if len(audiosdata):
+            for audiodata in audiosdata:
+                audioslist.append(base64.b64encode(audiodata).decode('utf-8'))
+        if len(videosdata):
+            for videodata in videosdata:
+                videoslist.append(base64.b64encode(videodata).decode('utf-8'))
         data = {
             "query": query,
-            "imagesdata": dataslist,
+            "imagesdata": imageslist,
+            "audiosdata": audioslist,
+            "videosdata": videoslist,
             "history": history,
             "stream": stream,
             "model_name": model,
@@ -173,7 +185,7 @@ class ApiRequest:
             response = self.post("/chat/chat", json=data, stream=True, **kwargs)
             return self._httpx_stream2generator(response, as_json=True)
         
-        elif modelinfo["mtype"] == ModelType.Special:
+        elif modelinfo["mtype"] == ModelType.Special or modelinfo["mtype"] == ModelType.Multimodal:
             response = self.post(
                "/llm_model/chat",
                json=data,

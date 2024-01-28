@@ -52,6 +52,7 @@ def load_pipeline_model(app: FastAPI, model_name, model_path, device):
         model=model,
         tokenizer=tokenizer,
         max_length=512,
+        do_sample=True,
         temperature=0.7,
         top_p=0.95,
         repetition_penalty=1.2,
@@ -74,6 +75,7 @@ def load_llamacpp_model(app: FastAPI, model_name, model_path):
     if len(modellist):
         llm_model = LlamaCpp(
             model_path=path,
+            do_sample=True,
             temperature=0.7,
             max_tokens=512,
             top_p=1,
@@ -105,10 +107,12 @@ def init_special_models(app: FastAPI, args):
 
 def special_model_chat(
         model: Any,
-        model_name: str,
         async_callback: Any,
+        modelinfo: Any,
         query: str,
         imagesdata: List[str],
+        audiosdata: List[str],
+        videosdata: List[str],
         history: List[dict],
         stream: bool,
         speechmodel: dict,
@@ -119,16 +123,16 @@ def special_model_chat(
     async def special_chat_iterator(model: Any,
                             query: str,
                             imagesdata: List[str],
+                            audiosdata: List[str],
+                            videosdata: List[str],
                             history: List[dict] = [],
-                            model_name: str = "",
+                            modelinfo: Any = None,
                             prompt_name: str = prompt_name,
                             ) -> AsyncIterable[str]:
     
         configinst = InnerJsonConfigWebUIParse()
         webui_config = configinst.dump()
-        modelinfo : Dict[str, any] = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "config": dict}
-        modelinfo["mtype"], modelinfo["msize"], modelinfo["msubtype"] = GetModelInfoByName(webui_config, model_name)
-
+        model_name = modelinfo["mname"]
         speak_handler = None
         if len(speechmodel):
                 modeltype = speechmodel.get("type", "")
@@ -144,7 +148,6 @@ def special_model_chat(
         chat_history_id = add_chat_history_to_db(chat_type="llm_chat", query=query)
         if modelinfo["mtype"] == ModelType.Special:
             from langchain.prompts import PromptTemplate
-            modelinfo["mname"] = model_name
             modelconfig = GetModelConfig(webui_config, modelinfo)
             loadtype = modelconfig["load_type"]
             presetname = modelconfig["preset"]
@@ -198,7 +201,6 @@ def special_model_chat(
         elif modelinfo["mtype"] == ModelType.Online:
             provider = GetProviderByName(webui_config, model_name)
             if provider == "google-api":
-                modelinfo["mname"] = model_name
                 model_config = GetModelConfig(webui_config, modelinfo)
                 apikey = model_config.get("apikey", "[Your Key]")
                 if apikey == "[Your Key]" or apikey == "":
@@ -250,8 +252,10 @@ def special_model_chat(
                                             model=model,
                                             query=query,
                                             imagesdata=imagesdata,
+                                            audiosdata=audiosdata,
+                                            videosdata=videosdata,
                                             history=history,
-                                            model_name=model_name,
+                                            modelinfo=modelinfo,
                                             prompt_name=prompt_name),
                              media_type="text/event-stream")
 
@@ -272,3 +276,225 @@ def special_model_knowledge_base_chat(
         prompt_name: str,
 ):
     pass
+
+def load_causallm_model(app: FastAPI, model_name, model_path, device):
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+    import torch
+    from PIL import Image
+    if model_name == "cogvlm-chat-hf":
+        from transformers import LlamaTokenizer
+        tokenizer = LlamaTokenizer.from_pretrained("lmsys/vicuna-7b-v1.5")
+    else:
+        tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
+    model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype="auto", device_map=device, low_cpu_mem_usage=True, trust_remote_code=True).eval()
+    
+    app._model = model
+    app._tokenizer = tokenizer
+    app._model_name = model_name
+
+def load_automodel_model(app: FastAPI, model_name, model_path, device):
+    from transformers import AutoTokenizer, AutoModel
+    tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
+    model = AutoModel.from_pretrained(model_path, device_map=device, trust_remote_code=True).half()
+    app._model = model
+    app._tokenizer = tokenizer
+    app._model_name = model_name
+
+def init_multimodal_models(app: FastAPI, args):
+    model_name = args.model_names[0]
+    model_path = args.model_path
+    if len(model_name) == 0 or len(model_path) == 0:
+        return
+    configinst = InnerJsonConfigWebUIParse()
+    webui_config = configinst.dump()
+    model_info : Dict[str, any] = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "config": dict}
+    model_info["mtype"], model_info["msize"], model_info["msubtype"] = GetModelInfoByName(webui_config, model_name)
+    model_info["mname"] = model_name
+    model_config = GetModelConfig(webui_config, model_info)
+    load_type = model_config.get("load_type", "")
+    if load_type == "causallm":
+        load_causallm_model(app=app, model_name=model_name, model_path=model_path, device=args.device)
+    elif load_type == "automodel":
+        load_automodel_model(app=app, model_name=model_name, model_path=model_path, device=args.device)
+
+def multimodal_model_chat(
+        model: Any,
+        tokenizer: Any,
+        modelinfo: Any,
+        query: str,
+        imagesdata: List[str],
+        audiosdata: List[str],
+        videosdata: List[str],
+        history: List[dict],
+        stream: bool,
+        speechmodel: dict,
+        temperature: float,
+        max_tokens: Optional[int],
+        prompt_name: str,
+):
+    if modelinfo == None:
+        return json.dumps(
+            {"text": "Unusual error!", "chat_history_id": 123},
+            ensure_ascii=False)
+    
+    async def multimodal_chat_iterator(model: Any,
+                            tokenizer: Any,
+                            query: str,
+                            imagesdata: List[str],
+                            audiosdata: List[str],
+                            videosdata: List[str],
+                            history: List[dict] = [],
+                            modelinfo: Any = None,
+                            prompt_name: str = prompt_name,
+                            ) -> AsyncIterable[str]:
+        import torch
+        import uuid
+        from io import BytesIO
+        from PIL import Image
+        from WebUI.Server.utils import detect_device
+        configinst = InnerJsonConfigWebUIParse()
+        webui_config = configinst.dump()
+        model_name = modelinfo["mname"]
+        speak_handler = None
+        if len(speechmodel):
+                modeltype = speechmodel.get("type", "")
+                provider = speechmodel.get("provider", "")
+                #spmodel = speechmodel.get("model", "")
+                spspeaker = speechmodel.get("speaker", "")
+                speechkey = speechmodel.get("speech_key", "")
+                speechregion = speechmodel.get("speech_region", "")
+                if modeltype == "local" or modeltype == "cloud":
+                    speak_handler = StreamSpeakHandler(run_place=modeltype, provider=provider, synthesis=spspeaker, subscription=speechkey, region=speechregion)
+
+        answer = ""
+        chat_history_id = add_chat_history_to_db(chat_type="llm_chat", query=query)
+        modelconfig = GetModelConfig(webui_config, modelinfo)
+        device = modelconfig.get("device", "auto")
+        device = "cuda" if device == "gpu" else detect_device() if device == "auto" else device
+        if model_name == "cogvlm-chat-hf":
+            # Only support one image.
+            image1 = []
+            if len(imagesdata):
+                decoded_data = base64.b64decode(imagesdata[0])
+                imagedata = BytesIO(decoded_data)
+                image1 = [Image.open(imagedata).convert('RGB')]
+            formated_history = []
+            if len(history):
+                formatted_history = [(history[i]['content'], history[i+1]['content']) for i in range(0, len(history), 2) if i < len(history)-1 and history[i]['role'] == 'user']
+            inputs = model.build_conversation_input_ids(tokenizer, query=query, history=formated_history, images=image1)
+            if len(imagesdata):
+                inputs = {
+                    'input_ids': inputs['input_ids'].unsqueeze(0).to(device),
+                    'token_type_ids': inputs['token_type_ids'].unsqueeze(0).to(device),
+                    'attention_mask': inputs['attention_mask'].unsqueeze(0).to(device),
+                    'images': [[inputs['images'][0].to(device).to(torch.bfloat16)]],
+                }
+            else:
+                inputs = {
+                    'input_ids': inputs['input_ids'].unsqueeze(0).to(device),
+                    'token_type_ids': inputs['token_type_ids'].unsqueeze(0).to(device),
+                    'attention_mask': inputs['attention_mask'].unsqueeze(0).to(device),
+                    'images': [],
+                }
+            gen_kwargs = {"max_length": 2048, "do_sample": False}
+            with torch.no_grad():
+                outputs = model.generate(**inputs, **gen_kwargs)
+                outputs = outputs[:, inputs['input_ids'].shape[1]:]
+                answer =tokenizer.decode(outputs[0])
+
+            if speak_handler: speak_handler.on_llm_new_token(answer)
+            yield json.dumps(
+                {"text": answer, "chat_history_id": chat_history_id},
+                ensure_ascii=False)
+            await asyncio.sleep(0.1)
+            if speak_handler: speak_handler.on_llm_end(None)
+        elif model_name == "Qwen-VL-Chat" or model_name == "Qwen-VL-Chat-Int4":
+            img_list = []
+            for image in imagesdata:
+                decoded_data = base64.b64decode(image)
+                imagedata = BytesIO(decoded_data)
+                image_rgb = Image.open(imagedata).convert('RGB')
+                image_path = str(TMP_DIR / Path(str(uuid.uuid4()) + ".jpg"))
+                image_rgb.save(image_path)
+                img_list.append(image_path)
+            query_list = []
+            for img in img_list:
+                img_dict = {'image': img}
+                query_list.append(img_dict)
+            query_dict = {'text': query}
+            query_list.append(query_dict)
+            query_tkz = tokenizer.from_list_format(query_list)
+            formatted_history = []
+            if len(history):
+                formatted_history = [(history[i]['content'], history[i+1]['content']) for i in range(0, len(history), 2) if i < len(history)-1 and history[i]['role'] == 'user']
+            answer, history = model.chat(tokenizer, query=query_tkz, history=formatted_history)
+            if speak_handler: speak_handler.on_llm_new_token(answer)
+            yield json.dumps(
+                {"text": answer, "chat_history_id": chat_history_id},
+                ensure_ascii=False)
+            await asyncio.sleep(0.1)
+            if speak_handler: speak_handler.on_llm_end(None)
+        elif model_name == "Qwen-Audio-Chat":
+            audio_list = []
+            for audio in audiosdata:
+                decoded_data = base64.b64decode(audio)
+                #audiodata = BytesIO(decoded_data)
+                audiopath = str(TMP_DIR / Path(str(uuid.uuid4()) + ".wav"))
+                with open(audiopath, "wb") as file:
+                    file.write(decoded_data)
+                audio_list.append(audiopath)
+            query_list = []
+            for ado in audio_list:
+                ado_dict = {'audio': ado}
+                query_list.append(ado_dict)
+            query_dict = {'text': query}
+            query_list.append(query_dict)
+            query_tkz = tokenizer.from_list_format(query_list)
+            formatted_history = []
+            if len(history):
+                formatted_history = [(history[i]['content'], history[i+1]['content']) for i in range(0, len(history), 2) if i < len(history)-1 and history[i]['role'] == 'user']
+            answer, history = model.chat(tokenizer, query=query_tkz, history=formatted_history)
+            if speak_handler: speak_handler.on_llm_new_token(answer)
+            yield json.dumps(
+                {"text": answer, "chat_history_id": chat_history_id},
+                ensure_ascii=False)
+            await asyncio.sleep(0.1)
+            if speak_handler: speak_handler.on_llm_end(None)
+        
+        update_chat_history(chat_history_id, response=answer)
+        
+    return StreamingResponse(multimodal_chat_iterator(
+                                            model=model,
+                                            tokenizer=tokenizer,
+                                            query=query,
+                                            imagesdata=imagesdata,
+                                            audiosdata=audiosdata,
+                                            videosdata=videosdata,
+                                            history=history,
+                                            modelinfo=modelinfo,
+                                            prompt_name=prompt_name),
+                             media_type="text/event-stream")
+
+def model_chat(
+        app: FastAPI,
+        query: str,
+        imagesdata: List[str],
+        audiosdata: List[str],
+        videosdata: List[str],
+        history: List[dict],
+        stream: bool,
+        speechmodel: dict,
+        temperature: float,
+        max_tokens: Optional[int],
+        prompt_name: str,
+):
+    configinst = InnerJsonConfigWebUIParse()
+    webui_config = configinst.dump()
+    modelinfo : Dict[str, any] = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "config": dict}
+    model_name = app._model_name
+    modelinfo["mtype"], modelinfo["msize"], modelinfo["msubtype"] = GetModelInfoByName(webui_config, model_name)
+    modelinfo["mname"] = model_name
+    if modelinfo["mtype"] == ModelType.Special or modelinfo["mtype"] == ModelType.Online:
+        return special_model_chat(app._model, app._streamer, modelinfo, query, imagesdata, audiosdata, videosdata, history, stream, speechmodel, temperature, max_tokens, prompt_name)
+    elif modelinfo["mtype"] == ModelType.Multimodal:
+        return multimodal_model_chat(app._model, app._tokenizer, modelinfo, query, imagesdata, audiosdata, videosdata, history, False, speechmodel, temperature, max_tokens, prompt_name)
