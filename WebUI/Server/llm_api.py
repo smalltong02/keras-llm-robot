@@ -118,6 +118,8 @@ def stop_llm_model(
 async def chat_llm_model(
     query: str = Body(..., description="User input: ", examples=["chat"]),
     imagesdata: List[str] = Body([], description="image data", examples=["image"]),
+    audiosdata: List[str] = Body([], description="audio data", examples=["audio"]),
+    videosdata: List[str] = Body([], description="video data", examples=["video"]),
     history: List[dict] = Body([],
                                   description="History chat",
                                   examples=[[
@@ -143,6 +145,8 @@ async def chat_llm_model(
                 json={
                     "query": query,
                     "imagesdata": imagesdata,
+                    "audiosdata": audiosdata,
+                    "videosdata": videosdata,
                     "history": history,
                     "stream": stream,
                     "model_name": model_name,

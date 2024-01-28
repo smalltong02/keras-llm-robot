@@ -239,6 +239,8 @@ def get_model_worker_config(model_name: str = None) -> dict:
             config["max_gpu_memory"] = get_max_gpumem(modelinfo["config"])
         if modelinfo["mtype"] == ModelType.Special:
             config["special_model"] = True
+        if modelinfo["mtype"] == ModelType.Multimodal:
+            config["multimodal_model"] = True
     return config
 
 def get_vtot_worker_config(model_name: str = None) -> dict:

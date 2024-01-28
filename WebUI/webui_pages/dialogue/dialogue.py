@@ -3,7 +3,9 @@ from WebUI.webui_pages.utils import *
 from streamlit_chatbox import *
 from streamlit_webrtc import webrtc_streamer, WebRtcMode, ClientSettings
 from aiortc.contrib.media import MediaRecorder
+from WebUI.configs.basicconfig import *
 from WebUI.configs.prompttemplates import PROMPT_TEMPLATES
+from io import BytesIO
 import os, platform
 from datetime import datetime
 from pydub.playback import play
@@ -245,7 +247,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
             use_container_width=True,
         )
 
-        voicedisable = False if voicemodel != "" or modelinfo["msubtype"] == ModelSubType.VoiceChatModel else True
+        voicedisable = False if voicemodel != "" else True
         if voicedisable == False:
             st.divider()
             st.write("Chat by 🎧 and 🎬: ")
@@ -297,15 +299,18 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                     pass
 
         imagesdata = []
+        audiosdata = []
+        videosdata = []
         imagedisable = False if imagemodel != ""  or modelinfo["msubtype"] == ModelSubType.VisionChatModel else True
+        audiodisable = False if modelinfo["msubtype"] == ModelSubType.VoiceChatModel else True
+        videodisable = False if modelinfo["msubtype"] == ModelSubType.VideoChatModel else True
+        
         if imagedisable == False:
-            imagefiles = st.file_uploader("Please upload 🎨 | 📰:",
+            imagefiles = st.file_uploader("Please upload 🎨:",
+                glob_multimodal_vision_list,
                 accept_multiple_files=True,
-                disabled=imagedisable
                 )
             if len(imagefiles):
-                from io import BytesIO
-                import PIL.Image
                 for imagefile in imagefiles:
                     print("image_file: ", imagefile)
                     print("image_type: ", imagefile.type)
@@ -315,8 +320,41 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                         imagesdata.append(imagefile.getvalue())
                     print("imagesdata size: ", len(imagesdata))
 
+        elif audiodisable == False:
+            audiofiles = st.file_uploader("Please upload 🎹:",
+                glob_multimodal_voice_list,
+                accept_multiple_files=True,
+                )
+            if len(audiofiles):
+                for audiofile in audiofiles:
+                    print("audio_file: ", audiofile)
+                    print("audio_type: ", audiofile.type)
+                    def is_audio_type(mime_type):
+                        return mime_type.startswith('audio/')
+                    if is_audio_type(audiofile.type):
+                        audiosdata.append(audiofile.getvalue())
+                    print("audiosdata size: ", len(audiosdata))
+        elif videodisable == False:
+            videofiles = st.file_uploader("Please upload 🎬:",
+                glob_multimodal_video_list,
+                accept_multiple_files=True,
+                )
+            if len(videofiles):
+                for videofile in videofiles:
+                    print("video_file: ", videofile)
+                    print("video_type: ", videofile.type)
+                    def is_video_type(mime_type):
+                        return mime_type.startswith('video/')
+                    if is_video_type(videofile.type):
+                        videosdata.append(videofile.getvalue())
+                    print("videosdata size: ", len(videosdata))
+
         for image in imagesdata:
             st.image(image=BytesIO(image))
+        for audio in audiosdata:
+            st.audio(data=audio)
+        for video in videosdata:
+            st.video(data=video)
 
         model_name = running_model
         if model_name == "None":
@@ -384,23 +422,26 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
         print("prompt: ", prompt)
         if bshowstatus:
             update_running_status(placeholder_cpu, placeholder_ram, placeholder_gpuutil, placeholder_gpumem)
-        if imagesdata:
-            history = []
-        else:
-            history = get_messages_history(history_len)
+        history = get_messages_history(history_len)
         prompt_list = [prompt]
         if imagesdata:
             for image in imagesdata:
                 prompt_list.append(Image(image))
+        if audiosdata:
+            for audio in audiosdata:
+                prompt_list.append(Audio(audio))
+        if videosdata:
+            for video in videosdata:
+                prompt_list.append(Video(video))
         chat_box.user_say(prompt_list)
-        #if imagesdata:
-        #    st.image(imagesdata)
         if dialogue_mode == "LLM Chat":
             chat_box.ai_say("Thinking...")
             text = ""
             chat_history_id = ""
             r = api.chat_chat(prompt,
                             imagesdata=imagesdata,
+                            audiosdata=audiosdata,
+                            videosdata=videosdata,
                             history=history,
                             model=running_model,
                             speechmodel=speechmodel,
