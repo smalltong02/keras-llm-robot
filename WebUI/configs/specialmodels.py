@@ -287,7 +287,6 @@ def load_causallm_model(app: FastAPI, model_name, model_path, device):
     else:
         tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
     model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype="auto", device_map=device, low_cpu_mem_usage=True, trust_remote_code=True).eval()
-    
     app._model = model
     app._tokenizer = tokenizer
     app._model_name = model_name

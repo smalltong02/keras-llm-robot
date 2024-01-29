@@ -115,6 +115,38 @@
                 "Huggingface": "BAAI/bge-reranker-large"
             }
         },
+        "ImageRecognition": {
+            "blip-image-captioning-large": {
+                "type": "local",
+                "path": "models/imagerecognition/blip-image-captioning-large",
+                "device": "auto",
+                "loadbits": 16,
+                "Huggingface": "Salesforce/blip-image-captioning-large"
+            }
+        },
+        "ImageGeneration": {
+            "animagine-xl-3.0": {
+                "type": "local",
+                "path": "models/imagegeneration/animagine-xl-3.0",
+                "device": "auto",
+                "loadbits": 16,
+                "Huggingface": "cagliostrolab/animagine-xl-3.0"
+            },
+            "IP-Adapter-FaceID": {
+                "type": "local",
+                "path": "models/imagegeneration/IP-Adapter-FaceID",
+                "device": "auto",
+                "loadbits": 16,
+                "Huggingface": "h94/IP-Adapter-FaceID"
+            },
+            "OpenDalleV1.1": {
+                "type": "local",
+                "path": "models/imagegeneration/OpenDalleV1.1",
+                "device": "auto",
+                "loadbits": 16,
+                "Huggingface": "dataautogpt3/OpenDalleV1.1"
+            }
+        },
         "VtoTModel": {
             "whisper-base": {
                 "type": "local",
