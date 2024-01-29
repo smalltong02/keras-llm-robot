@@ -57,6 +57,8 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
     webui_config = api.get_webui_config()
     current_voice_model = api.get_vtot_model()
     current_speech_model = api.get_ttov_model()
+    current_imagere_model = ""
+    current_imagegen_model = ""
     voicemodel = None
     
     if running_model == "":
@@ -371,6 +373,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
         ttovmodel_lists = [f"{key}" for key in ttovmodel]
         col1, col2 = st.columns(2)
         spmodel = current_speech_model.get("model", "")
+        
         with col1:
             if len(spmodel) == 0:
                 index = 0
@@ -397,40 +400,58 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                             current_speech_model = {"model": "", "speaker": ""}
                 else:
                     with st.spinner(f"Loading Model: `{speechmodel}`, Please do not perform any actions or refresh the page."):
-                        speaker = st.session_state["speaker"]
-                        print("speaker: ", speaker)
-                        r = api.change_speech_model(spmodel, speechmodel, speaker)
-                        if msg := check_error_msg(r):
-                            st.error(msg)
-                        elif msg := check_success_msg(r):
-                            st.success(msg)
-                            current_speech_model = {"model": speechmodel, "speaker": speaker}
+                        provider = ttovmodel[speechmodel].get("provider", "")
+                        if provider != "" or LocalModelExist(pathstr):
+                            speaker = st.session_state["speaker"]
+                            print("speaker: ", speaker)
+                            r = api.change_speech_model(spmodel, speechmodel, speaker)
+                            if msg := check_error_msg(r):
+                                st.error(msg)
+                            elif msg := check_success_msg(r):
+                                st.success(msg)
+                                current_speech_model = {"model": speechmodel, "speaker": speaker}
+                        else:
+                            st.error("Please download the model to your local machine first.")
+
         modelconfig = ttovmodel[speechmodel]
         synthesisconfig = modelconfig["synthesis"]
         #print(modelconfig)
         with col2:
             if modelconfig["type"] == "local":
                 pathstr = modelconfig.get("path")
-                st.text_input("Local Path", pathstr, key="sp_local_path")
-                spsave_path = st.button(
-                    "Save Path",
-                    key="spsave_btn",
+                st.text_input("Local Path", pathstr, key="sp_local_path", disabled=True)
+                spdownload_btn = st.button(
+                    "Download",
+                    key="spdownload_btn",
                     use_container_width=True,
                 )
-                if spsave_path:
-                    with st.spinner(f"Saving Path, Please do not perform any actions or refresh the page."):
-                        modelconfig["path"] = spsave_path
-                        r = api.save_speech_model_config(speechmodel, modelconfig)
-                        if msg := check_error_msg(r):
-                            st.error(msg)
-                        elif msg := check_success_msg(r):
-                            st.success(msg)
+                if spdownload_btn:
+                    with st.spinner(f"Model downloading..., Please do not perform any actions or refresh the page."):
+                        if LocalModelExist(pathstr):
+                            st.error(f'The model {speechmodel} already exists in the folder {pathstr}')
+                        else:
+                            huggingface_path = modelconfig["Huggingface"]
+                            r = api.download_llm_model(speechmodel, huggingface_path, pathstr)
+                            download_error = False
+                            progress_bar = st.progress(0)
+                            for t in r:
+                                if error_msg := check_error_msg(t):  # check whether error occured
+                                    download_error = True
+                                    st.error(msg)
+                                    st.toast(msg, icon="✖")
+                                    break
+                                tqdm = t.get("percentage", 0.0) / 100
+                                progress_bar.progress(tqdm)
+                            if download_error == False:
+                                progress_bar.progress(1.0)
+                                st.success("downloading success!")
+                                st.toast("downloading success!", icon="✔")
             elif modelconfig["type"] == "cloud":
                 pathstr = modelconfig.get("path")
                 st.text_input("Cloud Path", pathstr, key="sp_cloud_path", disabled=True)
-                spsave_path = st.button(
-                    "Save Path",
-                    key="spsave_btn",
+                spdownload_btn = st.button(
+                    "Download",
+                    key="spdownload_btn",
                     use_container_width=True,
                     disabled=True
                 )
@@ -572,12 +593,16 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                             current_voice_model = ""
                 else:
                     with st.spinner(f"Loading Model: `{voicemodel}`, Please do not perform any actions or refresh the page."):
-                        r = api.change_voice_model(current_voice_model, voicemodel)
-                        if msg := check_error_msg(r):
-                            st.error(msg)
-                        elif msg := check_success_msg(r):
-                            st.success(msg)
-                            current_voice_model = voicemodel
+                        provider = vtotmodel[voicemodel].get("provider", "")
+                        if provider != "" or LocalModelExist(pathstr):
+                            r = api.change_voice_model(current_voice_model, voicemodel)
+                            if msg := check_error_msg(r):
+                                st.error(msg)
+                            elif msg := check_success_msg(r):
+                                st.success(msg)
+                                current_voice_model = voicemodel
+                        else:
+                            st.error("Please download the model to your local machine first.")
             modelconfig = vtotmodel[voicemodel]
         with col2:
             if modelconfig["type"] == "local":
@@ -585,26 +610,39 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                     pathstr = vtotmodel[voicemodel].get("path")
                 else:
                     pathstr = ""
-                st.text_input("Local Path", pathstr, key="vo_local_path")
-                vosave_path = st.button(
-                    "Save Path",
-                    key="vosave_btn",
+                st.text_input("Local Path", pathstr, key="vo_local_path", disabled=True)
+                vodownload_btn = st.button(
+                    "Download",
+                    key="vodownload_btn",
                     use_container_width=True,
                 )
-                if vosave_path:
-                    with st.spinner(f"Saving Path, Please do not perform any actions or refresh the page."):
-                            vtotmodel[voicemodel]["path"] = vosave_path
-                            r = api.save_vtot_model_config(voicemodel, modelconfig)
-                            if msg := check_error_msg(r):
-                                st.error(f"failed to save path for model {voicemodel}.")
-                            elif msg := check_success_msg(r):
-                                st.success(f"success save path for model {voicemodel}.")
+                if vodownload_btn:
+                    with st.spinner(f"Model downloading..., Please do not perform any actions or refresh the page."):
+                        if LocalModelExist(pathstr):
+                            st.error(f'The model {voicemodel} already exists in the folder {pathstr}')
+                        else:
+                            huggingface_path = modelconfig["Huggingface"]
+                            r = api.download_llm_model(voicemodel, huggingface_path, pathstr)
+                            download_error = False
+                            progress_bar = st.progress(0)
+                            for t in r:
+                                if error_msg := check_error_msg(t):  # check whether error occured
+                                    download_error = True
+                                    st.error(msg)
+                                    st.toast(msg, icon="✖")
+                                    break
+                                tqdm = t.get("percentage", 0.0) / 100
+                                progress_bar.progress(tqdm)
+                            if download_error == False:
+                                progress_bar.progress(1.0)
+                                st.success("downloading success!")
+                                st.toast("downloading success!", icon="✔")
             elif modelconfig["type"] == "cloud":
                 pathstr = modelconfig.get("path")
                 st.text_input("Cloud Path", pathstr, key="vo_cloud_path", disabled=True)
-                spsave_path = st.button(
-                    "Save Path",
-                    key="vosave_btn",
+                vodownload_btn = st.button(
+                    "Download",
+                    key="vodownload_btn",
                     use_container_width=True,
                     disabled=True
                 )
@@ -722,10 +760,266 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                                 st.success(f"success save configuration for model {voicemodel}.")
 
     with tabimager:
-        pass
+        imageremodels = webui_config.get("ModelConfig").get("ImageRecognition")
+        imageremodels_lists = [f"{key}" for key in imageremodels]
+        col1, col2 = st.columns(2)
+        with col1:
+            if current_imagere_model == "":
+                index = 0
+            else:
+                index = imageremodels_lists.index(current_imagere_model)
+            imageremodel = st.selectbox(
+                    "Please Select Image Recognition Model",
+                    imageremodels_lists,
+                    index=index,
+                )
+            imagerele_button = st.button(
+                "Load & Eject",
+                key="imagere_btn",
+                use_container_width=True,
+            )
+            if imagerele_button:
+                if imageremodel == current_imagere_model:
+                    with st.spinner(f"Release Model: `{imageremodel}`, Please do not perform any actions or refresh the page."):
+                        r = api.eject_image_recognition_model(imageremodel)
+                        if msg := check_error_msg(r):
+                            st.error(msg)
+                        elif msg := check_success_msg(r):
+                            st.success(msg)
+                            current_imagere_model = ""
+                else:
+                    with st.spinner(f"Loading Model: `{imageremodel}`, Please do not perform any actions or refresh the page."):
+                        provider = imageremodels[imageremodel].get("provider", "")
+                        if provider != "" or LocalModelExist(pathstr):
+                            r = api.change_image_recognition_model(current_imagere_model, imageremodel)
+                            if msg := check_error_msg(r):
+                                st.error(msg)
+                            elif msg := check_success_msg(r):
+                                st.success(msg)
+                                current_imagere_model = imageremodel
+                        else:
+                            st.error("Please download the model to your local machine first.")
+            modelconfig = imageremodels[imageremodel]
+        with col2:
+            if modelconfig["type"] == "local":
+                if imageremodel is not None:
+                    pathstr = imageremodels[imageremodel].get("path")
+                else:
+                    pathstr = ""
+                st.text_input("Local Path", pathstr, key="re_local_path", disabled=True)
+                redownload_btn = st.button(
+                    "Download",
+                    key="redownload_btn",
+                    use_container_width=True,
+                )
+                if redownload_btn:
+                    with st.spinner(f"Model downloading..., Please do not perform any actions or refresh the page."):
+                        if LocalModelExist(pathstr):
+                            st.error(f'The model {imageremodel} already exists in the folder {pathstr}')
+                        else:
+                            huggingface_path = modelconfig["Huggingface"]
+                            r = api.download_llm_model(imageremodel, huggingface_path, pathstr)
+                            download_error = False
+                            progress_bar = st.progress(0)
+                            for t in r:
+                                if error_msg := check_error_msg(t):  # check whether error occured
+                                    download_error = True
+                                    st.error(msg)
+                                    st.toast(msg, icon="✖")
+                                    break
+                                tqdm = t.get("percentage", 0.0) / 100
+                                progress_bar.progress(tqdm)
+                            if download_error == False:
+                                progress_bar.progress(1.0)
+                                st.success("downloading success!")
+                                st.toast("downloading success!", icon="✔")
+            elif modelconfig["type"] == "cloud":
+                pathstr = modelconfig.get("path")
+                st.text_input("Cloud Path", pathstr, key="re_cloud_path", disabled=True)
+                redownload_btn = st.button(
+                    "Download",
+                    key="redownload_btn",
+                    use_container_width=True,
+                    disabled=True
+                )
+
+        st.divider()
+        if modelconfig["type"] == "local":
+            with st.form("image_recognition_model"):
+                devcol, bitcol = st.columns(2)
+                with devcol:
+                    if modelconfig["type"] == "local":
+                        sdevice = modelconfig.get("device").lower()
+                        if sdevice in training_devices_list:
+                            index = training_devices_list.index(sdevice)
+                        else:
+                            index = 0
+                        predict_dev = st.selectbox(
+                                "Please select Device",
+                                training_devices_list,
+                                index=index
+                            )
+                
+                with bitcol:
+                    nloadbits = modelconfig.get("loadbits")
+                    index = 0 if nloadbits == 32 else (1 if nloadbits == 16 else (2 if nloadbits == 8 else 16))
+                    nloadbits = st.selectbox(
+                        "Load Bits",
+                        loadbits_list,
+                        index=index
+                    )
+                save_parameters = st.form_submit_button(
+                    "Save Parameters",
+                    use_container_width=True
+                )
+                if save_parameters:
+                    modelconfig["device"] = predict_dev
+                    if nloadbits == "32 bits":
+                        modelconfig["loadbits"] = 32
+                    elif nloadbits == "16 bits":
+                        modelconfig["loadbits"] = 16
+                    else:
+                        modelconfig["loadbits"] = 8
+                    with st.spinner(f"Saving Parameters, Please do not perform any actions or refresh the page."):
+                        r = api.save_image_recognition_model_config(imageremodel, modelconfig)
+                        if msg := check_error_msg(r):
+                            st.error(msg)
+                        elif msg := check_success_msg(r):
+                            st.success(msg)
+
+        elif modelconfig["type"] == "cloud":
+            pass
 
     with tabimageg:
-        pass
+        imagegenmodels = webui_config.get("ModelConfig").get("ImageGeneration")
+        imagegenmodels_lists = [f"{key}" for key in imagegenmodels]
+        col1, col2 = st.columns(2)
+        with col1:
+            if current_imagegen_model == "":
+                index = 0
+            else:
+                index = imagegenmodels_lists.index(current_imagegen_model)
+            imagegenmodel = st.selectbox(
+                    "Please Select Image Generation Model",
+                    imagegenmodels_lists,
+                    index=index,
+                )
+            imagegenle_button = st.button(
+                "Load & Eject",
+                key="imagegen_btn",
+                use_container_width=True,
+            )
+            if imagegenle_button:
+                if imagegenmodel == current_imagegen_model:
+                    with st.spinner(f"Release Model: `{imagegenmodel}`, Please do not perform any actions or refresh the page."):
+                        r = api.eject_image_generation_model(imagegenmodel)
+                        if msg := check_error_msg(r):
+                            st.error(msg)
+                        elif msg := check_success_msg(r):
+                            st.success(msg)
+                            current_imagegen_model = ""
+                else:
+                    with st.spinner(f"Loading Model: `{imagegenmodel}`, Please do not perform any actions or refresh the page."):
+                        provider = imagegenmodels[imagegenmodel].get("provider", "")
+                        if provider != "" or LocalModelExist(pathstr):
+                            r = api.change_image_generation_model(current_imagegen_model, imagegenmodel)
+                            if msg := check_error_msg(r):
+                                st.error(msg)
+                            elif msg := check_success_msg(r):
+                                st.success(msg)
+                                current_imagegen_model = imagegenmodel
+                        else:
+                            st.error("Please download the model to your local machine first.")
+            modelconfig = imagegenmodels[imagegenmodel]
+        with col2:
+            if modelconfig["type"] == "local":
+                if imagegenmodel is not None:
+                    pathstr = imagegenmodels[imagegenmodel].get("path")
+                else:
+                    pathstr = ""
+                st.text_input("Local Path", pathstr, key="gen_local_path", disabled=True)
+                gendownload_btn = st.button(
+                    "Download",
+                    key="gendownload_btn",
+                    use_container_width=True,
+                )
+                if gendownload_btn:
+                    with st.spinner(f"Model downloading..., Please do not perform any actions or refresh the page."):
+                        if LocalModelExist(pathstr):
+                            st.error(f'The model {imagegenmodel} already exists in the folder {pathstr}')
+                        else:
+                            huggingface_path = modelconfig["Huggingface"]
+                            r = api.download_llm_model(imagegenmodel, huggingface_path, pathstr)
+                            download_error = False
+                            progress_bar = st.progress(0)
+                            for t in r:
+                                if error_msg := check_error_msg(t):  # check whether error occured
+                                    download_error = True
+                                    st.error(msg)
+                                    st.toast(msg, icon="✖")
+                                    break
+                                tqdm = t.get("percentage", 0.0) / 100
+                                progress_bar.progress(tqdm)
+                            if download_error == False:
+                                progress_bar.progress(1.0)
+                                st.success("downloading success!")
+                                st.toast("downloading success!", icon="✔")
+            elif modelconfig["type"] == "cloud":
+                pathstr = modelconfig.get("path")
+                st.text_input("Cloud Path", pathstr, key="gen_cloud_path", disabled=True)
+                gendownload_btn = st.button(
+                    "Download",
+                    key="gendownload_btn",
+                    use_container_width=True,
+                    disabled=True
+                )
+
+        st.divider()
+        if modelconfig["type"] == "local":
+            with st.form("image_generation_model"):
+                devcol, bitcol = st.columns(2)
+                with devcol:
+                    if modelconfig["type"] == "local":
+                        sdevice = modelconfig.get("device").lower()
+                        if sdevice in training_devices_list:
+                            index = training_devices_list.index(sdevice)
+                        else:
+                            index = 0
+                        predict_dev = st.selectbox(
+                                "Please select Device",
+                                training_devices_list,
+                                index=index
+                            )
+                
+                with bitcol:
+                    nloadbits = modelconfig.get("loadbits")
+                    index = 0 if nloadbits == 32 else (1 if nloadbits == 16 else (2 if nloadbits == 8 else 16))
+                    nloadbits = st.selectbox(
+                        "Load Bits",
+                        loadbits_list,
+                        index=index
+                    )
+                save_parameters = st.form_submit_button(
+                    "Save Parameters",
+                    use_container_width=True
+                )
+                if save_parameters:
+                    modelconfig["device"] = predict_dev
+                    if nloadbits == "32 bits":
+                        modelconfig["loadbits"] = 32
+                    elif nloadbits == "16 bits":
+                        modelconfig["loadbits"] = 16
+                    else:
+                        modelconfig["loadbits"] = 8
+                    with st.spinner(f"Saving Parameters, Please do not perform any actions or refresh the page."):
+                        r = api.save_image_generation_model_config(imageremodel, modelconfig)
+                        if msg := check_error_msg(r):
+                            st.error(msg)
+                        elif msg := check_success_msg(r):
+                            st.success(msg)
+
+        elif modelconfig["type"] == "cloud":
+            pass
 
     with tabfunctions:
         pass
