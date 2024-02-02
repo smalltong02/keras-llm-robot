@@ -84,6 +84,18 @@ The project inherits from the Langchain-Chatchat project(https://github.com/chat
   
   [![Alt text](https://img.youtube.com/vi/dyIFLISlskI/0.jpg)](https://www.youtube.com/watch?v=dyIFLISlskI) 
 
+  4. Demonstration of Image Recognition and Image Generation Features：
+  
+  Image Generation:
+
+  ![Image](./img/image_to_image_1.png) | ![Image](./img/image_to_image_2.png)
+
+  ![Image](./img/image_to_image_3.png) | ![Image](./img/image_to_image_4.png)
+
+  Creating Handicrafts Based on Items in the Picture:
+
+  ![Image](./img/image_creative.png)
+
 
 ## Project Introduction
 Consists of three main interfaces: the chat interface for language models, the configuration interface for language models, and the tools and agent interface for auxiliary models.
