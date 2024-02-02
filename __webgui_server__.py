@@ -12,13 +12,15 @@ from multiprocessing import Process
 from WebUI.Server.llm_api_stale import (LOG_PATH)
 from WebUI.Server.utils import (set_httpx_config, get_model_worker_config, get_httpx_client, 
                                 FastAPI, MakeFastAPIOffline, fschat_controller_address,
-                                fschat_model_worker_address, get_vtot_worker_config, get_speech_worker_config)
+                                fschat_model_worker_address, get_vtot_worker_config, get_speech_worker_config,
+                                get_image_recognition_worker_config, get_image_generation_worker_config)
 from __about__ import __title__, __summary__, __version__, __author__, __email__, __license__, __copyright__
 from webuisrv import InnerLlmAIRobotWebUIServer
 from WebUI.Server.knowledge_base.utils import SCORE_THRESHOLD
 from WebUI.configs.serverconfig import (FSCHAT_MODEL_WORKERS, FSCHAT_CONTROLLER, HTTPX_LOAD_TIMEOUT, HTTPX_RELEASE_TIMEOUT,
                                         HTTPX_LOAD_VOICE_TIMEOUT, HTTPX_RELEASE_VOICE_TIMEOUT, FSCHAT_OPENAI_API, API_SERVER)
 from WebUI.configs.voicemodels import (init_voice_models, translate_voice_data, cloud_voice_data, init_speech_models, translate_speech_data)
+from WebUI.configs.imagemodels import (init_image_recognition_models, translate_image_recognition_data, init_image_generation_models, translate_image_generation_data)
 from WebUI.configs.webuiconfig import *
 from WebUI.configs.basicconfig import *
 from WebUI.configs.specialmodels import *
@@ -112,6 +114,12 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
             "model_name": "",
             "speaker": ""
         },
+        "imagerecognition": {
+            "model_name": ""
+        },
+        "imagegeneration": {
+            "model_name": ""
+        }
     }
     app = create_controller_app(
         dispatch_method=FSCHAT_CONTROLLER.get("dispatch_method"),
@@ -228,6 +236,7 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
         imagesdata: List[str] = Body([], description="image data", examples=["image"]),
         audiosdata: List[str] = Body([], description="audio data", examples=["audio"]),
         videosdata: List[str] = Body([], description="video data", examples=["video"]),
+        imagesprompt: List[str] = Body([], description="prompt data", examples=["prompt"]),
         history: List[dict] = Body([],
                                     description="History chat",
                                     examples=[[
@@ -252,6 +261,7 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
                         "imagesdata": imagesdata,
                         "audiosdata": audiosdata,
                         "videosdata": videosdata,
+                        "imagesprompt": imagesprompt,
                         "history": history,
                         "stream": stream,
                         "speechmodel": speechmodel,
@@ -478,6 +488,162 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
                 return r.json()
             except Exception as e:
                 return {"code": 500, "channels": 0, "sample_width": 0, "frame_rate": 0, "speech_data": ""}
+
+    @app.post("/get_image_recognition_model")        
+    def get_image_recognition_model(
+    ) -> Dict:
+        model_name = glob_minor_models["imagerecognition"]["model_name"]
+        return {"code": 200, "model": model_name}
+    
+    @app.post("/release_image_recognition_model")
+    def release_image_recognition_model(
+        model_name: str = Body(..., description="Unload the model", samples=""),
+        new_model_name: str = Body(None, description="New model"),
+    ) -> Dict:
+        if new_model_name:
+            print(f"Change image recognition model: from {model_name} to {new_model_name})")
+        else:
+            print(f"Stoping image recognition model: {model_name}")
+        workerconfig = get_image_recognition_worker_config()
+        worker_address = "http://" + workerconfig["host"] + ":" + str(workerconfig["port"])
+        if model_name:
+            q.put([model_name, "stop_image_recognition_model", None])
+            timer = HTTPX_RELEASE_VOICE_TIMEOUT  # wait for release model
+            while timer > 0:
+                with get_httpx_client() as client:
+                    try:
+                        r = client.post(worker_address + "/get_name",
+                            json={})
+                    except Exception as e:
+                        break
+                time.sleep(1)
+                timer -= 1
+            if timer <= 0:
+                msg = f"failed to stop image recognition model: {model_name}"
+                print(msg)
+                return {"code": 500, "msg": msg}
+            glob_minor_models["imagerecognition"]["model_name"] = ""
+
+        if new_model_name:
+            q.put([model_name, "start_image_recognition_model", new_model_name])
+            timer = HTTPX_LOAD_VOICE_TIMEOUT  # wait for new vtot_worker register
+            while timer > 0:
+                with get_httpx_client() as client:
+                    try:
+                        r = client.post(worker_address + "/get_name",
+                            json={})
+                        break
+                    except Exception as e:
+                        pass
+                time.sleep(1)
+                timer -= 1
+            if timer <= 0:
+                msg = f"failed change image recognition model from {model_name} to {new_model_name}"
+                print(msg)
+                return {"code": 500, "msg": msg}
+            glob_minor_models["imagerecognition"]["model_name"] = new_model_name
+            msg = f"success change image recognition model from {model_name} to {new_model_name}"
+            return {"code": 200, "msg": msg}
+        else:
+            msg = f"success stop image recognition model {model_name}"
+            return {"code": 200, "msg": msg}
+
+    @app.post("/get_image_recognition_data")
+    def get_image_recognition_data(
+        imagedata: str = Body(..., description="image recognition data"),
+        imagetype: str = Body(None, description="type"),
+    ) -> Dict:
+        if len(imagedata) == 0:
+            msg = f"failed translate image to text."
+            return {"code": 500, "msg": msg}
+        workerconfig = get_image_recognition_worker_config()
+        worker_address = "http://" + workerconfig["host"] + ":" + str(workerconfig["port"])
+        with get_httpx_client() as client:
+            try:
+                r = client.post(worker_address + "/get_image_recognition_data",
+                    json={"imagedata": imagedata, "imagetype": imagetype},
+                    )
+                return r.json()
+            except Exception as e:
+                return {"code": 500, "text": ""}
+
+    @app.post("/get_image_generation_model")        
+    def get_image_generation_model(
+    ) -> Dict:
+        model_name = glob_minor_models["imagegeneration"]["model_name"]
+        return {"code": 200, "model": model_name}
+    
+    @app.post("/release_image_generation_model")
+    def release_image_generation_model(
+        model_name: str = Body(..., description="Unload the model", samples=""),
+        new_model_name: str = Body(None, description="New model"),
+    ) -> Dict:
+        if new_model_name:
+            print(f"Change image generation model: from {model_name} to {new_model_name})")
+        else:
+            print(f"Stoping image generation model: {model_name}")
+        workerconfig = get_image_generation_worker_config()
+        worker_address = "http://" + workerconfig["host"] + ":" + str(workerconfig["port"])
+        if model_name:
+            q.put([model_name, "stop_image_generation_model", None])
+            timer = HTTPX_RELEASE_VOICE_TIMEOUT  # wait for release model
+            while timer > 0:
+                with get_httpx_client() as client:
+                    try:
+                        r = client.post(worker_address + "/get_name",
+                            json={})
+                    except Exception as e:
+                        break
+                time.sleep(1)
+                timer -= 1
+            if timer <= 0:
+                msg = f"failed to stop image generation model: {model_name}"
+                print(msg)
+                return {"code": 500, "msg": msg}
+            glob_minor_models["imagegeneration"]["model_name"] = ""
+
+        if new_model_name:
+            q.put([model_name, "start_image_generation_model", new_model_name])
+            timer = HTTPX_LOAD_VOICE_TIMEOUT  # wait for new vtot_worker register
+            while timer > 0:
+                with get_httpx_client() as client:
+                    try:
+                        r = client.post(worker_address + "/get_name",
+                            json={})
+                        break
+                    except Exception as e:
+                        pass
+                time.sleep(1)
+                timer -= 1
+            if timer <= 0:
+                msg = f"failed change image generation model from {model_name} to {new_model_name}"
+                print(msg)
+                return {"code": 500, "msg": msg}
+            glob_minor_models["imagegeneration"]["model_name"] = new_model_name
+            msg = f"success change image generation model from {model_name} to {new_model_name}"
+            return {"code": 200, "msg": msg}
+        else:
+            msg = f"success stop image generation model {model_name}"
+            return {"code": 200, "msg": msg}
+
+    @app.post("/get_image_generation_data")
+    def get_image_generation_data(
+        prompt_data: str = Body(..., description="prompt data"),
+        prompttype: str = Body(None, description="type"),
+    ) -> Dict:
+        if len(prompt_data) == 0:
+            msg = f"failed translate prompt to image."
+            return {"code": 500, "msg": msg}
+        workerconfig = get_image_generation_worker_config()
+        worker_address = "http://" + workerconfig["host"] + ":" + str(workerconfig["port"])
+        with get_httpx_client() as client:
+            try:
+                r = client.post(worker_address + "/get_image_generation_data",
+                    json={"prompt_data": prompt_data, "prompttype": prompttype},
+                    )
+                return r.json()
+            except Exception as e:
+                return {"code": 500, "image": ""}
             
     @app.post("/download_llm_model")
     def download_llm_model(
@@ -816,6 +982,116 @@ def run_speech_worker(
 
     uvicorn.run(app, host=host, port=port)
 
+def run_image_recognition_worker(
+    model_name: str = "",
+    controller_address: str = "",
+    q: mp.Queue = None,
+    started_event: mp.Event = None,
+):
+    import uvicorn
+    from fastapi import Body
+
+    kwargs = get_image_recognition_worker_config(model_name)
+    host = kwargs.pop("host")
+    port = kwargs.pop("port")
+    kwargs["model_name"] = model_name
+    app = FastAPI()
+    try:
+        config = {
+            "model_name": kwargs["model_name"],
+            "model_path": kwargs["model_path"],
+            "device": kwargs["device"],
+            "loadbits": kwargs["loadbits"],
+        }
+        if kwargs["model_type"] == "local":
+            image_recognition_model, processor = init_image_recognition_models(config)
+            if image_recognition_model is None:
+                    return None
+        elif kwargs["model_type"] == "cloud":
+            image_recognition_model = None
+    except Exception as e:
+        print(e)
+        return None
+    app.title = f"Image Recognition model worker ({model_name})"
+    app._worker = ""
+    _set_app_event(app, started_event)
+    
+    # add interface to get image recognition model name
+    @app.post("/get_name")
+    def get_name(
+    ) -> dict:
+        return {"code": 200, "name": model_name}
+    
+    @app.post("/get_image_recognition_data")
+    def get_image_recognition_data(
+        imagedata: str = Body(..., description="image recognition data", examples=["image"]),
+        imagetype: str = Body(None, description="type"),
+    ) -> dict:
+        if len(imagedata) == 0 or processor is None or image_recognition_model is None:
+            return {"code": 500, "text": ""}
+        text_data = translate_image_recognition_data(image_recognition_model, processor, config, imagedata)
+        return {"code": 200, "text": text_data}
+
+    uvicorn.run(app, host=host, port=port)
+
+def run_image_generation_worker(
+    model_name: str = "",
+    controller_address: str = "",
+    q: mp.Queue = None,
+    started_event: mp.Event = None,
+):
+    import uvicorn
+    from fastapi import Body
+
+    kwargs = get_image_generation_worker_config(model_name)
+    host = kwargs.pop("host")
+    port = kwargs.pop("port")
+    kwargs["model_name"] = model_name
+    app = FastAPI()
+    try:
+        config = {
+            "model_name": kwargs["model_name"],
+            "model_path": kwargs["model_path"],
+            "device": kwargs["device"],
+            "loadbits": kwargs["loadbits"],
+            "seed": kwargs["seed"],
+            "torch_compile": kwargs["torch_compile"],
+            "cpu_offload": kwargs["cpu_offload"],
+            "refiner": kwargs["refiner"],
+        }
+        if kwargs["model_type"] == "local":
+            image_generation_model, refiner = init_image_generation_models(config)
+            if image_generation_model is None:
+                    return None
+        elif kwargs["model_type"] == "cloud":
+            image_generation_model = None
+    except Exception as e:
+        print(e)
+        return None
+    app.title = f"Image Generation model worker ({model_name})"
+    app._worker = ""
+    _set_app_event(app, started_event)
+    
+    # add interface to get voice model name
+    @app.post("/get_name")
+    def get_name(
+    ) -> dict:
+        return {"code": 200, "name": model_name}
+    
+    @app.post("/get_image_generation_data")
+    def get_image_generation_data(
+        prompt_data: str = Body(..., description="text data"),
+        prompttype: str = Body(None, description="type"),
+    ) -> dict:
+        if len(prompt_data) == 0 or image_generation_model is None:
+            return {"code": 500, "image": ""}
+        image_data = translate_image_generation_data(image_generation_model, refiner, config, prompt_data)
+        if image_data == "":
+            return {"code": 500, "image": ""}
+        return {"code": 200, "image": image_data}
+
+    uvicorn.run(app, host=host, port=port)
+
 def run_model_worker(
         model_name: str = "",
         controller_address: str = "",
@@ -871,6 +1147,7 @@ def run_model_worker(
         imagesdata: List[str] = Body([], description="image data", examples=["image"]),
         audiosdata: List[str] = Body([], description="audio data", examples=["audio"]),
         videosdata: List[str] = Body([], description="video data", examples=["video"]),
+        imagesprompt: List[str] = Body([], description="prompt data", examples=["prompt"]),
         history: List[dict] = Body([],
                                     description="History chat",
                                     examples=[[
@@ -883,7 +1160,7 @@ def run_model_worker(
         max_tokens: Optional[int] = Body(None, description="max tokens."),
         prompt_name: str = Body("default", description=""),
     ):
-        return model_chat(app, query, imagesdata, audiosdata, videosdata, history, stream, speechmodel, temperature, max_tokens, prompt_name)
+        return model_chat(app, query, imagesdata, audiosdata, videosdata, imagesprompt, history, stream, speechmodel, temperature, max_tokens, prompt_name)
     
     @app.post("/knowledge_base_chat")
     def knowledge_base_chat(
@@ -944,10 +1221,12 @@ def main_server():
     
     dump_server_info(args=args)
 
-    processes = {"online_api": {}, "model_worker": {}, "vtot_worker": {}, "speech_worker": {}}
+    processes = {"online_api": {}, "model_worker": {}, "vtot_worker": {}, "speech_worker": {}, "imagerecognition_worker": {}, "imagegeneration_worker": {}}
 
     def process_count():
-        return len(processes) + len(processes["online_api"]) + len(processes["model_worker"]) + len(processes["vtot_worker"]) + len(processes["speech_worker"]) - 2
+        return len(processes) + len(processes["online_api"]) + len(processes["model_worker"]) + \
+        len(processes["vtot_worker"]) + len(processes["speech_worker"]) + \
+        len(processes["imagerecognition_worker"]) + len(processes["imagegeneration_worker"]) - 2
        
     controller_started = manager.Event()
     if args.openai_api:
@@ -1174,6 +1453,55 @@ def main_server():
                             print(f"Stop speech model: {model_name}")
                         else:
                             print(f"Can not find the model: {model_name}")
+                    elif cmd == "start_image_recognition_model":
+                        print(f"Change to new model: {new_model_name}")
+                        process = Process(
+                            target=run_image_recognition_worker,
+                            name=f"imagerecognition_worker - {new_model_name}",
+                            kwargs=dict(model_name=new_model_name,
+                                        controller_address=args.controller_address,
+                                        q=queue,
+                                        started_event=e),
+                            daemon=True,
+                        )
+                        process.start()
+                        process.name = f"{process.name} ({process.pid})"
+                        processes["imagerecognition_worker"][new_model_name] = process
+                        e.wait()
+                        print(f"The image recognition model: {new_model_name} running!")
+                    elif cmd == "stop_image_recognition_model":
+                        if process := processes["imagerecognition_worker"].pop(model_name):
+                            time.sleep(1)
+                            process.terminate()
+                            process.join()
+                            print(f"Stop image recognition model: {model_name}")
+                        else:
+                            print(f"Can not find the model: {model_name}")
+                    elif cmd == "start_image_generation_model":
+                        print(f"Change to new model: {new_model_name}")
+                        process = Process(
+                            target=run_image_generation_worker,
+                            name=f"imagegeneration_worker - {new_model_name}",
+                            kwargs=dict(model_name=new_model_name,
+                                        controller_address=args.controller_address,
+                                        q=queue,
+                                        started_event=e),
+                            daemon=True,
+                        )
+                        process.start()
+                        process.name = f"{process.name} ({process.pid})"
+                        processes["imagegeneration_worker"][new_model_name] = process
+                        e.wait()
+                        print(f"The image generation model: {new_model_name} running!")
+                    elif cmd == "stop_image_generation_model":
+                        if process := processes["imagegeneration_worker"].pop(model_name):
+                            time.sleep(1)
+                            process.terminate()
+                            process.join()
+                            print(f"Stop image generation model: {model_name}")
+                        else:
+                            print(f"Can not find the model: {model_name}")
+
 
         except Exception as e:
             print("Caught KeyboardInterrupt! Setting stop event...")

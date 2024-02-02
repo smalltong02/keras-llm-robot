@@ -21,6 +21,7 @@ async def chat(query: str = Body(..., description="User input: ", examples=["cha
     imagesdata: List[str] = Body([], description="image data", examples=["image"]),
     audiosdata: List[str] = Body([], description="audio data", examples=["audio"]),
     videosdata: List[str] = Body([], description="video data", examples=["video"]),
+    imagesprompt: List[str] = Body([], description="image prompt", examples=["prompt"]),
     history: List[History] = Body([],
                                   description="History chat",
                                   examples=[[
@@ -40,6 +41,7 @@ async def chat(query: str = Body(..., description="User input: ", examples=["cha
                             imagesdata: List[str] = [],
                             audiosdata: List[str] = [],
                             videosdata: List[str] = [],
+                            imagesprompt: List[str] = [],
                             history: List[History] = [],
                             stream: bool = True,
                             model_name: str = "",
@@ -92,6 +94,9 @@ async def chat(query: str = Body(..., description="User input: ", examples=["cha
                 async_callback.done),
             )
         else:
+            if imagesprompt:
+                query = generate_new_query(query, imagesprompt)
+
             prompt_template = get_prompt_template("llm_chat", prompt_name)
             input_msg = History(role="user", content=prompt_template).to_msg_template(False)
             chat_prompt = ChatPromptTemplate.from_messages(
@@ -129,6 +134,7 @@ async def chat(query: str = Body(..., description="User input: ", examples=["cha
                                            imagesdata=imagesdata,
                                            audiosdata=audiosdata,
                                            videosdata=videosdata,
+                                           imagesprompt=imagesprompt,
                                            history=history,
                                            stream=stream,
                                            model_name=model_name,

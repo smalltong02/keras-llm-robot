@@ -70,7 +70,7 @@ The project inherits from the Langchain-Chatchat project(https://github.com/chat
   
   Access Server on Windows PC by https service.
 
-## Video Demonstration
+## Feature Demonstration
 
   1. The demonstration utilizes a multimodal online model GPT-4-vision-preview along with Azure Speech to Text services:
 

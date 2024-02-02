@@ -136,3 +136,4 @@ zipp==3.17.0
 SpeechRecognition==3.10.0
 
 xformers==0.0.23.post1
+diffusers==0.25.1

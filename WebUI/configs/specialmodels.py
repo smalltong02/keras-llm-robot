@@ -113,6 +113,7 @@ def special_model_chat(
         imagesdata: List[str],
         audiosdata: List[str],
         videosdata: List[str],
+        imagesprompt: List[str],
         history: List[dict],
         stream: bool,
         speechmodel: dict,
@@ -125,6 +126,7 @@ def special_model_chat(
                             imagesdata: List[str],
                             audiosdata: List[str],
                             videosdata: List[str],
+                            imagesprompt: List[str],
                             history: List[dict] = [],
                             modelinfo: Any = None,
                             prompt_name: str = prompt_name,
@@ -146,6 +148,8 @@ def special_model_chat(
 
         answer = ""
         chat_history_id = add_chat_history_to_db(chat_type="llm_chat", query=query)
+        if imagesprompt:
+                query = generate_new_query(query, imagesprompt)
         if modelinfo["mtype"] == ModelType.Special:
             from langchain.prompts import PromptTemplate
             modelconfig = GetModelConfig(webui_config, modelinfo)
@@ -254,6 +258,7 @@ def special_model_chat(
                                             imagesdata=imagesdata,
                                             audiosdata=audiosdata,
                                             videosdata=videosdata,
+                                            imagesprompt=imagesprompt,
                                             history=history,
                                             modelinfo=modelinfo,
                                             prompt_name=prompt_name),
@@ -324,6 +329,7 @@ def multimodal_model_chat(
         imagesdata: List[str],
         audiosdata: List[str],
         videosdata: List[str],
+        imagesprompt: List[str],
         history: List[dict],
         stream: bool,
         speechmodel: dict,
@@ -342,6 +348,7 @@ def multimodal_model_chat(
                             imagesdata: List[str],
                             audiosdata: List[str],
                             videosdata: List[str],
+                            imagesprompt: List[str],
                             history: List[dict] = [],
                             modelinfo: Any = None,
                             prompt_name: str = prompt_name,
@@ -469,6 +476,7 @@ def multimodal_model_chat(
                                             imagesdata=imagesdata,
                                             audiosdata=audiosdata,
                                             videosdata=videosdata,
+                                            imagesprompt=imagesprompt,
                                             history=history,
                                             modelinfo=modelinfo,
                                             prompt_name=prompt_name),
@@ -480,6 +488,7 @@ def model_chat(
         imagesdata: List[str],
         audiosdata: List[str],
         videosdata: List[str],
+        imagesprompt: List[str],
         history: List[dict],
         stream: bool,
         speechmodel: dict,
@@ -494,6 +503,6 @@ def model_chat(
     modelinfo["mtype"], modelinfo["msize"], modelinfo["msubtype"] = GetModelInfoByName(webui_config, model_name)
     modelinfo["mname"] = model_name
     if modelinfo["mtype"] == ModelType.Special or modelinfo["mtype"] == ModelType.Online:
-        return special_model_chat(app._model, app._streamer, modelinfo, query, imagesdata, audiosdata, videosdata, history, stream, speechmodel, temperature, max_tokens, prompt_name)
+        return special_model_chat(app._model, app._streamer, modelinfo, query, imagesdata, audiosdata, videosdata, imagesprompt, history, stream, speechmodel, temperature, max_tokens, prompt_name)
     elif modelinfo["mtype"] == ModelType.Multimodal:
-        return multimodal_model_chat(app._model, app._tokenizer, modelinfo, query, imagesdata, audiosdata, videosdata, history, False, speechmodel, temperature, max_tokens, prompt_name)
+        return multimodal_model_chat(app._model, app._tokenizer, modelinfo, query, imagesdata, audiosdata, videosdata, imagesprompt, history, False, speechmodel, temperature, max_tokens, prompt_name)

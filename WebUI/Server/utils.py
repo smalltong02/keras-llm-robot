@@ -307,6 +307,73 @@ def get_speech_worker_config(model_name: str = None) -> dict:
             config["Huggingface"] = ""
     return config
 
+def get_image_recognition_worker_config(model_name: str = None) -> dict:
+    config = {}
+    configinst = InnerJsonConfigWebUIParse()
+    webui_config = configinst.dump()
+    server_config = webui_config.get("ServerConfig")
+    config["host"] = server_config.get("default_host_ip")
+    config["port"] = server_config["image_recognition_worker"].get("port")
+
+    if model_name is None or model_name == "":
+        return config
+    imagere_models = webui_config.get("ModelConfig").get("ImageRecognition")
+    if model_name in imagere_models:
+        if imagere_models[model_name].get("type") == "local":
+            config["model_type"] = "local"
+            config["model_path"] = imagere_models[model_name].get("path")
+            config["device"] = imagere_models[model_name].get("device")
+            config["loadbits"] = imagere_models[model_name].get("loadbits")
+            config["Huggingface"] = imagere_models[model_name].get("Huggingface")
+        else:
+            config["model_type"] = ""
+            config["model_path"] = ""
+            config["device"] = ""
+            config["loadbits"] = ""
+            config["Huggingface"] = ""
+    return config
+
+def get_image_generation_worker_config(model_name: str = None) -> dict:
+    config = {}
+    configinst = InnerJsonConfigWebUIParse()
+    webui_config = configinst.dump()
+    server_config = webui_config.get("ServerConfig")
+    config["host"] = server_config.get("default_host_ip")
+    config["port"] = server_config["image_generation_worker"].get("port")
+
+    if model_name is None or model_name == "":
+        return config
+    imagegen_models = webui_config.get("ModelConfig").get("ImageGeneration")
+    if model_name in imagegen_models:
+        if imagegen_models[model_name].get("type") == "local":
+            config["model_type"] = "local"
+            config["model_path"] = imagegen_models[model_name].get("path")
+            config["device"] = imagegen_models[model_name].get("device")
+            config["loadbits"] = imagegen_models[model_name].get("loadbits")
+            config["Huggingface"] = imagegen_models[model_name].get("Huggingface")
+            subconfig = imagegen_models[model_name].get("config", {})
+            if subconfig:
+                config["seed"] = subconfig.get("seed")
+                config["torch_compile"] = subconfig.get("torch_compile")
+                config["cpu_offload"] = subconfig.get("cpu_offload")
+                config["refiner"] = subconfig.get("refiner")
+            else:
+                config["seed"] = 0
+                config["torch_compile"] = False
+                config["cpu_offload"] = False
+                config["refiner"] = False
+        else:
+            config["model_type"] = ""
+            config["model_path"] = ""
+            config["device"] = ""
+            config["loadbits"] = ""
+            config["Huggingface"] = ""
+            config["seed"] = 0
+            config["torch_compile"] = False
+            config["cpu_offload"] = False
+            config["refiner"] = False
+    return config
+
 def MakeFastAPIOffline(
         app: FastAPI,
         static_dir=Path(__file__).parent / "static",
