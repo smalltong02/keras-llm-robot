@@ -119,32 +119,24 @@
             "blip-image-captioning-large": {
                 "type": "local",
                 "path": "models/imagerecognition/blip-image-captioning-large",
-                "device": "auto",
+                "device": "cpu",
                 "loadbits": 16,
                 "Huggingface": "Salesforce/blip-image-captioning-large"
             }
         },
         "ImageGeneration": {
-            "animagine-xl-3.0": {
-                "type": "local",
-                "path": "models/imagegeneration/animagine-xl-3.0",
-                "device": "auto",
-                "loadbits": 16,
-                "Huggingface": "cagliostrolab/animagine-xl-3.0"
-            },
-            "IP-Adapter-FaceID": {
-                "type": "local",
-                "path": "models/imagegeneration/IP-Adapter-FaceID",
-                "device": "auto",
-                "loadbits": 16,
-                "Huggingface": "h94/IP-Adapter-FaceID"
-            },
             "OpenDalleV1.1": {
                 "type": "local",
                 "path": "models/imagegeneration/OpenDalleV1.1",
                 "device": "auto",
                 "loadbits": 16,
-                "Huggingface": "dataautogpt3/OpenDalleV1.1"
+                "Huggingface": "dataautogpt3/OpenDalleV1.1",
+                "config": {
+                    "seed": -1,
+                    "torch_compile": false,
+                    "cpu_offload": false,
+                    "refiner": true
+                }
             }
         },
         "VtoTModel": {
@@ -836,6 +828,16 @@
         "ttov_model_worker": {
             "host": "default_host_ip",
             "port": 20003,
+            "device": "auto"
+        },
+        "image_recognition_worker": {
+            "host": "default_host_ip",
+            "port": 20004,
+            "device": "auto"
+        },
+        "image_generation_worker": {
+            "host": "default_host_ip",
+            "port": 20005,
             "device": "auto"
         },
         "fastchat_model_worker": {

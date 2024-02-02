@@ -124,8 +124,12 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
     bshowstatus = webconfig.get("ShowRunningStatus")
     voicemodel = api.get_vtot_model()
     speechmodel = api.get_ttov_model()
-    imagemodel = ""
+    imagerecognition_model = api.get_image_recognition_model()
+    imagegeneration_model = api.get_image_generation_model()
     modelinfo : Dict[str, any] = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str}
+    print("voicemodel: ", voicemodel)
+    print("imagerecognition_model: ", imagerecognition_model)
+    print("imagegeneration_model: ", imagegeneration_model)
 
     dialogue_turns = chatconfig.get("dialogue_turns", 5)
     disabled = False
@@ -299,9 +303,10 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                     pass
 
         imagesdata = []
+        imagesprompt = []
         audiosdata = []
         videosdata = []
-        imagedisable = False if imagemodel != ""  or modelinfo["msubtype"] == ModelSubType.VisionChatModel else True
+        imagedisable = False if imagerecognition_model != ""  or modelinfo["msubtype"] == ModelSubType.VisionChatModel else True
         audiodisable = False if modelinfo["msubtype"] == ModelSubType.VoiceChatModel else True
         videodisable = False if modelinfo["msubtype"] == ModelSubType.VideoChatModel else True
         
@@ -319,6 +324,16 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                     if is_image_type(imagefile.type):
                         imagesdata.append(imagefile.getvalue())
                     print("imagesdata size: ", len(imagesdata))
+                if modelinfo["msubtype"] != ModelSubType.VisionChatModel and imagerecognition_model != "" and len(imagesdata):
+                    try:
+                        for imagedata in imagesdata:
+                            image_prompt = api.get_image_recognition_data(imagedata)
+                            imagesprompt.append(image_prompt)
+                        print("imagesprompt: ", imagesprompt)
+                        if running_model == "" or running_model == "None":
+                            image_prompt = ""
+                    except Exception as e:
+                        print(e)
 
         elif audiodisable == False:
             audiofiles = st.file_uploader("Please upload 🎹:",
@@ -433,15 +448,25 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
         if videosdata:
             for video in videosdata:
                 prompt_list.append(Video(video))
+        if imagesprompt:
+            imagesdata = []
         chat_box.user_say(prompt_list)
         if dialogue_mode == "LLM Chat":
-            chat_box.ai_say("Thinking...")
+            chat_box.ai_say(["Thinking...", ""])
             text = ""
             chat_history_id = ""
+            if imagegeneration_model:
+                imageprompt = ""
+                if imagesprompt:
+                    imageprompt = imagesprompt[0]
+                prompt = generate_prompt_for_imagegen(imagegeneration_model, prompt, imageprompt)
+                imagesprompt = []
+                history = []
             r = api.chat_chat(prompt,
                             imagesdata=imagesdata,
                             audiosdata=audiosdata,
                             videosdata=videosdata,
+                            imagesprompt=imagesprompt,
                             history=history,
                             model=running_model,
                             speechmodel=speechmodel,
@@ -452,13 +477,20 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                     st.error(error_msg)
                     break
                 text += t.get("text", "")
-                chat_box.update_msg(text)
+                chat_box.update_msg(text, element_index=0)
                 chat_history_id = t.get("chat_history_id", "")
 
             metadata = {
                 "chat_history_id": chat_history_id,
                 }
-            chat_box.update_msg(text, streaming=False, metadata=metadata)
+            chat_box.update_msg(text, element_index=0, streaming=False, metadata=metadata)
+            if imagegeneration_model:
+                with st.spinner(f"Image generation in progress...."):
+                    gen_image = api.get_image_generation_data(text)
+                    if gen_image:
+                        decoded_data = base64.b64decode(gen_image)
+                        gen_image=Image(BytesIO(decoded_data))
+                        chat_box.update_msg(gen_image, element_index=1, streaming=False)
             #print("chat_box.history: ", len(chat_box.history))
             chat_box.show_feedback(**feedback_kwargs,
                                 key=chat_history_id,

@@ -19,6 +19,8 @@ from WebUI.Server.llm_api import (list_running_models, get_running_models, list_
                             get_model_config, save_chat_config, save_model_config, get_webui_configs,
                             get_vtot_model, get_vtot_data, stop_vtot_model, change_vtot_model, save_voice_model_config,
                             get_speech_model, get_speech_data, save_speech_model_config, stop_speech_model, change_speech_model,
+                            get_image_recognition_model, save_image_recognition_model_config, eject_image_recognition_model, change_image_recognition_model, get_image_recognition_data,
+                            get_image_generation_model, save_image_generation_model_config, eject_image_generation_model, change_image_generation_model, get_image_generation_data,
                             llm_knowledge_base_chat, list_search_engines)
 from WebUI.Server.utils import(BaseResponse, ListResponse, FastAPI, MakeFastAPIOffline,
                           get_server_configs, get_prompt_template)
@@ -176,6 +178,58 @@ def mount_app_routes(app: FastAPI, run_mode: str = None):
              tags=["Speech Model Management"],
              summary="Switch to new Speech Model",
              )(change_speech_model)
+    
+    # Image Recognition Model interface
+    app.post("/image_model/get_image_recognition_model",
+             tags=["Image Recognition Model Management"],
+             summary="Get current running Image Recognition Model",
+             )(get_image_recognition_model)
+    
+    app.post("/image_model/save_image_recognition_model_config",
+             tags=["Image Recognition Model Management"],
+             summary="Save Image Recognition Model configration information",
+             )(save_image_recognition_model_config)
+    
+    app.post("/image_model/eject_image_recognition_model",
+             tags=["Image Recognition Model Management"],
+             summary="Stop Image Recognition Model",
+             )(eject_image_recognition_model)
+    
+    app.post("/image_model/change_image_recognition_model",
+             tags=["Image Recognition Model Management"],
+             summary="Switch to new Image Recognition Model",
+             )(change_image_recognition_model)
+    
+    app.post("/image_model/get_image_recognition_data",
+             tags=["Image Recognition Model Management"],
+             summary="Translate image to text",
+             )(get_image_recognition_data)
+
+    # Image Generation Model interface
+    app.post("/image_model/get_image_generation_model",
+             tags=["Image Generation Model Management"],
+             summary="Get current running Image Generation Model",
+             )(get_image_generation_model)
+    
+    app.post("/image_model/save_image_generation_model_config",
+             tags=["Image Generation Model Management"],
+             summary="Save Image Generation Model configration information",
+             )(save_image_generation_model_config)
+    
+    app.post("/image_model/eject_image_generation_model",
+             tags=["Image Generation Model Management"],
+             summary="Stop Image Generation Model",
+             )(eject_image_generation_model)
+    
+    app.post("/image_model/change_image_generation_model",
+             tags=["Image Generation Model Management"],
+             summary="Switch to new Image Generation Model",
+             )(change_image_generation_model)
+    
+    app.post("/image_model/get_image_generation_data",
+             tags=["Image Generation Model Management"],
+             summary="Generate images based on text",
+             )(get_image_generation_data)
 
     # Server interface
     app.post("/server/get_webui_config",

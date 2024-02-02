@@ -69,7 +69,7 @@
   在windows机器上，通过Https服务访问服务器
 
 
-## 视频演示
+## 功能演示
 
   1. 演示使用了多模态在线模型gpt-4-vision-preview 加 Azure Speech to Text服务：
 
@@ -82,6 +82,19 @@
   3. 对RAG(Retrieval Augmented Generation)功能的视频演示：
   
   [![Alt text](https://img.youtube.com/vi/dyIFLISlskI/0.jpg)](https://www.youtube.com/watch?v=dyIFLISlskI) 
+
+  4. 图像识别和图像生成功能的演示：
+  
+  Image Generation:
+
+  ![Image](./img/image_to_image_1.png) | ![Image](./img/image_to_image_2.png)
+
+  ![Image](./img/image_to_image_3.png) | ![Image](./img/image_to_image_4.png)
+
+  Creating Handicrafts Based on Items in the Picture:
+
+  ![Image](./img/image_creative.png)
+
 
 ## 项目介绍
 由三个主界面组成，语言模型的聊天界面，语言模型的配置界面，辅助模型的工具和代理界面。

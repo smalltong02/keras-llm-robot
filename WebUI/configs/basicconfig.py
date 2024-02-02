@@ -6,6 +6,7 @@ import copy
 
 SAVE_CHAT_HISTORY = True
 MIN_LLMMODEL_SIZE = 1024**3 # 1G
+MIN_IMAGEMODEL_SIZE = 1024**2 # 1MB
 MIN_EMBEDMODEL_SIZE = 1024**2 # 1MB
 
 TMP_DIR = Path('temp')
@@ -303,6 +304,18 @@ def LocalModelExist(local_path):
         return True
     return False
 
+def ImageModelExist(local_path):
+    total_size_bytes = 0
+    for dirpath, _, filenames in os.walk(local_path):
+        for filename in filenames:
+            filepath = os.path.join(dirpath, filename)
+            total_size_bytes += os.path.getsize(filepath)
+    total_size_mb = total_size_bytes / (MIN_IMAGEMODEL_SIZE)
+    print("total_size_mb: ", total_size_mb)
+    if total_size_mb > 100:
+        return True
+    return False
+
 def EmbeddingModelExist(embed_model: str):
     if embed_model:
         from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
@@ -380,3 +393,51 @@ def GetTextSplitterDict():
     kb_config = GetKbConfig()
     text_splitter_dict = kb_config.get("text_splitter_dict", {})
     return text_splitter_dict
+
+def generate_new_query(query : str = "", imagesprompt : List[str] = []):
+    en_nums = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth']
+
+    new_query = ""
+    if len(query) == 0 or len(imagesprompt) == 0:
+        return query
+    index = 0
+    for prompt in imagesprompt:
+        new_query += f'The content of the {en_nums[index]} picture: ' + prompt + '\n\n'
+        index = index + 1
+        if index >= 10:
+            break
+    
+    if new_query:
+        new_query += "If the user's question involves pictures, please answer the user's question based on the content of the pictures provided above. \n\n"
+        new_query += "Please respond to the user using the language in which the user asked the question.\n\n"
+    new_query += "The user's question is: " + query
+    print("new_query: ", new_query)
+    return new_query
+
+def generate_prompt_for_imagegen(model_name : str = "", prompt : str = "", imagesprompt : str = ""):
+    new_prompt = ""
+    if len(model_name) == 0 or len(prompt) == 0:
+        return prompt
+    if model_name == "OpenDalleV1.1":        
+        new_prompt = """
+                You need to create prompts for an image generation model based on the user's question. The format of the prompts is the features of the image, separated by commas, with no any other information outputted, for example:
+
+                1. black fluffy gorgeous dangerous cat animal creature, large orange eyes, big fluffy ears, piercing gaze, full moon, dark ambiance, best quality, extremely detailed
+                2. an anime female general laughing, with a military cap, evil smile, sadistic, grim
+                3. John Berkey Style page,ral-oilspill, There is no road ahead,no land, Strangely,the river is still flowing,crossing the void into the mysterious unknown, The end of nothingness,a huge ripple,it is a kind of wave,and it is the law of time that lasts forever in that void, At the end of the infinite void,there is a colorful world,very hazy and mysterious,and it cannot be seen clearly,but it is real, And that's where the river goes
+                4. (impressionistic realism by csybgh), a 50 something male, working in banking, very short dyed dark curly balding hair, Afro-Asiatic ancestry, talks a lot but listens poorly, stuck in the past, wearing a suit, he has a certain charm, bronze skintone, sitting in a bar at night, he is smoking and feeling cool, drunk on plum wine, masterpiece, 8k, hyper detailed, smokey ambiance, perfect hands AND fingers
+                5. Super Closeup Portrait, action shot, Profoundly dark whitish meadow, glass flowers, Stains, space grunge style, Jeanne d'Arc wearing White Olive green used styled Cotton frock, Wielding thin silver sword, Sci-fi vibe, dirty, noisy, Vintage monk style, very detailed, hd
+                6. cinematic film still of Kodak Motion Picture Film: (Sharp Detailed Image) An Oscar winning movie for Best Cinematography a woman in a kimono standing on a subway train in Japan Kodak Motion Picture Film Style, shallow depth of field, vignette, highly detailed, high budget, bokeh, cinemascope, moody, epic, gorgeous, film grain, grainy
+                7. in the style of artgerm, comic style,3D model, mythical seascape, negative space, space quixotic dreams, temporal hallucination, psychedelic, mystical, intricate details, very bright neon colors, (vantablack background:1.5), pointillism, pareidolia, melting, symbolism, very high contrast, chiaroscuro bad quality, bad anatomy, worst quality, low quality, low resolutions, extra fingers, blur, blurry, ugly, wrongs proportions, watermark, image artifacts, lowres, ugly, jpeg artifacts, deformed, noisy image
+                8. ((OpenDAlle!)text logo:1), ~*~aesthetic~*~
+                \n
+                Please generate appropriate prompts for the user's question based on the above example. Please note do not reply to what I say. that the format should only consist of features separated by commas, with no any other information outputted, Just output a prompt.
+                \n
+                """
+        
+        new_prompt += "The user's question is: " + prompt
+        if imagesprompt:
+            new_prompt += f". Contents of this image is '{imagesprompt}'"
+        print("new_prompt: ", new_prompt)
+        return new_prompt
+    return prompt

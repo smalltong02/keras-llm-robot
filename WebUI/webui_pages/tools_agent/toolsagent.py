@@ -11,7 +11,7 @@ loadbits_list = ["32 bits","16 bits","8 bits"]
 
 KB_CREATE_NEW = "[Create New...]"
 
-cell_renderer = JsCode("""function(params) {if(params.value==true){return '✓'}else{return '×'}}""")
+cell_renderer = JsCode("""function(params) {if(params.value==true){return '✓'}else{return 'X'}}""")
 
 
 def config_aggrid(
@@ -57,8 +57,8 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
     webui_config = api.get_webui_config()
     current_voice_model = api.get_vtot_model()
     current_speech_model = api.get_ttov_model()
-    current_imagere_model = ""
-    current_imagegen_model = ""
+    current_imagere_model = api.get_image_recognition_model()
+    current_imagegen_model = api.get_image_generation_model()
     voicemodel = None
     
     if running_model == "":
@@ -814,7 +814,8 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                 )
                 if redownload_btn:
                     with st.spinner(f"Model downloading..., Please do not perform any actions or refresh the page."):
-                        if LocalModelExist(pathstr):
+                        pathstr = modelconfig.get("path")
+                        if ImageModelExist(pathstr):
                             st.error(f'The model {imageremodel} already exists in the folder {pathstr}')
                         else:
                             huggingface_path = modelconfig["Huggingface"]
@@ -921,13 +922,17 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                 else:
                     with st.spinner(f"Loading Model: `{imagegenmodel}`, Please do not perform any actions or refresh the page."):
                         provider = imagegenmodels[imagegenmodel].get("provider", "")
-                        if provider != "" or LocalModelExist(pathstr):
-                            r = api.change_image_generation_model(current_imagegen_model, imagegenmodel)
-                            if msg := check_error_msg(r):
-                                st.error(msg)
-                            elif msg := check_success_msg(r):
-                                st.success(msg)
-                                current_imagegen_model = imagegenmodel
+                        pathstr = imagegenmodels[imagegenmodel].get("path")
+                        if provider != "" or ImageModelExist(pathstr):
+                            if imagegenmodel == "OpenDalleV1.1" and ImageModelExist("models/imagegeneration/sdxl-vae-fp16-fix") == False:
+                                st.error("Please first download the sdxl-vae-fp16-fix model from Hugginface.")
+                            else:
+                                r = api.change_image_generation_model(current_imagegen_model, imagegenmodel)
+                                if msg := check_error_msg(r):
+                                    st.error(msg)
+                                elif msg := check_success_msg(r):
+                                    st.success(msg)
+                                    current_imagegen_model = imagegenmodel
                         else:
                             st.error("Please download the model to your local machine first.")
             modelconfig = imagegenmodels[imagegenmodel]
@@ -979,6 +984,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
             with st.form("image_generation_model"):
                 devcol, bitcol = st.columns(2)
                 with devcol:
+                    subconfig = modelconfig.get("config", {})
                     if modelconfig["type"] == "local":
                         sdevice = modelconfig.get("device").lower()
                         if sdevice in training_devices_list:
@@ -990,15 +996,26 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                                 training_devices_list,
                                 index=index
                             )
+                    if subconfig:
+                        seed = subconfig.get("seed", 0)
+                        seed = st.number_input("Seed (-1 for random)", value = seed)
                 
                 with bitcol:
-                    nloadbits = modelconfig.get("loadbits")
-                    index = 0 if nloadbits == 32 else (1 if nloadbits == 16 else (2 if nloadbits == 8 else 16))
-                    nloadbits = st.selectbox(
-                        "Load Bits",
-                        loadbits_list,
-                        index=index
-                    )
+                    if modelconfig["type"] == "local":
+                        nloadbits = modelconfig.get("loadbits")
+                        index = 0 if nloadbits == 32 else (1 if nloadbits == 16 else (2 if nloadbits == 8 else 16))
+                        nloadbits = st.selectbox(
+                            "Load Bits",
+                            loadbits_list,
+                            index=index
+                        )
+                    if subconfig:
+                        torch_compile = subconfig.get("torch_compile", False)
+                        torch_compile = st.checkbox('Torch Compile', value=torch_compile, help="Note: Not support torch compile on windows.")
+                        cpu_offload = subconfig.get("cpu_offload", False)
+                        cpu_offload = st.checkbox('Cpu Offload', value=cpu_offload)
+                        refiner = subconfig.get("refiner", False)
+                        refiner = st.checkbox('Refiner', value=refiner, help="Please download the model stable-diffusion-xl-refiner-1.0 in advance.")
                 save_parameters = st.form_submit_button(
                     "Save Parameters",
                     use_container_width=True
@@ -1011,8 +1028,13 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                         modelconfig["loadbits"] = 16
                     else:
                         modelconfig["loadbits"] = 8
+                    if subconfig:
+                        modelconfig["config"]["seed"] = seed
+                        modelconfig["config"]["torch_compile"] = torch_compile
+                        modelconfig["config"]["cpu_offload"] = cpu_offload
+                        modelconfig["config"]["refiner"] = refiner
                     with st.spinner(f"Saving Parameters, Please do not perform any actions or refresh the page."):
-                        r = api.save_image_generation_model_config(imageremodel, modelconfig)
+                        r = api.save_image_generation_model_config(imagegenmodel, modelconfig)
                         if msg := check_error_msg(r):
                             st.error(msg)
                         elif msg := check_success_msg(r):

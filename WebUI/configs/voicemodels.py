@@ -1,6 +1,7 @@
 import io, os
 import torch
 import base64
+from WebUI.Server.utils import detect_device
 from WebUI.configs.basicconfig import TMP_DIR
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 import wave
@@ -9,7 +10,8 @@ def init_voice_models(config):
     if isinstance(config, dict):
         if config["model_name"] == "whisper-large-v3" or config["model_name"] == "whisper-base" or config["model_name"] == "whisper-medium":
             model_id = config["model_path"]
-            device =  'cuda' if config["device"] == 'gpu' else config["device"]
+            device = config.get("device", "auto")
+            device = "cuda" if device == "gpu" else detect_device() if device == "auto" else device
             if device == "cpu":
                 torch_dtype = torch.float32
                 model = AutoModelForSpeechSeq2Seq.from_pretrained(
@@ -25,7 +27,8 @@ def init_voice_models(config):
         elif config["model_name"] == "faster-whisper-large-v3":
             from faster_whisper import WhisperModel
             model_id = config["model_path"]
-            device =  'cuda' if config["device"] == 'gpu' else config["device"]
+            device = config.get("device", "auto")
+            device = "cuda" if device == "gpu" else detect_device() if device == "auto" else device
             compute_type = "float16"
             if device == "cpu":
                 compute_type = "float32"
@@ -49,7 +52,8 @@ def translate_voice_data(model, config, voice_data: str = "") -> str:
                     torch_dtype = torch.float16
                 else:
                     torch_dtype = torch.float32
-                device =  'cuda' if config["device"] == 'gpu' else config["device"]
+                device = config.get("device", "auto")
+                device = "cuda" if device == "gpu" else detect_device() if device == "auto" else device
                 model.to(device)
                 processor = AutoProcessor.from_pretrained(model_id)
                 pipe = pipeline(
@@ -120,7 +124,8 @@ def init_speech_models(config):
         from TTS.api import TTS
         model_id = config["model_path"]
         config_path = model_id + "/config.json"
-        device =  'cuda' if config["device"] == 'gpu' else config["device"]
+        device = config.get("device", "auto")
+        device = "cuda" if device == "gpu" else detect_device() if device == "auto" else device
         tts_model = TTS(model_path=model_id, config_path=config_path, progress_bar=False)
         tts_model.to(device)
         return tts_model

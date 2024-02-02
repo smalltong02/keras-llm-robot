@@ -123,6 +123,7 @@ class ApiRequest:
         imagesdata: List[bytes] = [],
         audiosdata: List[bytes] = [],
         videosdata: List[bytes] = [],
+        imagesprompt: List[str] = [],
         history: List[dict] = [],
         stream: bool = True,
         model: str = "",
@@ -169,6 +170,7 @@ class ApiRequest:
             "imagesdata": imageslist,
             "audiosdata": audioslist,
             "videosdata": videoslist,
+            "imagesprompt": imagesprompt,
             "history": history,
             "stream": stream,
             "model_name": model,
@@ -884,7 +886,7 @@ class ApiRequest:
         }
 
         response = self.post(
-            "/image_model/stop_re",
+            "/image_model/eject_image_recognition_model",
             json=data,
         )
         
@@ -917,7 +919,7 @@ class ApiRequest:
         }
 
         response = self.post(
-            "/image_model/change_re",
+            "/image_model/change_image_recognition_model",
             json=data,
         )
 
@@ -927,14 +929,14 @@ class ApiRequest:
             return self.ret_sync(response)
         
     def get_image_recognition_data(self,
-        voice_data: bytes,
+        imagedata: bytes,
         controller_address: str = None
     ):
-        if voice_data is None or len(voice_data) == 0:
+        if imagedata is None or len(imagedata) == 0:
             return ""
-        base64_data = base64.b64encode(voice_data).decode('utf-8')
+        imagedata = base64.b64encode(imagedata).decode('utf-8')
         data = {
-            "voice_data": base64_data,
+            "imagedata": imagedata,
             "controller_address": controller_address,
         }
         response = self.post(
@@ -1002,7 +1004,7 @@ class ApiRequest:
         }
 
         response = self.post(
-            "/image_model/stop_gen",
+            "/image_model/eject_image_generation_model",
             json=data,
         )
         
@@ -1035,7 +1037,7 @@ class ApiRequest:
         }
 
         response = self.post(
-            "/image_model/change_gen",
+            "/image_model/change_image_generation_model",
             json=data,
         )
 
@@ -1045,14 +1047,13 @@ class ApiRequest:
             return self.ret_sync(response)
         
     def get_image_generation_data(self,
-        voice_data: bytes,
+        prompt_data: str,
         controller_address: str = None
     ):
-        if voice_data is None or len(voice_data) == 0:
+        if prompt_data is None or len(prompt_data) == 0:
             return ""
-        base64_data = base64.b64encode(voice_data).decode('utf-8')
         data = {
-            "voice_data": base64_data,
+            "prompt_data": prompt_data,
             "controller_address": controller_address,
         }
         response = self.post(

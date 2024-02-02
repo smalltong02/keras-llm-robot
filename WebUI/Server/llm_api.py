@@ -2,7 +2,8 @@ from fastapi import Body
 from WebUI.Server.knowledge_base.utils import SCORE_THRESHOLD
 from WebUI.configs import HTTPX_DEFAULT_TIMEOUT
 from WebUI.Server.utils import (BaseResponse, fschat_controller_address, list_config_llm_models,
-                          get_httpx_client, get_model_worker_config, get_vtot_worker_config, get_speech_worker_config)
+                          get_httpx_client, get_model_worker_config, get_vtot_worker_config, get_speech_worker_config,
+                          get_image_recognition_worker_config, get_image_generation_worker_config)
 from copy import deepcopy
 import json
 from WebUI.configs.webuiconfig import *
@@ -120,6 +121,7 @@ async def chat_llm_model(
     imagesdata: List[str] = Body([], description="image data", examples=["image"]),
     audiosdata: List[str] = Body([], description="audio data", examples=["audio"]),
     videosdata: List[str] = Body([], description="video data", examples=["video"]),
+    imagesprompt: List[str] = Body([], description="prompt data", examples=["prompt"]),
     history: List[dict] = Body([],
                                   description="History chat",
                                   examples=[[
@@ -147,6 +149,7 @@ async def chat_llm_model(
                     "imagesdata": imagesdata,
                     "audiosdata": audiosdata,
                     "videosdata": videosdata,
+                    "imagesprompt": imagesprompt,
                     "history": history,
                     "stream": stream,
                     "model_name": model_name,
@@ -316,6 +319,8 @@ async def download_llm_model(
                     await asyncio.sleep(0.1)
     return StreamingResponse(fake_json_streamer(), media_type="text/event-stream")
 
+# Voice Model
+
 def get_vtot_model_config(
         model_name: str = Body(description="Vtot Model name"),
         placeholder: str = Body(description="Unused")
@@ -330,7 +335,7 @@ def get_vtot_model_config(
             msg=f"failed to save local model configration, error: {e}")
     
 def save_voice_model_config(
-    model_name: str = Body(..., description="Change Model"),
+    model_name: str = Body(..., description="Save Model Config"),
     config: dict = Body(..., description="Model configration information"),
     controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])    
 ) -> BaseResponse:
@@ -432,6 +437,8 @@ def change_vtot_model(
         return BaseResponse(
             code=500,
             msg=f"failed to switch Voice model from controller: {controller_address}. error: {e}")
+
+# Speech Model
     
 def get_speech_model_config(
         model_name: str = Body(description="Speech Model name"),
@@ -447,7 +454,7 @@ def get_speech_model_config(
             msg=f"failed to save local model configration, error: {e}")
     
 def save_speech_model_config(
-    model_name: str = Body(..., description="Change Model"),
+    model_name: str = Body(..., description="Save Model Config"),
     config: dict = Body(..., description="Model configration information"),
     controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])    
 ) -> BaseResponse:
@@ -549,6 +556,247 @@ def change_speech_model(
         return BaseResponse(
             code=500,
             msg=f"failed to switch speech model from controller: {controller_address}. error: {e}")
+    
+# Image Recognition interface
+    
+def get_image_recognition_model_config(
+        model_name: str = Body(description="Image Recognition Model name"),
+        placeholder: str = Body(description="Unused")
+) -> BaseResponse:
+    try:
+        config = get_image_recognition_worker_config(model_name=model_name)
+        return BaseResponse(data=config)
+    except Exception as e:
+        print(f'{e.__class__.__name__}: {e}')
+        return BaseResponse(
+            code=500,
+            msg=f"failed to save local model configration, error: {e}")
+    
+def save_image_recognition_model_config(
+    model_name: str = Body(..., description="Save Model Config"),
+    config: dict = Body(..., description="Model configration information"),
+    controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])    
+) -> BaseResponse:
+    try:
+        with open("WebUI/configs/webuiconfig.json", 'r+') as file:
+            jsondata = json.load(file)
+            jsondata["ModelConfig"]["ImageRecognition"][model_name].update(config)
+            file.seek(0)
+            json.dump(jsondata, file, indent=4)
+            file.truncate()
+        return BaseResponse(
+            code=200,
+            msg=f"success save local model configration!")
+            
+    except Exception as e:
+        print(f'{e.__class__.__name__}: {e}')
+        return BaseResponse(
+            code=500,
+            msg=f"failed to save local model configration, error: {e}")
+
+def get_image_recognition_model(
+    controller_address: str = Body(None, description="Fastchat controller adress", examples=[fschat_controller_address()]),
+    placeholder: str = Body(None, description="Not use"), 
+) -> BaseResponse:
+    try:
+        controller_address = controller_address or fschat_controller_address()
+        with get_httpx_client() as client:
+            r = client.post(controller_address + "/get_image_recognition_model")
+            model = r.json()["model"]
+            return BaseResponse(data=model)
+    except Exception as e:
+        print(f'{e.__class__.__name__}: {e}')
+        return BaseResponse(
+            code=500,
+            data={},
+            msg=f"failed to get current model, error: {e}")
+    
+def get_image_recognition_data(
+    imagedata: str = Body(..., description="image recognition data", examples=["image"]),
+    controller_address: str = Body(None, description="Fastchat controller adress", examples=[fschat_controller_address()]),
+) -> BaseResponse:
+    try:
+        controller_address = controller_address or fschat_controller_address()
+        with get_httpx_client() as client:
+            r = client.post(
+                controller_address + "/get_image_recognition_data",
+                json={
+                    "imagedata": imagedata,
+                    "imagetype": "jpeg",
+                    },
+                )
+            data = r.json()["text"]
+            code = r.json()["code"]
+            if code == 200:
+                return BaseResponse(data=data)
+            else:
+                return BaseResponse(
+                    code=500,
+                    data="",
+                    msg=f"failed to translate voice data, error: {e}")
+    except Exception as e:
+        print(f'{e.__class__.__name__}: {e}')
+        return BaseResponse(
+            code=500,
+            data="",
+            msg=f"failed to translate voice data, error: {e}")
+    
+def eject_image_recognition_model(
+    model_name: str = Body(..., description="Stop Model"),
+    controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])
+) -> BaseResponse:
+    try:
+        controller_address = controller_address or fschat_controller_address()
+        with get_httpx_client() as client:
+            r = client.post(
+                controller_address + "/release_image_recognition_model",
+                json={"model_name": model_name},
+            )
+            return r.json()
+    except Exception as e:
+        print(f'{e.__class__.__name__}: {e}')
+        return BaseResponse(
+            code=500,
+            msg=f"failed to stop Image Recognition model {model_name} from controller: {controller_address}. error: {e}")
+    
+def change_image_recognition_model(
+    model_name: str = Body(..., description="Change Model", examples=""),
+    new_model_name: str = Body(..., description="Switch to new Model", examples=""),
+    controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])
+):
+    try:
+        controller_address = controller_address or fschat_controller_address()
+        with get_httpx_client() as client:
+            r = client.post(
+                controller_address + "/release_image_recognition_model",
+                json={"model_name": model_name, "new_model_name": new_model_name},
+                timeout=HTTPX_DEFAULT_TIMEOUT, # wait for new worker_model
+            )
+            return r.json()
+    except Exception as e:
+        print(f'{e.__class__.__name__}: {e}')
+        return BaseResponse(
+            code=500,
+            msg=f"failed to switch image recognition model from controller: {controller_address}. error: {e}")
+    
+# Image Generation interface
+
+def get_image_generation_model_config(
+        model_name: str = Body(description="Image Generation Model name"),
+        placeholder: str = Body(description="Unused")
+) -> BaseResponse:
+    try:
+        config = get_image_generation_worker_config(model_name=model_name)
+        return BaseResponse(data=config)
+    except Exception as e:
+        print(f'{e.__class__.__name__}: {e}')
+        return BaseResponse(
+            code=500,
+            msg=f"failed to save local model configration, error: {e}")
+    
+def save_image_generation_model_config(
+    model_name: str = Body(..., description="Save Model Config"),
+    config: dict = Body(..., description="Model configration information"),
+    controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])    
+) -> BaseResponse:
+    try:
+        with open("WebUI/configs/webuiconfig.json", 'r+') as file:
+            jsondata = json.load(file)
+            jsondata["ModelConfig"]["ImageGeneration"][model_name].update(config)
+            file.seek(0)
+            json.dump(jsondata, file, indent=4)
+            file.truncate()
+        return BaseResponse(
+            code=200,
+            msg=f"success save local model configration!")
+            
+    except Exception as e:
+        print(f'{e.__class__.__name__}: {e}')
+        return BaseResponse(
+            code=500,
+            msg=f"failed to save local model configration, error: {e}")
+
+def get_image_generation_model(
+    controller_address: str = Body(None, description="Fastchat controller adress", examples=[fschat_controller_address()]),
+    placeholder: str = Body(None, description="Not use"), 
+) -> BaseResponse:
+    try:
+        controller_address = controller_address or fschat_controller_address()
+        with get_httpx_client() as client:
+            r = client.post(controller_address + "/get_image_generation_model")
+            model = r.json()["model"]
+            return BaseResponse(data=model)
+    except Exception as e:
+        print(f'{e.__class__.__name__}: {e}')
+        return BaseResponse(
+            code=500,
+            data={},
+            msg=f"failed to get current model, error: {e}")
+    
+def get_image_generation_data(
+    prompt_data: str = Body(..., description="prompt data"),
+    controller_address: str = Body(None, description="Fastchat controller adress", examples=[fschat_controller_address()]),
+) -> BaseResponse:
+    try:
+        controller_address = controller_address or fschat_controller_address()
+        with get_httpx_client() as client:
+            r = client.post(
+                controller_address + "/get_image_generation_data",
+                json={"prompt_data": prompt_data, "prompttype": "prompt"},
+                )
+            code = r.json()["code"]
+            image = r.json()["image"]
+            if code == 200:
+                return BaseResponse(data=image)
+            else:
+                return {
+                    "code": 500,
+                    "image": ""}
+    except Exception as e:
+        print(f'{e.__class__.__name__}: {e}')
+        return {
+            "code": 500,
+            "image": ""}
+    
+def eject_image_generation_model(
+    model_name: str = Body(..., description="Stop Model"),
+    controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])
+) -> BaseResponse:
+    try:
+        controller_address = controller_address or fschat_controller_address()
+        with get_httpx_client() as client:
+            r = client.post(
+                controller_address + "/release_image_generation_model",
+                json={"model_name": model_name},
+            )
+            return r.json()
+    except Exception as e:
+        print(f'{e.__class__.__name__}: {e}')
+        return BaseResponse(
+            code=500,
+            msg=f"failed to stop Image Generation model {model_name} from controller: {controller_address}. error: {e}")
+    
+def change_image_generation_model(
+    model_name: str = Body(..., description="Change Model", examples=""),
+    new_model_name: str = Body(..., description="Switch to new Model", examples=""),
+    controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])
+):
+    try:
+        controller_address = controller_address or fschat_controller_address()
+        with get_httpx_client() as client:
+            r = client.post(
+                controller_address + "/release_image_generation_model",
+                json={"model_name": model_name, "new_model_name": new_model_name},
+                timeout=HTTPX_DEFAULT_TIMEOUT, # wait for new worker_model
+            )
+            return r.json()
+    except Exception as e:
+        print(f'{e.__class__.__name__}: {e}')
+        return BaseResponse(
+            code=500,
+            msg=f"failed to switch speech model from controller: {controller_address}. error: {e}")
+
+# chat interface
 
 def save_chat_config(
         config: dict = Body(..., description="Chat configration information"),
