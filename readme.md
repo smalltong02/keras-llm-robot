@@ -151,7 +151,7 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
   1. If you have an NVIDIA GPU, Please install the CUDA Toolkit from (https://developer.nvidia.com/cuda-toolkit-archive), and install the PyTorch CUDA version in the virtual environment (same to the CUDA Toolkit version https://pytorch.org/):
   ```bash
   // such as install version 12.1
-  conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
+  conda install pytorch=2.1.2 torchvision=0.16.2 torchaudio=2.1.2 pytorch-cuda=12.1 -c pytorch -c nvidia
   ```
 
   1. Install dependencies, Please choose the appropriate requirements file based on your platform, On the Windows, if encounter compilation errors for llama-cpp-python or tts during the installation, please remove these two packages from the requirements:

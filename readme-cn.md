@@ -149,7 +149,7 @@
   1. 如果拥有NVIDIA GPU，请首先安装CUDA Toolkit (https://developer.nvidia.com/cuda-toolkit-archive) ，并在虚拟环境中安装pytorch CUDA版本 (版本号请和CUDA Toolkit版本相同 https://pytorch.org/)
   ```bash
   // 例如安装12.1版本
-  conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
+  conda install pytorch=2.1.2 torchvision=0.16.2 torchaudio=2.1.2 pytorch-cuda=12.1 -c pytorch -c nvidia
   ```
 
   1. 安装依赖项, 请按照不同平台选择适当的requirements
