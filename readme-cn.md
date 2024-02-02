@@ -85,13 +85,13 @@
 
   4. 图像识别和图像生成功能的演示：
   
-  Image Generation:
+  图生图演示:
 
   ![Image](./img/image_to_image_1.png) | ![Image](./img/image_to_image_2.png)
 
   ![Image](./img/image_to_image_3.png) | ![Image](./img/image_to_image_4.png)
 
-  Creating Handicrafts Based on Items in the Picture:
+  根据图片中的物品，创建手工艺品:
 
   ![Image](./img/image_creative.png)
 
