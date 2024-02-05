@@ -432,6 +432,11 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
     prompt = st.chat_input(chat_input_placeholder, key="prompt", disabled=disabled)
     if voice_prompt != "":
         prompt = voice_prompt
+
+    if modelinfo["mtype"] != ModelType.Code:
+        imagesdata = []
+        audiosdata = []
+        videosdata = []
     
     if prompt != None and prompt != "":
         print("prompt: ", prompt)
@@ -455,7 +460,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
             chat_box.ai_say(["Thinking...", ""])
             text = ""
             chat_history_id = ""
-            if imagegeneration_model:
+            if imagegeneration_model and modelinfo["mtype"] != ModelType.Code:
                 imageprompt = ""
                 if imagesprompt:
                     imageprompt = imagesprompt[0]
@@ -484,7 +489,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                 "chat_history_id": chat_history_id,
                 }
             chat_box.update_msg(text, element_index=0, streaming=False, metadata=metadata)
-            if imagegeneration_model:
+            if imagegeneration_model and modelinfo["mtype"] != ModelType.Code:
                 with st.spinner(f"Image generation in progress...."):
                     gen_image = api.get_image_generation_data(text)
                     if gen_image:

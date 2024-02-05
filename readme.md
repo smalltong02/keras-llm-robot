@@ -86,7 +86,7 @@ The project inherits from the Langchain-Chatchat project(https://github.com/chat
 
   4. Demonstration of Image Recognition and Image Generation Features：
   
-  Image Generation:
+  Presentation of text to image, translating natural language into the CLIP for image generation models:
 
   ![Image](./img/image_to_image_1.png) | ![Image](./img/image_to_image_2.png)
 
@@ -232,8 +232,9 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
   1. **`Foundation Models`** Untouched models published on Hugging Face, supporting models with chat templates similar to OpenAI.
   2. **`Multimodal Models`** (`Not implemented`): Models supporting both voice and text or image and text at the lower level.
-  3. **`Special Models`** Quantized models (GGUF) published on Hugging Face or models requiring special chat templates.
-  4. **`Online Models`** Supports online language models from OpenAI and Google, such as GPT4-Turbo, Gemini-Pro, GPT4-vision, and Gemini-Pro-vision. Requires OpenAI API Key and Google API Key, which can be configured in the system environment variables or in the configuration interface.
+  3. **`Code Models`** Code generation model.
+  4. **`Special Models`** Quantized models (GGUF) published on Hugging Face or models requiring special chat templates.
+  5. **`Online Models`** Supports online language models from OpenAI and Google, such as GPT4-Turbo, Gemini-Pro, GPT4-vision, and Gemini-Pro-vision. Requires OpenAI API Key and Google API Key, which can be configured in the system environment variables or in the configuration interface.
 
 
 ![Image1](./img/Configuration.png)
@@ -247,8 +248,8 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
   2. **`Code Interpreter`** (`Not implemented`)
   3. **`Text-to-Speech`** Supports local model XTTS-v2 and Azure online text-to-speech service. Requires Azure API Key, which can be configured in the system environment variables `SPEECH_KEY` and `SPEECH_REGION`, or in the configuration interface.
   4. **`Speech-to-Text`** Supports local models whisper and fast-whisper and Azure online speech-to-text service. Requires Azure API Key, which can be configured in the system environment variables `SPEECH_KEY` and `SPEECH_REGION`, or in the configuration interface.
-  5. **`Image Recognition`** (`Not implemented`)
-  6. **`Image Generation`** (`Not implemented`)
+  5. **`Image Recognition`** Supports local model blip-image-captioning-large.
+  6. **`Image Generation`** Supports local model OpenDalleV1.1 for static image generation and local model stable-video-diffusion-img2vid-xt for dynamic image generation.
   7. **`Function Calling`** (`Not implemented`)
 
 ![Image](./img/Tools_Agent.png)
@@ -443,7 +444,24 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
   4. **`Image Recognition`**
 
-      Provide the language model with input and output capabilities for images and videos, adding the functions of sight and drawing to the mind. `Not implemented`
+      Provide the language model with input and output capabilities for images and videos, adding the functions of sight and drawing to the mind. 
+
+      Support the following Image:
+
+      png, jpg, jpeg, bmp
+
+      Image Recognition:
+      ![Image1](./img/image_creative.png)
+
+      Static image generation:
+      ![Image1](./img/text_to_image_1.png)
+      ![Image1](./img/text_to_image_2.png)
+      ![Image1](./img/text_to_image_3.png)
+      ![Image1](./img/text_to_image_4.png)
+
+      Dynamic image generation:
+      ![Image1](./img/dynamic_image_1.gif)
+      
 
   5. **`Function Calling`**
 

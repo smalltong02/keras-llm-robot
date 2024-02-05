@@ -24,6 +24,7 @@ from WebUI.configs.imagemodels import (init_image_recognition_models, translate_
 from WebUI.configs.webuiconfig import *
 from WebUI.configs.basicconfig import *
 from WebUI.configs.specialmodels import *
+from WebUI.configs.codemodels import *
 from typing import Union, List, Dict
 
 def parse_args() -> argparse.ArgumentParser:
@@ -206,7 +207,7 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
                     models = app._controller.list_models()
                     if model_name not in models:
                         break
-                elif modelinfo["mtype"] == ModelType.Special or modelinfo["mtype"] == ModelType.Online:
+                elif modelinfo["mtype"] == ModelType.Special or modelinfo["mtype"] == ModelType.Code or modelinfo["mtype"] == ModelType.Online:
                     with get_httpx_client() as client:
                         try:
                             r = client.post(worker_address + "/get_name",
@@ -717,6 +718,12 @@ def create_model_worker_app(log_level: str = "INFO", **kwargs) -> Union[FastAPI,
         init_multimodal_models(app, args)
         MakeFastAPIOffline(app)
         app.title = f"Multimodal Model ({args.model_names[0]})"
+        return app
+    # Code model
+    elif kwargs.get("code_model", False) == True:
+        init_code_models(app, args)
+        MakeFastAPIOffline(app)
+        app.title = f"Code Model ({args.model_names[0]})"
         return app
     # Special model
     elif kwargs.get("special_model", False) == True:

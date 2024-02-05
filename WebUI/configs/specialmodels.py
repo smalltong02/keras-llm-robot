@@ -6,6 +6,7 @@ from WebUI.Server.utils import wrap_done
 import google.generativeai as genai
 from fastapi.responses import StreamingResponse
 from WebUI.configs.basicconfig import *
+from WebUI.configs.codemodels import *
 from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
 from WebUI.Server.db.repository import add_chat_history_to_db, update_chat_history
 from WebUI.Server.chat.StreamHandler import StreamSpeakHandler
@@ -51,7 +52,7 @@ def load_pipeline_model(app: FastAPI, model_name, model_path, device):
         "text-generation",
         model=model,
         tokenizer=tokenizer,
-        max_length=512,
+        max_length=1024,
         do_sample=True,
         temperature=0.7,
         top_p=0.95,
@@ -77,7 +78,7 @@ def load_llamacpp_model(app: FastAPI, model_name, model_path):
             model_path=path,
             do_sample=True,
             temperature=0.7,
-            max_tokens=512,
+            max_tokens=1024,
             top_p=1,
             verbose=True,
             callback_manager=callback_manager,
@@ -504,5 +505,7 @@ def model_chat(
     modelinfo["mname"] = model_name
     if modelinfo["mtype"] == ModelType.Special or modelinfo["mtype"] == ModelType.Online:
         return special_model_chat(app._model, app._streamer, modelinfo, query, imagesdata, audiosdata, videosdata, imagesprompt, history, stream, speechmodel, temperature, max_tokens, prompt_name)
+    elif modelinfo["mtype"] == ModelType.Code:
+        return code_model_chat(app._model, app._tokenizer, app._streamer, modelinfo, query, imagesdata, audiosdata, videosdata, imagesprompt, history, False, speechmodel, temperature, max_tokens, prompt_name)
     elif modelinfo["mtype"] == ModelType.Multimodal:
         return multimodal_model_chat(app._model, app._tokenizer, modelinfo, query, imagesdata, audiosdata, videosdata, imagesprompt, history, False, speechmodel, temperature, max_tokens, prompt_name)
