@@ -85,16 +85,15 @@
 
   4. 图像识别和图像生成功能的演示：
   
-  图生图演示:
+  文生图的演示，将自然语言转换为图像生成模型的输入语言CLIP，来达到使用自然语言生图的目标:
 
   ![Image](./img/image_to_image_1.png) | ![Image](./img/image_to_image_2.png)
 
   ![Image](./img/image_to_image_3.png) | ![Image](./img/image_to_image_4.png)
 
-  根据图片中的物品，创建手工艺品:
+  根据图片中的物品，创建手工艺品。识别输入图片内容加上自然语言的目标描述，并最终转换为CLIP语言，来达到图生图的目标:
 
   ![Image](./img/image_creative.png)
-
 
 ## 项目介绍
 由三个主界面组成，语言模型的聊天界面，语言模型的配置界面，辅助模型的工具和代理界面。
@@ -228,9 +227,10 @@
     在配置界面中，可以选择合适的语言模型加载，语言模型分为`基础模型`，`多模态模型`，`特殊模型`和`在线模型`
 
   1. **`基础模型`** Huggingface上发布的未经量化和处理过的模型，并且它们需要支持和OpenAI相同聊天模版的模型
-  2. **`多模态模型`**(`当前功能还未实现`) 在底层支持语音和文本，或者图片和文本的模型
-  3. **`特殊模型`** Huggingface上发布的量化模型(GGUF)或者需要特殊聊天模版的模型
-  4. **`在线模型`** 支持OpenAI和Google的在线语言模型，比如GPT4-Turbo和Gemini-Pro模型，或者在线的多模态模型GPT4-vision和Gemini-Pro-vision。需要提供OpenAI的API Key和Google API Key。可以在系统环境变量中配置OPENAI_API_KEY和GOOGLE_API_KEY，或者在配置界面中单独配置。
+  2. **`多模态模型`** 在底层支持语音和文本，或者图片和文本的模型
+  3. **`代码模型`** 专业的代码生成模型
+  4. **`特殊模型`** Huggingface上发布的量化模型(GGUF)或者需要特殊聊天模版的模型
+  5. **`在线模型`** 支持OpenAI和Google的在线语言模型，比如GPT4-Turbo和Gemini-Pro模型，或者在线的多模态模型GPT4-vision和Gemini-Pro-vision。需要提供OpenAI的API Key和Google API Key。可以在系统环境变量中配置OPENAI_API_KEY和GOOGLE_API_KEY，或者在配置界面中单独配置。
 
   `目前参数可以配置加载设备和加载位数，模型量化，模型微调，和提示词模版配置功能还未实现`
 
@@ -245,8 +245,8 @@
   2. **`代码执行模型`** (`当前功能还未实现`)
   3. **`文本转语音模型`** 支持本地模型XTTS-v2，支持Azure在线文本转语音服务，需要提供Azure的API Key。也可以在系统环境变量中配置SPEECH_KEY和SPEECH_REGION，或者在配置界面中单独配置。
   4. **`语音转文本模型`** 支持本地模型whisper，fast-whisper，支持Azure在线语音转文本服务，需要提供Azure的API Key。也可以在系统环境变量中配置SPEECH_KEY和SPEECH_REGION，或者在配置界面中单独配置。
-  5. **`图像识别模型`** (`当前功能还未实现`)
-  6. **`图像生成模型`** (`当前功能还未实现`)
+  5. **`图像识别模型`** 支持本地模型blip-image-captioning-large。
+  6. **`图像生成模型`** 支持本地模型OpenDalleV1.1进行静态图片的生成，支持本地模型stable-video-diffusion-img2vid-xt进行动态图片的生成。
   7. **`功能调用`** (`当前功能还未实现`)
 
 ![Image](./img/Tools_Agent.png)
@@ -443,7 +443,24 @@
 
   4. **`图像识别模型`**
 
-      给语言模型提供图像和视频的输入和输出功能，为大脑加上眼睛和绘画能力。`该功能还未实现`
+      给语言模型提供图像和视频的输入和输出功能，为大脑加上眼睛和绘画能力。
+
+      目前支持的图片类型：
+      
+      png, jpg, jpeg, bmp
+
+      图像识别的演示：
+      ![Image1](./img/image_creative.png)
+
+      静态图像生成的演示：
+      ![Image1](./img/text_to_image_1.png)
+      ![Image1](./img/text_to_image_2.png)
+      ![Image1](./img/text_to_image_3.png)
+      ![Image1](./img/text_to_image_4.png)
+      根据自然语言文字的描述，生成对应的图片。
+      
+      动态图像生成的演示:
+      ![Image1](./img/dynamic_image_1.gif)
 
   5. **`函数定义`**
 

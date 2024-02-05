@@ -50,7 +50,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
         current_model["mtype"] = GetModelType(modeltype)
         type_index = current_model["mtype"].value - 1
     with col2:
-        if type_index == ModelType.Local.value - 1 or type_index == ModelType.Special.value - 1:
+        if type_index == ModelType.Local.value - 1 or type_index == ModelType.Special.value - 1 or type_index == ModelType.Code.value - 1:
             modelsize = st.selectbox(
                     "Please Select Model Size",
                     glob_model_size_list,
@@ -177,7 +177,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
     st.divider()
     if current_model["config"]:
         preset_list = GetPresetPromptList()
-        if current_model["mtype"] == ModelType.Local or current_model["mtype"] == ModelType.Multimodal or current_model["mtype"] == ModelType.Special:
+        if current_model["mtype"] == ModelType.Local or current_model["mtype"] == ModelType.Multimodal or current_model["mtype"] == ModelType.Special or current_model["mtype"] == ModelType.Code:
             tabparams, tabquant, tabtunning, tabprompt = st.tabs(["Parameters", "Quantization", "Fine-Tunning", "Prompt Templates"])
             with tabparams:
                 with st.form("Parameter"):
@@ -407,7 +407,6 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                         savename = current_model["mname"]
                         current_model["mname"] = onlinemodel
                         with st.spinner(f"Saving online config, Please do not perform any actions or refresh the page."):
-                            print("current_model: ", current_model)
                             r = api.save_model_config(current_model)
                             if msg := check_error_msg(r):
                                 st.toast(msg, icon="✖")

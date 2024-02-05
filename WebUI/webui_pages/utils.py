@@ -187,7 +187,7 @@ class ApiRequest:
             response = self.post("/chat/chat", json=data, stream=True, **kwargs)
             return self._httpx_stream2generator(response, as_json=True)
         
-        elif modelinfo["mtype"] == ModelType.Special or modelinfo["mtype"] == ModelType.Multimodal:
+        elif modelinfo["mtype"] == ModelType.Special or modelinfo["mtype"] == ModelType.Code or modelinfo["mtype"] == ModelType.Multimodal:
             response = self.post(
                "/llm_model/chat",
                json=data,

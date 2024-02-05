@@ -13,7 +13,7 @@ TMP_DIR = Path('temp')
 if not TMP_DIR.exists():
     TMP_DIR.mkdir(exist_ok=True, parents=True)
 
-glob_model_type_list = ["LLM Model","Multimodal Model","Special Model","Online Model"]
+glob_model_type_list = ["LLM Model","Multimodal Model", "Code Model", "Special Model","Online Model"]
 glob_model_size_list = ["3B Model","7B Model","13B Model","34B Model","70B Model"]
 glob_model_subtype_list = ["Vision Chat Model","Voice Chat Model","Video Chat Model"]
 
@@ -21,8 +21,9 @@ class ModelType(Enum):
     Unknown = 0
     Local = 1
     Multimodal = 2
-    Special = 3
-    Online = 4
+    Code = 3
+    Special = 4
+    Online = 5
 
 class ModelSize(Enum):
     Unknown = 0
@@ -51,6 +52,8 @@ def GetTypeName(type: ModelType) -> str:
         return "LLM Model"
     if type == ModelType.Multimodal:
         return "Multimodal Model"
+    if type == ModelType.Code:
+        return "Code Model"
     if type == ModelType.Special:
         return "Special Model"
     if type == ModelType.Online:
@@ -84,6 +87,8 @@ def GetModelType(Typestr : str) -> ModelType:
         return ModelType.Local
     if Typestr == "Multimodal Model":
         return ModelType.Multimodal
+    if Typestr == "Code Model":
+        return ModelType.Code
     if Typestr == "Special Model":
         return ModelType.Special
     if Typestr == "Online Model":
@@ -165,6 +170,9 @@ def GetModeList(webui_config, current_model  : Dict[str, any]) -> list:
     if mtype == ModelType.Local:
         msize = current_model["msize"]
         return [f"{key}" for key in localmodel.get("LLM Model").get(GetSizeName(msize))]
+    if mtype == ModelType.Code:
+        msize = current_model["msize"]
+        return [f"{key}" for key in localmodel.get("Code Model").get(GetSizeName(msize))]
     elif mtype == ModelType.Special:
         msize = current_model["msize"]
         return [f"{key}" for key in localmodel.get("Special Model").get(GetSizeName(msize))]
@@ -180,6 +188,9 @@ def GetModelConfig(webui_config, current_model : Dict[str, any]) -> Dict:
     if mtype == ModelType.Local:
         msize = GetSizeName(current_model["msize"])
         provider = "LLM Model"
+    elif mtype == ModelType.Code:
+        msize = GetSizeName(current_model["msize"])
+        provider = "Code Model"
     elif mtype == ModelType.Special:
         msize = GetSizeName(current_model["msize"])
         provider = "Special Model"

@@ -229,7 +229,7 @@ def get_model_worker_config(model_name: str = None) -> dict:
             return config
 
     modelinfo["mtype"], modelinfo["msize"], modelinfo["msubtype"] = GetModelInfoByName(webui_config, model_name)
-    if modelinfo["mtype"] == ModelType.Local or modelinfo["mtype"] == ModelType.Multimodal or modelinfo["mtype"] == ModelType.Special:
+    if modelinfo["mtype"] == ModelType.Local or modelinfo["mtype"] == ModelType.Multimodal or modelinfo["mtype"] == ModelType.Code or modelinfo["mtype"] == ModelType.Special:
         modelinfo["mname"] = model_name
         modelinfo["config"] = GetModelConfig(webui_config, modelinfo)
         if modelinfo["config"]:
@@ -239,6 +239,8 @@ def get_model_worker_config(model_name: str = None) -> dict:
             config["max_gpu_memory"] = get_max_gpumem(modelinfo["config"])
         if modelinfo["mtype"] == ModelType.Special:
             config["special_model"] = True
+        if modelinfo["mtype"] == ModelType.Code:
+            config["code_model"] = True
         if modelinfo["mtype"] == ModelType.Multimodal:
             config["multimodal_model"] = True
     return config

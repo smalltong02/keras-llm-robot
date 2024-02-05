@@ -137,6 +137,24 @@
                     "cpu_offload": false,
                     "refiner": true
                 }
+            },
+            "stable-video-diffusion-img2vid": {
+                "type": "local",
+                "path": "models/imagegeneration/stable-video-diffusion-img2vid",
+                "device": "auto",
+                "loadbits": 16,
+                "Huggingface": "stabilityai/stable-video-diffusion-img2vid",
+                "config": {
+                }
+            },
+            "stable-video-diffusion-img2vid-xt": {
+                "type": "local",
+                "path": "models/imagegeneration/stable-video-diffusion-img2vid-xt",
+                "device": "auto",
+                "loadbits": 16,
+                "Huggingface": "stabilityai/stable-video-diffusion-img2vid-xt",
+                "config": {
+                }
             }
         },
         "VtoTModel": {
@@ -725,6 +743,68 @@
                     }
                 },
                 "Video Chat Model": {}
+            },
+            "Code Model": {
+                "3B Model": {
+                    "stable-code-3b": {
+                        "path": "models/llm/stable-code-3b",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "causallm",
+                        "Huggingface": "stabilityai/stable-code-3b"
+                    }
+                },
+                "7B Model": {
+                    "CodeLlama-7b-Python-hf": {
+                        "path": "models/llm/CodeLlama-7b-Python-hf",
+                        "device": "auto",
+                        "maxmemory": 24,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "llama",
+                        "Huggingface": "codellama/CodeLlama-7b-Python-hf"
+                    },
+                    "CodeLlama-7b-Instruct-hf": {
+                        "path": "models/llm/CodeLlama-7b-Instruct-hf",
+                        "device": "auto",
+                        "maxmemory": 24,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "llama",
+                        "Huggingface": "codellama/CodeLlama-7b-Instruct-hf"
+                    }
+                },
+                "13B Model": {
+                    "CodeLlama-13b-Python-hf": {
+                        "path": "models/llm/CodeLlama-13b-Python-hf",
+                        "device": "auto",
+                        "maxmemory": 24,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "llama",
+                        "Huggingface": "codellama/CodeLlama-13b-Python-hf"
+                    },
+                    "CodeLlama-13b-Instruct-hf": {
+                        "path": "models/llm/CodeLlama-13b-Instruct-hf",
+                        "device": "auto",
+                        "maxmemory": 24,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "llama",
+                        "Huggingface": "codellama/CodeLlama-13b-Instruct-hf"
+                    }
+                },
+                "34B Model": {
+                },
+                "70B Model": {
+                }
             },
             "Special Model": {
                 "3B Model": {
