@@ -433,7 +433,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
     if voice_prompt != "":
         prompt = voice_prompt
 
-    if modelinfo["mtype"] != ModelType.Code:
+    if modelinfo["mtype"] == ModelType.Code:
         imagesdata = []
         audiosdata = []
         videosdata = []
@@ -457,7 +457,14 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
             imagesdata = []
         chat_box.user_say(prompt_list)
         if dialogue_mode == "LLM Chat":
-            chat_box.ai_say(["Thinking...", ""])
+            return_video = False
+            if modelinfo["mtype"] == ModelType.Multimodal:
+                    if running_model == "stable-video-diffusion-img2vid" or running_model == "stable-video-diffusion-img2vid-xt":
+                        return_video = True
+            if return_video:
+                chat_box.ai_say("Video generation in progress....")
+            else:
+                chat_box.ai_say(["Thinking...", ""])
             text = ""
             chat_history_id = ""
             if imagegeneration_model and modelinfo["mtype"] != ModelType.Code:
@@ -482,13 +489,16 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                     st.error(error_msg)
                     break
                 text += t.get("text", "")
-                chat_box.update_msg(text, element_index=0)
+                if return_video is False:
+                    chat_box.update_msg(text, element_index=0)
                 chat_history_id = t.get("chat_history_id", "")
 
             metadata = {
                 "chat_history_id": chat_history_id,
                 }
-            chat_box.update_msg(text, element_index=0, streaming=False, metadata=metadata)
+            if return_video is False:
+                chat_box.update_msg(text, element_index=0, streaming=False, metadata=metadata)
+
             if imagegeneration_model and modelinfo["mtype"] != ModelType.Code:
                 with st.spinner(f"Image generation in progress...."):
                     gen_image = api.get_image_generation_data(text)
@@ -496,6 +506,13 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                         decoded_data = base64.b64decode(gen_image)
                         gen_image=Image(BytesIO(decoded_data))
                         chat_box.update_msg(gen_image, element_index=1, streaming=False)
+            elif modelinfo["mtype"] == ModelType.Multimodal:
+                if running_model == "stable-video-diffusion-img2vid" or running_model == "stable-video-diffusion-img2vid-xt":
+                    print("video_path: ", text)
+                    with open(text, "rb") as f:
+                        video_bytes = f.read()
+                        gen_video=Video(BytesIO(video_bytes))
+                        chat_box.update_msg(gen_video, streaming=False)
             #print("chat_box.history: ", len(chat_box.history))
             chat_box.show_feedback(**feedback_kwargs,
                                 key=chat_history_id,
