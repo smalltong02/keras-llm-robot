@@ -65,8 +65,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                     glob_model_subtype_list,
                     index=size_index,
                 )
-            size_index = glob_model_subtype_list.index(submodel)
-            current_model["msubtype"] = ModelSubType(size_index + 1)
+            current_model["msubtype"] = GetModelSubType(submodel)
             current_model["msize"] = ModelSize.Unknown
         elif type_index == ModelType.Online.value - 1:
             online_model_list = GetOnlineProvider(webui_config)
