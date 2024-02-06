@@ -468,6 +468,13 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
       png, jpg, jpeg, bmp
 
+      | Model | Type | Size |
+      | :---- | :---- | :---- |
+      | blip-image-captioning-large | Image Recognition Model | *B |
+      | OpenDalleV1.1 | Image Generation Model | *B |
+
+      When using the OpenDalleV1.1 model to generate images, if using 16-bit precision, please download the sdxl-vae-fp16-fix model from Huggingface and place it in the models\imagegeneration folder. If enabling the Refiner, please download the stable-diffusion-xl-refiner-1.0 model from Huggingface and place it in the models\imagegeneration folder beforehand.
+
       Image Recognition:
       
       ![Image1](./img/image_creative.png)

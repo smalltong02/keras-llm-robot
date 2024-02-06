@@ -473,6 +473,8 @@
       | blip-image-captioning-large | Image Recognition Model | *B |
       | OpenDalleV1.1 | Image Generation Model | *B |
 
+      在使用OpenDalleV1.1模型生成图片时，如果使用16位精度使用模型，请先从Huggingface上下载sdxl-vae-fp16-fix模型并放入models\imagegeneration文件夹中。 如果开启Refiner，请先从Huggingface上下载stable-diffusion-xl-refiner-1.0模型并放入models\imagegeneration文件夹中。
+
       图像识别的演示：
       
       ![Image1](./img/image_creative.png)
