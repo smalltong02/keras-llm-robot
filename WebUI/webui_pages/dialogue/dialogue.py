@@ -461,8 +461,9 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
             if modelinfo["mtype"] == ModelType.Multimodal:
                     if running_model == "stable-video-diffusion-img2vid" or running_model == "stable-video-diffusion-img2vid-xt":
                         return_video = True
+
             if return_video:
-                chat_box.ai_say("Video generation in progress....")
+                chat_box.ai_say("")
             else:
                 chat_box.ai_say(["Thinking...", ""])
             text = ""
@@ -474,45 +475,59 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                 prompt = generate_prompt_for_imagegen(imagegeneration_model, prompt, imageprompt)
                 imagesprompt = []
                 history = []
-            r = api.chat_chat(prompt,
-                            imagesdata=imagesdata,
-                            audiosdata=audiosdata,
-                            videosdata=videosdata,
-                            imagesprompt=imagesprompt,
-                            history=history,
-                            model=running_model,
-                            speechmodel=speechmodel,
-                            prompt_name=prompt_template_name,
-                            temperature=temperature)
-            for t in r:
-                if error_msg := check_error_msg(t):  # check whether error occured
-                    st.error(error_msg)
-                    break
-                text += t.get("text", "")
-                if return_video is False:
-                    chat_box.update_msg(text, element_index=0)
-                chat_history_id = t.get("chat_history_id", "")
-
-            metadata = {
-                "chat_history_id": chat_history_id,
-                }
-            if return_video is False:
-                chat_box.update_msg(text, element_index=0, streaming=False, metadata=metadata)
-
-            if imagegeneration_model and modelinfo["mtype"] != ModelType.Code:
-                with st.spinner(f"Image generation in progress...."):
-                    gen_image = api.get_image_generation_data(text)
-                    if gen_image:
-                        decoded_data = base64.b64decode(gen_image)
-                        gen_image=Image(BytesIO(decoded_data))
-                        chat_box.update_msg(gen_image, element_index=1, streaming=False)
-            elif modelinfo["mtype"] == ModelType.Multimodal:
-                if running_model == "stable-video-diffusion-img2vid" or running_model == "stable-video-diffusion-img2vid-xt":
+            if return_video:
+                with st.spinner(f"Video generation in progress...."):
+                    r = api.chat_chat(prompt,
+                                imagesdata=imagesdata,
+                                audiosdata=audiosdata,
+                                videosdata=videosdata,
+                                imagesprompt=imagesprompt,
+                                history=history,
+                                model=running_model,
+                                speechmodel=speechmodel,
+                                prompt_name=prompt_template_name,
+                                temperature=temperature)
+                    for t in r:
+                        if error_msg := check_error_msg(t):  # check whether error occured
+                            st.error(error_msg)
+                            break
+                        text += t.get("text", "")
+                        chat_history_id = t.get("chat_history_id", "")
                     print("video_path: ", text)
                     with open(text, "rb") as f:
                         video_bytes = f.read()
                         gen_video=Video(BytesIO(video_bytes))
                         chat_box.update_msg(gen_video, streaming=False)
+            else:
+                r = api.chat_chat(prompt,
+                                imagesdata=imagesdata,
+                                audiosdata=audiosdata,
+                                videosdata=videosdata,
+                                imagesprompt=imagesprompt,
+                                history=history,
+                                model=running_model,
+                                speechmodel=speechmodel,
+                                prompt_name=prompt_template_name,
+                                temperature=temperature)
+                for t in r:
+                    if error_msg := check_error_msg(t):  # check whether error occured
+                        st.error(error_msg)
+                        break
+                    text += t.get("text", "")
+                    chat_box.update_msg(text, element_index=0)
+                    chat_history_id = t.get("chat_history_id", "")
+
+                metadata = {
+                    "chat_history_id": chat_history_id,
+                    }
+                chat_box.update_msg(text, element_index=0, streaming=False, metadata=metadata)
+                if imagegeneration_model and modelinfo["mtype"] != ModelType.Code:
+                    with st.spinner(f"Image generation in progress...."):
+                        gen_image = api.get_image_generation_data(text)
+                        if gen_image:
+                            decoded_data = base64.b64decode(gen_image)
+                            gen_image=Image(BytesIO(decoded_data))
+                            chat_box.update_msg(gen_image, element_index=1, streaming=False)
             #print("chat_box.history: ", len(chat_box.history))
             chat_box.show_feedback(**feedback_kwargs,
                                 key=chat_history_id,
