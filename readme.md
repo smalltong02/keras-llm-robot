@@ -302,11 +302,12 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
       | Yi-34B-Chat-4bits | LLM Model | 34B |
       | llama-2-70b-hf | LLM Model | 70B |
       | llama-2-70b-chat-hf | LLM Model | 70B |
-      | visualglm-6b| Multimodal Model (image) | 7B |
       | cogvlm-chat-hf | Multimodal Model (image) | 7B |
-      | mplug-owl2-llama2-7b | Multimodal Model (image) | 7B |
+      | Qwen-VL-Chat | Multimodal Model (image) | 7B |
       | Qwen-VL-Chat-Int4 | Multimodal Model (image) | 7B |
-      | internlm-xcomposer-7b-4bit | Multimodal Model (image) | 7B |
+      | stable-video-diffusion-img2vid | Multimodal Model (image) | 7B |
+      | stable-video-diffusion-img2vid-xt | Multimodal Model (image) | 7B |
+      | Qwen-Audio-Chat | Multimodal Model (image) | 7B |
       | phi-2-gguf | Special Model | 3B |
       | phi-2 | Special Model | 3B |
       | Yi-6B-Chat-gguf | Special Model | 7B |
@@ -332,6 +333,23 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
       | AzureSpeechService | Speech Model | *B |
       | OpenAISpeechService | Speech Model | *B |
 
+      `Notes for Multimodal Models`
+
+      - The Model cogvlm-chat-hf, Qwen-VL-Chat, and Qwen-VL-Chat-Int4 support single-image file input with text input, capable of recognizing image content and answering questions about the image based on natural language.
+
+      - The Model stable-video-diffusion-img2vid and stable-video-diffusion-img2vid-xt support single-image file input and generate video based on the image.
+
+        When using these two models, it is necessary to install ffmpeg and the corresponding dependencies first:
+
+        ```bash
+        1. download generative-models from https://github.com/Stability-AI/generative-models in project root folder.
+        2. cd generative-models & pip install .
+        3. pip install pytorch-lightning
+           pip install kornia
+           pip install open_clip_torch
+        ```
+
+      - The Model Qwen-Audio-Chat supports single audio file input with text input and provides responses to the content of the audio file based on natural language.
 
   2. **`Quantization`**
 
@@ -438,11 +456,11 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
       Enable code execution capability for the language model to empower it with actionable functionality for the mind. `Not implemented`
 
-  3. **`Speech Recognition`**
+  3. **`Speech Recognition and Generation`**
 
       Provide the language model with speech input and output capabilities, adding the functions of listening and speaking to the mind. Support local models such as XTTS-v2 and Whisper, as well as integration with Azure online speech services.
 
-  4. **`Image Recognition`**
+  4. **`Image Recognition and Generation`**
 
       Provide the language model with input and output capabilities for images and videos, adding the functions of sight and drawing to the mind. 
 
@@ -451,15 +469,18 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
       png, jpg, jpeg, bmp
 
       Image Recognition:
+      
       ![Image1](./img/image_creative.png)
 
       Static image generation:
+
       ![Image1](./img/text_to_image_1.png)
       ![Image1](./img/text_to_image_2.png)
       ![Image1](./img/text_to_image_3.png)
       ![Image1](./img/text_to_image_4.png)
 
       Dynamic image generation:
+
       ![Image1](./img/dynamic_image_1.gif)
       
 

@@ -301,11 +301,12 @@
       | Yi-34B-Chat-4bits | LLM Model | 34B |
       | llama-2-70b-hf | LLM Model | 70B |
       | llama-2-70b-chat-hf | LLM Model | 70B |
-      | visualglm-6b| Multimodal Model (image) | 7B |
       | cogvlm-chat-hf | Multimodal Model (image) | 7B |
-      | mplug-owl2-llama2-7b | Multimodal Model (image) | 7B |
+      | Qwen-VL-Chat | Multimodal Model (image) | 7B |
       | Qwen-VL-Chat-Int4 | Multimodal Model (image) | 7B |
-      | internlm-xcomposer-7b-4bit | Multimodal Model (image) | 7B |
+      | stable-video-diffusion-img2vid | Multimodal Model (image) | 7B |
+      | stable-video-diffusion-img2vid-xt | Multimodal Model (image) | 7B |
+      | Qwen-Audio-Chat | Multimodal Model (image) | 7B |
       | phi-2-gguf | Special Model | 3B |
       | phi-2 | Special Model | 3B |
       | Yi-6B-Chat-gguf | Special Model | 7B |
@@ -330,6 +331,24 @@
       | XTTS-v2 | Speech Model | *B |
       | AzureSpeechService | Speech Model | *B |
       | OpenAISpeechService | Speech Model | *B |
+
+      `多模态模型的特殊说明`
+
+      - cogvlm-chat-hf, Qwen-VL-Chat, Qwen-VL-Chat-Int4支持单张图片文件加文字输入，可以识别图片内容，并根据自然语言来回答关于图片的问题。
+
+      - stable-video-diffusion-img2vid, stable-video-diffusion-img2vid-xt支持单张图片文件输入, 并且根据图片生成视频。
+
+        在使用这两个模型时，需要先安装ffmpeg和对应的依赖包：
+
+        ```bash
+        1. download generative-models from https://github.com/Stability-AI/generative-models in project root folder.
+        2. cd generative-models & pip install .
+        3. pip install pytorch-lightning
+          pip install kornia
+          pip install open_clip_torch
+        ```
+
+      - Qwen-Audio-Chat支持单个语音文件加文字输入，并根据自然语言来回答语音文件中的内容。
 
 
   2. **`模型量化`**
@@ -441,7 +460,7 @@
 
       给语言模型提供语音输入和输出功能，为大脑加上听和说的功能，支持本地模型XTTS-v2，whisper，支持Azure在线语音服务
 
-  4. **`图像识别模型`**
+  4. **`图像识别和生成模型`**
 
       给语言模型提供图像和视频的输入和输出功能，为大脑加上眼睛和绘画能力。
 
@@ -449,10 +468,17 @@
       
       png, jpg, jpeg, bmp
 
+      | 支持模型 | 类型 | 大小 |
+      | :---- | :---- | :---- |
+      | blip-image-captioning-large | Image Recognition Model | *B |
+      | OpenDalleV1.1 | Image Generation Model | *B |
+
       图像识别的演示：
+      
       ![Image1](./img/image_creative.png)
 
       静态图像生成的演示：
+
       ![Image1](./img/text_to_image_1.png)
       ![Image1](./img/text_to_image_2.png)
       ![Image1](./img/text_to_image_3.png)
@@ -460,6 +486,7 @@
       根据自然语言文字的描述，生成对应的图片。
       
       动态图像生成的演示:
+
       ![Image1](./img/dynamic_image_1.gif)
 
   5. **`函数定义`**
