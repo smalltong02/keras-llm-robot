@@ -137,6 +137,19 @@
                     "cpu_offload": false,
                     "refiner": true
                 }
+            },
+            "ProteusV0.2": {
+                "type": "local",
+                "path": "models/imagegeneration/ProteusV0.2",
+                "device": "auto",
+                "loadbits": 16,
+                "Huggingface": "dataautogpt3/ProteusV0.2",
+                "config": {
+                    "seed": -1,
+                    "torch_compile": false,
+                    "cpu_offload": false,
+                    "refiner": true
+                }
             }
         },
         "VtoTModel": {

@@ -924,7 +924,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                         provider = imagegenmodels[imagegenmodel].get("provider", "")
                         pathstr = imagegenmodels[imagegenmodel].get("path")
                         if provider != "" or ImageModelExist(pathstr):
-                            if imagegenmodel == "OpenDalleV1.1" and ImageModelExist("models/imagegeneration/sdxl-vae-fp16-fix") == False:
+                            if (imagegenmodel == "OpenDalleV1.1" or imagegenmodel == "ProteusV0.2") and ImageModelExist("models/imagegeneration/sdxl-vae-fp16-fix") == False:
                                 st.error("Please first download the sdxl-vae-fp16-fix model from Hugginface.")
                             else:
                                 r = api.change_image_generation_model(current_imagegen_model, imagegenmodel)

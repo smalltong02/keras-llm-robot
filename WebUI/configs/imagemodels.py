@@ -123,7 +123,7 @@ def init_image_generation_models(config):
     if not torch.cuda.is_available():
         return None
     if isinstance(config, dict):
-        if config["model_name"] == "OpenDalleV1.1":
+        if config["model_name"] == "OpenDalleV1.1" or config["model_name"] == "ProteusV0.2":
             from diffusers import AutoencoderKL, DiffusionPipeline
             model_id = config["model_path"]
             enable_torch_compile = config["torch_compile"]
@@ -180,7 +180,7 @@ def translate_image_generation_data(model, refiner, config, text_data: str = "")
 
     if len(text_data) and model is not None:
         if isinstance(config, dict):
-            if config["model_name"] == "OpenDalleV1.1":
+            if config["model_name"] == "OpenDalleV1.1" or config["model_name"] == "ProteusV0.2":
                 seed = config["seed"]
                 apply_refiner = False if refiner is None else True
                 if seed == -1:
