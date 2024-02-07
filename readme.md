@@ -137,24 +137,24 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
   conda create -n keras-llm-robot python==3.11.5
   ```
 
-  1. Clone the repository:
+  3. Clone the repository:
   ```bash
   git clone https://github.com/smalltong02/keras-llm-robot.git
   cd keras-llm-robot
   ```
 
-  1. Activate the virtual environment:
+  4. Activate the virtual environment:
   ```bash
   conda activate keras-llm-robot
   ```
 
-  1. If you have an NVIDIA GPU, Please install the CUDA Toolkit from (https://developer.nvidia.com/cuda-toolkit-archive), and install the PyTorch CUDA version in the virtual environment (same to the CUDA Toolkit version https://pytorch.org/):
+  5. If you have an NVIDIA GPU, Please install the CUDA Toolkit from (https://developer.nvidia.com/cuda-toolkit-archive), and install the PyTorch CUDA version in the virtual environment (same to the CUDA Toolkit version https://pytorch.org/):
   ```bash
   // such as install version 12.1
   conda install pytorch=2.1.2 torchvision=0.16.2 torchaudio=2.1.2 pytorch-cuda=12.1 -c pytorch -c nvidia
   ```
 
-  1. Install dependencies, Please choose the appropriate requirements file based on your platform, On the Windows, if encounter compilation errors for llama-cpp-python or tts during the installation, please remove these two packages from the requirements:
+  6. Install dependencies, Please choose the appropriate requirements file based on your platform, On the Windows, if encounter compilation errors for llama-cpp-python or tts during the installation, please remove these two packages from the requirements:
   ```bash
   // windows
   pip install -r requirements-windows.txt
@@ -164,7 +164,7 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
   pip install -r requirements-macos.txt
   ```
 
-  1. If speech feature is required, you also need to install the ffmpeg tool.
+  7. If speech feature is required, you also need to install the ffmpeg tool.
 
     // For Windows:
     Download the Windows binary package of ffmpeg from (https://www.gyan.dev/ffmpeg/builds/).
@@ -185,7 +185,7 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
     brew install ffmpeg
     ```
 
-  2. If you need to download models from Hugging Face for offline execution, please download the models yourself and place them in the "models" directory. If the models have not been downloaded in advance, the WebUI will automatically download them from the Hugging Face website to the local system cache.
+  8. If you need to download models from Hugging Face for offline execution, please download the models yourself and place them in the "models" directory. If the models have not been downloaded in advance, the WebUI will automatically download them from the Hugging Face website to the local system cache.
   ```bash
   // such as the folder of llama-2-7b-chat model:
   models\llm\Llama-2-7b-chat-hf
@@ -197,12 +197,24 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
   models\voices\faster-whisper-large-v3
   ```
 
-  9. If run locally, start the Web UI using Python at http://127.0.0.1:8818:
+  9. When using the `OpenDalleV1.1` model to generate images, if using 16-bit precision, please download the `sdxl-vae-fp16-fix` model from Huggingface and place it in the `models\imagegeneration` folder. If enabling the Refiner, please download the `stable-diffusion-xl-refiner-1.0` model from Huggingface and place it in the `models\imagegeneration` folder beforehand.
+ 
+  10. When using the Model `stable-video-diffusion-img2vid` and `stable-video-diffusion-img2vid-xt`, it is necessary to install ffmpeg and the corresponding dependencies first:
+
+        ```bash
+        1. download generative-models from https://github.com/Stability-AI/generative-models in project root folder.
+        2. cd generative-models & pip install .
+        3. pip install pytorch-lightning
+           pip install kornia
+           pip install open_clip_torch
+        ```
+
+  11.  If run locally, start the Web UI using Python at http://127.0.0.1:8818:
   ```bash
   python __webgui_server__.py --webui
   ```
 
-  10. If deploying on a cloud server and accessing the Web UI locally, use reverse proxy and start the Web UI with HTTPS. Access using https://127.0.0.1:4480 on locally, and use the https interface at https://[server ip]:4480 on remotely:
+  12.  If deploying on a cloud server and accessing the Web UI locally, use reverse proxy and start the Web UI with HTTPS. Access using https://127.0.0.1:4480 on locally, and use the https interface at https://[server ip]:4480 on remotely:
   ```bash
   // By default, the batch file uses the virtual environment named keras-llm-robot,
   // Modify the batch file if using a different virtual environment name.
@@ -335,9 +347,9 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
       `Notes for Multimodal Models`
 
-      - The Model cogvlm-chat-hf, Qwen-VL-Chat, and Qwen-VL-Chat-Int4 support single-image file input with text input, capable of recognizing image content and answering questions about the image based on natural language.
+      - The Model `cogvlm-chat-hf`, `Qwen-VL-Chat`, and `Qwen-VL-Chat-Int4` support single-image file input with text input, capable of recognizing image content and answering questions about the image based on natural language.
 
-      - The Model stable-video-diffusion-img2vid and stable-video-diffusion-img2vid-xt support single-image file input and generate video based on the image.
+      - The Model `stable-video-diffusion-img2vid` and `stable-video-diffusion-img2vid-xt` support single-image file input and generate video based on the image.
 
         When using these two models, it is necessary to install ffmpeg and the corresponding dependencies first:
 
@@ -349,7 +361,7 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
            pip install open_clip_torch
         ```
 
-      - The Model Qwen-Audio-Chat supports single audio file input with text input and provides responses to the content of the audio file based on natural language.
+      - The Model `Qwen-Audio-Chat` supports single audio file input with text input and provides responses to the content of the audio file based on natural language.
 
   2. **`Quantization`**
 
@@ -473,7 +485,7 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
       | blip-image-captioning-large | Image Recognition Model | *B |
       | OpenDalleV1.1 | Image Generation Model | *B |
 
-      When using the OpenDalleV1.1 model to generate images, if using 16-bit precision, please download the sdxl-vae-fp16-fix model from Huggingface and place it in the models\imagegeneration folder. If enabling the Refiner, please download the stable-diffusion-xl-refiner-1.0 model from Huggingface and place it in the models\imagegeneration folder beforehand.
+      When using the `OpenDalleV1.1` model to generate images, if using 16-bit precision, please download the `sdxl-vae-fp16-fix` model from Huggingface and place it in the `models\imagegeneration` folder. If enabling the Refiner, please download the `stable-diffusion-xl-refiner-1.0` model from Huggingface and place it in the `models\imagegeneration` folder beforehand.
 
       Image Recognition:
       

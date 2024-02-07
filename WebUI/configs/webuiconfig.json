@@ -712,7 +712,7 @@
                         "Huggingface": "Qwen/Qwen-VL-Chat-Int4"
                     },
                     "stable-video-diffusion-img2vid": {
-                        "path": "models/imagegeneration/stable-video-diffusion-img2vid",
+                        "path": "models/multimodal/image-chat/stable-video-diffusion-img2vid",
                         "device": "auto",
                         "maxmemory": 24,
                         "cputhreads": 4,
@@ -722,7 +722,7 @@
                         "Huggingface": "stabilityai/stable-video-diffusion-img2vid"
                     },
                     "stable-video-diffusion-img2vid-xt": {
-                        "path": "models/imagegeneration/stable-video-diffusion-img2vid-xt",
+                        "path": "models/multimodal/image-chat/stable-video-diffusion-img2vid-xt",
                         "device": "auto",
                         "maxmemory": 24,
                         "cputhreads": 4,
