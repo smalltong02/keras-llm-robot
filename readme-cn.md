@@ -134,24 +134,24 @@
   conda create -n keras-llm-robot python==3.11.5
   ```
 
-  1. 拉取仓库
+  3. 拉取仓库
   ```bash
   git clone https://github.com/smalltong02/keras-llm-robot.git
   cd keras-llm-robot
   ```
 
-  1. 激活虚拟环境
+  4. 激活虚拟环境
   ```bash
   conda activate keras-llm-robot
   ```
 
-  1. 如果拥有NVIDIA GPU，请首先安装CUDA Toolkit (https://developer.nvidia.com/cuda-toolkit-archive) ，并在虚拟环境中安装pytorch CUDA版本 (版本号请和CUDA Toolkit版本相同 https://pytorch.org/)
+  5. 如果拥有NVIDIA GPU，请首先安装CUDA Toolkit (https://developer.nvidia.com/cuda-toolkit-archive) ，并在虚拟环境中安装pytorch CUDA版本 (版本号请和CUDA Toolkit版本相同 https://pytorch.org/)
   ```bash
   // 例如安装12.1版本
   conda install pytorch=2.1.2 torchvision=0.16.2 torchaudio=2.1.2 pytorch-cuda=12.1 -c pytorch -c nvidia
   ```
 
-  1. 安装依赖项, 请按照不同平台选择适当的requirements
+  6. 安装依赖项, 请按照不同平台选择适当的requirements
   ```bash
   // windows平台, 安装过程中如果遇到llama-cpp-python和tts的编译错误，请将这两个安装包从requirements中删除掉，但是删除这2个包之后，将失去
   // 无法加载本地语音模型XTTS-2以及无法加载GGUF的量化模型。
@@ -162,7 +162,7 @@
   pip install -r requirements-macos.txt
   ```
 
-  1. 如果需要支持语音功能，还需要安装ffmpeg工具
+  7. 如果需要支持语音功能，还需要安装ffmpeg工具
   
     // windows平台
 
@@ -185,7 +185,7 @@
     brew install ffmpeg
     ```
 
-  2.  如果需要从Huggingface上下载模型到本地离线运行，请自行下载模型之后，放入到"models"目录中。如果没有提前下载模型，程序会自动从Huggingface网站上下载到本地的系统缓存中。
+  8.  如果需要从Huggingface上下载模型到本地离线运行，请自行下载模型之后，放入到"models"目录中。如果没有提前下载模型，程序会自动从Huggingface网站上下载到本地的系统缓存中。
   ```bash
   // 比如llama-2-7b-chat语言模型的目录是
   models\llm\Llama-2-7b-chat-hf
@@ -197,12 +197,26 @@
   models\voices\faster-whisper-large-v3
   ```
 
-  8. 如果仅想在本地进行部署，可以使用python启动WebUI，http://127.0.0.1:8818
+  9. 在使用`OpenDalleV1.1`模型生成图片时，如果使用16位精度使用模型，请先从Huggingface上下载`sdxl-vae-fp16-fix`模型并放入`models\imagegeneration`文件夹中。 如果开启Refiner，请先从Huggingface上下载`stable-diffusion-xl-refiner-1.0`模型并放入`models\imagegeneration`文件夹中。  
+
+  10. 在使用`stable-video-diffusion-img2vid`或者`stable-video-diffusion-img2vid-xt`模型生成视频时：
+
+        需要先安装ffmpeg和对应的依赖包：
+
+        ```bash
+        1. download generative-models from https://github.com/Stability-AI/generative-models in project root folder.
+        2. cd generative-models & pip install .
+        3. pip install pytorch-lightning
+          pip install kornia
+          pip install open_clip_torch
+        ```
+
+  11.   如果仅想在本地进行部署，可以使用python启动WebUI，http://127.0.0.1:8818
   ```bash
   python __webgui_server__.py --webui
   ```
 
-  9. 如果需要在云服务器上部署，并在本地访问WebUI，请使用反向代理，并以HTTPS协议启动WebUI。在本地请使用https://127.0.0.1:4480 打开WebUI，在远端使用 https://[server ip]:4480 打开WebUI。
+  12.   如果需要在云服务器上部署，并在本地访问WebUI，请使用反向代理，并以HTTPS协议启动WebUI。在本地请使用https://127.0.0.1:4480 打开WebUI，在远端使用 https://[server ip]:4480 打开WebUI。
   ```bash
   // 批处理内部默认使用的虚拟环境是 keras-llm-robot，如果想使用其它的虚拟环境名称，请自行修改批处理文件
   webui-startup-windows.bat
@@ -334,9 +348,9 @@
 
       `多模态模型的特殊说明`
 
-      - cogvlm-chat-hf, Qwen-VL-Chat, Qwen-VL-Chat-Int4支持单张图片文件加文字输入，可以识别图片内容，并根据自然语言来回答关于图片的问题。
+      - `cogvlm-chat-hf`, `Qwen-VL-Chat`, `Qwen-VL-Chat-Int4`支持单张图片文件加文字输入，可以识别图片内容，并根据自然语言来回答关于图片的问题。
 
-      - stable-video-diffusion-img2vid, stable-video-diffusion-img2vid-xt支持单张图片文件输入, 并且根据图片生成视频。
+      - `stable-video-diffusion-img2vid`, `stable-video-diffusion-img2vid-xt`支持单张图片文件输入, 并且根据图片生成视频。
 
         在使用这两个模型时，需要先安装ffmpeg和对应的依赖包：
 
@@ -348,7 +362,7 @@
           pip install open_clip_torch
         ```
 
-      - Qwen-Audio-Chat支持单个语音文件加文字输入，并根据自然语言来回答语音文件中的内容。
+      - `Qwen-Audio-Chat`支持单个语音文件加文字输入，并根据自然语言来回答语音文件中的内容。
 
 
   2. **`模型量化`**
@@ -473,7 +487,7 @@
       | blip-image-captioning-large | Image Recognition Model | *B |
       | OpenDalleV1.1 | Image Generation Model | *B |
 
-      在使用OpenDalleV1.1模型生成图片时，如果使用16位精度使用模型，请先从Huggingface上下载sdxl-vae-fp16-fix模型并放入models\imagegeneration文件夹中。 如果开启Refiner，请先从Huggingface上下载stable-diffusion-xl-refiner-1.0模型并放入models\imagegeneration文件夹中。
+      在使用`OpenDalleV1.1`模型生成图片时，如果使用16位精度使用模型，请先从Huggingface上下载`sdxl-vae-fp16-fix`模型并放入`models\imagegeneration`文件夹中。 如果开启Refiner，请先从Huggingface上下载`stable-diffusion-xl-refiner-1.0`模型并放入`models\imagegeneration`文件夹中。
 
       图像识别的演示：
       
