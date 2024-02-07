@@ -429,7 +429,7 @@ def generate_prompt_for_imagegen(model_name : str = "", prompt : str = "", image
     new_prompt = ""
     if len(model_name) == 0 or len(prompt) == 0:
         return prompt
-    if model_name == "OpenDalleV1.1":        
+    if model_name == "OpenDalleV1.1" or model_name == "ProteusV0.2":        
         new_prompt = """
                 You need to create prompts for an image generation model based on the user's question. The format of the prompts is the features of the image, separated by commas, with no any other information outputted, for example:
 
