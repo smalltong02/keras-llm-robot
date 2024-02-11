@@ -818,7 +818,69 @@ def save_chat_config(
         return BaseResponse(
             code=500,
             msg=f"failed to save chat configration, error: {e}")
-
+    
+def save_search_engine_config(
+    config: dict = Body(..., description="Search Engine configration information"),
+    controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])
+) -> BaseResponse:
+    try:
+        with open("WebUI/configs/webuiconfig.json", 'r+') as file:
+            jsondata = json.load(file)
+            jsondata["SearchEngine"].update(config)
+            file.seek(0)
+            json.dump(jsondata, file, indent=4)
+            file.truncate()
+        return BaseResponse(
+            code=200,
+            msg=f"success save chat configration!")
+            
+    except Exception as e:
+        print(f'{e.__class__.__name__}: {e}')
+        return BaseResponse(
+            code=500,
+            msg=f"failed to save chat configration, error: {e}")
+    
+def llm_search_engine_chat(
+    query: str = Body(..., description="User input: ", examples=["chat"]),
+    search_engine_name: str = Body(..., description="Search engine name"),
+    history: List[dict] = Body([],
+                                  description="History chat",
+                                  examples=[[
+                                      {"role": "user", "content": "Who are you?"},
+                                      {"role": "assistant", "content": "I am AI."}]]
+                                  ),
+    stream: bool = Body(False, description="stream output"),
+    model_name: str = Body("", description="model name"),
+    temperature: float = Body(0.7, description="LLM Temperature", ge=0.0, le=1.0),
+    max_tokens: Optional[int] = Body(None, description="max tokens."),
+    prompt_name: str = Body("default", description=""),
+    controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])
+):
+    controller_address = controller_address or fschat_controller_address()
+    async def fake_json_streamer() -> AsyncIterable[str]:
+        import asyncio
+        with get_httpx_client() as client:
+            response = client.stream(
+                "POST",
+                url=controller_address + "/llm_search_engine_chat",
+                json={
+                    "query": query,
+                    "search_engine_name": search_engine_name,
+                    "history": history,
+                    "stream": stream,
+                    "model_name": model_name,
+                    "temperature": temperature,
+                    "max_tokens": max_tokens,
+                    "prompt_name": prompt_name,
+                    },
+            )
+            with response as r:
+                for chunk in r.iter_text(None):
+                    if not chunk:
+                        continue
+                    yield chunk
+                    await asyncio.sleep(0.1)
+    return StreamingResponse(fake_json_streamer(), media_type="text/event-stream")
 
 def list_search_engines() -> BaseResponse:
     pass
