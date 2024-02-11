@@ -228,5 +228,12 @@ Werkzeug==3.0.1
 yarl==1.9.2
 zipp==3.17.0
 
+# for image
 xformers==0.0.23.post1
 diffusers==0.25.1
+
+# for search engine
+duckduckgo-search==4.4
+exa-py==1.0.8
+markdownify==0.11.6
+strsimpy==0.2.1

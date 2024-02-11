@@ -328,6 +328,46 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
                         yield chunk
                         await asyncio.sleep(0.1)
         return StreamingResponse(fake_json_streamer(), media_type="text/event-stream")
+    
+    @app.post("/llm_search_engine_chat")
+    def llm_search_engine_chat(
+        query: str = Body(..., description="User input: ", examples=["chat"]),
+        search_engine_name: str = Body(..., description="Search engine name"),
+        history: List[dict] = Body([],
+                                    description="History chat",
+                                    examples=[[
+                                        {"role": "user", "content": "Who are you?"},
+                                        {"role": "assistant", "content": "I am AI."}]]
+                                    ),
+        stream: bool = Body(False, description="stream output"),
+        model_name: str = Body("", description="model name"),
+        temperature: float = Body(0.7, description="LLM Temperature", ge=0.0, le=1.0),
+        max_tokens: Optional[int] = Body(None, description="max tokens."),
+        prompt_name: str = Body("default", description=""),
+    ):
+        workerconfig = get_model_worker_config(model_name)
+        worker_address = "http://" + workerconfig["host"] + ":" + str(workerconfig["port"])
+        async def fake_json_streamer() -> AsyncIterable[str]:
+            with get_httpx_client() as client:
+                response = client.stream("POST", 
+                    url=worker_address + "/llm_search_engine_chat",
+                    json={
+                        "query": query,
+                        "search_engine_name": search_engine_name,
+                        "history": history,
+                        "stream": stream,
+                        "temperature": temperature,
+                        "max_tokens": max_tokens,
+                        "prompt_name": prompt_name,
+                        },
+                    )
+                with response as r:
+                    for chunk in r.iter_text(None):
+                        if not chunk:
+                            continue
+                        yield chunk
+                        await asyncio.sleep(0.1)
+        return StreamingResponse(fake_json_streamer(), media_type="text/event-stream")
 
     @app.post("/get_vtot_model")
     def get_vtot_model(
@@ -1190,7 +1230,24 @@ def run_model_worker(
         max_tokens: Optional[int] = Body(None, description="max tokens."),
         prompt_name: str = Body("default", description=""),
     ):
-        return special_model_knowledge_base_chat(app._model, app._model_name, app._streamer, query, knowledge_base_name, top_k, score_threshold, history, stream, imagesdata, speechmodel, temperature, max_tokens, prompt_name)
+        return model_knowledge_base_chat(app, query, knowledge_base_name, top_k, score_threshold, history, stream, imagesdata, speechmodel, temperature, max_tokens, prompt_name)
+    
+    @app.post("/llm_search_engine_chat")
+    def llm_search_engine_chat(
+        query: str = Body(..., description="User input: ", examples=["chat"]),
+        search_engine_name: str = Body(..., description="Search engine name"),
+        history: List[dict] = Body([],
+                                    description="History chat",
+                                    examples=[[
+                                        {"role": "user", "content": "Who are you?"},
+                                        {"role": "assistant", "content": "I am AI."}]]
+                                    ),
+        stream: bool = Body(False, description="stream output"),
+        temperature: float = Body(0.7, description="LLM Temperature", ge=0.0, le=1.0),
+        max_tokens: Optional[int] = Body(None, description="max tokens."),
+        prompt_name: str = Body("default", description=""),
+    ):
+        return model_search_engine_chat(app, query, search_engine_name, history, stream, temperature, max_tokens, prompt_name)
     
     uvicorn.run(app, host=host, port=port)
 

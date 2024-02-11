@@ -1289,6 +1289,88 @@ class ApiRequest:
         )
         return self._get_response_value(response, as_json=True)
     
+    def save_search_engine_config(self,
+        searchengine: dict = {},
+        controller_address: str = None,
+    ):
+        print("searchengine: ", searchengine)
+        data = {
+            "config": searchengine,
+            "controller_address": controller_address,
+        }
+
+        response = self.post(
+            "/search_engine/save_search_engine_config",
+            json=data,
+        )
+        
+        if self._use_async:
+            return self.ret_async(response)
+        else:
+            return self.ret_sync(response)
+        
+    def search_engine_chat(
+            self,
+            query: str,
+            search_engine_name: str,
+            history: List[Dict] = [],
+            stream: bool = True,
+            model: str = "",
+            temperature: float = 0.7,
+            max_tokens: int = None,
+            prompt_name: str = "default",
+    ):
+        configinst = InnerJsonConfigWebUIParse()
+        webui_config = configinst.dump()
+        modelinfo : Dict[str, any] = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "config": dict}
+        modelinfo["mtype"], modelinfo["msize"], modelinfo["msubtype"] = GetModelInfoByName(webui_config, model)
+
+        data = {
+            "query": query,
+            "search_engine_name": search_engine_name,
+            "history": history,
+            "stream": stream,
+            "model_name": model,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "prompt_name": prompt_name,
+        }
+
+        print(f"received input message:")
+        pprint(data)
+
+        if modelinfo["mtype"] == ModelType.Local:
+            response = self.post(
+                "/search_engine/search_engine_chat",
+                json=data,
+                stream=True,
+            )
+            return self._httpx_stream2generator(response, as_json=True)
+        
+        elif modelinfo["mtype"] == ModelType.Special or modelinfo["mtype"] == ModelType.Code or modelinfo["mtype"] == ModelType.Multimodal:
+            response = self.post(
+               "/llm_model/search_engine_chat",
+               json=data,
+               stream=True,
+            )
+            return self._httpx_stream2generator(response, as_json=True)
+        elif modelinfo["mtype"] == ModelType.Online:
+            provider = GetProviderByName(webui_config, model)
+            if provider is not None:
+                if provider == "google-api":
+                    response = self.post(
+                        "/llm_model/search_engine_chat",
+                        json=data,
+                        stream=True
+                    )
+                    return self._httpx_stream2generator(response, as_json=True)
+                else:
+                    response = self.post("/search_engine/search_engine_chat", json=data, stream=True,)
+                    return self._httpx_stream2generator(response, as_json=True)
+
+        return self._httpx_stream2generator(response, as_json=True)
+
+    
     def _get_response_value(self, response: httpx.Response, as_json: bool = False, value_func: Callable = None,):
         
         def to_json(r):

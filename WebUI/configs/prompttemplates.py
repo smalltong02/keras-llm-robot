@@ -11,8 +11,7 @@ PROMPT_TEMPLATES = {
             """
         You are a Python expert, please write code using Python. \n
         {{ input }}
-        """
-        ,
+        """,
     },
 
     "knowledge_base_chat": {
@@ -42,7 +41,16 @@ PROMPT_TEMPLATES = {
     },
 
     "search_engine_chat": {
-        "default": "{{ input }}",
+        "default":
+            '<Instruction> This is the internet information I found. Please extract and organize it to provide concise answers to the questions.'
+            'If you cannot find an answer from it, please say, "Unable to find content that answers the question."</Instruction>\n'
+            '<Known Information>{{ context }}</Known Information>\n'
+            '<Question>{{ question }}</Question>\n',
+
+        "search":
+            '<Instruction>Based on the known information, please provide concise and professional answers to the questions. If unable to find an answer from it, please say, "Unable to answer the question based on known information," and the response should be in the language of the query.</Instruction>\n'
+            '<Known Information>{{ context }}</Known Information>\n'
+            '<Question>{{ question }}</Question>\n',
     },
 
     "agent_chat": {

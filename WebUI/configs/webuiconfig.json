@@ -554,6 +554,26 @@
                         "load_type": "fastchat",
                         "Huggingface": "openchat/openchat_3.5"
                     },
+                    "openchat-3.5-1210": {
+                        "path": "models/llm/openchat-3.5-1210",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "fastchat",
+                        "Huggingface": "openchat/openchat-3.5-1210"
+                    },
+                    "openchat-3.5-0106": {
+                        "path": "models/llm/openchat-3.5-0106",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "fastchat",
+                        "Huggingface": "openchat/openchat-3.5-0106"
+                    },
                     "Qwen-7B-Chat-Int4": {
                         "path": "models/llm/Qwen-7B-Chat-Int4",
                         "device": "auto",
@@ -816,10 +836,8 @@
                         "Huggingface": "codellama/CodeLlama-13b-Instruct-hf"
                     }
                 },
-                "34B Model": {
-                },
-                "70B Model": {
-                }
+                "34B Model": {},
+                "70B Model": {}
             },
             "Special Model": {
                 "3B Model": {
@@ -1000,5 +1018,20 @@
     },
     "QuantizationConfiguration": {},
     "Fine-Tunning": {},
+    "SearchEngine": {
+        "duckduckgo": {
+            "search_url": "",
+            "api_key": ""
+        },
+        "bing": {
+            "search_url": "https://api.bing.microsoft.com/v7.0/search",
+            "api_key": "YOUR_API_KEY"
+        },
+        "metaphor": {
+            "search_url": "",
+            "api_key": "YOUR_API_KEY"
+        },
+        "top_k": 5
+    },
     "PromptTemplates": {}
 }

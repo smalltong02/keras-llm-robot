@@ -19,6 +19,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
     chatconfig = webui_config.get("ChatConfiguration")
     quantconfig = webui_config.get("QuantizationConfiguration")
     finetunning = webui_config.get("Fine-Tunning")
+    searchengine = webui_config.get("SearchEngine")
     prompttemplates = webui_config.get("PromptTemplates")
 
     running_model["mname"] = ""
@@ -51,6 +52,8 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
         type_index = current_model["mtype"].value - 1
     with col2:
         if type_index == ModelType.Local.value - 1 or type_index == ModelType.Special.value - 1 or type_index == ModelType.Code.value - 1:
+            if size_index >= len(glob_model_size_list):
+                size_index = 0
             modelsize = st.selectbox(
                     "Please Select Model Size",
                     glob_model_size_list,
@@ -60,6 +63,8 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
             current_model["msubtype"] = ModelSubType.Unknown
             current_model["msize"] = ModelSize(size_index + 1)
         elif type_index == ModelType.Multimodal.value - 1:
+            if size_index >= len(glob_model_subtype_list):
+                size_index = 0
             submodel = st.selectbox(
                     "Please Select Sub Model",
                     glob_model_subtype_list,
@@ -69,6 +74,8 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
             current_model["msize"] = ModelSize.Unknown
         elif type_index == ModelType.Online.value - 1:
             online_model_list = GetOnlineProvider(webui_config)
+            if size_index >= len(online_model_list):
+                size_index = 0
             onlinemodel = st.selectbox(
                     "Please Select Online Provider",
                     online_model_list,
@@ -177,7 +184,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
     if current_model["config"]:
         preset_list = GetPresetPromptList()
         if current_model["mtype"] == ModelType.Local or current_model["mtype"] == ModelType.Multimodal or current_model["mtype"] == ModelType.Special or current_model["mtype"] == ModelType.Code:
-            tabparams, tabquant, tabtunning, tabprompt = st.tabs(["Parameters", "Quantization", "Fine-Tunning", "Prompt Templates"])
+            tabparams, tabquant, tabtunning, tabsearch, tabprompt = st.tabs(["Parameters", "Quantization", "Fine-Tunning", "Search Engine", "Prompt Templates"])
             with tabparams:
                 with st.form("Parameter"):
                     col1, col2 = st.columns(2)
@@ -356,11 +363,62 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                     index=0,
                     disabled=disabled
                 )
+
+            with tabsearch:
+                search_enable = False
+                search_engine_list = []
+                for key, value in searchengine.items():
+                    if isinstance(value, dict):
+                        search_engine_list.append(key)
+                current_search_engine = st.session_state.get("current_search_engine", {})
+                if current_search_engine:
+                    search_enable = True
+                    smart_search = current_search_engine["smart"]
+                    index = search_engine_list.index(current_search_engine["engine"])
+                else:
+                    index = 0
+                    smart_search = False
+
+                current_search_engine = st.selectbox(
+                    "Please select Search Engine",
+                    search_engine_list,
+                    index=index,
+                    disabled=disabled
+                )
+                with st.form("SearchEngine"):
+                    col1, col2 = st.columns(2)
+                    top_k = searchengine.get("top_k", 3)
+                    search_url = searchengine.get(current_search_engine).get("search_url", "")
+                    api_key = searchengine.get(current_search_engine).get("api_key", "")
+                    with col1:
+                        api_key = st.text_input("API KEY", api_key, disabled=disabled)
+                        search_enable = st.checkbox('Enable', value=search_enable, help="After enabling, parameters need to be saved for the configuration to take effect.", disabled=disabled)
+                        smart_search = st.checkbox('Smart Search', value=smart_search, help="Let the model handle the question first, and let the model decide whether to invoke the search engine.", disabled=disabled)
+                    with col2:
+                        top_k = st.slider("Top_k", 1, 10, top_k, 1, disabled=disabled)
+                    save_parameters = st.form_submit_button(
+                        "Save Parameters",
+                        use_container_width=True,
+                        disabled=disabled
+                    )
+                    if save_parameters:
+                        searchengine.get(current_search_engine)["api_key"] = api_key
+                        searchengine["top_k"] = top_k
+                        with st.spinner(f"Saving Parameters, Please do not perform any actions or refresh the page."):
+                            r = api.save_search_engine_config(searchengine)
+                            if msg := check_error_msg(r):
+                                st.toast(msg, icon="✖")
+                            elif msg := check_success_msg(r):
+                                st.toast("success save configuration for search engine.", icon="✔")
+                if search_enable:
+                    st.session_state["current_search_engine"] = {"engine": current_search_engine, "smart": smart_search}
+                else:
+                    st.session_state["current_search_engine"] = {}
             with tabprompt:
                 pass
         
         elif current_model["mtype"] == ModelType.Online:
-            tabparams, tabapiconfig, tabprompt = st.tabs(["Parameters", "API Config", "Prompt Templates"])
+            tabparams, tabapiconfig, tabsearch, tabprompt = st.tabs(["Parameters", "API Config", "Search Engine", "Prompt Templates"])
             with tabparams:
                 with st.form("Parameters"):
                     col1, col2 = st.columns(2)
@@ -375,11 +433,11 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                         )
                     with col2:
                         pass
-                    submit_params = st.form_submit_button(
+                    save_parameters = st.form_submit_button(
                         "Save Parameters",
                         use_container_width=True
                     )
-                    if submit_params:
+                    if save_parameters:
                         st.toast("Not Support Now!", icon="✖")
 
             with tabapiconfig:
@@ -412,7 +470,58 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                             elif msg := check_success_msg(r):
                                 st.toast(msg, icon="✔")
                         current_model["mname"] = savename
-            
+
+            with tabsearch:
+                search_enable = False
+                search_engine_list = []
+                for key, value in searchengine.items():
+                    if isinstance(value, dict):
+                        search_engine_list.append(key)
+                current_search_engine = st.session_state.get("current_search_engine", {})
+                if current_search_engine:
+                    search_enable = True
+                    smart_search = current_search_engine["smart"]
+                    index = search_engine_list.index(current_search_engine["engine"])
+                else:
+                    index = 0
+                    smart_search = False
+
+                current_search_engine = st.selectbox(
+                    "Please select Search Engine",
+                    search_engine_list,
+                    index=index,
+                    disabled=disabled
+                )
+                with st.form("SearchEngine"):
+                    col1, col2 = st.columns(2)
+                    top_k = searchengine.get("top_k", 3)
+                    search_url = searchengine.get(current_search_engine).get("search_url", "")
+                    api_key = searchengine.get(current_search_engine).get("api_key", "")
+                    with col1:
+                        api_key = st.text_input("API KEY", api_key, disabled=disabled)
+                        search_enable = st.checkbox('Enable', value=search_enable, help="After enabling, parameters need to be saved for the configuration to take effect.", disabled=disabled)
+                        smart_search = st.checkbox('Smart Search', value=smart_search, help="Let the model handle the question first, and let the model decide whether to invoke the search engine.", disabled=disabled)
+                    with col2:
+                        top_k = st.slider("Top_k", 1, 10, top_k, 1, disabled=disabled)
+                    save_parameters = st.form_submit_button(
+                        "Save Parameters",
+                        use_container_width=True,
+                        disabled=disabled
+                    )
+                    if save_parameters:
+                        searchengine.get(current_search_engine)["api_key"] = api_key
+                        searchengine["top_k"] = top_k
+                        with st.spinner(f"Saving Parameters, Please do not perform any actions or refresh the page."):
+                            r = api.save_search_engine_config(searchengine)
+                            if msg := check_error_msg(r):
+                                st.toast(msg, icon="✖")
+                            elif msg := check_success_msg(r):
+                                st.toast("success save configuration for search engine.", icon="✔")
+                if search_enable:
+                    st.session_state["current_search_engine"] = {"engine": current_search_engine, "smart": smart_search}
+                else:
+                    st.session_state["current_search_engine"] = {}
+                    
             with tabprompt:
                 pass
     

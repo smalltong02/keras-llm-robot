@@ -14,6 +14,7 @@ from WebUI.Server.chat.chat import chat
 from WebUI.Server.chat.feedback import chat_feedback
 from WebUI.Server.embeddings_api import embed_texts_endpoint
 from WebUI.Server.chat.openai_chat import openai_chat
+from WebUI.Server.chat.search_engine_chat import search_engine_chat
 from WebUI.Server.llm_api import (list_running_models, get_running_models, list_config_models,
                             change_llm_model, stop_llm_model, chat_llm_model, download_llm_model,
                             get_model_config, save_chat_config, save_model_config, get_webui_configs,
@@ -21,7 +22,8 @@ from WebUI.Server.llm_api import (list_running_models, get_running_models, list_
                             get_speech_model, get_speech_data, save_speech_model_config, stop_speech_model, change_speech_model,
                             get_image_recognition_model, save_image_recognition_model_config, eject_image_recognition_model, change_image_recognition_model, get_image_recognition_data,
                             get_image_generation_model, save_image_generation_model_config, eject_image_generation_model, change_image_generation_model, get_image_generation_data,
-                            llm_knowledge_base_chat, list_search_engines)
+                            save_search_engine_config,
+                            llm_knowledge_base_chat, llm_search_engine_chat, list_search_engines)
 from WebUI.Server.utils import(BaseResponse, ListResponse, FastAPI, MakeFastAPIOffline,
                           get_server_configs, get_prompt_template)
 from typing import List, Literal
@@ -67,11 +69,6 @@ def mount_app_routes(app: FastAPI, run_mode: str = None):
              tags=["Chat"],
              summary="Save chat configration information",
              )(save_chat_config)
-
-    #app.post("/chat/search_engine_chat",
-    #         tags=["Chat"],
-    #         summary="Chat with search engine.",
-    #         )(search_engine_chat)
 
     app.post("/chat/feedback",
              tags=["Chat"],
@@ -126,6 +123,22 @@ def mount_app_routes(app: FastAPI, run_mode: str = None):
              tags=["LLM Model Management"],
              summary="Download LLM Model (Model Worker)",
              )(download_llm_model)
+    
+    # Search Engine interface
+    app.post("/search_engine/save_search_engine_config",
+             tags=["Search Engine Management"],
+             summary="Save config for search engine",
+             )(save_search_engine_config)
+    
+    app.post("/search_engine/search_engine_chat",
+            tags=["Search Engine Management"],
+            summary="Chat with search engine.",
+            )(search_engine_chat)
+    
+    app.post("/llm_model/search_engine_chat",
+            tags=["Search Engine Management"],
+            summary="Chat with search engine.",
+            )(llm_search_engine_chat)
     
     # Voice Model interface
     app.post("/voice_model/get_vtot_model",
@@ -236,15 +249,6 @@ def mount_app_routes(app: FastAPI, run_mode: str = None):
              tags=["Server State"],
              summary="get webui config",
              )(get_webui_configs)
-    #app.post("/server/configs",
-    #         tags=["Server State"],
-    #         summary="Get server configration info.",
-    #         )(get_server_configs)
-
-    #app.post("/server/list_search_engines",
-    #         tags=["Server State"],
-    #         summary="Get all search engine info.",
-    #         )(list_search_engines)
 
     @app.post("/server/get_prompt_template",
              tags=["Server State"],
@@ -327,7 +331,6 @@ def mount_knowledge_routes(app: FastAPI):
             response_model=BaseResponse,
             summary="update doc for knowledge base"
             )(update_docs_by_id)
-
 
     app.post("/knowledge_base/upload_docs",
             tags=["Knowledge Base Management"],

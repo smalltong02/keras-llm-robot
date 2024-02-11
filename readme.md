@@ -25,7 +25,8 @@ The project inherits from the Langchain-Chatchat project(https://github.com/chat
       * [2. Code Interpreter](readme.md#2-Code-Interpreter)
       * [3. Speech Recognition](readme.md#3-Speech-Recognition)
       * [4. Image Recognition](readme.md#4-Image-Recognition)
-      * [5. Function Calling](readme.md#5-Function-Calling)
+      * [5. Network Search Engine](readme-cn.md#5-Network-Search-Engine)
+      * [6. Function Calling](readme.md#6-Function-Calling)
 
 
 ## Quick Start
@@ -502,8 +503,31 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
       ![Image1](./img/dynamic_image_1.gif)
       
+  5. **`Network Search Engine`**
 
-  5. **`Function Calling`**
+      Providing language models with network retrieval capabilities adds the ability for the brain to retrieve the latest knowledge from the internet.
+
+      Support the following Network Search Engine：
+
+      | Network Search Engine | Key |
+      | :---- | :---- |
+      | duckduckgo | No |
+      | bing | Yes |
+      | metaphor | Yes |
+
+      When use `bing` and `metaphor` search engine，Please apply and config API Key first.
+
+      Please install the following packages before using the network search engine.
+      ```bash
+        1. pip install duckduckgo-search
+        2. pip install exa-py
+        3. pip install markdownify
+        4. pip install strsimpy
+      ```
+
+      **`Support smart feature, The smart feature allows the model to autonomously decide whether to use a search engine when answering questions`**
+
+  6. **`Function Calling`**
 
       Provide the language model with function calling capability, empowering the mind with the ability to use tools. Anticipated support for automation platforms such as Zapier, n8n, and others. `Not implemented`
 

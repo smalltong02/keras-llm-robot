@@ -25,7 +25,8 @@
       * [2. 代码解释器](readme-cn.md#2-代码解释器)
       * [3. 语音识别模型](readme-cn.md#3-语音识别模型)
       * [4. 图像识别模型](readme-cn.md#4-图像识别模型)
-      * [5. 函数定义](readme-cn.md#5-函数定义)
+      * [5. 网络检索](readme-cn.md#5-网络检索)
+      * [6. 函数定义](readme-cn.md#6-函数定义)
 
 
 ## 快速启动
@@ -505,7 +506,31 @@
 
       ![Image1](./img/dynamic_image_1.gif)
 
-  5. **`函数定义`**
+  6. **`网络检索`**
+
+      给语言模型提供网络检索功能，为大脑加上从网络上检索最新知识的能力。
+
+      当前支持三个搜索引擎：
+
+      | 搜索引擎 | 秘钥 |
+      | :---- | :---- |
+      | duckduckgo | No |
+      | bing | Yes |
+      | metaphor | Yes |
+
+      使用`bing`和`metaphor`搜索引擎时，需要先申请和配置秘钥。
+
+      在使用网络检索功能之前，请安装一下第三方库：
+      ```bash
+        1. pip install duckduckgo-search
+        2. pip install exa-py
+        3. pip install markdownify
+        4. pip install strsimpy
+      ```
+
+      **`支持smart功能，smart功能在回答问题时会让模型自主决定是否使用搜索引擎。`**
+
+  7. **`函数定义`**
 
       给语言模型提供函数调用功能，为大脑加上使用工具的能力。预计支持Zapier，n8n等自动化平台。`该功能还未实现`
 
