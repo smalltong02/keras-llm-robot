@@ -28,6 +28,11 @@ async def wrap_done(fn: Awaitable, event: asyncio.Event):
         # Signal the aiter to stop.
         event.set()
 
+def getlocalip(host : str = "127.0.0.1"):
+    if host == "0.0.0.0":
+        return "127.0.0.1"
+    return host
+
 def fschat_controller_address() -> str:
         host = FSCHAT_CONTROLLER["host"]
         if host == "0.0.0.0":
@@ -209,7 +214,7 @@ def get_model_worker_config(model_name: str = None) -> dict:
     webui_config = configinst.dump()
     server_config = webui_config.get("ServerConfig")
     
-    config["host"] = server_config.get("default_host_ip")
+    config["host"] = getlocalip(server_config.get("default_host_ip"))
     config["port"] = server_config["fastchat_model_worker"]["default"].get("port")
     config["vllm_enable"] = server_config["fastchat_model_worker"]["default"].get("vllm_enable")
 
@@ -250,7 +255,7 @@ def get_vtot_worker_config(model_name: str = None) -> dict:
     configinst = InnerJsonConfigWebUIParse()
     webui_config = configinst.dump()
     server_config = webui_config.get("ServerConfig")
-    config["host"] = server_config.get("default_host_ip")
+    config["host"] = getlocalip(server_config.get("default_host_ip"))
     config["port"] = server_config["vtot_model_worker"].get("port")
     
     if model_name is None or model_name == "":
@@ -282,7 +287,7 @@ def get_speech_worker_config(model_name: str = None) -> dict:
     configinst = InnerJsonConfigWebUIParse()
     webui_config = configinst.dump()
     server_config = webui_config.get("ServerConfig")
-    config["host"] = server_config.get("default_host_ip")
+    config["host"] = getlocalip(server_config.get("default_host_ip"))
     config["port"] = server_config["ttov_model_worker"].get("port")
     
     if model_name is None or model_name == "":
@@ -314,7 +319,7 @@ def get_image_recognition_worker_config(model_name: str = None) -> dict:
     configinst = InnerJsonConfigWebUIParse()
     webui_config = configinst.dump()
     server_config = webui_config.get("ServerConfig")
-    config["host"] = server_config.get("default_host_ip")
+    config["host"] = getlocalip(server_config.get("default_host_ip"))
     config["port"] = server_config["image_recognition_worker"].get("port")
 
     if model_name is None or model_name == "":
@@ -340,7 +345,7 @@ def get_image_generation_worker_config(model_name: str = None) -> dict:
     configinst = InnerJsonConfigWebUIParse()
     webui_config = configinst.dump()
     server_config = webui_config.get("ServerConfig")
-    config["host"] = server_config.get("default_host_ip")
+    config["host"] = getlocalip(server_config.get("default_host_ip"))
     config["port"] = server_config["image_generation_worker"].get("port")
 
     if model_name is None or model_name == "":
