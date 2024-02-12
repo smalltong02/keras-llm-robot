@@ -9,6 +9,8 @@ class InnerLlmAIRobotWebUIServer():
     def launch(self, started_event: mp.Event = None, run_mode: str = None):
         host = WEBUI_SERVER["host"]
         port = WEBUI_SERVER["port"]
+        if host == "0.0.0.0":
+            host = "localhost"
 
         cmd = ["streamlit", "run", "webui.py",
                 "--server.address", host,

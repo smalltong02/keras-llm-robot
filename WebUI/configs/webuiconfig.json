@@ -912,7 +912,7 @@
         }
     },
     "ServerConfig": {
-        "default_host_ip": "127.0.0.1",
+        "default_host_ip": "0.0.0.0",
         "default_timeout": 300,
         "load_timeout": 120,
         "release_timeout": 60,

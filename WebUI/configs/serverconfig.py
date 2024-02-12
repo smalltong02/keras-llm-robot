@@ -13,7 +13,7 @@ HTTPX_RELEASE_VOICE_TIMEOUT = 40
 OPEN_CROSS_DOMAIN = False
 
 # The server will listen on all available network interfaces.
-DEFAULT_BIND_HOST = "127.0.0.1"
+DEFAULT_BIND_HOST = "0.0.0.0"
 
 #webui server
 WEBUI_SERVER = {
