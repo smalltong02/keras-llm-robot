@@ -1033,5 +1033,18 @@
         },
         "top_k": 5
     },
+    "CodeInterpreter": {
+        "Keras Interpreter": {
+            "custom_instructions": "[default]",
+            "system_message":"[default]"
+        },
+        "Open Interpreter": {
+            "custom_instructions": "[default]",
+            "system_message":"[default]"
+        },
+        "offline": false,
+        "auto_run": true,
+        "safe_mode": true
+    },
     "PromptTemplates": {}
 }
