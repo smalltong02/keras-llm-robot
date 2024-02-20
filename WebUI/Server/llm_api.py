@@ -887,3 +887,24 @@ def list_search_engines() -> BaseResponse:
     #from server.chat.search_engine_chat import SEARCH_ENGINES
 
     #return BaseResponse(data=list(SEARCH_ENGINES))
+
+def save_code_interpreter_config(
+    config: dict = Body(..., description="Code Interpreter configration information"),
+    controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])
+) -> BaseResponse:
+    try:
+        with open("WebUI/configs/webuiconfig.json", 'r+') as file:
+            jsondata = json.load(file)
+            jsondata["CodeInterpreter"].update(config)
+            file.seek(0)
+            json.dump(jsondata, file, indent=4)
+            file.truncate()
+        return BaseResponse(
+            code=200,
+            msg=f"success save chat configration!")
+            
+    except Exception as e:
+        print(f'{e.__class__.__name__}: {e}')
+        return BaseResponse(
+            code=500,
+            msg=f"failed to save chat configration, error: {e}")

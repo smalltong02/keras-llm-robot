@@ -144,3 +144,6 @@ duckduckgo-search==4.4
 exa-py==1.0.8
 markdownify==0.11.6
 strsimpy==0.2.1
+
+#for code interpreter
+open-interpreter==0.2.0

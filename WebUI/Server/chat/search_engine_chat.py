@@ -1,4 +1,4 @@
-from fastapi import Body, Request
+from fastapi import Body
 from WebUI.configs import GetProviderByName
 from fastapi.responses import StreamingResponse
 from WebUI.Server.chat.utils import History
@@ -13,7 +13,6 @@ from WebUI.Server.utils import get_prompt_template
 from langchain.callbacks import AsyncIteratorCallbackHandler
 from langchain.utilities.bing_search import BingSearchAPIWrapper
 from langchain.utilities.duckduckgo_search import DuckDuckGoSearchAPIWrapper
-from langchain.text_splitter import RecursiveCharacterTextSplitter
 from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
 from langchain.prompts.chat import ChatPromptTemplate
 from typing import AsyncIterable, Dict, List, Optional

@@ -58,6 +58,14 @@ def fschat_openai_api_address() -> str:
     port = FSCHAT_OPENAI_API["port"]
     return f"http://{host}:{port}/v1"
 
+def GetInterpreterBaseAddress(modelinfo: dict) -> str:
+    if modelinfo["mtype"] != ModelType.Local:
+        address = fschat_model_worker_address()
+        address += "/v1"
+        return address
+    address = fschat_openai_api_address()
+    return address
+
 def get_httpx_client(
         use_async: bool = False,
         proxies: Union[str, Dict] = None,

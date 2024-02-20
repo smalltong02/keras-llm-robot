@@ -392,7 +392,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
             system_message = codeinterpreter.get(current_interpreter).get("system_message", "[default]")
             with col1:
                 custom_instructions = st.text_input("Custom Instructions", custom_instructions)
-                interpreter_enable = st.checkbox("Interpreter Enable", value=interpreter_enable, help="After enabling, The code interpreter feature will activate.")
+                interpreter_enable = st.checkbox("Enable", value=interpreter_enable, help="After enabling, The code interpreter feature will activate.")
                 auto_run = st.checkbox('Autorun', value=auto_run, help="After enabling, The code will run without asking the user.")
             with col2:
                 system_message = st.text_input("System Message", system_message)
@@ -405,11 +405,20 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
             )
             if save_parameters:
                 with st.spinner(f"Saving Parameters, Please do not perform any actions or refresh the page."):
-                    # r = api.save_search_engine_config(searchengine)
-                    # if msg := check_error_msg(r):
-                    #     st.toast(msg, icon="✖")
-                    # elif msg := check_success_msg(r):
+                    codeinterpreter["offline"] = offline
+                    codeinterpreter["auto_run"] = auto_run
+                    codeinterpreter["safe_mode"] = safe_mode
+                    codeinterpreter.get(current_interpreter)["custom_instructions"] = custom_instructions
+                    codeinterpreter.get(current_interpreter)["system_message"] = system_message
+                    r = api.save_code_interpreter_config(codeinterpreter)
+                    if msg := check_error_msg(r):
+                        st.toast(msg, icon="✖")
+                    elif msg := check_success_msg(r):
                         st.toast("success save configuration for Code Interpreter.", icon="✔")
+        if interpreter_enable:
+            st.session_state["current_interpreter"] = {"interpreter": current_interpreter}
+        else:
+            st.session_state["current_interpreter"] = {}
 
     with tabspeech:
         ttovmodel = webui_config.get("ModelConfig").get("TtoVModel")

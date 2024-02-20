@@ -1293,7 +1293,6 @@ class ApiRequest:
         searchengine: dict = {},
         controller_address: str = None,
     ):
-        print("searchengine: ", searchengine)
         data = {
             "config": searchengine,
             "controller_address": controller_address,
@@ -1370,6 +1369,24 @@ class ApiRequest:
 
         return self._httpx_stream2generator(response, as_json=True)
 
+    def save_code_interpreter_config(self,
+        codeinterpreter: dict = {},
+        controller_address: str = None,
+    ):
+        data = {
+            "config": codeinterpreter,
+            "controller_address": controller_address,
+        }
+
+        response = self.post(
+            "/code_interpreter/save_code_interpreter_config",
+            json=data,
+        )
+        
+        if self._use_async:
+            return self.ret_async(response)
+        else:
+            return self.ret_sync(response)
     
     def _get_response_value(self, response: httpx.Response, as_json: bool = False, value_func: Callable = None,):
         

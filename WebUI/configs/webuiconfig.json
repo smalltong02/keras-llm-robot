@@ -661,7 +661,7 @@
                         "device": "auto",
                         "maxmemory": 20,
                         "cputhreads": 4,
-                        "loadbits": 8,
+                        "loadbits": 16,
                         "preset": "default",
                         "load_type": "fastchat",
                         "Huggingface": "Qwen/Qwen-14B-Chat"
@@ -1036,15 +1036,15 @@
     "CodeInterpreter": {
         "Keras Interpreter": {
             "custom_instructions": "[default]",
-            "system_message":"[default]"
+            "system_message": "[default]"
         },
         "Open Interpreter": {
             "custom_instructions": "[default]",
-            "system_message":"[default]"
+            "system_message": "[default]"
         },
         "offline": false,
-        "auto_run": true,
-        "safe_mode": true
+        "auto_run": false,
+        "safe_mode": false
     },
     "PromptTemplates": {}
 }
