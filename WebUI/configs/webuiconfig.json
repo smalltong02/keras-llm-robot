@@ -481,6 +481,26 @@
                         "preset": "default",
                         "load_type": "fastchat",
                         "Huggingface": "lmsys/fastchat-t5-3b-v1.0"
+                    },
+                    "gemma-2b": {
+                        "path": "models/llm/gemma-2b",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "fastchat",
+                        "Huggingface": "google/gemma-2b"
+                    },
+                    "gemma-2b-it": {
+                        "path": "models/llm/gemma-2b-it",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "fastchat",
+                        "Huggingface": "google/gemma-2b-it"
                     }
                 },
                 "7B Model": {
@@ -633,6 +653,16 @@
                         "preset": "default",
                         "load_type": "fastchat",
                         "Huggingface": "google/gemma-7b"
+                    },
+                    "gemma-7b-it": {
+                        "path": "models/llm/gemma-7b-it",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "fastchat",
+                        "Huggingface": "google/gemma-7b-it"
                     }
                 },
                 "13B Model": {
