@@ -145,7 +145,7 @@
                 "loadbits": 16,
                 "Huggingface": "dataautogpt3/ProteusV0.2",
                 "config": {
-                    "seed": -1,
+                    "seed": 5,
                     "torch_compile": false,
                     "cpu_offload": false,
                     "refiner": true
@@ -623,6 +623,16 @@
                         "preset": "default",
                         "load_type": "fastchat",
                         "Huggingface": "mistralai/Mistral-7B-Instruct-v0.2"
+                    },
+                    "gemma-7b": {
+                        "path": "models/llm/gemma-7b",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "fastchat",
+                        "Huggingface": "google/gemma-7b"
                     }
                 },
                 "13B Model": {
