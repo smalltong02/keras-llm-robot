@@ -3,6 +3,7 @@ from typing import *
 from pathlib import Path
 import os
 import copy
+from fastchat.protocol.openai_api_protocol import ChatCompletionRequest
 
 SAVE_CHAT_HISTORY = True
 MIN_LLMMODEL_SIZE = 1024**3 # 1G
@@ -459,3 +460,34 @@ def generate_prompt_for_smart_search(prompt : str = ""):
 
 def use_search_engine(text : str = ""):
     return "search_engine" in text
+
+def ConvertCompletionRequestToHistory(request: ChatCompletionRequest):
+    messages = request.messages
+    if len(messages) == 0:
+        return [], None
+    historys = []
+    query = None
+    answer = None
+    for message in messages:
+        if message['role'] == 'system':
+            historys.append({'role': 'user', 'content': message['content']})
+            historys.append({'role': 'assistant', 'content': 'I will strictly follow your instructions to carry out the task.'})
+        elif message['role'] == 'user':
+            if query is not None and answer is not None:
+                historys.append({'role': 'user', 'content': query})
+                historys.append({'role': 'assistant', 'content': answer})
+                query = None
+                answer = None
+            if query is None:
+                query = ""
+            query += message['content']
+        elif message['role'] == 'assistant':
+            if answer is None:
+                answer = ""
+            answer += message['content']
+    if query is None:
+        return [], None
+    if answer is not None:
+        return [], None 
+    return historys, query
+    

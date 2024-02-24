@@ -19,6 +19,8 @@ from webuisrv import InnerLlmAIRobotWebUIServer
 from WebUI.Server.knowledge_base.utils import SCORE_THRESHOLD
 from WebUI.configs.serverconfig import (FSCHAT_MODEL_WORKERS, FSCHAT_CONTROLLER, HTTPX_LOAD_TIMEOUT, HTTPX_RELEASE_TIMEOUT,
                                         HTTPX_LOAD_VOICE_TIMEOUT, HTTPX_RELEASE_VOICE_TIMEOUT, FSCHAT_OPENAI_API, API_SERVER)
+from fastchat.constants import ErrorCode
+from fastchat.protocol.openai_api_protocol import ChatCompletionRequest
 from WebUI.configs.voicemodels import (init_voice_models, translate_voice_data, cloud_voice_data, init_speech_models, translate_speech_data)
 from WebUI.configs.imagemodels import (init_image_recognition_models, translate_image_recognition_data, init_image_generation_models, translate_image_generation_data)
 from WebUI.configs.webuiconfig import *
@@ -1248,6 +1250,12 @@ def run_model_worker(
         prompt_name: str = Body("default", description=""),
     ):
         return model_search_engine_chat(app, query, search_engine_name, history, stream, temperature, max_tokens, prompt_name)
+    
+    @app.post("/v1/chat/completions")
+    def create_chat_completion(request: ChatCompletionRequest):
+        """Creates a completion for the chat message"""
+        from WebUI.Server.chat.openai_chat import completion_stream_generator
+        return completion_stream_generator(app, request)
     
     uvicorn.run(app, host=host, port=port)
 

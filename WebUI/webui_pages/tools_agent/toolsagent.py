@@ -366,7 +366,59 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                 #             st.toast("Update Document Failed!")
 
     with tabinterpreter:
-        pass
+        codeinterpreter = webui_config.get("CodeInterpreter")
+        codeinterpreter_lists = []
+        for key, value in codeinterpreter.items():
+            if isinstance(value, dict):
+                codeinterpreter_lists.append(key)
+        current_interpreter_state = st.session_state.get("current_interpreter", {})
+        if current_interpreter_state:
+            interpreter_enable = True
+            index = codeinterpreter_lists.index(current_interpreter_state["interpreter"])
+        else:
+            index = 0
+            interpreter_enable = False
+        current_interpreter = st.selectbox(
+            "Please select Code Interpreter",
+            codeinterpreter_lists,
+            index=index
+        )
+        with st.form("CodeInterpreter"):
+            col1, col2 = st.columns(2)
+            offline = codeinterpreter.get("offline", True)
+            auto_run = codeinterpreter.get("auto_run", True)
+            safe_mode = codeinterpreter.get("safe_mode", True)
+            custom_instructions = codeinterpreter.get(current_interpreter).get("custom_instructions", "[default]")
+            system_message = codeinterpreter.get(current_interpreter).get("system_message", "[default]")
+            with col1:
+                custom_instructions = st.text_input("Custom Instructions", custom_instructions)
+                interpreter_enable = st.checkbox("Enable", value=interpreter_enable, help="After enabling, The code interpreter feature will activate.")
+                auto_run = st.checkbox('Autorun', value=auto_run, help="After enabling, The code will run without asking the user.")
+            with col2:
+                system_message = st.text_input("System Message", system_message)
+                offline = st.checkbox("Offline", value=offline, help="After enabling, The code interpreter will work offline.")
+                safe_mode = st.checkbox('Safe Mode', value=safe_mode, help="After enabling, The running code will be checked for security.")
+
+            save_parameters = st.form_submit_button(
+                "Save Parameters",
+                use_container_width=True,
+            )
+            if save_parameters:
+                with st.spinner(f"Saving Parameters, Please do not perform any actions or refresh the page."):
+                    codeinterpreter["offline"] = offline
+                    codeinterpreter["auto_run"] = auto_run
+                    codeinterpreter["safe_mode"] = safe_mode
+                    codeinterpreter.get(current_interpreter)["custom_instructions"] = custom_instructions
+                    codeinterpreter.get(current_interpreter)["system_message"] = system_message
+                    r = api.save_code_interpreter_config(codeinterpreter)
+                    if msg := check_error_msg(r):
+                        st.toast(msg, icon="✖")
+                    elif msg := check_success_msg(r):
+                        st.toast("success save configuration for Code Interpreter.", icon="✔")
+        if interpreter_enable:
+            st.session_state["current_interpreter"] = {"interpreter": current_interpreter}
+        else:
+            st.session_state["current_interpreter"] = {}
 
     with tabspeech:
         ttovmodel = webui_config.get("ModelConfig").get("TtoVModel")

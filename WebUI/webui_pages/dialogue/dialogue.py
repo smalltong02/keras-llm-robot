@@ -129,15 +129,20 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
     current_engine_name = ""
     current_smart = False
     current_search_engine = {}
+    code_interpreter = {}
     if st.session_state.get("current_search_engine"):
         current_search_engine = st.session_state["current_search_engine"]
         current_engine_name = current_search_engine["engine"]
         current_smart = current_search_engine["smart"]
+    if st.session_state.get("current_interpreter"):
+        current_interpreter = st.session_state["current_interpreter"]
+        code_interpreter = current_interpreter["interpreter"]
     modelinfo : Dict[str, any] = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str}
     print("voicemodel: ", voicemodel)
     print("imagerecognition_model: ", imagerecognition_model)
     print("imagegeneration_model: ", imagegeneration_model)
     print("search_engine: ", current_search_engine)
+    print("code_interpreter: ", code_interpreter)
 
     dialogue_turns = chatconfig.get("dialogue_turns", 5)
     disabled = False
@@ -232,6 +237,9 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
         export_btn = cols[0]
         if cols[1].button('New chat', use_container_width=True):
             chat_box.reset_history()
+            if code_interpreter == "Open Interpreter":
+                from interpreter import interpreter
+                interpreter.messages = []
 
         def md_callback(msg: Any):
             user_avatar : str = "User"
@@ -436,7 +444,10 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
         "optional_text_label": "Please provide feedback on the reasons for your rating.",
     }
     
-    prompt = st.chat_input(chat_input_placeholder, key="prompt", disabled=disabled)
+    if imagegeneration_model:
+        prompt = st.chat_input(chat_input_placeholder, key="prompt")
+    else:
+        prompt = st.chat_input(chat_input_placeholder, key="prompt", disabled=disabled)
     if voice_prompt != "":
         prompt = voice_prompt
 
@@ -464,135 +475,172 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
             imagesdata = []
         chat_box.user_say(prompt_list)
         if dialogue_mode == "LLM Chat":
-            return_video = False
-            if modelinfo["mtype"] == ModelType.Multimodal:
-                    if running_model == "stable-video-diffusion-img2vid" or running_model == "stable-video-diffusion-img2vid-xt":
-                        return_video = True
-            if current_engine_name == "" or current_smart is True:
-                if return_video:
-                    chat_box.ai_say("")
-                else:
-                    if current_smart is True:
-                        chat_box.ai_say([
-                            f"Thinking...",
-                            Markdown("...", in_expander=True, title="Internet search results", state="complete"),
-                        ])
-                    else:
-                        chat_box.ai_say(["Thinking...", ""])
-                text = ""
-                chat_history_id = ""
-                if imagegeneration_model and modelinfo["mtype"] != ModelType.Code:
-                    imageprompt = ""
-                    if imagesprompt:
-                        imageprompt = imagesprompt[0]
-                    prompt = generate_prompt_for_imagegen(imagegeneration_model, prompt, imageprompt)
-                    imagesprompt = []
-                    history = []
-                if return_video:
-                    with st.spinner(f"Video generation in progress...."):
-                        r = api.chat_chat(prompt,
-                                    imagesdata=imagesdata,
-                                    audiosdata=audiosdata,
-                                    videosdata=videosdata,
-                                    imagesprompt=imagesprompt,
-                                    history=history,
-                                    model=running_model,
-                                    speechmodel=speechmodel,
-                                    prompt_name=prompt_template_name,
-                                    temperature=temperature)
-                        for t in r:
-                            if error_msg := check_error_msg(t):  # check whether error occured
-                                st.error(error_msg)
-                                break
-                            text += t.get("text", "")
-                            chat_history_id = t.get("chat_history_id", "")
-                        print("video_path: ", text)
-                        with open(text, "rb") as f:
-                            video_bytes = f.read()
-                            gen_video=Video(BytesIO(video_bytes))
-                            chat_box.update_msg(gen_video, streaming=False)
-                else:
-                    if current_smart is True:
-                        new_prompt = generate_prompt_for_smart_search(prompt)
-                    else:
-                        new_prompt = prompt
-                    r = api.chat_chat(new_prompt,
-                                    imagesdata=imagesdata,
-                                    audiosdata=audiosdata,
-                                    videosdata=videosdata,
-                                    imagesprompt=imagesprompt,
-                                    history=history,
-                                    model=running_model,
-                                    speechmodel=speechmodel,
-                                    prompt_name=prompt_template_name,
-                                    temperature=temperature)
-                    for t in r:
-                        if error_msg := check_error_msg(t):  # check whether error occured
-                            st.error(error_msg)
-                            break
-                        text += t.get("text", "")
-                        chat_box.update_msg(text, element_index=0)
-                        chat_history_id = t.get("chat_history_id", "")
-                        #print("text: ", text)
-                    if current_smart is True and use_search_engine(text):
-                        name = current_engine_name
-                        chat_box.update_msg(f"Searching is now being conducted through `{name}`...", element_index=0)
-                        chat_box.update_msg(Markdown("...", in_expander=True, title="Internet search results", state="complete"), element_index=1)
-                        text = ""
-                        for d in api.search_engine_chat(prompt,
-                                                    search_engine_name=name,
-                                                    history=history,
-                                                    model=running_model,
-                                                    prompt_name=prompt_template_name,
-                                                    temperature=temperature):
-                            if error_msg := check_error_msg(d):
-                                st.error(error_msg)
-                            elif chunk := d.get("answer"):
-                                text += chunk
-                                chat_box.update_msg(text, element_index=0)
-                        chat_box.update_msg(text, element_index=0, streaming=False)
-                        chat_box.update_msg("\n\n".join(d.get("docs", [])), element_index=1, streaming=False)
-
-                    metadata = {
-                        "chat_history_id": chat_history_id,
-                        }
-                    chat_box.update_msg(text, element_index=0, streaming=False, metadata=metadata)
-                    if imagegeneration_model and modelinfo["mtype"] != ModelType.Code:
-                        with st.spinner(f"Image generation in progress...."):
-                            gen_image = api.get_image_generation_data(text)
-                            if gen_image:
-                                decoded_data = base64.b64decode(gen_image)
-                                gen_image=Image(BytesIO(decoded_data))
-                                chat_box.update_msg(gen_image, element_index=1, streaming=False)
-                #print("chat_box.history: ", len(chat_box.history))
-                chat_box.show_feedback(**feedback_kwargs,
-                                    key=chat_history_id,
-                                    on_submit=on_feedback,
-                                    kwargs={"chat_history_id": chat_history_id, "history_index": len(chat_box.history) - 1})
+            if disabled:
+                if imagegeneration_model:
+                    with st.spinner(f"Image generation in progress...."):
+                        gen_image = api.get_image_generation_data(prompt)
+                        if gen_image:
+                            chat_box.ai_say([""])
+                            decoded_data = base64.b64decode(gen_image)
+                            gen_image=Image(BytesIO(decoded_data))
+                            chat_box.update_msg(gen_image, element_index=0, streaming=False)
             else:
-                if return_video == False:
-                    name = current_engine_name
-                    chat_box.ai_say([
-                        f"Searching is now being conducted through `{name}`...",
-                        Markdown("...", in_expander=True, title="Internet search results", state="complete"),
-                    ])
+                if code_interpreter == "Open Interpreter":
+                    from WebUI.Server.utils import GetInterpreterBaseAddress
+                    from interpreter import interpreter
+                    interpreter.offline = True
+                    interpreter.auto_run = True
+                    interpreter.llm.model = "openai/" + running_model
+                    interpreter.llm.api_key = "EMPTY"
+                    interpreter.llm.api_base = GetInterpreterBaseAddress(modelinfo)
+                    
+                    chat_box.ai_say(["Code Interpreter in progress...", ""])
                     text = ""
-                    for d in api.search_engine_chat(prompt,
-                                                search_engine_name=name,
-                                                history=history,
-                                                model=running_model,
-                                                prompt_name=prompt_template_name,
-                                                temperature=temperature):
-                        if error_msg := check_error_msg(d):
-                            st.error(error_msg)
-                        elif chunk := d.get("answer"):
-                            text += chunk
-                            chat_box.update_msg(text, element_index=0)
+                    for chunk in interpreter.chat(prompt, display=False, stream=True):
+                        inter_format = chunk.get("format", None)
+                        if inter_format is None or inter_format != "execution":
+                            continue
+                        print("chunk: ", chunk)
+                        inter_content = chunk.get("content", None)
+                        if inter_content is None or not isinstance(inter_content, dict):
+                            continue
+                        inter_format = inter_content.get("format", None)
+                        inter_content = inter_content.get("content", None)
+                        if not isinstance(inter_content, str):
+                            continue
+                        text +="```" + inter_format + "\n" + inter_content + "```\n"
+                        chat_box.update_msg(text, element_index=0)
                     chat_box.update_msg(text, element_index=0, streaming=False)
-                    chat_box.update_msg("\n\n".join(d.get("docs", [])), element_index=1, streaming=False)
+                else:
+                    return_video = False
+                    if modelinfo["mtype"] == ModelType.Multimodal:
+                        if running_model == "stable-video-diffusion-img2vid" or running_model == "stable-video-diffusion-img2vid-xt":
+                            return_video = True
+                    if current_engine_name == "" or current_smart is True:
+                        if return_video:
+                            chat_box.ai_say("")
+                        else:
+                            if current_smart is True:
+                                chat_box.ai_say([
+                                    f"Thinking...",
+                                    Markdown("...", in_expander=True, title="Internet search results", state="complete"),
+                                ])
+                            else:
+                                chat_box.ai_say(["Thinking...", ""])
+                        text = ""
+                        chat_history_id = ""
+                        if imagegeneration_model and modelinfo["mtype"] != ModelType.Code:
+                            imageprompt = ""
+                            if imagesprompt:
+                                imageprompt = imagesprompt[0]
+                            prompt = generate_prompt_for_imagegen(imagegeneration_model, prompt, imageprompt)
+                            imagesprompt = []
+                            history = []
+                        if return_video:
+                            with st.spinner(f"Video generation in progress...."):
+                                r = api.chat_chat(prompt,
+                                            imagesdata=imagesdata,
+                                            audiosdata=audiosdata,
+                                            videosdata=videosdata,
+                                            imagesprompt=imagesprompt,
+                                            history=history,
+                                            model=running_model,
+                                            speechmodel=speechmodel,
+                                            prompt_name=prompt_template_name,
+                                            temperature=temperature)
+                                for t in r:
+                                    if error_msg := check_error_msg(t):  # check whether error occured
+                                        st.error(error_msg)
+                                        break
+                                    text += t.get("text", "")
+                                    chat_history_id = t.get("chat_history_id", "")
+                                print("video_path: ", text)
+                                with open(text, "rb") as f:
+                                    video_bytes = f.read()
+                                    gen_video=Video(BytesIO(video_bytes))
+                                    chat_box.update_msg(gen_video, streaming=False)
+                        else:
+                            if current_smart is True:
+                                new_prompt = generate_prompt_for_smart_search(prompt)
+                            else:
+                                new_prompt = prompt
+                            r = api.chat_chat(new_prompt,
+                                            imagesdata=imagesdata,
+                                            audiosdata=audiosdata,
+                                            videosdata=videosdata,
+                                            imagesprompt=imagesprompt,
+                                            history=history,
+                                            model=running_model,
+                                            speechmodel=speechmodel,
+                                            prompt_name=prompt_template_name,
+                                            temperature=temperature)
+                            for t in r:
+                                if error_msg := check_error_msg(t):  # check whether error occured
+                                    st.error(error_msg)
+                                    break
+                                text += t.get("text", "")
+                                chat_box.update_msg(text, element_index=0)
+                                chat_history_id = t.get("chat_history_id", "")
+                                #print("text: ", text)
+                            if current_smart is True and use_search_engine(text):
+                                name = current_engine_name
+                                chat_box.update_msg(f"Searching is now being conducted through `{name}`...", element_index=0)
+                                chat_box.update_msg(Markdown("...", in_expander=True, title="Internet search results", state="complete"), element_index=1)
+                                text = ""
+                                for d in api.search_engine_chat(prompt,
+                                                            search_engine_name=name,
+                                                            history=history,
+                                                            model=running_model,
+                                                            prompt_name=prompt_template_name,
+                                                            temperature=temperature):
+                                    if error_msg := check_error_msg(d):
+                                        st.error(error_msg)
+                                    elif chunk := d.get("answer"):
+                                        text += chunk
+                                        chat_box.update_msg(text, element_index=0)
+                                chat_box.update_msg(text, element_index=0, streaming=False)
+                                chat_box.update_msg("\n\n".join(d.get("docs", [])), element_index=1, streaming=False)
+
+                            metadata = {
+                                "chat_history_id": chat_history_id,
+                                }
+                            chat_box.update_msg(text, element_index=0, streaming=False, metadata=metadata)
+                            if imagegeneration_model and modelinfo["mtype"] != ModelType.Code:
+                                with st.spinner(f"Image generation in progress...."):
+                                    gen_image = api.get_image_generation_data(text)
+                                    if gen_image:
+                                        decoded_data = base64.b64decode(gen_image)
+                                        gen_image=Image(BytesIO(decoded_data))
+                                        chat_box.update_msg(gen_image, element_index=1, streaming=False)
+                        #print("chat_box.history: ", len(chat_box.history))
+                        chat_box.show_feedback(**feedback_kwargs,
+                                            key=chat_history_id,
+                                            on_submit=on_feedback,
+                                            kwargs={"chat_history_id": chat_history_id, "history_index": len(chat_box.history) - 1})
+                    else:
+                        if return_video == False:
+                            name = current_engine_name
+                            chat_box.ai_say([
+                                f"Searching is now being conducted through `{name}`...",
+                                Markdown("...", in_expander=True, title="Internet search results", state="complete"),
+                            ])
+                            text = ""
+                            for d in api.search_engine_chat(prompt,
+                                                        search_engine_name=name,
+                                                        history=history,
+                                                        model=running_model,
+                                                        prompt_name=prompt_template_name,
+                                                        temperature=temperature):
+                                if error_msg := check_error_msg(d):
+                                    st.error(error_msg)
+                                elif chunk := d.get("answer"):
+                                    text += chunk
+                                    chat_box.update_msg(text, element_index=0)
+                            chat_box.update_msg(text, element_index=0, streaming=False)
+                            chat_box.update_msg("\n\n".join(d.get("docs", [])), element_index=1, streaming=False)
 
         elif dialogue_mode == "KnowledgeBase Chat":
-            if len(selected_kb):
+            if len(selected_kb) and not disabled:
                 chat_box.ai_say([
                     f"Querying from knowledge base `{selected_kb}` ...",
                     Markdown("...", in_expander=True, title="Knowledge base match results", state="complete"),

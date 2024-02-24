@@ -18,7 +18,7 @@ __uri__ = "https://github.com/smalltong02/keras-llm-robot"
 __version__ = KERAS_LLM_VERSION
 
 __author__ = "YIN MA and individual contributors"
-__email__ = "yinma@fortinet.com"
+__email__ = "smalltong02@gmail.com"
 
 __license__ = "The Apache-2.0 License"
 __copyright__ = "Copyright 2023-2030 {0}".format(__author__)

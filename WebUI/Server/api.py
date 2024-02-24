@@ -15,6 +15,7 @@ from WebUI.Server.chat.feedback import chat_feedback
 from WebUI.Server.embeddings_api import embed_texts_endpoint
 from WebUI.Server.chat.openai_chat import openai_chat
 from WebUI.Server.chat.search_engine_chat import search_engine_chat
+from WebUI.Server.chat.code_interpreter_chat import code_interpreter_chat
 from WebUI.Server.llm_api import (list_running_models, get_running_models, list_config_models,
                             change_llm_model, stop_llm_model, chat_llm_model, download_llm_model,
                             get_model_config, save_chat_config, save_model_config, get_webui_configs,
@@ -22,8 +23,7 @@ from WebUI.Server.llm_api import (list_running_models, get_running_models, list_
                             get_speech_model, get_speech_data, save_speech_model_config, stop_speech_model, change_speech_model,
                             get_image_recognition_model, save_image_recognition_model_config, eject_image_recognition_model, change_image_recognition_model, get_image_recognition_data,
                             get_image_generation_model, save_image_generation_model_config, eject_image_generation_model, change_image_generation_model, get_image_generation_data,
-                            save_search_engine_config,
-                            llm_knowledge_base_chat, llm_search_engine_chat, list_search_engines)
+                            save_search_engine_config, llm_knowledge_base_chat, llm_search_engine_chat, save_code_interpreter_config, list_search_engines)
 from WebUI.Server.utils import(BaseResponse, ListResponse, FastAPI, MakeFastAPIOffline,
                           get_server_configs, get_prompt_template)
 from typing import List, Literal
@@ -139,6 +139,17 @@ def mount_app_routes(app: FastAPI, run_mode: str = None):
             tags=["Search Engine Management"],
             summary="Chat with search engine.",
             )(llm_search_engine_chat)
+    
+    # code interpreter interface
+    app.post("/code_interpreter/save_code_interpreter_config",
+             tags=["Code Interpreter Management"],
+             summary="Save config for code interpreter",
+             )(save_code_interpreter_config)
+    
+    app.post("/code_interpreter/code_interpreter_chat",
+            tags=["Code Interpreter Management"],
+            summary="Chat with code interpreter.",
+            )(code_interpreter_chat)
     
     # Voice Model interface
     app.post("/voice_model/get_vtot_model",

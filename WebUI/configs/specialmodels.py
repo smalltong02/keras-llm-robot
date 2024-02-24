@@ -106,6 +106,194 @@ def init_special_models(app: FastAPI, args):
     elif load_type == "llamacpp":
         load_llamacpp_model(app=app, model_name=model_name, model_path=model_path)
 
+async def special_chat_iterator(model: Any,
+    query: str,
+    imagesdata: List[str],
+    audiosdata: List[str],
+    videosdata: List[str],
+    imagesprompt: List[str],
+    history: List[dict] = [],
+    async_callback: Any = None,
+    stream: bool = True,
+    speechmodel: dict = {},
+    temperature: float = 0.7,
+    max_tokens: Optional[int] = None,
+    modelinfo: Any = None,
+    prompt_name: str = "default",
+    ) -> AsyncIterable[str]:
+
+    configinst = InnerJsonConfigWebUIParse()
+    webui_config = configinst.dump()
+    model_name = modelinfo["mname"]
+    speak_handler = None
+    if len(speechmodel):
+            modeltype = speechmodel.get("type", "")
+            provider = speechmodel.get("provider", "")
+            #spmodel = speechmodel.get("model", "")
+            spspeaker = speechmodel.get("speaker", "")
+            speechkey = speechmodel.get("speech_key", "")
+            speechregion = speechmodel.get("speech_region", "")
+            if modeltype == "local" or modeltype == "cloud":
+                speak_handler = StreamSpeakHandler(run_place=modeltype, provider=provider, synthesis=spspeaker, subscription=speechkey, region=speechregion)
+
+    answer = ""
+    chat_history_id = add_chat_history_to_db(chat_type="llm_chat", query=query)
+    if imagesprompt:
+            query = generate_new_query(query, imagesprompt)
+    if modelinfo["mtype"] == ModelType.Special:
+        from langchain.prompts import PromptTemplate
+        modelconfig = GetModelConfig(webui_config, modelinfo)
+        loadtype = modelconfig["load_type"]
+        presetname = modelconfig["preset"]
+        presetconfig = GetPresetConfig(presetname)
+        if loadtype != "llamacpp" and loadtype != "pipeline":
+            pass
+        else:
+            prompttemplate = GeneratePresetPrompt(presetname)
+            if len(prompttemplate):
+                input_variables = prompttemplate["input_variables"]
+                prompt = PromptTemplate(template=prompttemplate["prompt_templates"], input_variables=input_variables)
+                chain = LLMChain(prompt=prompt, llm=model)
+                def running_chain(chain, input_variables, query):
+                    chain.run(GenerateModelPrompt(input_variables, query))
+                    print("running_chain exit!")
+                
+                thread = threading.Thread(target=running_chain, args=(chain, input_variables, query))
+                thread.start()
+                noret = False
+                if loadtype == "pipeline":
+                    streamer = async_callback
+                    for chunk in streamer:
+                        if chunk is not None:
+                            print(chunk, end="")
+                            if noret is False:
+                                noret = clean_special_text(chunk, prompttemplate)
+                                if noret is False:
+                                    if speak_handler: speak_handler.on_llm_new_token(chunk)
+                                    yield json.dumps(
+                                        {"text": chunk, "chat_history_id": chat_history_id},
+                                        ensure_ascii=False)
+                                    await asyncio.sleep(0.1)
+                    print("async_callback exit!")
+                elif loadtype == "llamacpp":
+                    while True:
+                        chunk = async_callback.get_tokens()
+                        if chunk is not None:
+                            print(chunk, end="")
+                            if noret is False:
+                                noret = clean_special_text(chunk, prompttemplate)
+                                if noret is False:
+                                    if speak_handler: speak_handler.on_llm_new_token(chunk)
+                                    yield json.dumps(
+                                        {"text": chunk, "chat_history_id": chat_history_id},
+                                        ensure_ascii=False)
+                                    await asyncio.sleep(0.1)
+                        if not thread.is_alive():
+                            print("async_callback exit!")
+                            break
+                if speak_handler: speak_handler.on_llm_end(None)
+    elif modelinfo["mtype"] == ModelType.Online:
+        provider = GetProviderByName(webui_config, model_name)
+        if provider == "google-api":
+            model_config = GetModelConfig(webui_config, modelinfo)
+            apikey = model_config.get("apikey", "[Your Key]")
+            if apikey == "[Your Key]" or apikey == "":
+                apikey = os.environ.get('GOOGLE_API_KEY')
+            if apikey == None:
+                apikey = "EMPTY"
+            genai.configure(api_key=apikey)
+            model = genai.GenerativeModel(model_name=model_name)
+            updated_history = [
+                {'parts': entry['content'], **({'role': 'model'} if entry['role'] == 'assistant' else {'role': entry['role']})}
+                for entry in history
+            ]
+            
+            generation_config = {'temperature': temperature}
+            if len(imagesdata):
+                from io import BytesIO
+                import PIL.Image
+                content=[]
+                content.append(query)
+                for imagedata in imagesdata:
+                    decoded_data = base64.b64decode(imagedata)
+                    imagedata = BytesIO(decoded_data)
+                    content.append(PIL.Image.open(imagedata))
+                response = model.generate_content(content, generation_config=generation_config, stream=stream)
+            else:
+                chat = model.start_chat(history=updated_history)
+                response = chat.send_message(query, generation_config=generation_config, stream=stream)
+            if stream is True:
+                for chunk in response:
+                    if speak_handler: speak_handler.on_llm_new_token(chunk.text)
+                    yield json.dumps(
+                        {"text": chunk.text, "chat_history_id": chat_history_id},
+                        ensure_ascii=False)
+                    await asyncio.sleep(0.1)
+                if speak_handler: speak_handler.on_llm_end(None)
+            else:
+                for chunk in response:
+                    if speak_handler: speak_handler.on_llm_new_token(chunk.text)
+                    answer += chunk.text
+                yield json.dumps(
+                    {"text": answer, "chat_history_id": chat_history_id},
+                    ensure_ascii=False)
+                await asyncio.sleep(0.1)
+                if speak_handler: speak_handler.on_llm_end(None)
+        elif provider == "openai-api":
+            from langchain.callbacks import AsyncIteratorCallbackHandler
+            from WebUI.Server.utils import wrap_done, get_ChatOpenAI
+            from WebUI.Server.utils import get_prompt_template
+            from WebUI.Server.chat.utils import History
+            from langchain.prompts.chat import ChatPromptTemplate
+
+            async_callback = AsyncIteratorCallbackHandler()
+            model = get_ChatOpenAI(
+                provider=provider,
+                model_name=model_name,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                callbacks=[async_callback],
+            )
+            history = [History.from_data(h) for h in history]
+            prompt_template = get_prompt_template("llm_chat", prompt_name)
+            input_msg = History(role="user", content=prompt_template).to_msg_template(False)
+            chat_prompt = ChatPromptTemplate.from_messages(
+                [i.to_msg_template() for i in history] + [input_msg])
+            chain = LLMChain(prompt=chat_prompt, llm=model)
+
+            # Begin a task that runs in the background.
+            task = asyncio.create_task(wrap_done(
+                chain.acall({"input": query}),
+                async_callback.done),
+            )
+            if stream:
+                new_sentence = ""
+                async for token in async_callback.aiter():
+                    answer += token
+                    new_sentence += token
+                    # Use server-sent-events to stream the response
+                    if '\n' in new_sentence:
+                        #print("token: ", new_sentence)
+                        yield json.dumps(
+                            {"text": new_sentence, "chat_history_id": chat_history_id},
+                            ensure_ascii=False)
+                        new_sentence = ""
+                if new_sentence:
+                    #print("token: ", new_sentence)
+                    yield json.dumps(
+                        {"text": new_sentence, "chat_history_id": chat_history_id},
+                        ensure_ascii=False)
+                new_sentence = ""
+            else:
+                async for token in async_callback.aiter():
+                    answer += token
+                yield json.dumps(
+                    {"text": answer, "chat_history_id": chat_history_id},
+                    ensure_ascii=False)
+            await task
+            
+    update_chat_history(chat_history_id, response=answer)
+
 def special_model_chat(
     model: Any,
     async_callback: Any,
@@ -121,146 +309,20 @@ def special_model_chat(
     temperature: float,
     max_tokens: Optional[int],
     prompt_name: str,
-):
-    async def special_chat_iterator(model: Any,
-        query: str,
-        imagesdata: List[str],
-        audiosdata: List[str],
-        videosdata: List[str],
-        imagesprompt: List[str],
-        history: List[dict] = [],
-        modelinfo: Any = None,
-        prompt_name: str = prompt_name,
-        ) -> AsyncIterable[str]:
-    
-        configinst = InnerJsonConfigWebUIParse()
-        webui_config = configinst.dump()
-        model_name = modelinfo["mname"]
-        speak_handler = None
-        if len(speechmodel):
-                modeltype = speechmodel.get("type", "")
-                provider = speechmodel.get("provider", "")
-                #spmodel = speechmodel.get("model", "")
-                spspeaker = speechmodel.get("speaker", "")
-                speechkey = speechmodel.get("speech_key", "")
-                speechregion = speechmodel.get("speech_region", "")
-                if modeltype == "local" or modeltype == "cloud":
-                    speak_handler = StreamSpeakHandler(run_place=modeltype, provider=provider, synthesis=spspeaker, subscription=speechkey, region=speechregion)
-
-        answer = ""
-        chat_history_id = add_chat_history_to_db(chat_type="llm_chat", query=query)
-        if imagesprompt:
-                query = generate_new_query(query, imagesprompt)
-        if modelinfo["mtype"] == ModelType.Special:
-            from langchain.prompts import PromptTemplate
-            modelconfig = GetModelConfig(webui_config, modelinfo)
-            loadtype = modelconfig["load_type"]
-            presetname = modelconfig["preset"]
-            presetconfig = GetPresetConfig(presetname)
-            if loadtype != "llamacpp" and loadtype != "pipeline":
-                pass
-            else:
-                prompttemplate = GeneratePresetPrompt(presetname)
-                if len(prompttemplate):
-                    input_variables = prompttemplate["input_variables"]
-                    prompt = PromptTemplate(template=prompttemplate["prompt_templates"], input_variables=input_variables)
-                    chain = LLMChain(prompt=prompt, llm=model)
-                    def running_chain(chain, input_variables, query):
-                        chain.run(GenerateModelPrompt(input_variables, query))
-                        print("running_chain exit!")
-                    
-                    thread = threading.Thread(target=running_chain, args=(chain, input_variables, query))
-                    thread.start()
-                    noret = False
-                    if loadtype == "pipeline":
-                        streamer = async_callback
-                        for chunk in streamer:
-                            if chunk is not None:
-                                print(chunk, end="")
-                                if noret is False:
-                                    noret = clean_special_text(chunk, prompttemplate)
-                                    if noret is False:
-                                        if speak_handler: speak_handler.on_llm_new_token(chunk)
-                                        yield json.dumps(
-                                            {"text": chunk, "chat_history_id": chat_history_id},
-                                            ensure_ascii=False)
-                                        await asyncio.sleep(0.1)
-                        print("async_callback exit!")
-                    elif loadtype == "llamacpp":
-                        while True:
-                            chunk = async_callback.get_tokens()
-                            if chunk is not None:
-                                print(chunk, end="")
-                                if noret is False:
-                                    noret = clean_special_text(chunk, prompttemplate)
-                                    if noret is False:
-                                        if speak_handler: speak_handler.on_llm_new_token(chunk)
-                                        yield json.dumps(
-                                            {"text": chunk, "chat_history_id": chat_history_id},
-                                            ensure_ascii=False)
-                                        await asyncio.sleep(0.1)
-                            if not thread.is_alive():
-                                print("async_callback exit!")
-                                break
-                    if speak_handler: speak_handler.on_llm_end(None)
-        elif modelinfo["mtype"] == ModelType.Online:
-            provider = GetProviderByName(webui_config, model_name)
-            if provider == "google-api":
-                model_config = GetModelConfig(webui_config, modelinfo)
-                apikey = model_config.get("apikey", "[Your Key]")
-                if apikey == "[Your Key]" or apikey == "":
-                    apikey = os.environ.get('GOOGLE_API_KEY')
-                if apikey == None:
-                    apikey = "EMPTY"
-                genai.configure(api_key=apikey)
-                model = genai.GenerativeModel(model_name=model_name)
-                updated_history = [
-                    {'parts': entry['content'], **({'role': 'model'} if entry['role'] == 'assistant' else {'role': entry['role']})}
-                    for entry in history
-                ]
-                
-                generation_config = {'temperature': temperature}
-                if len(imagesdata):
-                    from io import BytesIO
-                    import PIL.Image
-                    content=[]
-                    content.append(query)
-                    for imagedata in imagesdata:
-                        decoded_data = base64.b64decode(imagedata)
-                        imagedata = BytesIO(decoded_data)
-                        content.append(PIL.Image.open(imagedata))
-                    response = model.generate_content(content, generation_config=generation_config, stream=stream)
-                else:
-                    chat = model.start_chat(history=updated_history)
-                    response = chat.send_message(query, generation_config=generation_config, stream=stream)
-                if stream is True:
-                    for chunk in response:
-                        if speak_handler: speak_handler.on_llm_new_token(chunk.text)
-                        yield json.dumps(
-                            {"text": chunk.text, "chat_history_id": chat_history_id},
-                            ensure_ascii=False)
-                        await asyncio.sleep(0.1)
-                    if speak_handler: speak_handler.on_llm_end(None)
-                else:
-                    for chunk in response:
-                        if speak_handler: speak_handler.on_llm_new_token(chunk.text)
-                        answer += chunk.text
-                    yield json.dumps(
-                        {"text": answer, "chat_history_id": chat_history_id},
-                        ensure_ascii=False)
-                    await asyncio.sleep(0.1)
-                    if speak_handler: speak_handler.on_llm_end(None)
-        
-        update_chat_history(chat_history_id, response=answer)
-        
+):    
     return StreamingResponse(special_chat_iterator(
                                             model=model,
+                                            async_callback=async_callback,
                                             query=query,
                                             imagesdata=imagesdata,
                                             audiosdata=audiosdata,
                                             videosdata=videosdata,
                                             imagesprompt=imagesprompt,
                                             history=history,
+                                            stream=stream,
+                                            speechmodel=speechmodel,
+                                            temperature=temperature,
+                                            max_tokens=max_tokens,
                                             modelinfo=modelinfo,
                                             prompt_name=prompt_name),
                              media_type="text/event-stream")
@@ -777,7 +839,7 @@ def special_model_search_engine_chat(
     max_tokens: Optional[int],
     prompt_name: str,
 ):
-    async def special_chat_iterator(model: Any,
+    async def special_search_chat_iterator(model: Any,
         query: str,
         search_engine_name: str,
         history: List[dict] = [],
@@ -836,7 +898,7 @@ def special_model_search_engine_chat(
                 await asyncio.sleep(0.1)
 
         
-    return StreamingResponse(special_chat_iterator(
+    return StreamingResponse(special_search_chat_iterator(
                                             model=model,
                                             query=query,
                                             search_engine_name=search_engine_name,
