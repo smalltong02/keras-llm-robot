@@ -451,8 +451,8 @@ def generate_prompt_for_imagegen(model_name : str = "", prompt : str = "", image
         if imagesprompt:
             new_prompt += f". Contents of this image is '{imagesprompt}'"
         print("new_prompt: ", new_prompt)
-        return new_prompt
-    return prompt
+        return new_prompt, True
+    return prompt, False
 
 def generate_prompt_for_smart_search(prompt : str = ""):
     new_prompt = "You are an AI assistant, answering questions based on user inquiries. If you are absolutely certain of the answer to the question, please answer it to the best of your ability and refrain from returning the 'search_engine' command. If you don't know how to answer the question or you require real-time information or need to search the internet before answering questions, then please only return the command: 'search_engine'. \n\n User's question: " + prompt

@@ -1048,12 +1048,16 @@ class ApiRequest:
         
     def get_image_generation_data(self,
         prompt_data: str,
+        negative_prompt: str,
+        btranslate_prompt: bool,
         controller_address: str = None
     ):
         if prompt_data is None or len(prompt_data) == 0:
             return ""
         data = {
             "prompt_data": prompt_data,
+            "negative_prompt": negative_prompt,
+            "btranslate_prompt": btranslate_prompt,
             "controller_address": controller_address,
         }
         response = self.post(

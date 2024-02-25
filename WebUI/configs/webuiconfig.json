@@ -145,10 +145,36 @@
                 "loadbits": 16,
                 "Huggingface": "dataautogpt3/ProteusV0.2",
                 "config": {
-                    "seed": 5,
+                    "seed": -1,
                     "torch_compile": false,
                     "cpu_offload": false,
                     "refiner": true
+                }
+            },
+            "SDXL-Lightning": {
+                "type": "local",
+                "path": "models/imagegeneration/SDXL-Lightning",
+                "device": "auto",
+                "loadbits": 16,
+                "Huggingface": "ByteDance/SDXL-Lightning",
+                "config": {
+                    "seed": -1,
+                    "torch_compile": false,
+                    "cpu_offload": false,
+                    "refiner": false
+                }
+            },
+            "GhostXL": {
+                "type": "local",
+                "path": "models/imagegeneration/GhostXL",
+                "device": "auto",
+                "loadbits": 16,
+                "Huggingface": "drnighthan/GhostXL",
+                "config": {
+                    "seed": -1,
+                    "torch_compile": false,
+                    "cpu_offload": false,
+                    "refiner": false
                 }
             }
         },

@@ -150,6 +150,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
     binit = True
     if st.session_state.get("current_page", "") == "dialogue_page":
         binit = False
+    negative_prompt = ""
     with st.sidebar:
         def on_mode_change():
             mode = st.session_state.dialogue_mode
@@ -265,6 +266,12 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
             mime="text/markdown",
             use_container_width=True,
         )
+        
+        if imagegeneration_model:
+            negative_prompt = st.text_input(
+                "Negative Prompt:",
+                key="negative_prompt",
+            )
 
         voicedisable = False if voicemodel != "" else True
         if voicedisable == False:
@@ -456,6 +463,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
         audiosdata = []
         videosdata = []
     
+    btranslate_prompt = False
     if prompt != None and prompt != "":
         print("prompt: ", prompt)
         if bshowstatus:
@@ -478,7 +486,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
             if disabled:
                 if imagegeneration_model:
                     with st.spinner(f"Image generation in progress...."):
-                        gen_image = api.get_image_generation_data(prompt)
+                        gen_image = api.get_image_generation_data(prompt, negative_prompt, False)
                         if gen_image:
                             chat_box.ai_say([""])
                             decoded_data = base64.b64decode(gen_image)
@@ -533,7 +541,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                             imageprompt = ""
                             if imagesprompt:
                                 imageprompt = imagesprompt[0]
-                            prompt = generate_prompt_for_imagegen(imagegeneration_model, prompt, imageprompt)
+                            prompt, btranslate_prompt = generate_prompt_for_imagegen(imagegeneration_model, prompt, imageprompt)
                             imagesprompt = []
                             history = []
                         if return_video:
@@ -607,7 +615,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                             chat_box.update_msg(text, element_index=0, streaming=False, metadata=metadata)
                             if imagegeneration_model and modelinfo["mtype"] != ModelType.Code:
                                 with st.spinner(f"Image generation in progress...."):
-                                    gen_image = api.get_image_generation_data(text)
+                                    gen_image = api.get_image_generation_data(text, negative_prompt, btranslate_prompt)
                                     if gen_image:
                                         decoded_data = base64.b64decode(gen_image)
                                         gen_image=Image(BytesIO(decoded_data))

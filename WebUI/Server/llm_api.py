@@ -735,6 +735,8 @@ def get_image_generation_model(
     
 def get_image_generation_data(
     prompt_data: str = Body(..., description="prompt data"),
+    negative_prompt: str = Body(..., description="negative prompt"),
+    btranslate_prompt: bool = Body(False, description=""),
     controller_address: str = Body(None, description="Fastchat controller adress", examples=[fschat_controller_address()]),
 ) -> BaseResponse:
     try:
@@ -742,7 +744,7 @@ def get_image_generation_data(
         with get_httpx_client() as client:
             r = client.post(
                 controller_address + "/get_image_generation_data",
-                json={"prompt_data": prompt_data, "prompttype": "prompt"},
+                json={"prompt_data": prompt_data, "negative_prompt": negative_prompt, "btranslate_prompt": btranslate_prompt},
                 )
             code = r.json()["code"]
             image = r.json()["image"]

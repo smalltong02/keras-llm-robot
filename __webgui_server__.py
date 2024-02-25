@@ -672,7 +672,8 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
     @app.post("/get_image_generation_data")
     def get_image_generation_data(
         prompt_data: str = Body(..., description="prompt data"),
-        prompttype: str = Body(None, description="type"),
+        negative_prompt: str = Body(..., description="negative prompt"),
+        btranslate_prompt: bool = Body(False, description=""),
     ) -> Dict:
         if len(prompt_data) == 0:
             msg = f"failed translate prompt to image."
@@ -682,7 +683,7 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
         with get_httpx_client() as client:
             try:
                 r = client.post(worker_address + "/get_image_generation_data",
-                    json={"prompt_data": prompt_data, "prompttype": prompttype},
+                    json={"prompt_data": prompt_data, "negative_prompt": negative_prompt, "btranslate_prompt": btranslate_prompt},
                     )
                 return r.json()
             except Exception as e:
@@ -1130,11 +1131,12 @@ def run_image_generation_worker(
     @app.post("/get_image_generation_data")
     def get_image_generation_data(
         prompt_data: str = Body(..., description="text data"),
-        prompttype: str = Body(None, description="type"),
+        negative_prompt: str = Body(..., description="negative prompt"),
+        btranslate_prompt: bool = Body(False, description=""),
     ) -> dict:
         if len(prompt_data) == 0 or image_generation_model is None:
             return {"code": 500, "image": ""}
-        image_data = translate_image_generation_data(image_generation_model, refiner, config, prompt_data)
+        image_data = translate_image_generation_data(image_generation_model, refiner, config, prompt_data, negative_prompt, btranslate_prompt)
         if image_data == "":
             return {"code": 500, "image": ""}
         return {"code": 200, "image": image_data}
