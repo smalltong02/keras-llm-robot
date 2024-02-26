@@ -13,7 +13,8 @@ from WebUI.Server.llm_api_stale import (LOG_PATH)
 from WebUI.Server.utils import (set_httpx_config, get_model_worker_config, get_httpx_client, 
                                 FastAPI, MakeFastAPIOffline, fschat_controller_address,
                                 fschat_model_worker_address, get_vtot_worker_config, get_speech_worker_config,
-                                get_image_recognition_worker_config, get_image_generation_worker_config)
+                                get_image_recognition_worker_config, get_image_generation_worker_config,
+                                get_music_generation_worker_config)
 from __about__ import __title__, __summary__, __version__, __author__, __email__, __license__, __copyright__
 from webuisrv import InnerLlmAIRobotWebUIServer
 from WebUI.Server.knowledge_base.utils import SCORE_THRESHOLD
@@ -23,6 +24,7 @@ from fastchat.constants import ErrorCode
 from fastchat.protocol.openai_api_protocol import ChatCompletionRequest
 from WebUI.configs.voicemodels import (init_voice_models, translate_voice_data, cloud_voice_data, init_speech_models, translate_speech_data)
 from WebUI.configs.imagemodels import (init_image_recognition_models, translate_image_recognition_data, init_image_generation_models, translate_image_generation_data)
+from WebUI.configs.musicmodels import (init_music_generation_models, translate_music_generation_data)
 from WebUI.configs.webuiconfig import *
 from WebUI.configs.basicconfig import *
 from WebUI.configs.specialmodels import *
@@ -121,6 +123,9 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
             "model_name": ""
         },
         "imagegeneration": {
+            "model_name": ""
+        },
+        "musicgeneration": {
             "model_name": ""
         }
     }
@@ -689,6 +694,84 @@ def run_controller(started_event: mp.Event = None, q: mp.Queue = None):
             except Exception as e:
                 return {"code": 500, "image": ""}
             
+    @app.post("/get_music_generation_model")        
+    def get_music_generation_model(
+    ) -> Dict:
+        model_name = glob_minor_models["musicgeneration"]["model_name"]
+        return {"code": 200, "model": model_name}
+    
+    @app.post("/release_music_generation_model")
+    def release_music_generation_model(
+        model_name: str = Body(..., description="Unload the model", samples=""),
+        new_model_name: str = Body(None, description="New model"),
+    ) -> Dict:
+        if new_model_name:
+            print(f"Change music generation model: from {model_name} to {new_model_name})")
+        else:
+            print(f"Stoping music generation model: {model_name}")
+        workerconfig = get_music_generation_worker_config()
+        worker_address = "http://" + workerconfig["host"] + ":" + str(workerconfig["port"])
+        if model_name:
+            q.put([model_name, "stop_music_generation_model", None])
+            timer = HTTPX_RELEASE_VOICE_TIMEOUT  # wait for release model
+            while timer > 0:
+                with get_httpx_client() as client:
+                    try:
+                        r = client.post(worker_address + "/get_name",
+                            json={})
+                    except Exception as e:
+                        break
+                time.sleep(1)
+                timer -= 1
+            if timer <= 0:
+                msg = f"failed to stop music generation model: {model_name}"
+                print(msg)
+                return {"code": 500, "msg": msg}
+            glob_minor_models["musicgeneration"]["model_name"] = ""
+
+        if new_model_name:
+            q.put([model_name, "start_music_generation_model", new_model_name])
+            timer = HTTPX_LOAD_VOICE_TIMEOUT  # wait for new vtot_worker register
+            while timer > 0:
+                with get_httpx_client() as client:
+                    try:
+                        r = client.post(worker_address + "/get_name",
+                            json={})
+                        break
+                    except Exception as e:
+                        pass
+                time.sleep(1)
+                timer -= 1
+            if timer <= 0:
+                msg = f"failed change music generation model from {model_name} to {new_model_name}"
+                print(msg)
+                return {"code": 500, "msg": msg}
+            glob_minor_models["musicgeneration"]["model_name"] = new_model_name
+            msg = f"success change music generation model from {model_name} to {new_model_name}"
+            return {"code": 200, "msg": msg}
+        else:
+            msg = f"success stop music generation model {model_name}"
+            return {"code": 200, "msg": msg}
+
+    @app.post("/get_music_generation_data")
+    def get_music_generation_data(
+        prompt_data: str = Body(..., description="prompt data"),
+        btranslate_prompt: bool = Body(False, description=""),
+    ) -> Dict:
+        if len(prompt_data) == 0:
+            msg = f"failed translate prompt to music."
+            return {"code": 500, "msg": msg}
+        workerconfig = get_music_generation_worker_config()
+        worker_address = "http://" + workerconfig["host"] + ":" + str(workerconfig["port"])
+        with get_httpx_client() as client:
+            try:
+                r = client.post(worker_address + "/get_music_generation_data",
+                    json={"prompt_data": prompt_data, "btranslate_prompt": btranslate_prompt},
+                    )
+                return r.json()
+            except Exception as e:
+                return {"code": 500, "audio": ""}
+            
     @app.post("/download_llm_model")
     def download_llm_model(
         model_name: str = Body(..., description="model name"),
@@ -1143,6 +1226,64 @@ def run_image_generation_worker(
 
     uvicorn.run(app, host=host, port=port)
 
+def run_music_generation_worker(
+    model_name: str = "",
+    controller_address: str = "",
+    q: mp.Queue = None,
+    started_event: mp.Event = None,
+):
+    import uvicorn
+    from fastapi import Body
+
+    kwargs = get_music_generation_worker_config(model_name)
+    host = kwargs.pop("host")
+    port = kwargs.pop("port")
+    kwargs["model_name"] = model_name
+    app = FastAPI()
+    try:
+        config = {
+            "model_name": kwargs["model_name"],
+            "model_path": kwargs["model_path"],
+            "device": kwargs["device"],
+            "loadbits": kwargs["loadbits"],
+            "seed": kwargs["seed"],
+            "guiding_scale": kwargs["guiding_scale"],
+            "max_new_tokens": kwargs["max_new_tokens"],
+            "do_sample": kwargs["do_sample"],
+        }
+        if kwargs["model_type"] == "local":
+            music_generation_model, processor = init_music_generation_models(config)
+            if music_generation_model is None:
+                    return None
+        elif kwargs["model_type"] == "cloud":
+            music_generation_model = None
+    except Exception as e:
+        print(e)
+        return None
+    app.title = f"Music Generation model worker ({model_name})"
+    app._worker = ""
+    _set_app_event(app, started_event)
+    
+    # add interface to get voice model name
+    @app.post("/get_name")
+    def get_name(
+    ) -> dict:
+        return {"code": 200, "name": model_name}
+    
+    @app.post("/get_music_generation_data")
+    def get_music_generation_data(
+        prompt_data: str = Body(..., description="text data"),
+        btranslate_prompt: bool = Body(False, description=""),
+    ) -> dict:
+        if len(prompt_data) == 0 or music_generation_model is None:
+            return {"code": 500, "audio": ""}
+        music_data = translate_music_generation_data(music_generation_model, processor, config, prompt_data, btranslate_prompt)
+        if music_data == "":
+            return {"code": 500, "audio": ""}
+        return {"code": 200, "audio": music_data}
+
+    uvicorn.run(app, host=host, port=port)
+
 def run_model_worker(
         model_name: str = "",
         controller_address: str = "",
@@ -1295,12 +1436,13 @@ def main_server():
     
     dump_server_info(args=args)
 
-    processes = {"online_api": {}, "model_worker": {}, "vtot_worker": {}, "speech_worker": {}, "imagerecognition_worker": {}, "imagegeneration_worker": {}}
+    processes = {"online_api": {}, "model_worker": {}, "vtot_worker": {}, "speech_worker": {}, "imagerecognition_worker": {}, "imagegeneration_worker": {}, "musicgeneration_worker": {}}
 
     def process_count():
         return len(processes) + len(processes["online_api"]) + len(processes["model_worker"]) + \
         len(processes["vtot_worker"]) + len(processes["speech_worker"]) + \
-        len(processes["imagerecognition_worker"]) + len(processes["imagegeneration_worker"]) - 2
+        len(processes["imagerecognition_worker"]) + len(processes["imagegeneration_worker"]) + \
+        len(processes["musicgeneration_worker"]) - 2
        
     controller_started = manager.Event()
     if args.openai_api:
@@ -1573,6 +1715,30 @@ def main_server():
                             process.terminate()
                             process.join()
                             print(f"Stop image generation model: {model_name}")
+                        else:
+                            print(f"Can not find the model: {model_name}")
+                    elif cmd == "start_music_generation_model":
+                        print(f"Change to new model: {new_model_name}")
+                        process = Process(
+                            target=run_music_generation_worker,
+                            name=f"musicgeneration_worker - {new_model_name}",
+                            kwargs=dict(model_name=new_model_name,
+                                        controller_address=args.controller_address,
+                                        q=queue,
+                                        started_event=e),
+                            daemon=True,
+                        )
+                        process.start()
+                        process.name = f"{process.name} ({process.pid})"
+                        processes["musicgeneration_worker"][new_model_name] = process
+                        e.wait()
+                        print(f"The music generation model: {new_model_name} running!")
+                    elif cmd == "stop_music_generation_model":
+                        if process := processes["musicgeneration_worker"].pop(model_name):
+                            time.sleep(1)
+                            process.terminate()
+                            process.join()
+                            print(f"Stop music generation model: {model_name}")
                         else:
                             print(f"Can not find the model: {model_name}")
 

@@ -1065,6 +1065,127 @@ class ApiRequest:
             json=data,
         )
         return self._get_response_value(response, as_json=True, value_func=lambda r:r.get("data", ""))
+    
+    # music generation model api
+
+    def save_music_generation_model_config(self,
+        model_name: str = "",
+        modelconfig: dict = {},
+        controller_address: str = None,
+    ):
+        if model_name == "" or modelconfig is None:
+            return {
+                "code": 500,
+                "msg": f"modelconfig is None."
+            }
+        data = {
+            "model_name": model_name,
+            "config": modelconfig,
+            "controller_address": controller_address,
+        }
+
+        response = self.post(
+            "/music_model/save_music_generation_model_config",
+            json=data,
+        )
+        
+        if self._use_async:
+            return self.ret_async(response)
+        else:
+            return self.ret_sync(response)
+        
+    def get_music_generation_model(self, controller_address: str = None):
+        data = {
+            "controller_address": controller_address,
+        }
+        response = self.post(
+            "/music_model/get_music_generation_model",
+            json=data,
+        )
+        return self._get_response_value(response, as_json=True, value_func=lambda r:r.get("data", []))
+    
+    def eject_music_generation_model(self,
+        model_name: str,
+        controller_address: str = None,
+    ):
+        if not model_name:
+            return {
+                "code": 500,
+                "msg": f"name for the new model is None."
+            }
+        
+        running_model = self.get_music_generation_model()
+        if model_name != running_model:
+            return {
+                "code": 200,
+                "msg": f"the model '{model_name}' is not running."
+            }
+
+        data = {
+            "model_name": model_name,
+            "controller_address": controller_address,
+        }
+
+        response = self.post(
+            "/music_model/eject_music_generation_model",
+            json=data,
+        )
+        
+        if self._use_async:
+            return self.ret_async(response)
+        else:
+            return self.ret_sync(response)
+
+    def change_music_generation_model(self,
+        model_name: str,
+        new_model_name: str,
+        controller_address: str = None,
+    ):
+        if not new_model_name:
+            return {
+                "code": 500,
+                "msg": f"name for the new model is None."
+            }
+        running_model = self.get_music_generation_model()
+        if new_model_name == model_name or new_model_name == running_model:
+            return {
+                "code": 200,
+                "msg": "Not necessary to switch models."
+            }
+
+        data = {
+            "model_name": model_name,
+            "new_model_name": new_model_name,
+            "controller_address": controller_address,
+        }
+
+        response = self.post(
+            "/music_model/change_music_generation_model",
+            json=data,
+        )
+
+        if self._use_async:
+            return self.ret_async(response)
+        else:
+            return self.ret_sync(response)
+        
+    def get_music_generation_data(self,
+        prompt_data: str,
+        btranslate_prompt: bool,
+        controller_address: str = None
+    ):
+        if prompt_data is None or len(prompt_data) == 0:
+            return ""
+        data = {
+            "prompt_data": prompt_data,
+            "btranslate_prompt": btranslate_prompt,
+            "controller_address": controller_address,
+        }
+        response = self.post(
+            "/music_model/get_music_generation_data",
+            json=data,
+        )
+        return self._get_response_value(response, as_json=True, value_func=lambda r:r.get("data", ""))
 
     # chat & knowledge base api
 

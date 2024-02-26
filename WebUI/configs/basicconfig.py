@@ -328,6 +328,9 @@ def ImageModelExist(local_path):
         return True
     return False
 
+def MusicModelExist(local_path):
+    return ImageModelExist(local_path)
+
 def EmbeddingModelExist(embed_model: str):
     if embed_model:
         from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse

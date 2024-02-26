@@ -126,6 +126,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
     speechmodel = api.get_ttov_model()
     imagerecognition_model = api.get_image_recognition_model()
     imagegeneration_model = api.get_image_generation_model()
+    musicgeneration_model = api.get_music_generation_model()
     current_engine_name = ""
     current_smart = False
     current_search_engine = {}
@@ -141,6 +142,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
     print("voicemodel: ", voicemodel)
     print("imagerecognition_model: ", imagerecognition_model)
     print("imagegeneration_model: ", imagegeneration_model)
+    print("musicgeneration_model: ", musicgeneration_model)
     print("search_engine: ", current_search_engine)
     print("code_interpreter: ", code_interpreter)
 
@@ -451,7 +453,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
         "optional_text_label": "Please provide feedback on the reasons for your rating.",
     }
     
-    if imagegeneration_model:
+    if imagegeneration_model or musicgeneration_model:
         prompt = st.chat_input(chat_input_placeholder, key="prompt")
     else:
         prompt = st.chat_input(chat_input_placeholder, key="prompt", disabled=disabled)
@@ -492,6 +494,14 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                             decoded_data = base64.b64decode(gen_image)
                             gen_image=Image(BytesIO(decoded_data))
                             chat_box.update_msg(gen_image, element_index=0, streaming=False)
+                if musicgeneration_model:
+                    with st.spinner(f"Music generation in progress...."):
+                        gen_music = api.get_music_generation_data(prompt, False)
+                        if gen_music:
+                            chat_box.ai_say([""])
+                            decoded_data = base64.b64decode(gen_music)
+                            gen_music=Audio(BytesIO(decoded_data))
+                            chat_box.update_msg(gen_music, element_index=0, streaming=False)
             else:
                 if code_interpreter == "Open Interpreter":
                     from WebUI.Server.utils import GetInterpreterBaseAddress

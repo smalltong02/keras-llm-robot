@@ -59,6 +59,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
     current_speech_model = api.get_ttov_model()
     current_imagere_model = api.get_image_recognition_model()
     current_imagegen_model = api.get_image_generation_model()
+    current_musicgen_model = api.get_music_generation_model()
     voicemodel = None
     
     if running_model == "":
@@ -67,7 +68,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
             f"""<h1 style="font-size: 1.5em; text-align: center; color: #3498db;">Running LLM Model: {running_model}</h1>""",
             unsafe_allow_html=True,
         )
-    tabretrieval, tabinterpreter, tabspeech, tabvoice, tabimager, tabimageg, tabfunctions = st.tabs(["Retrieval", "Code Interpreter", "Text-to-Voice", "Voice-to-Text", "Image Recognition", "Image Generation", "Functions"])
+    tabretrieval, tabinterpreter, tabspeech, tabvoice, tabimager, tabimageg, tabmusic = st.tabs(["Retrieval", "Code Interpreter", "Text-to-Voice", "Voice-to-Text", "Image Recognition", "Image Generation", "Music"])
     with tabretrieval:
         kb_list = {}
         try:
@@ -1095,8 +1096,90 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
         elif modelconfig["type"] == "cloud":
             pass
 
-    with tabfunctions:
-        pass
+    with tabmusic:
+        musicgenmodels = webui_config.get("ModelConfig").get("MusicGeneration")
+        musicgenmodels_lists = [f"{key}" for key in musicgenmodels]
+        col1, col2 = st.columns(2)
+        with col1:
+            if current_musicgen_model == "":
+                index = 0
+            else:
+                index = musicgenmodels_lists.index(current_musicgen_model)
+            musicgenmodel = st.selectbox(
+                    "Please Select Music Generation Model",
+                    musicgenmodels_lists,
+                    index=index,
+                )
+            musicgenle_button = st.button(
+                "Load & Eject",
+                key="musicgen_btn",
+                use_container_width=True,
+            )
+            if musicgenle_button:
+                if musicgenmodel == current_musicgen_model:
+                    with st.spinner(f"Release Model: `{musicgenmodel}`, Please do not perform any actions or refresh the page."):
+                        r = api.eject_music_generation_model(musicgenmodel)
+                        if msg := check_error_msg(r):
+                            st.error(msg)
+                        elif msg := check_success_msg(r):
+                            st.success(msg)
+                            current_musicgen_model = ""
+                else:
+                    with st.spinner(f"Loading Model: `{musicgenmodel}`, Please do not perform any actions or refresh the page."):
+                        provider = musicgenmodels[musicgenmodel].get("provider", "")
+                        pathstr = musicgenmodels[musicgenmodel].get("path")
+                        if provider != "" or MusicModelExist(pathstr):
+                            r = api.change_music_generation_model(current_musicgen_model, musicgenmodel)
+                            if msg := check_error_msg(r):
+                                st.error(msg)
+                            elif msg := check_success_msg(r):
+                                st.success(msg)
+                                current_musicgen_model = musicgenmodel
+                        else:
+                            st.error("Please download the model to your local machine first.")
+            modelconfig = musicgenmodels[musicgenmodel]
+        with col2:
+            if modelconfig["type"] == "local":
+                if musicgenmodel is not None:
+                    pathstr = musicgenmodels[musicgenmodel].get("path")
+                else:
+                    pathstr = ""
+                st.text_input("Local Path", pathstr, key="music_local_path", disabled=True)
+                musicdownload_btn = st.button(
+                    "Download",
+                    key="musicdownload_btn",
+                    use_container_width=True,
+                )
+                if musicdownload_btn:
+                    with st.spinner(f"Model downloading..., Please do not perform any actions or refresh the page."):
+                        if LocalModelExist(pathstr):
+                            st.error(f'The model {musicgenmodel} already exists in the folder {pathstr}')
+                        else:
+                            huggingface_path = modelconfig["Huggingface"]
+                            r = api.download_llm_model(musicgenmodel, huggingface_path, pathstr)
+                            download_error = False
+                            progress_bar = st.progress(0)
+                            for t in r:
+                                if error_msg := check_error_msg(t):  # check whether error occured
+                                    download_error = True
+                                    st.error(msg)
+                                    st.toast(msg, icon="✖")
+                                    break
+                                tqdm = t.get("percentage", 0.0) / 100
+                                progress_bar.progress(tqdm)
+                            if download_error == False:
+                                progress_bar.progress(1.0)
+                                st.success("downloading success!")
+                                st.toast("downloading success!", icon="✔")
+            elif modelconfig["type"] == "cloud":
+                pathstr = modelconfig.get("path")
+                st.text_input("Cloud Path", pathstr, key="gen_cloud_path", disabled=True)
+                musicdownload_btn = st.button(
+                    "Download",
+                    key="musicdownload_btn",
+                    use_container_width=True,
+                    disabled=True
+                )
 
     st.session_state["current_page"] = "retrieval_agent_page"
 

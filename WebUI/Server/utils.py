@@ -389,6 +389,47 @@ def get_image_generation_worker_config(model_name: str = None) -> dict:
             config["refiner"] = False
     return config
 
+def get_music_generation_worker_config(model_name: str = None) -> dict:
+    config = {}
+    configinst = InnerJsonConfigWebUIParse()
+    webui_config = configinst.dump()
+    server_config = webui_config.get("ServerConfig")
+    config["host"] = getlocalip(server_config.get("default_host_ip"))
+    config["port"] = server_config["music_generation_worker"].get("port")
+
+    if model_name is None or model_name == "":
+        return config
+    imagegen_models = webui_config.get("ModelConfig").get("MusicGeneration")
+    if model_name in imagegen_models:
+        if imagegen_models[model_name].get("type") == "local":
+            config["model_type"] = "local"
+            config["model_path"] = imagegen_models[model_name].get("path")
+            config["device"] = imagegen_models[model_name].get("device")
+            config["loadbits"] = imagegen_models[model_name].get("loadbits")
+            config["Huggingface"] = imagegen_models[model_name].get("Huggingface")
+            subconfig = imagegen_models[model_name].get("config", {})
+            if subconfig:
+                config["seed"] = subconfig.get("seed")
+                config["guiding_scale"] = subconfig.get("guiding_scale")
+                config["max_new_tokens"] = subconfig.get("max_new_tokens")
+                config["do_sample"] = subconfig.get("do_sample")
+            else:
+                config["seed"] = 0
+                config["guiding_scale"] = 3
+                config["max_new_tokens"] = 256
+                config["do_sample"] = True
+        else:
+            config["model_type"] = ""
+            config["model_path"] = ""
+            config["device"] = ""
+            config["loadbits"] = ""
+            config["Huggingface"] = ""
+            config["seed"] = 0
+            config["guiding_scale"] = 3
+            config["max_new_tokens"] = 256
+            config["do_sample"] = True
+    return config
+
 def MakeFastAPIOffline(
         app: FastAPI,
         static_dir=Path(__file__).parent / "static",
