@@ -1180,6 +1180,68 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                     use_container_width=True,
                     disabled=True
                 )
+            
+        st.divider()
+        if modelconfig["type"] == "local":
+            with st.form("music_generation_model"):
+                devcol, bitcol = st.columns(2)
+                with devcol:
+                    subconfig = modelconfig.get("config", {})
+                    if modelconfig["type"] == "local":
+                        sdevice = modelconfig.get("device").lower()
+                        if sdevice in training_devices_list:
+                            index = training_devices_list.index(sdevice)
+                        else:
+                            index = 0
+                        predict_dev = st.selectbox(
+                                "Please select Device",
+                                training_devices_list,
+                                index=index
+                            )
+                    if subconfig:
+                        max_tokens = subconfig.get("max_new_tokens", 256)
+                        max_tokens = st.slider("Max Tokens", 1, 1500, max_tokens, 1)
+                        do_sample = subconfig.get("do_sample", False)
+                        do_sample = st.checkbox('Do Sample', value=do_sample)
+
+                with bitcol:
+                    if modelconfig["type"] == "local":
+                        nloadbits = modelconfig.get("loadbits")
+                        index = 0 if nloadbits == 32 else (1 if nloadbits == 16 else (2 if nloadbits == 8 else 16))
+                        nloadbits = st.selectbox(
+                            "Load Bits",
+                            loadbits_list,
+                            index=index
+                        )
+                    if subconfig:
+                        guiding_scale = subconfig.get("guiding_scale", 3)
+                        guiding_scale = st.slider("Guiding Scale", 1, 20, guiding_scale, 1)
+                save_parameters = st.form_submit_button(
+                    "Save Parameters",
+                    use_container_width=True
+                )
+                if save_parameters:
+                    modelconfig["device"] = predict_dev
+                    if nloadbits == "32 bits":
+                        modelconfig["loadbits"] = 32
+                    elif nloadbits == "16 bits":
+                        modelconfig["loadbits"] = 16
+                    else:
+                        modelconfig["loadbits"] = 8
+                    if subconfig:
+                        modelconfig["config"]["seed"] = seed
+                        modelconfig["config"]["guiding_scale"] = guiding_scale
+                        modelconfig["config"]["max_new_tokens"] = max_tokens
+                        modelconfig["config"]["do_sample"] = do_sample
+                    with st.spinner(f"Saving Parameters, Please do not perform any actions or refresh the page."):
+                        r = api.save_music_generation_model_config(musicgenmodel, modelconfig)
+                        if msg := check_error_msg(r):
+                            st.error(msg)
+                        elif msg := check_success_msg(r):
+                            st.success(msg)
+
+        elif modelconfig["type"] == "cloud":
+            pass
 
     st.session_state["current_page"] = "retrieval_agent_page"
 
