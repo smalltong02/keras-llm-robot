@@ -1161,7 +1161,7 @@
             "system_message": "[default]"
         },
         "offline": false,
-        "auto_run": false,
+        "auto_run": true,
         "safe_mode": false
     },
     "PromptTemplates": {}

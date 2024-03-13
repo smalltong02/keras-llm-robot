@@ -1,13 +1,12 @@
 import os
 import shutil
-
+from typing import List, Dict
 from WebUI.Server.knowledge_base.kb_service.base import KBService, SupportedVSType, EmbeddingsFunAdapter
 from WebUI.Server.knowledge_base.kb_cache.faiss_cache import kb_faiss_pool, ThreadSafeFaiss
 from WebUI.Server.knowledge_base.utils import KnowledgeFile, get_kb_path, get_vs_path
 from WebUI.Server.utils import torch_gc
 from langchain.docstore.document import Document
 from WebUI.Server.knowledge_base.utils import SCORE_THRESHOLD
-from typing import List, Dict, Optional
 
 class FaissKBService(KBService):
     vs_path: str

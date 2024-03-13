@@ -1,4 +1,5 @@
-import io, os
+import io
+import os
 import torch
 import base64
 from WebUI.Server.utils import detect_device
@@ -133,7 +134,7 @@ def init_speech_models(config):
 
 def translate_speech_data(model, config, text_data: str = "", speech_type: str = "en-us-female-1") -> str:
     if len(text_data):
-        if isinstance(config, dict) and speech_type != None:
+        if isinstance(config, dict) and speech_type is not None:
             parts = speech_type.split('_')
             language = parts[0]
             synthesis = parts[1]
@@ -156,7 +157,7 @@ def translate_speech_data(model, config, text_data: str = "", speech_type: str =
                 frame_rate = wave_file.getframerate()
                 frames = wave_file.getnframes()
                 raw_data = wave_file.readframes(frames)
-            if raw_data != None:
+            if raw_data is not None:
                 base64_data = base64.b64encode(raw_data).decode('utf-8')
                 return channels, sample_width, frame_rate, base64_data
             return 0, 0, 0, 0, ""

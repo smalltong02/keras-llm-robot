@@ -1,20 +1,12 @@
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, JSONResponse
 from typing import List, Optional
 import openai
 from WebUI.Server.utils import get_model_worker_config, fschat_openai_api_address
 from pydantic import BaseModel
 from WebUI.Server.utils import FastAPI
 from fastchat.protocol.openai_api_protocol import ChatCompletionRequest
-from fastapi.responses import StreamingResponse, JSONResponse
-from fastchat.constants import (
-    WORKER_API_TIMEOUT,
-    WORKER_API_EMBEDDING_BATCH_SIZE,
-    ErrorCode,
-)
-from fastchat.protocol.openai_api_protocol import (
-    ChatCompletionResponse,
-    ErrorResponse,
-)
+from fastchat.constants import ErrorCode
+from fastchat.protocol.openai_api_protocol import ErrorResponse
 
 class OpenAiMessage(BaseModel):
     role: str = "user"
@@ -121,8 +113,7 @@ def completion_stream_generator(app: FastAPI, request: ChatCompletionRequest):
     async def chat_completion_stream_generator(app: FastAPI, request: ChatCompletionRequest):
         import json
         import shortuuid
-        from typing import Dict, AsyncIterable, Iterator
-        from WebUI.webui_pages.utils import check_error_msg
+        from typing import Dict
         from WebUI.configs.basicconfig import ModelType, ModelSize, ModelSubType, GetModelInfoByName, ConvertCompletionRequestToHistory
         from WebUI.configs.specialmodels import special_chat_iterator
         from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse

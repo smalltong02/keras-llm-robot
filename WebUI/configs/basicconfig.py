@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import *
+from typing import Dict, List, Union
 from pathlib import Path
 import os
 import copy
@@ -294,7 +294,6 @@ def GeneratePresetPrompt(preset_name: str) -> dict:
 
 def GenerateModelPrompt(inputs: list, input: str) -> Union[str, dict]:
     if len(inputs):
-        index = len(inputs)
         prompt_dict = {key: "" for key in inputs}
         last_key = inputs[-1]
         prompt_dict[last_key] = input

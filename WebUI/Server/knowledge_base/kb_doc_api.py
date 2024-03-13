@@ -22,9 +22,9 @@ def update_docs_by_id(
     if kb is None:
         return BaseResponse(code=500, msg=f"The Knowledge base '{knowledge_base_name}' not exist!")
     if kb.update_doc_by_ids(docs=docs):
-        return BaseResponse(msg=f"update doc success!")
+        return BaseResponse(msg="update doc success!")
     else:
-        return BaseResponse(msg=f"update doc failed.")
+        return BaseResponse(msg="update doc failed.")
 
 def list_files(
         knowledge_base_name: str
@@ -52,7 +52,7 @@ def update_info(
         return BaseResponse(code=404, msg=f"Not found Knowledge base '{knowledge_base_name}'")
     kb.update_info(kb_info)
 
-    return BaseResponse(code=200, msg=f"Knowledge base information has been changed.", data={"kb_info": kb_info})
+    return BaseResponse(code=200, msg="Knowledge base information has been changed.", data={"kb_info": kb_info})
     
 def _save_files_in_thread(files: List[UploadFile],
                           knowledge_base_name: str,
@@ -163,7 +163,7 @@ def update_docs(
     if not not_refresh_vs_cache:
         kb.save_vector_store()
 
-    return BaseResponse(code=200, msg=f"update docs finished!", data={"failed_files": failed_files})
+    return BaseResponse(code=200, msg="update docs finished!", data={"failed_files": failed_files})
     
 def upload_docs(
         files: List[UploadFile] = File(..., description="upload file, support multiple files"),
@@ -242,7 +242,7 @@ def delete_docs(
     if not not_refresh_vs_cache:
         kb.save_vector_store()
 
-    return BaseResponse(code=200, msg=f"Delete file finished!", data={"failed_files": failed_files})
+    return BaseResponse(code=200, msg="Delete file finished!", data={"failed_files": failed_files})
 
 def download_doc(
         knowledge_base_name: str = Query(..., description="Knowledge base name", examples=["samples"]),

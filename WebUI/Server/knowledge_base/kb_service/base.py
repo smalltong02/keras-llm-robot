@@ -1,7 +1,7 @@
 import operator
 from abc import ABC, abstractmethod
 from WebUI.Server.knowledge_base.utils import (KnowledgeFile, list_kbs_from_folder, list_files_from_folder)
-from WebUI.configs import *
+from WebUI.configs import GetKbInfo, GetKbPath, GetDocPath, GetKbsList
 from WebUI.Server.knowledge_base.utils import SCORE_THRESHOLD
 import os
 from pathlib import Path
@@ -20,7 +20,7 @@ from WebUI.Server.db.repository.knowledge_file_repository import (
 from WebUI.Server.knowledge_base.model.kb_document_model import DocumentWithVSId
 from WebUI.Server.embeddings_api import embed_texts, aembed_texts, embed_documents
 
-from typing import List, Union, Dict, Optional
+from typing import List, Union, Dict
 
 def normalize(embeddings: List[List[float]]) -> np.ndarray:
     norm = np.linalg.norm(embeddings, axis=1)

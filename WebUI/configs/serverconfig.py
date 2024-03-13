@@ -1,6 +1,5 @@
 
-import sys
-from .modelconfig import LLM_DEVICE
+from WebUI.configs.modelconfig import LLM_DEVICE
 
 HTTPX_DEFAULT_TIMEOUT = 300.0
 

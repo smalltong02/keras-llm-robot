@@ -3,8 +3,8 @@ import base64
 import torch
 import PIL.Image
 import numpy as np
-from typing import *
-from WebUI.webui_pages.utils import *
+from typing import Any
+from WebUI.configs.basicconfig import ImageModelExist
 from WebUI.Server.utils import detect_device
 
 def init_image_recognition_models(config):
@@ -143,7 +143,7 @@ def init_image_generation_models(config):
                 variant="fp16",
             )
             refiner = None
-            if ImageModelExist("models/imagegeneration/stable-diffusion-xl-refiner-1.0") == False:
+            if ImageModelExist("models/imagegeneration/stable-diffusion-xl-refiner-1.0") is False:
                 enable_refiner = False
             if enable_refiner:
                 refiner = DiffusionPipeline.from_pretrained(

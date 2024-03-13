@@ -6,7 +6,6 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from fastapi import Body
 from WebUI.Server.chat.completion import completion
-from WebUI.Server.utils import (FastAPI, MakeFastAPIOffline, BaseResponse)
 from WebUI.configs.serverconfig import OPEN_CROSS_DOMAIN
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import RedirectResponse
@@ -24,9 +23,9 @@ from WebUI.Server.llm_api import (list_running_models, get_running_models, list_
                             get_image_recognition_model, save_image_recognition_model_config, eject_image_recognition_model, change_image_recognition_model, get_image_recognition_data,
                             get_image_generation_model, save_image_generation_model_config, eject_image_generation_model, change_image_generation_model, get_image_generation_data,
                             get_music_generation_model, save_music_generation_model_config, eject_music_generation_model, change_music_generation_model, get_music_generation_data,
-                            save_search_engine_config, llm_knowledge_base_chat, llm_search_engine_chat, save_code_interpreter_config, list_search_engines)
+                            save_search_engine_config, llm_knowledge_base_chat, llm_search_engine_chat, save_code_interpreter_config)
 from WebUI.Server.utils import(BaseResponse, ListResponse, FastAPI, MakeFastAPIOffline,
-                          get_server_configs, get_prompt_template)
+                          get_prompt_template)
 from typing import List, Literal
 from __about__ import __version__
 

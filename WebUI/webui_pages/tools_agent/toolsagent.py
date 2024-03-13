@@ -1,8 +1,12 @@
+import os
+import json
 import streamlit as st
 import pandas as pd
+from WebUI.configs.basicconfig import LocalModelExist, ImageModelExist, MusicModelExist
 from st_aggrid import AgGrid, JsCode
 from st_aggrid.grid_options_builder import GridOptionsBuilder
-from WebUI.webui_pages.utils import *
+from WebUI.webui_pages.utils import ApiRequest, check_success_msg, check_error_msg
+from typing import List, Dict, Tuple, Literal
 from WebUI.Server.knowledge_base.kb_service.base import (get_kb_details, get_kb_file_details)
 from WebUI.Server.knowledge_base.utils import (get_file_path, LOADER_DICT, CHUNK_SIZE, OVERLAP_SIZE, ZH_TITLE_ENHANCE)
 
@@ -75,7 +79,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
             kb_details = get_kb_details()
             if len(kb_details):
                 kb_list = {x["kb_name"]: x for x in kb_details}
-        except Exception as e:
+        except Exception as _:
             st.error("Get Knowledge Base failed!")
             st.stop()
         kb_names = [KB_CREATE_NEW]
@@ -131,7 +135,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
             if submit_create_kb:
                 with st.spinner(f"Create new Knowledge Base `{kb_name}`, Please do not perform any actions or refresh the page."):
                     if not kb_name or not kb_name.strip():
-                        st.error(f"Knowledge Base Name is None!")
+                        st.error("Knowledge Base Name is None!")
                     elif kb_name in kb_list:
                         st.error(f"The {kb_name} exist!")
                     else:
@@ -343,7 +347,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                 gb.configure_column("to_del", "Delete", editable=False, width=50, wrapHeaderText=True,
                                     cellEditor="agCheckboxCellEditor", cellRender="agCheckboxCellRenderer")
                 gb.configure_selection()
-                edit_docs = AgGrid(df, gb.build())
+                #edit_docs = AgGrid(df, gb.build())
 
                 # if st.button("Save"):
                 #     # origin_docs = {x["id"]: {"page_content": x["page_content"], "type": x["type"], "metadata": x["metadata"]} for x in docs}
@@ -405,7 +409,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                 use_container_width=True,
             )
             if save_parameters:
-                with st.spinner(f"Saving Parameters, Please do not perform any actions or refresh the page."):
+                with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
                     codeinterpreter["offline"] = offline
                     codeinterpreter["auto_run"] = auto_run
                     codeinterpreter["safe_mode"] = safe_mode
@@ -421,6 +425,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
         else:
             st.session_state["current_interpreter"] = {}
 
+    pathstr = ""
     with tabspeech:
         ttovmodel = webui_config.get("ModelConfig").get("TtoVModel")
         ttovmodel_lists = [f"{key}" for key in ttovmodel]
@@ -479,7 +484,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                     use_container_width=True,
                 )
                 if spdownload_btn:
-                    with st.spinner(f"Model downloading..., Please do not perform any actions or refresh the page."):
+                    with st.spinner("Model downloading..., Please do not perform any actions or refresh the page."):
                         if LocalModelExist(pathstr):
                             st.error(f'The model {speechmodel} already exists in the folder {pathstr}')
                         else:
@@ -488,14 +493,14 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                             download_error = False
                             progress_bar = st.progress(0)
                             for t in r:
-                                if error_msg := check_error_msg(t):  # check whether error occured
+                                if _ := check_error_msg(t):  # check whether error occured
                                     download_error = True
                                     st.error(msg)
                                     st.toast(msg, icon="✖")
                                     break
                                 tqdm = t.get("percentage", 0.0) / 100
                                 progress_bar.progress(tqdm)
-                            if download_error == False:
+                            if download_error is False:
                                 progress_bar.progress(1.0)
                                 st.success("downloading success!")
                                 st.toast("downloading success!", icon="✔")
@@ -546,7 +551,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                         modelconfig["loadbits"] = 16
                     else:
                         modelconfig["loadbits"] = 8
-                    with st.spinner(f"Saving Parameters, Please do not perform any actions or refresh the page."):
+                    with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
                         r = api.save_speech_model_config(speechmodel, modelconfig)
                         if msg := check_error_msg(r):
                             st.error(msg)
@@ -568,7 +573,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                     use_container_width=True
                 )
                 if save_parameters:
-                    with st.spinner(f"Saving Parameters, Please do not perform any actions or refresh the page."):
+                    with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
                         if speechkey == "" or speechkey == "[Your Key]" or speechregion == "" or speechregion == "[Your Region]":
                             st.error("Please enter the correct key and region, save failed!")
                         else:
@@ -584,7 +589,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
         col1, col2 = st.columns(2)
         with col1:
             templates_list = [modelconfig.get("CloudTemplates", "")]
-            templates = st.selectbox(
+            _ = st.selectbox(
                 "Please Select templates",
                 templates_list,
                 index=0,
@@ -670,7 +675,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                     use_container_width=True,
                 )
                 if vodownload_btn:
-                    with st.spinner(f"Model downloading..., Please do not perform any actions or refresh the page."):
+                    with st.spinner("Model downloading..., Please do not perform any actions or refresh the page."):
                         if LocalModelExist(pathstr):
                             st.error(f'The model {voicemodel} already exists in the folder {pathstr}')
                         else:
@@ -679,14 +684,14 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                             download_error = False
                             progress_bar = st.progress(0)
                             for t in r:
-                                if error_msg := check_error_msg(t):  # check whether error occured
+                                if _ := check_error_msg(t):  # check whether error occured
                                     download_error = True
                                     st.error(msg)
                                     st.toast(msg, icon="✖")
                                     break
                                 tqdm = t.get("percentage", 0.0) / 100
                                 progress_bar.progress(tqdm)
-                            if download_error == False:
+                            if download_error is False:
                                 progress_bar.progress(1.0)
                                 st.success("downloading success!")
                                 st.toast("downloading success!", icon="✔")
@@ -736,7 +741,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                             modelconfig["loadbits"] = 16
                         else:
                             modelconfig["loadbits"] = 8
-                        with st.spinner(f"Saving Parameters, Please do not perform any actions or refresh the page."):
+                        with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
                             r = api.save_vtot_model_config(voicemodel, modelconfig)
                             if msg := check_error_msg(r):
                                 st.error(f"failed to save configuration for model {voicemodel}.")
@@ -777,7 +782,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                             modelconfig["loadbits"] = 16
                         else:
                             modelconfig["loadbits"] = 8
-                        with st.spinner(f"Saving Parameters, Please do not perform any actions or refresh the page."):
+                        with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
                             r = api.save_vtot_model_config(voicemodel, modelconfig)
                             if msg := check_error_msg(r):
                                 st.error(f"failed to save configuration for model {voicemodel}.")
@@ -800,7 +805,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                     use_container_width=True
                 )
                 if save_parameters:
-                    with st.spinner(f"Saving Parameters, Please do not perform any actions or refresh the page."):
+                    with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
                         if voicekey == "" or voicekey == "[Your Key]" or voiceregion == "" or voiceregion == "[Your Region]":
                             st.error("Please enter the correct key and region, save failed!")
                         else:
@@ -866,7 +871,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                     use_container_width=True,
                 )
                 if redownload_btn:
-                    with st.spinner(f"Model downloading..., Please do not perform any actions or refresh the page."):
+                    with st.spinner("Model downloading..., Please do not perform any actions or refresh the page."):
                         pathstr = modelconfig.get("path")
                         if ImageModelExist(pathstr):
                             st.error(f'The model {imageremodel} already exists in the folder {pathstr}')
@@ -876,14 +881,14 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                             download_error = False
                             progress_bar = st.progress(0)
                             for t in r:
-                                if error_msg := check_error_msg(t):  # check whether error occured
+                                if __ := check_error_msg(t):  # check whether error occured
                                     download_error = True
                                     st.error(msg)
                                     st.toast(msg, icon="✖")
                                     break
                                 tqdm = t.get("percentage", 0.0) / 100
                                 progress_bar.progress(tqdm)
-                            if download_error == False:
+                            if download_error is False:
                                 progress_bar.progress(1.0)
                                 st.success("downloading success!")
                                 st.toast("downloading success!", icon="✔")
@@ -934,7 +939,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                         modelconfig["loadbits"] = 16
                     else:
                         modelconfig["loadbits"] = 8
-                    with st.spinner(f"Saving Parameters, Please do not perform any actions or refresh the page."):
+                    with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
                         r = api.save_image_recognition_model_config(imageremodel, modelconfig)
                         if msg := check_error_msg(r):
                             st.error(msg)
@@ -977,7 +982,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                         provider = imagegenmodels[imagegenmodel].get("provider", "")
                         pathstr = imagegenmodels[imagegenmodel].get("path")
                         if provider != "" or ImageModelExist(pathstr):
-                            if (imagegenmodel == "OpenDalleV1.1" or imagegenmodel == "ProteusV0.2") and ImageModelExist("models/imagegeneration/sdxl-vae-fp16-fix") == False:
+                            if (imagegenmodel == "OpenDalleV1.1" or imagegenmodel == "ProteusV0.2") and ImageModelExist("models/imagegeneration/sdxl-vae-fp16-fix") is False:
                                 st.error("Please first download the sdxl-vae-fp16-fix model from Hugginface.")
                             else:
                                 r = api.change_image_generation_model(current_imagegen_model, imagegenmodel)
@@ -1002,7 +1007,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                     use_container_width=True,
                 )
                 if gendownload_btn:
-                    with st.spinner(f"Model downloading..., Please do not perform any actions or refresh the page."):
+                    with st.spinner("Model downloading..., Please do not perform any actions or refresh the page."):
                         if LocalModelExist(pathstr):
                             st.error(f'The model {imagegenmodel} already exists in the folder {pathstr}')
                         else:
@@ -1011,14 +1016,14 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                             download_error = False
                             progress_bar = st.progress(0)
                             for t in r:
-                                if error_msg := check_error_msg(t):  # check whether error occured
+                                if _ := check_error_msg(t):  # check whether error occured
                                     download_error = True
                                     st.error(msg)
                                     st.toast(msg, icon="✖")
                                     break
                                 tqdm = t.get("percentage", 0.0) / 100
                                 progress_bar.progress(tqdm)
-                            if download_error == False:
+                            if download_error is False:
                                 progress_bar.progress(1.0)
                                 st.success("downloading success!")
                                 st.toast("downloading success!", icon="✔")
@@ -1086,7 +1091,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                         modelconfig["config"]["torch_compile"] = torch_compile
                         modelconfig["config"]["cpu_offload"] = cpu_offload
                         modelconfig["config"]["refiner"] = refiner
-                    with st.spinner(f"Saving Parameters, Please do not perform any actions or refresh the page."):
+                    with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
                         r = api.save_image_generation_model_config(imagegenmodel, modelconfig)
                         if msg := check_error_msg(r):
                             st.error(msg)
@@ -1151,7 +1156,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                     use_container_width=True,
                 )
                 if musicdownload_btn:
-                    with st.spinner(f"Model downloading..., Please do not perform any actions or refresh the page."):
+                    with st.spinner("Model downloading..., Please do not perform any actions or refresh the page."):
                         if LocalModelExist(pathstr):
                             st.error(f'The model {musicgenmodel} already exists in the folder {pathstr}')
                         else:
@@ -1160,14 +1165,14 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                             download_error = False
                             progress_bar = st.progress(0)
                             for t in r:
-                                if error_msg := check_error_msg(t):  # check whether error occured
+                                if _ := check_error_msg(t):  # check whether error occured
                                     download_error = True
                                     st.error(msg)
                                     st.toast(msg, icon="✖")
                                     break
                                 tqdm = t.get("percentage", 0.0) / 100
                                 progress_bar.progress(tqdm)
-                            if download_error == False:
+                            if download_error is False:
                                 progress_bar.progress(1.0)
                                 st.success("downloading success!")
                                 st.toast("downloading success!", icon="✔")
@@ -1233,7 +1238,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                         modelconfig["config"]["guiding_scale"] = guiding_scale
                         modelconfig["config"]["max_new_tokens"] = max_tokens
                         modelconfig["config"]["do_sample"] = do_sample
-                    with st.spinner(f"Saving Parameters, Please do not perform any actions or refresh the page."):
+                    with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
                         r = api.save_music_generation_model_config(musicgenmodel, modelconfig)
                         if msg := check_error_msg(r):
                             st.error(msg)

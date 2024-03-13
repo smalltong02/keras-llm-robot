@@ -1,12 +1,13 @@
-from WebUI.Server.knowledge_base.kb_cache.base import *
+from WebUI.Server.knowledge_base.kb_cache.base import ThreadSafeObject, CachePool
 from WebUI.Server.knowledge_base.kb_service.base import EmbeddingsFunAdapter
-from WebUI.Server.utils import load_embeddings
+from WebUI.Server.utils import detect_device, load_embeddings
 from WebUI.Server.knowledge_base.utils import get_vs_path
 from langchain.vectorstores.faiss import FAISS
 from langchain.docstore.in_memory import InMemoryDocstore
 from langchain.schema import Document
 import os
-from langchain.schema import Document
+import threading
+from typing import Union
 
 CACHED_VS_NUM = 1
 CACHED_MEMO_VS_NUM = 10
@@ -69,7 +70,7 @@ class _FaissPool(CachePool):
             return cache.save(path)
 
     def unload_vector_store(self, kb_name: str):
-        if cache := self.get(kb_name):
+        if _ := self.get(kb_name):
             self.pop(kb_name)
             print(f"free '{kb_name}' successful!")
 
@@ -141,7 +142,8 @@ memo_faiss_pool = MemoFaissPool(cache_num=CACHED_MEMO_VS_NUM)
 
 
 if __name__ == "__main__":
-    import time, random
+    import time
+    import random
     from pprint import pprint
 
     kb_names = ["vs1", "vs2", "vs3"]

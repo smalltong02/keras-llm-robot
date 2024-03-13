@@ -1,5 +1,5 @@
 from langchain.embeddings.base import Embeddings
-from langchain.vectorstores.faiss import FAISS
+#from langchain.vectorstores.faiss import FAISS
 import os
 import threading
 from WebUI.Server.utils import detect_device, get_embed_model_config, list_online_embed_models
@@ -25,7 +25,7 @@ class ThreadSafeObject:
         return self._key
 
     @contextmanager
-    def acquire(self, owner: str = "", msg: str = "") -> FAISS:
+    def acquire(self, owner: str = "", msg: str = ""):
         owner = owner or f"thread {threading.get_native_id()}"
         try:
             self._lock.acquire()

@@ -1,13 +1,13 @@
 from fastapi import Body, Request
 from fastapi.responses import StreamingResponse
-from WebUI.configs import (DEF_TOKENS, USE_RERANKER, SAVE_CHAT_HISTORY, GetProviderByName, GetRerankerModelPath)
+from WebUI.configs import (DEF_TOKENS, USE_RERANKER, GetProviderByName, GetRerankerModelPath)
 from WebUI.Server.knowledge_base.utils import SCORE_THRESHOLD
 from WebUI.Server.utils import wrap_done, get_ChatOpenAI
 from langchain.chains import LLMChain
 import asyncio
 import json
 from urllib.parse import urlencode
-from sse_starlette.sse import EventSourceResponse
+#from sse_starlette.sse import EventSourceResponse
 from fastapi.concurrency import run_in_threadpool
 from WebUI.Server.utils import BaseResponse, get_prompt_template, detect_device
 from WebUI.Server.chat.utils import History

@@ -1,11 +1,9 @@
-from typing import List, Dict, Optional
-
 from langchain.schema import Document
 from langchain.vectorstores.milvus import Milvus
 from WebUI.configs.basicconfig import GetKbsConfig
 from WebUI.Server.knowledge_base.kb_service.base import KBService, SupportedVSType, EmbeddingsFunAdapter, score_threshold_process
 from WebUI.Server.knowledge_base.utils import KnowledgeFile
-
+from typing import List, Dict
 
 class MilvusKBService(KBService):
     milvus: Milvus

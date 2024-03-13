@@ -1,9 +1,6 @@
-from fastapi import Body, File, Form, UploadFile
+from fastapi import Body
 from WebUI.Server.chat.utils import History
-from WebUI.Server.utils import (wrap_done, get_ChatOpenAI,
-                        BaseResponse, get_prompt_template, run_in_thread_pool)
-
-from typing import AsyncIterable, List, Optional
+from typing import List, Optional
 
 async def agent_chat(query: str = Body(..., description="User input: ", examples=["chat"]),
     history: List[History] = Body([],

@@ -239,3 +239,5 @@ strsimpy==0.2.1
 
 #for code interpreter
 open-interpreter==0.2.0
+websocket-client==1.7.0
+websockets==12.0

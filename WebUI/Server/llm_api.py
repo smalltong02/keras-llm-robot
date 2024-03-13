@@ -5,11 +5,11 @@ from WebUI.Server.utils import (BaseResponse, fschat_controller_address, list_co
                           get_httpx_client, get_model_worker_config, get_vtot_worker_config, get_speech_worker_config,
                           get_image_recognition_worker_config, get_image_generation_worker_config,
                           get_music_generation_worker_config)
-from copy import deepcopy
 import json
-from WebUI.configs.webuiconfig import *
-from WebUI.configs.basicconfig import *
+from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
+from WebUI.configs.basicconfig import (ModelType, ModelSize, ModelSubType, GetSizeName, GetSubTypeName)
 from fastapi.responses import StreamingResponse
+from typing import List, Optional, AsyncIterable
 
 def list_running_models(
     controller_address: str = Body(None, description="Fastchat controller adress", examples=[fschat_controller_address()]),
@@ -51,7 +51,7 @@ def get_running_models(
                         name = r.json().get("name", "")
                         if name != "":
                             models = [name]
-                    except Exception as e:
+                    except Exception as _:
                         pass
                 return BaseResponse(data=models)
     except Exception as e:
@@ -273,7 +273,7 @@ def save_model_config(
         elif mtype != ModelType.Online.value:
             return BaseResponse(
                 code=500,
-                msg=f"failed to save model configration, error mtype!")
+                msg="failed to save model configration, error mtype!")
 
         with open("WebUI/configs/webuiconfig.json", 'r+') as file:
             jsondata = json.load(file)
@@ -286,7 +286,7 @@ def save_model_config(
             file.truncate()
         return BaseResponse(
             code=200,
-            msg=f"success save model configration!")
+            msg="success save model configration!")
             
     except Exception as e:
         print(f'{e.__class__.__name__}: {e}')
@@ -349,7 +349,7 @@ def save_voice_model_config(
             file.truncate()
         return BaseResponse(
             code=200,
-            msg=f"success save local model configration!")
+            msg="success save local model configration!")
             
     except Exception as e:
         print(f'{e.__class__.__name__}: {e}')
@@ -393,7 +393,7 @@ def get_vtot_data(
                 return BaseResponse(
                     code=500,
                     data="",
-                    msg=f"failed to translate voice data, error: {e}")
+                    msg="failed to translate voice data, error!")
     except Exception as e:
         print(f'{e.__class__.__name__}: {e}')
         return BaseResponse(
@@ -468,7 +468,7 @@ def save_speech_model_config(
             file.truncate()
         return BaseResponse(
             code=200,
-            msg=f"success save local model configration!")
+            msg="success save local model configration!")
             
     except Exception as e:
         print(f'{e.__class__.__name__}: {e}')
@@ -587,7 +587,7 @@ def save_image_recognition_model_config(
             file.truncate()
         return BaseResponse(
             code=200,
-            msg=f"success save local model configration!")
+            msg="success save local model configration!")
             
     except Exception as e:
         print(f'{e.__class__.__name__}: {e}')
@@ -634,7 +634,7 @@ def get_image_recognition_data(
                 return BaseResponse(
                     code=500,
                     data="",
-                    msg=f"failed to translate voice data, error: {e}")
+                    msg="failed to translate voice data, error!")
     except Exception as e:
         print(f'{e.__class__.__name__}: {e}')
         return BaseResponse(
@@ -709,7 +709,7 @@ def save_image_generation_model_config(
             file.truncate()
         return BaseResponse(
             code=200,
-            msg=f"success save local model configration!")
+            msg="success save local model configration!")
             
     except Exception as e:
         print(f'{e.__class__.__name__}: {e}')
@@ -828,7 +828,7 @@ def save_music_generation_model_config(
             file.truncate()
         return BaseResponse(
             code=200,
-            msg=f"success save local model configration!")
+            msg="success save local model configration!")
             
     except Exception as e:
         print(f'{e.__class__.__name__}: {e}')
@@ -932,7 +932,7 @@ def save_chat_config(
             file.truncate()
         return BaseResponse(
             code=200,
-            msg=f"success save chat configration!")
+            msg="success save chat configration!")
             
     except Exception as e:
         print(f'{e.__class__.__name__}: {e}')
@@ -953,7 +953,7 @@ def save_search_engine_config(
             file.truncate()
         return BaseResponse(
             code=200,
-            msg=f"success save chat configration!")
+            msg="success save chat configration!")
             
     except Exception as e:
         print(f'{e.__class__.__name__}: {e}')
@@ -1022,7 +1022,7 @@ def save_code_interpreter_config(
             file.truncate()
         return BaseResponse(
             code=200,
-            msg=f"success save chat configration!")
+            msg="success save chat configration!")
             
     except Exception as e:
         print(f'{e.__class__.__name__}: {e}')

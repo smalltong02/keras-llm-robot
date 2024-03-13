@@ -1,10 +1,12 @@
+import os
 import httpx
 import json
 import base64
 import contextlib
+from pathlib import Path
 from pprint import pprint
-from typing import *
-from WebUI.configs import *
+from typing import List, Dict, Any, Union, Tuple, Iterator, Callable
+from WebUI.configs.basicconfig import (ModelType, ModelSize, ModelSubType, GetModelInfoByName, GetProviderByName, GetSpeechModelInfo)
 from WebUI.Server.utils import get_httpx_client
 from WebUI.configs.serverconfig import API_SERVER
 from WebUI.configs import HTTPX_DEFAULT_TIMEOUT
@@ -180,7 +182,7 @@ class ApiRequest:
             "prompt_name": prompt_name,
         }
 
-        print(f"received input message:")
+        print("received input message:")
         pprint(data)
 
         if modelinfo["mtype"] == ModelType.Local:
@@ -268,7 +270,7 @@ class ApiRequest:
             "prompt_name": prompt_name,
         }
 
-        print(f"received input message:")
+        print("received input message:")
         pprint(data)
 
         if modelinfo["mtype"] == ModelType.Local:
@@ -313,7 +315,7 @@ class ApiRequest:
             }]
         return [{
                 "code": 500,
-                "msg": f"internal error!",
+                "msg": "internal error!",
             }]
 
     def _httpx_stream2generator(
@@ -472,7 +474,7 @@ class ApiRequest:
         if not new_model_name:
             return {
                 "code": 500,
-                "msg": f"name for the new model is None."
+                "msg": "name for the new model is None."
             }
         running_models = self.get_running_models()
         if new_model_name == model_name or new_model_name in running_models:
@@ -504,7 +506,7 @@ class ApiRequest:
         if not model_name:
             return {
                 "code": 500,
-                "msg": f"name for the new model is None."
+                "msg": "name for the new model is None."
             }
         
         running_models = self.get_running_models()
@@ -536,7 +538,7 @@ class ApiRequest:
         if modelconfig is None or all(key in modelconfig for key in ["mtype", "msize", "msubtype", "mname", "config"]) is False:
             return {
                 "code": 500,
-                "msg": f"modelconfig is None."
+                "msg": "modelconfig is None."
             }
         
         data = {
@@ -567,7 +569,7 @@ class ApiRequest:
         if model_name == "" or hugg_path == "" or local_path == "":
             return {
                 "code": 500,
-                "msg": f"Parameter is incorrect."
+                "msg": "Parameter is incorrect."
             }
         
         data = {
@@ -596,7 +598,7 @@ class ApiRequest:
         if model_name == "" or modelconfig is None:
             return {
                 "code": 500,
-                "msg": f"modelconfig is None."
+                "msg": "modelconfig is None."
             }
         data = {
             "model_name": model_name,
@@ -631,7 +633,7 @@ class ApiRequest:
         if not model_name:
             return {
                 "code": 500,
-                "msg": f"name for the new model is None."
+                "msg": "name for the new model is None."
             }
         
         running_model = self.get_vtot_model()
@@ -664,7 +666,7 @@ class ApiRequest:
         if not new_model_name:
             return {
                 "code": 500,
-                "msg": f"name for the new model is None."
+                "msg": "name for the new model is None."
             }
         running_model = self.get_vtot_model()
         if new_model_name == model_name or new_model_name == running_model:
@@ -723,7 +725,7 @@ class ApiRequest:
         if not model_name:
             return {
                 "code": 500,
-                "msg": f"name for the new model is None."
+                "msg": "name for the new model is None."
             }
         
         running_model = self.get_ttov_model()
@@ -757,7 +759,7 @@ class ApiRequest:
         if not new_model_name or not speaker:
             return {
                 "code": 500,
-                "msg": f"name or speaker for the new model is None."
+                "msg": "name or speaker for the new model is None."
             }
         running_model = self.get_ttov_model()
         if new_model_name == model_name or new_model_name == running_model.get("model", ""):
@@ -807,7 +809,7 @@ class ApiRequest:
         if model_name == "" or modelconfig is None:
             return {
                 "code": 500,
-                "msg": f"modelconfig is None."
+                "msg": "modelconfig is None."
             }
         data = {
             "model_name": model_name,
@@ -835,7 +837,7 @@ class ApiRequest:
         if model_name == "" or modelconfig is None:
             return {
                 "code": 500,
-                "msg": f"modelconfig is None."
+                "msg": "modelconfig is None."
             }
         data = {
             "model_name": model_name,
@@ -870,7 +872,7 @@ class ApiRequest:
         if not model_name:
             return {
                 "code": 500,
-                "msg": f"name for the new model is None."
+                "msg": "name for the new model is None."
             }
         
         running_model = self.get_image_recognition_model()
@@ -903,7 +905,7 @@ class ApiRequest:
         if not new_model_name:
             return {
                 "code": 500,
-                "msg": f"name for the new model is None."
+                "msg": "name for the new model is None."
             }
         running_model = self.get_image_recognition_model()
         if new_model_name == model_name or new_model_name == running_model:
@@ -953,7 +955,7 @@ class ApiRequest:
         if model_name == "" or modelconfig is None:
             return {
                 "code": 500,
-                "msg": f"modelconfig is None."
+                "msg": "modelconfig is None."
             }
         data = {
             "model_name": model_name,
@@ -988,7 +990,7 @@ class ApiRequest:
         if not model_name:
             return {
                 "code": 500,
-                "msg": f"name for the new model is None."
+                "msg": "name for the new model is None."
             }
         
         running_model = self.get_image_generation_model()
@@ -1021,7 +1023,7 @@ class ApiRequest:
         if not new_model_name:
             return {
                 "code": 500,
-                "msg": f"name for the new model is None."
+                "msg": "name for the new model is None."
             }
         running_model = self.get_image_generation_model()
         if new_model_name == model_name or new_model_name == running_model:
@@ -1076,7 +1078,7 @@ class ApiRequest:
         if model_name == "" or modelconfig is None:
             return {
                 "code": 500,
-                "msg": f"modelconfig is None."
+                "msg": "modelconfig is None."
             }
         data = {
             "model_name": model_name,
@@ -1111,7 +1113,7 @@ class ApiRequest:
         if not model_name:
             return {
                 "code": 500,
-                "msg": f"name for the new model is None."
+                "msg": "name for the new model is None."
             }
         
         running_model = self.get_music_generation_model()
@@ -1144,7 +1146,7 @@ class ApiRequest:
         if not new_model_name:
             return {
                 "code": 500,
-                "msg": f"name for the new model is None."
+                "msg": "name for the new model is None."
             }
         running_model = self.get_music_generation_model()
         if new_model_name == model_name or new_model_name == running_model:
@@ -1196,7 +1198,7 @@ class ApiRequest:
         if chatconfig is None:
             return {
                 "code": 500,
-                "msg": f"chatconfig is None."
+                "msg": "chatconfig is None."
             }
         
         data = {
@@ -1460,7 +1462,7 @@ class ApiRequest:
             "prompt_name": prompt_name,
         }
 
-        print(f"received input message:")
+        print("received input message:")
         pprint(data)
 
         if modelinfo["mtype"] == ModelType.Local:
@@ -1512,6 +1514,32 @@ class ApiRequest:
             return self.ret_async(response)
         else:
             return self.ret_sync(response)
+        
+    def code_interpreter_chat(
+            self,
+            query: str,
+            interpreter_id: str = "",
+            stream: bool = True,
+            model: str = "",
+            temperature: float = 0.7,
+    ):
+        data = {
+            "query": query,
+            "interpreter_id": interpreter_id,
+            "stream": stream,
+            "model_name": model,
+            "temperature": temperature,
+        }
+
+        print("received input message:")
+        pprint(data)
+
+        response = self.post(
+            "/code_interpreter/code_interpreter_chat",
+            json=data,
+            stream=True,
+        )
+        return self._httpx_stream2generator(response, as_json=True)
     
     def _get_response_value(self, response: httpx.Response, as_json: bool = False, value_func: Callable = None,):
         

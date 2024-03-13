@@ -3,10 +3,10 @@ import os
 import sys
 from streamlit_option_menu import option_menu
 from WebUI.configs.modelconfig import KERAS_LLM_VERSION
-from WebUI.webui_pages.utils import *
+from WebUI.webui_pages.utils import ApiRequest
 from WebUI.configs.serverconfig import API_SERVER
 from WebUI.configs import HTTPX_DEFAULT_TIMEOUT
-from WebUI.webui_pages.dialogue.dialogue import dialogue_page, chat_box
+from WebUI.webui_pages.dialogue.dialogue import dialogue_page
 from WebUI.webui_pages.model_configuration.configuration import configuration_page
 from WebUI.webui_pages.tools_agent.toolsagent import tools_agent_page
 
@@ -50,7 +50,7 @@ if __name__ == "__main__":
 
     with st.sidebar:
         st.caption(
-            f"""<h1 style="font-size: 2.5em; text-align: center; color: #3498db;">KERAS LLM Robot</h1>""",
+            """<h1 style="font-size: 2.5em; text-align: center; color: #3498db;">KERAS LLM Robot</h1>""",
             unsafe_allow_html=True,
         )
         st.image(

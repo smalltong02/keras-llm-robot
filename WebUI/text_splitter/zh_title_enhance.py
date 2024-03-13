@@ -23,7 +23,7 @@ def under_non_alpha_ratio(text: str, threshold: float = 0.5):
     try:
         ratio = alpha_count / total_count
         return ratio < threshold
-    except:
+    except Exception as _:
         return False
 
 
