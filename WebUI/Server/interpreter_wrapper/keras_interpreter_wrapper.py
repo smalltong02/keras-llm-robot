@@ -2,11 +2,11 @@ import os
 import time
 import json
 import traceback
-import datetime
+from datetime import datetime
 from enum import Enum
 from WebUI.Server.interpreter_wrapper.default_system_message import (default_local_system_message, default_docker_system_message, force_task_completion_message)
 from WebUI.Server.utils import fschat_openai_api_address, GetKerasInterpreterConfig
-from WebUI.Server.interpreter_wrapper.utils import extract_markdown_code_blocks, split_with_code_blocks
+from WebUI.Server.interpreter_wrapper.utils import extract_markdown_code_blocks, split_with_code_blocks, is_task_completion
 from WebUI.Server.interpreter_wrapper.computer.computer import Computer
 from WebUI.Server.interpreter_wrapper.terminal.terminal import Terminal
 from WebUI.Server.interpreter_wrapper.local_llm.localllm import LocalLLM
@@ -133,6 +133,7 @@ class KerasInterpreter(BaseInterpreter):
         last_unsupported_code = ""
         insert_force_task_completion_message = False
 
+        query = {}
         while True:
             ## RENDER SYSTEM MESSAGE ##
 
@@ -162,9 +163,17 @@ class KerasInterpreter(BaseInterpreter):
 
             # Create the version of messages that we'll send to the LLM
             history = self.messages.copy()
-            query = {}
-            if history:
-                query = history.pop()
+            
+            if not query:
+                if history:
+                    if history[-1]["role"] == "user":
+                        query = history.pop()
+                    else:
+                        query = {
+                            "role": "user",
+                            "type": "message",
+                            "content": "Please proceed according to the customized plan, You can try writing code to complete the task.",
+                            }
             history = [rendered_system_message] + history
 
             # if insert_force_task_completion_message:
@@ -193,30 +202,46 @@ class KerasInterpreter(BaseInterpreter):
                     "Error occurred. "
                     + str(e))
 
+            if is_task_completion(model_response):
+                yield {
+                    "role": "assistant",
+                    "type": "end",
+                    "format": "output",
+                    "content": "All tasks done!",
+                }
+                break
+
             code_blocks = extract_markdown_code_blocks(model_response, self.terminal.get_languages())
             model_response= split_with_code_blocks(model_response, code_blocks)
             ### RUN CODE (if it's there) ###
-
+            query = {}
             index = 0
             if model_response:
                 for response in model_response:
                     if response.get("type") == "message":
-                        content = response.get("content")
+                        message_answer = response.get("content")
                         yield {
                             "role": "assistant",
                             "type": "message",
                             "format": "output",
-                            "content": content,
+                            "content": message_answer,
                         }
                     elif response.get("type") == "code":
+                        code_answer = ""
                         code_block = code_blocks[index]
                         for trunk in self.terminal.run(code_block[0], code_block[1]):
-                            content += trunk
+                            code_answer += trunk
+                        yield response
                         yield {
                             "role": "terminal",
                             "type": "code",
                             "format": "output",
-                            "content": content,
+                            "content": f'\n\nThe code execution is complete, returning the result: {code_answer}',
+                        }
+                        query = {
+                            "role": "user",
+                            "type": "message",
+                            "content": f'The code execution is complete, returning the result: {code_answer}',
                         }
                         index += 1
             # if self.messages[-1]["type"] == "code":
@@ -405,6 +430,9 @@ class KerasInterpreter(BaseInterpreter):
         for chunk in self.respond():
             if chunk["content"] == "":
                 continue
+            
+            if chunk["type"] == "end":
+                yield chunk
 
             # Handle the special "confirmation" chunk, which neither triggers a flag or creates a message
             if chunk["type"] == "confirmation":
@@ -423,6 +451,10 @@ class KerasInterpreter(BaseInterpreter):
                         "content": "",
                     }
                 )
+                continue
+            
+            if chunk["type"] == "code":
+                yield chunk
                 continue
 
             # Check if the chunk's role, type, and format (if present) match the last_flag_base

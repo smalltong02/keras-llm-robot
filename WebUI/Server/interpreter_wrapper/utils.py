@@ -32,7 +32,6 @@ def render_message(interpreter, message):
     return rendered_message
 
 def extract_markdown_code_blocks(text, languages=None):
-    
     if languages is None:
         pattern = r'```([a-zA-Z]+)\n([\s\S]*?)\n```'
     else:
@@ -62,3 +61,8 @@ def split_with_code_blocks(initial_string, delimiters):
     if index != -1:
         result_list.append({"role": "assistant", "type": "message", "content": initial_string[start:]})
     return result_list
+
+def is_task_completion(message):
+    if re.search("all tasks done", message, re.IGNORECASE):
+        return True
+    return False

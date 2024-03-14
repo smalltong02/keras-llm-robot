@@ -56,6 +56,6 @@ class LocalLLM(BaseLLM):
         chain = LLMChain(prompt=chat_prompt, llm=self.model)
 
         answer = chain.run({"input": query})
-        substrings = re.findall(r".*?\n+", answer)
+        substrings = re.findall(r".*?(?:\n+|$)", answer)
         for line in substrings:
             yield line
