@@ -1,4 +1,10 @@
 import re
+from enum import Enum
+
+class TaskResult(Enum):
+    task_processing = 0
+    task_success = 1
+    task_impossible = 2
 
 def render_message(interpreter, message):
     """
@@ -64,5 +70,7 @@ def split_with_code_blocks(initial_string, delimiters):
 
 def is_task_completion(message):
     if re.search("all tasks done", message, re.IGNORECASE):
-        return True
-    return False
+        return TaskResult.task_success
+    if re.search("task is impossible", message, re.IGNORECASE):
+        return TaskResult.task_impossible
+    return TaskResult.task_processing

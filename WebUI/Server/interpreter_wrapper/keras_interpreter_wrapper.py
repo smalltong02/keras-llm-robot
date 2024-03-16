@@ -6,7 +6,7 @@ from datetime import datetime
 from enum import Enum
 from WebUI.Server.interpreter_wrapper.default_system_message import (default_local_system_message, default_docker_system_message, force_task_completion_message)
 from WebUI.Server.utils import fschat_openai_api_address, GetKerasInterpreterConfig
-from WebUI.Server.interpreter_wrapper.utils import extract_markdown_code_blocks, split_with_code_blocks, is_task_completion
+from WebUI.Server.interpreter_wrapper.utils import (TaskResult, extract_markdown_code_blocks, split_with_code_blocks, is_task_completion)
 from WebUI.Server.interpreter_wrapper.computer.computer import Computer
 from WebUI.Server.interpreter_wrapper.terminal.terminal import Terminal
 from WebUI.Server.interpreter_wrapper.local_llm.localllm import LocalLLM
@@ -130,84 +130,73 @@ class KerasInterpreter(BaseInterpreter):
         return data
     
     def respond(self):
-        last_unsupported_code = ""
-        insert_force_task_completion_message = False
+        system_message = self.system_message
+        if self.custom_instructions:
+            system_message += "\n\n" + self.custom_instructions
 
-        query = {}
-        while True:
-            ## RENDER SYSTEM MESSAGE ##
-
-            system_message = self.system_message
-
-            # Add language-specific system messages
-            # for language in self.terminal_config.get("languages", {}):
-            #     if hasattr(language, "system_message"):
-            #         system_message += "\n\n" + language.system_message
-
-            # Add custom instructions
-            if self.custom_instructions:
-                system_message += "\n\n" + self.custom_instructions
-
-            # Storing the messages so they're accessible in the interpreter's computer
-            #output = self.terminal.run("python", f"messages={self.messages}")
-
-            ## Rendering ↓
-            #rendered_system_message = render_message(self, system_message)
-            ## Rendering ↑
-
-            rendered_system_message = {
+        rendered_system_message = {
                 "role": "system",
                 "type": "message",
                 "content": system_message,
             }
+        history = self.messages.copy()
+        history = [rendered_system_message] + history
 
-            # Create the version of messages that we'll send to the LLM
-            history = self.messages.copy()
-            
+        if history[-1]["role"] != "user":
+            yield {
+                "role": "assistant",
+                "type": "end",
+                "format": "output",
+                "content": "\n\nThe user has not input any queries.",
+            }
+            return
+
+
+        continuous_no_code = 0
+        continuous_task_cycles = 0
+        query = history.pop()
+        while True:
             if not query:
-                if history:
-                    if history[-1]["role"] == "user":
-                        query = history.pop()
-                    else:
-                        query = {
-                            "role": "user",
-                            "type": "message",
-                            "content": "Please proceed according to the customized plan, You can try writing code to complete the task.",
-                            }
-            history = [rendered_system_message] + history
-
-            # if insert_force_task_completion_message:
-            #     messages_for_llm.append(
-            #         {
-            #             "role": "user",
-            #             "type": "message",
-            #             "content": force_task_completion_message,
-            #         }
-            #     )
-            #     # Yield two newlines to seperate the LLMs reply from previous messages.
-            #     yield {"role": "assistant", "type": "message", "content": "\n\n"}
+                query = {
+                    "role": "user",
+                    "type": "message",
+                    "content": force_task_completion_message,
+                }
 
             ### RUN THE LLM ###
             model_response = ""
             try:
-                
                 for chunk in self.model.run(history, query):
                     model_response += chunk
-                    # yield {"role": "assistant", "type": "message", "content": chunk + '\n'}
-            # Provide extra information on how to change API keys, if we encounter that error
-            # (Many people writing GitHub issues were struggling with this)
             except Exception as e:
                 print(traceback.format_exc())
                 raise Exception(
                     "Error occurred. "
                     + str(e))
-
-            if is_task_completion(model_response):
+            
+            history = history + [
+                    query,
+                    {
+                        "role": "assistant",
+                        "type": "message",
+                        "content": model_response,
+                    },
+                ]
+            task_result = is_task_completion(model_response)
+            if task_result == TaskResult.task_success:
                 yield {
                     "role": "assistant",
                     "type": "end",
                     "format": "output",
-                    "content": "All tasks done!",
+                    "content": "\n\nAll tasks done!",
+                }
+                break
+            elif task_result == TaskResult.task_impossible:
+                yield {
+                    "role": "assistant",
+                    "type": "end",
+                    "format": "output",
+                    "content": "\n\nTask is impossible!",
                 }
                 break
 
@@ -216,6 +205,7 @@ class KerasInterpreter(BaseInterpreter):
             ### RUN CODE (if it's there) ###
             query = {}
             index = 0
+            continuous_no_code += 1
             if model_response:
                 for response in model_response:
                     if response.get("type") == "message":
@@ -224,13 +214,15 @@ class KerasInterpreter(BaseInterpreter):
                             "role": "assistant",
                             "type": "message",
                             "format": "output",
-                            "content": message_answer,
+                            "content": "\n" + message_answer,
                         }
                     elif response.get("type") == "code":
+                        continuous_no_code = 0
                         code_answer = ""
                         code_block = code_blocks[index]
                         for trunk in self.terminal.run(code_block[0], code_block[1]):
                             code_answer += trunk
+                        response["content"] = "\n" + response["content"]
                         yield response
                         yield {
                             "role": "terminal",
@@ -244,129 +236,16 @@ class KerasInterpreter(BaseInterpreter):
                             "content": f'The code execution is complete, returning the result: {code_answer}',
                         }
                         index += 1
-            # if self.messages[-1]["type"] == "code":
-            #     if self.verbose:
-            #         print("Running code:", self.messages[-1])
+            continuous_task_cycles += 1
 
-            #     try:
-            #         # What language/code do you want to run?
-            #         language = self.messages[-1]["format"].lower().strip()
-            #         code = self.messages[-1]["content"]
-
-            #         if language == "text":
-            #             # It does this sometimes just to take notes. Let it, it's useful.
-            #             # In the future we should probably not detect this behavior as code at all.
-            #             continue
-
-            #         # Is this language enabled/supported?
-            #         if language not in self.terminal.get_languages():
-            #             output = f"`{language}` disabled or not supported."
-
-            #             yield {
-            #                 "role": "computer",
-            #                 "type": "console",
-            #                 "format": "output",
-            #                 "content": output,
-            #             }
-
-            #             # Let the response continue so it can deal with the unsupported code in another way. Also prevent looping on the same piece of code.
-            #             if code != last_unsupported_code:
-            #                 last_unsupported_code = code
-            #                 continue
-            #             else:
-            #                 break
-
-            #         # Yield a message, such that the user can stop code execution if they want to
-            #         try:
-            #             yield {
-            #                 "role": "computer",
-            #                 "type": "confirmation",
-            #                 "format": "execution",
-            #                 "content": {
-            #                     "type": "code",
-            #                     "format": language,
-            #                     "content": code,
-            #                 },
-            #             }
-            #         except GeneratorExit:
-            #             # The user might exit here.
-            #             # We need to tell python what we (the generator) should do if they exit
-            #             break
-
-            #         ## ↓ CODE IS RUN HERE
-
-            #         for line in self.terminal.run(language, code, stream=True):
-            #             yield {"role": "computer", **line}
-
-            #         ## ↑ CODE IS RUN HERE
-
-            #         # yield final "active_line" message, as if to say, no more code is running. unlightlight active lines
-            #         # (is this a good idea? is this our responsibility? i think so — we're saying what line of code is running! ...?)
-            #         yield {
-            #             "role": "computer",
-            #             "type": "console",
-            #             "format": "active_line",
-            #             "content": None,
-            #         }
-
-            #     except Exception:
-            #         yield {
-            #             "role": "computer",
-            #             "type": "console",
-            #             "format": "output",
-            #             "content": traceback.format_exc(),
-            #         }
-
-            # else:
-            #     ## FORCE TASK COMLETION
-            #     # This makes it utter specific phrases if it doesn't want to be told to "Proceed."
-            #     #if interpreter.os:
-            #     #    force_task_completion_message.replace(
-            #     #        "If the entire task I asked for is done,",
-            #     #        "If the entire task I asked for is done, take a screenshot to verify it's complete, or if you've already taken a screenshot and verified it's complete,",
-            #     #    )
-            #     force_task_completion_responses = [
-            #         "the task is done.",
-            #         "the task is impossible.",
-            #         "let me know what you'd like to do next.",
-            #     ]
-
-            #     if (
-            #         self.messages
-            #         and not any(
-            #             task_status in self.messages[-1].get("content", "").lower()
-            #             for task_status in force_task_completion_responses
-            #         )
-            #     ):
-            #         # Remove past force_task_completion messages
-            #         self.messages = [
-            #             message
-            #             for message in self.messages
-            #             if message.get("content", "") != force_task_completion_message
-            #         ]
-            #         # Combine adjacent assistant messages, so hopefully it learns to just keep going!
-            #         combined_messages = []
-            #         for message in self.messages:
-            #             if (
-            #                 combined_messages
-            #                 and message["role"] == "assistant"
-            #                 and combined_messages[-1]["role"] == "assistant"
-            #                 and message["type"] == "message"
-            #                 and combined_messages[-1]["type"] == "message"
-            #             ):
-            #                 combined_messages[-1]["content"] += "\n" + message["content"]
-            #             else:
-            #                 combined_messages.append(message)
-            #         self.messages = combined_messages
-
-            #         # Send model the force_task_completion_message:
-            #         insert_force_task_completion_message = True
-
-            #         continue
-
-            #     # Doesn't want to run code. We're done!
-            #     break
-
+            if continuous_no_code >= 5 or continuous_task_cycles >= 20:
+                yield {
+                    "role": "assistant",
+                    "type": "end",
+                    "format": "output",
+                    "content": "\n\n" + "Task is impossible!",
+                }
+                break
         return
 
     def _streaming_chat(self, message=None):
@@ -422,89 +301,8 @@ class KerasInterpreter(BaseInterpreter):
         )
 
     def _respond_and_store(self):
-        def is_active_line_chunk(chunk):
-            return "format" in chunk and chunk["format"] == "active_line"
-
-        last_flag_base = None
-
         for chunk in self.respond():
-            if chunk["content"] == "":
-                continue
-            
-            if chunk["type"] == "end":
-                yield chunk
-
-            # Handle the special "confirmation" chunk, which neither triggers a flag or creates a message
-            if chunk["type"] == "confirmation":
-                # Emit a end flag for the last message type, and reset last_flag_base
-                if last_flag_base:
-                    yield {**last_flag_base, "end": True}
-                    last_flag_base = None
-                yield chunk
-                # We want to append this now, so even if content is never filled, we know that the execution didn't produce output.
-                # ... rethink this though.
-                self.messages.append(
-                    {
-                        "role": "computer",
-                        "type": "console",
-                        "format": "output",
-                        "content": "",
-                    }
-                )
-                continue
-            
-            if chunk["type"] == "code":
-                yield chunk
-                continue
-
-            # Check if the chunk's role, type, and format (if present) match the last_flag_base
-            if (
-                last_flag_base
-                and "role" in chunk
-                and "type" in chunk
-                and last_flag_base["role"] == chunk["role"]
-                and last_flag_base["type"] == chunk["type"]
-                and (
-                    "format" not in last_flag_base
-                    or (
-                        "format" in chunk
-                        and chunk["format"] == last_flag_base["format"]
-                    )
-                )
-            ):
-                # If they match, append the chunk's content to the current message's content
-                # (Except active_line, which shouldn't be stored)
-                if not is_active_line_chunk(chunk):
-                    self.messages[-1]["content"] += chunk["content"]
-            else:
-                # If they don't match, yield a end message for the last message type and a start message for the new one
-                if last_flag_base:
-                    yield {**last_flag_base, "end": True}
-
-                last_flag_base = {"role": chunk["role"], "type": chunk["type"]}
-
-                # Don't add format to type: "console" flags, to accomodate active_line AND output formats
-                if "format" in chunk and chunk["type"] != "console":
-                    last_flag_base["format"] = chunk["format"]
-
-                yield {**last_flag_base, "start": True}
-
-                # Add the chunk as a new message
-                if not is_active_line_chunk(chunk):
-                    self.messages.append(chunk)
-
-            # Yield the chunk itself
             yield chunk
-
-            # Truncate output if it's console output
-            if chunk["type"] == "console" and chunk["format"] == "output":
-                self.messages[-1]["content"] = self.truncate_output(
-                    self.messages[-1]["content"], self.max_output
-                )
-
-        # Yield a final end flag
-        if last_flag_base:
-            yield {**last_flag_base, "end": True}
 
     def wait(self):
         while self.responding:
