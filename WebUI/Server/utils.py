@@ -677,10 +677,15 @@ def get_ChatOpenAI(
 ) -> ChatOpenAI:
     config = get_model_worker_config(model_name)
     apikey = None
-    if provider is not None and provider == "openai-api":
-        apikey = config.get("api_key", "[Your Key]")
-        if apikey == "[Your Key]":
-            apikey = os.environ.get('OPENAI_API_KEY')
+    if provider is not None:
+        if provider == "openai-api":
+            apikey = config.get("api_key", "[Your Key]")
+            if apikey == "[Your Key]":
+                apikey = os.environ.get('OPENAI_API_KEY')
+        elif provider == "kimi-cloud-api":
+            apikey = config.get("api_key", "[Your Key]")
+            if apikey == "[Your Key]":
+                apikey = os.environ.get('KIMI_API_KEY')
     if apikey is None:
         apikey = "EMPTY"
     proxy = config.get("api_proxy", "[Private Proxy]")

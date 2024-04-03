@@ -393,7 +393,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                     #search_url = searchengine.get(current_search_engine).get("search_url", "")
                     api_key = searchengine.get(current_search_engine).get("api_key", "")
                     with col1:
-                        api_key = st.text_input("API KEY", api_key, disabled=disabled)
+                        api_key = st.text_input("API Key", api_key, type="password", disabled=disabled)
                         search_enable = st.checkbox('Enable', value=search_enable, help="After enabling, parameters need to be saved for the configuration to take effect.", disabled=disabled)
                         smart_search = st.checkbox('Smart Search', value=smart_search, help="Let the model handle the question first, and let the model decide whether to invoke the search engine.", disabled=disabled)
                     with col2:
@@ -447,12 +447,18 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                     col1, col2 = st.columns(2)
                     with col1:
                         baseurl = st.text_input("Base URL", current_model["config"].get("baseurl", ""), disabled=disabled)
-                        apikey = st.text_input("API Key", current_model["config"].get("apikey", ""), disabled=disabled)
-                        provider = st.text_input("Provider", current_model["config"].get("provider", ""), disabled=disabled)
+                        apikey = st.text_input("API Key", current_model["config"].get("apikey", ""), type="password", disabled=disabled)
+                        apiproxy = st.text_input("API Proxy", current_model["config"].get("apiproxy", ""), disabled=disabled)
 
                     with col2:
                         apiversion = st.text_input("API Version", current_model["config"].get("apiversion", ""), disabled=disabled)
-                        apiproxy = st.text_input("API Proxy", current_model["config"].get("apiproxy", ""), disabled=disabled)
+                        secretkey = current_model["config"].get("secretkey", None)
+                        if secretkey is not None:
+                            secretkey = st.text_input("Secret Key", secretkey, type="password", disabled=disabled)
+                        else:
+                            st.text_input("Secret Key", "None", disabled=True)
+                        provider = st.text_input("Provider", current_model["config"].get("provider", ""), disabled=True)
+
                     submit_config = st.form_submit_button(
                         "Save API Config",
                         use_container_width=True
@@ -460,6 +466,8 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                     if submit_config:
                         current_model["config"]["baseurl"] = baseurl
                         current_model["config"]["apikey"] = apikey
+                        if secretkey is not None:
+                            current_model["config"]["secretkey"] = secretkey
                         current_model["config"]["provider"] = provider
                         current_model["config"]["apiversion"] = apiversion
                         current_model["config"]["apiproxy"] = apiproxy
@@ -500,7 +508,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                     #search_url = searchengine.get(current_search_engine).get("search_url", "")
                     api_key = searchengine.get(current_search_engine).get("api_key", "")
                     with col1:
-                        api_key = st.text_input("API KEY", api_key, disabled=disabled)
+                        api_key = st.text_input("API KEY", api_key, type="password", disabled=disabled)
                         search_enable = st.checkbox('Enable', value=search_enable, help="After enabling, parameters need to be saved for the configuration to take effect.", disabled=disabled)
                         smart_search = st.checkbox('Smart Search', value=smart_search, help="Let the model handle the question first, and let the model decide whether to invoke the search engine.", disabled=disabled)
                     with col2:

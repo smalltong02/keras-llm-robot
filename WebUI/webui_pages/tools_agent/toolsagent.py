@@ -563,7 +563,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                 keycol, regcol = st.columns(2)
                 with keycol:
                     speechkey = modelconfig.get("speech_key")
-                    speechkey = st.text_input("Speech Key", speechkey, key="speech_key")
+                    speechkey = st.text_input("Speech Key", speechkey, key="speech_key", type="password")
                 with regcol:
                     speechregion = modelconfig.get("speech_region")
                     speechregion = st.text_input("Speech Region", speechregion, key="speech_region")
@@ -795,7 +795,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                 keycol, regcol = st.columns(2)
                 with keycol:
                     voicekey = modelconfig.get("voice_key")
-                    voicekey = st.text_input("Voice Key", voicekey, key="voice_key")
+                    voicekey = st.text_input("Voice Key", voicekey, key="voice_key", type="password")
                 with regcol:
                     voiceregion = modelconfig.get("voice_region")
                     voiceregion = st.text_input("Voice Region", voiceregion, key="voice_region")

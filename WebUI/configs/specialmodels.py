@@ -247,7 +247,77 @@ async def special_chat_iterator(model: Any,
                 await asyncio.sleep(0.1)
                 if speak_handler: 
                     speak_handler.on_llm_end(None)
-        elif provider == "openai-api":
+        elif provider == "ali-cloud-api":
+            from http import HTTPStatus
+            from dashscope import Generation
+            from dashscope.api_entities.dashscope_response import Role
+            model_config = GetModelConfig(webui_config, modelinfo)
+            apikey = model_config.get("apikey", "[Your Key]")
+            if apikey == "[Your Key]" or apikey == "":
+                apikey = os.environ.get('ALI_API_KEY')
+            if apikey is None:
+                apikey = "EMPTY"
+            messages = history
+            messages.append({'role': Role.USER,
+                         'content': query})
+            if stream is True:
+                responses = Generation.call(model=model_name,
+                                messages=messages,
+                                result_format='message',
+                                api_key=apikey,
+                                stream=True,
+                                incremental_output=True,
+                                temperature=temperature,
+                                max_tokens=max_tokens,
+                                )
+                for response in responses:
+                    if response.status_code == HTTPStatus.OK:
+                        print(response)
+                        yield json.dumps(
+                            {"text": response.output.choices[0]['message']['content'], "chat_history_id": chat_history_id},
+                            ensure_ascii=False)
+                        await asyncio.sleep(0.1)
+                        if speak_handler: 
+                            speak_handler.on_llm_new_token(response.output.choices[0]['message']['content'])
+                    else:
+                        error_message = f'Request id: {response.request_id}, \
+                        Status code: {response.status_code}, \
+                        error code: {response.code}, \
+                        error message: {response.message}'
+                        yield json.dumps(
+                            {"text": error_message, "chat_history_id": chat_history_id},
+                            ensure_ascii=False)
+                        await asyncio.sleep(0.1)
+                        break
+            else:
+                response = Generation.call(model=model_name,
+                               messages=messages,
+                               result_format='message',
+                               api_key=apikey,
+                               temperature=temperature,
+                                max_tokens=max_tokens,
+                               )
+                if response.status_code == HTTPStatus.OK:
+                    print(response)
+                    yield json.dumps(
+                        {"text": response.output.choices[0]['message']['content'], "chat_history_id": chat_history_id},
+                        ensure_ascii=False)
+                    await asyncio.sleep(0.1)
+                    if speak_handler: 
+                        speak_handler.on_llm_new_token(response.output.choices[0]['message']['content'])
+                else:
+                    error_message = f'Request id: {response.request_id}, \
+                    Status code: {response.status_code}, \
+                    error code: {response.code}, \
+                    error message: {response.message}'
+                    yield json.dumps(
+                        {"text": error_message, "chat_history_id": chat_history_id},
+                        ensure_ascii=False)
+                    await asyncio.sleep(0.1)
+            if speak_handler: 
+                speak_handler.on_llm_end(None)
+
+        elif provider == "openai-api" or provider == "kimi-cloud-api":
             from langchain.callbacks import AsyncIteratorCallbackHandler
             from WebUI.Server.utils import wrap_done, get_ChatOpenAI
             from WebUI.Server.utils import get_prompt_template
@@ -299,6 +369,36 @@ async def special_chat_iterator(model: Any,
                     {"text": answer, "chat_history_id": chat_history_id},
                     ensure_ascii=False)
             await task
+        
+        elif provider == "baidu-cloud-api":
+            import qianfan
+            model_config = GetModelConfig(webui_config, modelinfo)
+            apikey = model_config.get("apikey", "[Your Key]")
+            if apikey == "[Your Key]" or apikey == "":
+                apikey = os.environ.get('QIANFAN_ACCESS_KEY')
+            if apikey is None:
+                apikey = "EMPTY"
+            secretkey = model_config.get("secretkey", "[Your Key]")
+            if secretkey == "[Your Key]" or secretkey == "":
+                secretkey = os.environ.get('QIANFAN_SECRET_KEY')
+            if secretkey is None:
+                secretkey = "EMPTY"
+
+            chat_comp = qianfan.ChatCompletion(ak=apikey, sk=secretkey)
+            messages = history
+            messages.append({'role': "user",
+                         'content': query})
+            responses = chat_comp.do(model=model_name, messages=messages, stream=True)
+            for response in responses:
+                print(response)
+                yield json.dumps(
+                    {"text": response['result'], "chat_history_id": chat_history_id},
+                    ensure_ascii=False)
+                await asyncio.sleep(0.1)
+                if speak_handler: 
+                    speak_handler.on_llm_new_token(response.output.choices[0]['message']['content'])
+            if speak_handler: 
+                speak_handler.on_llm_end(None)
             
     update_chat_history(chat_history_id, response=answer)
 

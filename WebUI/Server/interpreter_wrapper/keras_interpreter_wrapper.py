@@ -182,25 +182,9 @@ class KerasInterpreter(BaseInterpreter):
                         "content": model_response,
                     },
                 ]
-            task_result = is_task_completion(model_response)
-            if task_result == TaskResult.task_success:
-                yield {
-                    "role": "assistant",
-                    "type": "end",
-                    "format": "output",
-                    "content": "\n\nAll tasks done!",
-                }
-                break
-            elif task_result == TaskResult.task_impossible:
-                yield {
-                    "role": "assistant",
-                    "type": "end",
-                    "format": "output",
-                    "content": "\n\nTask is impossible!",
-                }
-                break
 
             code_blocks = extract_markdown_code_blocks(model_response, self.terminal.get_languages())
+            model_response_org = model_response
             model_response= split_with_code_blocks(model_response, code_blocks)
             ### RUN CODE (if it's there) ###
             query = {}
@@ -236,6 +220,24 @@ class KerasInterpreter(BaseInterpreter):
                             "content": f'The code execution is complete, returning the result: {code_answer}',
                         }
                         index += 1
+
+            task_result = is_task_completion(model_response_org)
+            if task_result == TaskResult.task_success:
+                yield {
+                    "role": "assistant",
+                    "type": "end",
+                    "format": "output",
+                    "content": "\n\nAll tasks done!",
+                }
+                break
+            elif task_result == TaskResult.task_impossible:
+                yield {
+                    "role": "assistant",
+                    "type": "end",
+                    "format": "output",
+                    "content": "\n\nTask is impossible!",
+                }
+                break
             continuous_task_cycles += 1
 
             if continuous_no_code >= 5 or continuous_task_cycles >= 20:

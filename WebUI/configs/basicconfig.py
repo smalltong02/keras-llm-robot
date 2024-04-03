@@ -492,4 +492,3 @@ def ConvertCompletionRequestToHistory(request: ChatCompletionRequest):
     if answer is not None:
         return [], None 
     return historys, query
-    

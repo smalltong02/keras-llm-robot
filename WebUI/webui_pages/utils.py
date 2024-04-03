@@ -200,15 +200,15 @@ class ApiRequest:
         elif modelinfo["mtype"] == ModelType.Online:
             provider = GetProviderByName(webui_config, model)
             if provider is not None:
-                if provider == "google-api":
+                if provider == "openai-api" or provider == "kimi-cloud-api":
+                    response = self.post("/chat/chat", json=data, stream=True, **kwargs)
+                    return self._httpx_stream2generator(response, as_json=True)
+                else:
                     response = self.post(
                         "/llm_model/chat",
                         json=data,
                         stream=True
                     )
-                    return self._httpx_stream2generator(response, as_json=True)
-                else:
-                    response = self.post("/chat/chat", json=data, stream=True, **kwargs)
                     return self._httpx_stream2generator(response, as_json=True)
         return [{
             "chat_history_id": "123",
