@@ -246,9 +246,4 @@ websockets==12.0
 dashscope==1.15.0
 
 #baidu qianfan
-aiolimiter==1.1.0
-bce-python-sdk==0.9.6
-dill==0.3.8
-future==1.0.0
-multiprocess==0.70.16
 qianfan==0.3.7
