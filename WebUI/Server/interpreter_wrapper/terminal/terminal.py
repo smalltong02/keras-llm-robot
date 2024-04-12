@@ -3,7 +3,9 @@ import time
 from websockets.sync.client import connect
 import WebUI.Server.interpreter_wrapper.terminal.status_code as status_code
 
-KERAS_INTERPRETER_TERMINAL = "keras-terminal"
+KERAS_INTERPRETER_TERMINAL_WIN = "keras-terminal.exe"
+KERAS_INTERPRETER_TERMINAL_DARWIN = "keras-terminal-darwin"
+KERAS_INTERPRETER_TERMINAL_LINUX = "keras-terminal-linux"
 
 class BaseTerminal:
     def __init__(self):
@@ -56,19 +58,28 @@ class Terminal(BaseTerminal):
             return False
     
     def start_local_terminal(self):
+            import sys
             import subprocess
-            local_command = [f"./tools/{KERAS_INTERPRETER_TERMINAL}", "--port", f"{self.port}"]
+            local_command = ""
+            if sys.platform.startswith("win32"):
+                local_command = [f"./tools/{KERAS_INTERPRETER_TERMINAL_WIN}", "--port", f"{self.port}"]
+            elif sys.platform.startswith("linux"):
+                 local_command = [f"./tools/{KERAS_INTERPRETER_TERMINAL_LINUX}", "--port", f"{self.port}"]
+            elif sys.platform.startswith("darwin"):
+                local_command = [f"./tools/{KERAS_INTERPRETER_TERMINAL_DARWIN}", "--port", f"{self.port}"]
+            else:
+                 return False
             try:
                 subprocess.Popen(local_command)
                 time.sleep(1)
-                return self.keep_alive_terminal(3)
-            except Exception as _:
-                pass
+                return self.keep_alive_terminal(20)
+            except Exception as e:
+                print(e)
             return False
 
     def start_docker_terminal(self):
         import subprocess
-        docker_command = ["docker", "run", "-d", "-p", f"{self.port}:{self.port}", "keras-interpreter-terminal"]
+        docker_command = ["docker", "run", "-d", "-p", f"{self.port}:{self.port}", "smalltong02/keras-interpreter-terminal"]
         try:
             subprocess.Popen(docker_command)
             time.sleep(1)
