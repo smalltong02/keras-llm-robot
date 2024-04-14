@@ -5,7 +5,7 @@ import WebUI.Server.interpreter_wrapper.terminal.status_code as status_code
 
 KERAS_INTERPRETER_TERMINAL_WIN = "keras-terminal.exe"
 KERAS_INTERPRETER_TERMINAL_DARWIN = "keras-terminal-darwin"
-KERAS_INTERPRETER_TERMINAL_LINUX = "keras-terminal-linux"
+KERAS_INTERPRETER_TERMINAL_LINUX = "keras-terminal-ubuntu"
 
 class BaseTerminal:
     def __init__(self):
