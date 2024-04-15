@@ -1,17 +1,19 @@
+import os
 import json
 import asyncio
 import base64
 import threading
-from WebUI.Server.utils import wrap_done
+from pathlib import Path
 import google.generativeai as genai
 from fastapi.responses import StreamingResponse
-from WebUI.configs.basicconfig import *
-from WebUI.configs.codemodels import *
+from WebUI.configs.basicconfig import (TMP_DIR, ModelType, ModelSize, ModelSubType, GetModelInfoByName, GetProviderByName, GetModelConfig, GetGGUFModelPath, generate_new_query, GeneratePresetPrompt, GenerateModelPrompt)
+from WebUI.configs.codemodels import code_model_chat
 from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
 from WebUI.Server.db.repository import add_chat_history_to_db, update_chat_history
 from WebUI.Server.chat.StreamHandler import StreamSpeakHandler
 from langchain.chains import LLMChain
 from WebUI.Server.utils import FastAPI
+from typing import List, Dict, Any, Optional, AsyncIterable
 
 def clean_special_text(text : str, prompttemplate: dict):
     anti_prompt = prompttemplate["anti_prompt"]
@@ -145,7 +147,6 @@ async def special_chat_iterator(model: Any,
         modelconfig = GetModelConfig(webui_config, modelinfo)
         loadtype = modelconfig["load_type"]
         presetname = modelconfig["preset"]
-        presetconfig = GetPresetConfig(presetname)
         if loadtype != "llamacpp" and loadtype != "pipeline":
             pass
         else:
@@ -169,7 +170,8 @@ async def special_chat_iterator(model: Any,
                             if noret is False:
                                 noret = clean_special_text(chunk, prompttemplate)
                                 if noret is False:
-                                    if speak_handler: speak_handler.on_llm_new_token(chunk)
+                                    if speak_handler: 
+                                        speak_handler.on_llm_new_token(chunk)
                                     yield json.dumps(
                                         {"text": chunk, "chat_history_id": chat_history_id},
                                         ensure_ascii=False)
@@ -183,7 +185,8 @@ async def special_chat_iterator(model: Any,
                             if noret is False:
                                 noret = clean_special_text(chunk, prompttemplate)
                                 if noret is False:
-                                    if speak_handler: speak_handler.on_llm_new_token(chunk)
+                                    if speak_handler: 
+                                        speak_handler.on_llm_new_token(chunk)
                                     yield json.dumps(
                                         {"text": chunk, "chat_history_id": chat_history_id},
                                         ensure_ascii=False)
@@ -191,7 +194,8 @@ async def special_chat_iterator(model: Any,
                         if not thread.is_alive():
                             print("async_callback exit!")
                             break
-                if speak_handler: speak_handler.on_llm_end(None)
+                if speak_handler: 
+                    speak_handler.on_llm_end(None)
     elif modelinfo["mtype"] == ModelType.Online:
         provider = GetProviderByName(webui_config, model_name)
         if provider == "google-api":
@@ -199,7 +203,7 @@ async def special_chat_iterator(model: Any,
             apikey = model_config.get("apikey", "[Your Key]")
             if apikey == "[Your Key]" or apikey == "":
                 apikey = os.environ.get('GOOGLE_API_KEY')
-            if apikey == None:
+            if apikey is None:
                 apikey = "EMPTY"
             genai.configure(api_key=apikey)
             model = genai.GenerativeModel(model_name=model_name)
@@ -224,22 +228,96 @@ async def special_chat_iterator(model: Any,
                 response = chat.send_message(query, generation_config=generation_config, stream=stream)
             if stream is True:
                 for chunk in response:
-                    if speak_handler: speak_handler.on_llm_new_token(chunk.text)
+                    if speak_handler: 
+                        speak_handler.on_llm_new_token(chunk.text)
                     yield json.dumps(
                         {"text": chunk.text, "chat_history_id": chat_history_id},
                         ensure_ascii=False)
                     await asyncio.sleep(0.1)
-                if speak_handler: speak_handler.on_llm_end(None)
+                if speak_handler: 
+                    speak_handler.on_llm_end(None)
             else:
                 for chunk in response:
-                    if speak_handler: speak_handler.on_llm_new_token(chunk.text)
+                    if speak_handler: 
+                        speak_handler.on_llm_new_token(chunk.text)
                     answer += chunk.text
                 yield json.dumps(
                     {"text": answer, "chat_history_id": chat_history_id},
                     ensure_ascii=False)
                 await asyncio.sleep(0.1)
-                if speak_handler: speak_handler.on_llm_end(None)
-        elif provider == "openai-api":
+                if speak_handler: 
+                    speak_handler.on_llm_end(None)
+        elif provider == "ali-cloud-api":
+            from http import HTTPStatus
+            from dashscope import Generation
+            from dashscope.api_entities.dashscope_response import Role
+            model_config = GetModelConfig(webui_config, modelinfo)
+            apikey = model_config.get("apikey", "[Your Key]")
+            if apikey == "[Your Key]" or apikey == "":
+                apikey = os.environ.get('ALI_API_KEY')
+            if apikey is None:
+                apikey = "EMPTY"
+            messages = history
+            messages.append({'role': Role.USER,
+                         'content': query})
+            if stream is True:
+                responses = Generation.call(model=model_name,
+                                messages=messages,
+                                result_format='message',
+                                api_key=apikey,
+                                stream=True,
+                                incremental_output=True,
+                                temperature=temperature,
+                                max_tokens=max_tokens,
+                                )
+                for response in responses:
+                    if response.status_code == HTTPStatus.OK:
+                        print(response)
+                        yield json.dumps(
+                            {"text": response.output.choices[0]['message']['content'], "chat_history_id": chat_history_id},
+                            ensure_ascii=False)
+                        await asyncio.sleep(0.1)
+                        if speak_handler: 
+                            speak_handler.on_llm_new_token(response.output.choices[0]['message']['content'])
+                    else:
+                        error_message = f'Request id: {response.request_id}, \
+                        Status code: {response.status_code}, \
+                        error code: {response.code}, \
+                        error message: {response.message}'
+                        yield json.dumps(
+                            {"text": error_message, "chat_history_id": chat_history_id},
+                            ensure_ascii=False)
+                        await asyncio.sleep(0.1)
+                        break
+            else:
+                response = Generation.call(model=model_name,
+                               messages=messages,
+                               result_format='message',
+                               api_key=apikey,
+                               temperature=temperature,
+                                max_tokens=max_tokens,
+                               )
+                if response.status_code == HTTPStatus.OK:
+                    print(response)
+                    yield json.dumps(
+                        {"text": response.output.choices[0]['message']['content'], "chat_history_id": chat_history_id},
+                        ensure_ascii=False)
+                    await asyncio.sleep(0.1)
+                    if speak_handler: 
+                        speak_handler.on_llm_new_token(response.output.choices[0]['message']['content'])
+                else:
+                    error_message = f'Request id: {response.request_id}, \
+                    Status code: {response.status_code}, \
+                    error code: {response.code}, \
+                    error message: {response.message}'
+                    yield json.dumps(
+                        {"text": error_message, "chat_history_id": chat_history_id},
+                        ensure_ascii=False)
+                    await asyncio.sleep(0.1)
+            if speak_handler: 
+                speak_handler.on_llm_end(None)
+
+        elif provider == "openai-api" or provider == "kimi-cloud-api":
             from langchain.callbacks import AsyncIteratorCallbackHandler
             from WebUI.Server.utils import wrap_done, get_ChatOpenAI
             from WebUI.Server.utils import get_prompt_template
@@ -291,6 +369,36 @@ async def special_chat_iterator(model: Any,
                     {"text": answer, "chat_history_id": chat_history_id},
                     ensure_ascii=False)
             await task
+        
+        elif provider == "baidu-cloud-api":
+            import qianfan
+            model_config = GetModelConfig(webui_config, modelinfo)
+            apikey = model_config.get("apikey", "[Your Key]")
+            if apikey == "[Your Key]" or apikey == "":
+                apikey = os.environ.get('QIANFAN_ACCESS_KEY')
+            if apikey is None:
+                apikey = "EMPTY"
+            secretkey = model_config.get("secretkey", "[Your Key]")
+            if secretkey == "[Your Key]" or secretkey == "":
+                secretkey = os.environ.get('QIANFAN_SECRET_KEY')
+            if secretkey is None:
+                secretkey = "EMPTY"
+
+            chat_comp = qianfan.ChatCompletion(ak=apikey, sk=secretkey)
+            messages = history
+            messages.append({'role': "user",
+                         'content': query})
+            responses = chat_comp.do(model=model_name, messages=messages, stream=True)
+            for response in responses:
+                print(response)
+                yield json.dumps(
+                    {"text": response['result'], "chat_history_id": chat_history_id},
+                    ensure_ascii=False)
+                await asyncio.sleep(0.1)
+                if speak_handler: 
+                    speak_handler.on_llm_new_token(response.output.choices[0]['message']['content'])
+            if speak_handler: 
+                speak_handler.on_llm_end(None)
             
     update_chat_history(chat_history_id, response=answer)
 
@@ -345,8 +453,6 @@ def model_knowledge_base_chat(
 
 def load_causallm_model(app: FastAPI, model_name, model_path, device):
     from transformers import AutoModelForCausalLM, AutoTokenizer
-    import torch
-    from PIL import Image
     if model_name == "cogvlm-chat-hf":
         from transformers import LlamaTokenizer
         tokenizer = LlamaTokenizer.from_pretrained("lmsys/vicuna-7b-v1.5")
@@ -368,8 +474,6 @@ def load_automodel_model(app: FastAPI, model_name, model_path, device):
 def load_video_diffusion_model(app: FastAPI, model_name, model_path, device):
     import torch
     from omegaconf import OmegaConf
-    from torchvision.transforms import ToTensor
-    from torchvision.transforms import functional as TF
     from sgm.util import instantiate_from_config
     def load_model(config: str, model_path: str, device: str, num_frames: int, num_steps: int):
         config = OmegaConf.load(config)
@@ -422,7 +526,7 @@ def get_unique_embedder_keys_from_conditioner(conditioner):
 
 def get_batch(keys, value_dict, N, T, device, dtype=None):
     import torch
-    import math, torch
+    import math
     from einops import repeat
     batch = {}
     batch_uc = {}
@@ -477,7 +581,8 @@ def generating_video(
     from io import BytesIO
     from PIL import Image
     from glob import glob
-    import os, cv2
+    import os
+    import cv2
     import numpy as np
     from einops import rearrange, repeat
     from torchvision.transforms import ToTensor
@@ -623,7 +728,7 @@ def multimodal_model_chat(
         max_tokens: Optional[int],
         prompt_name: str,
 ):
-    if modelinfo == None:
+    if modelinfo is None:
         return json.dumps(
             {"text": "Unusual error!", "chat_history_id": 123},
             ensure_ascii=False)
@@ -694,12 +799,14 @@ def multimodal_model_chat(
                 outputs = outputs[:, inputs['input_ids'].shape[1]:]
                 answer =tokenizer.decode(outputs[0])
 
-            if speak_handler: speak_handler.on_llm_new_token(answer)
+            if speak_handler: 
+                speak_handler.on_llm_new_token(answer)
             yield json.dumps(
                 {"text": answer, "chat_history_id": chat_history_id},
                 ensure_ascii=False)
             await asyncio.sleep(0.1)
-            if speak_handler: speak_handler.on_llm_end(None)
+            if speak_handler: 
+                speak_handler.on_llm_end(None)
         elif model_name == "Qwen-VL-Chat" or model_name == "Qwen-VL-Chat-Int4":
             img_list = []
             for image in imagesdata:
@@ -720,12 +827,14 @@ def multimodal_model_chat(
             if len(history):
                 formatted_history = [(history[i]['content'], history[i+1]['content']) for i in range(0, len(history), 2) if i < len(history)-1 and history[i]['role'] == 'user']
             answer, history = model.chat(tokenizer, query=query_tkz, history=formatted_history)
-            if speak_handler: speak_handler.on_llm_new_token(answer)
+            if speak_handler: 
+                speak_handler.on_llm_new_token(answer)
             yield json.dumps(
                 {"text": answer, "chat_history_id": chat_history_id},
                 ensure_ascii=False)
             await asyncio.sleep(0.1)
-            if speak_handler: speak_handler.on_llm_end(None)
+            if speak_handler: 
+                speak_handler.on_llm_end(None)
         elif model_name == "stable-video-diffusion-img2vid" or model_name == "stable-video-diffusion-img2vid-xt":
             import random
             answer = "video"
@@ -778,12 +887,14 @@ def multimodal_model_chat(
             if len(history):
                 formatted_history = [(history[i]['content'], history[i+1]['content']) for i in range(0, len(history), 2) if i < len(history)-1 and history[i]['role'] == 'user']
             answer, history = model.chat(tokenizer, query=query_tkz, history=formatted_history)
-            if speak_handler: speak_handler.on_llm_new_token(answer)
+            if speak_handler: 
+                speak_handler.on_llm_new_token(answer)
             yield json.dumps(
                 {"text": answer, "chat_history_id": chat_history_id},
                 ensure_ascii=False)
             await asyncio.sleep(0.1)
-            if speak_handler: speak_handler.on_llm_end(None)
+            if speak_handler: 
+                speak_handler.on_llm_end(None)
         
         update_chat_history(chat_history_id, response=answer)
         
@@ -863,7 +974,7 @@ def special_model_search_engine_chat(
                 apikey = model_config.get("apikey", "[Your Key]")
                 if apikey == "[Your Key]" or apikey == "":
                     apikey = os.environ.get('GOOGLE_API_KEY')
-                if apikey == None:
+                if apikey is None:
                     apikey = "EMPTY"
                 searchengine = webui_config.get("SearchEngine")
                 top_k = searchengine.get("top_k", 3)

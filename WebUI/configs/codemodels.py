@@ -1,18 +1,16 @@
 
 import json
 import asyncio
-import base64
-import threading
-from WebUI.configs.basicconfig import *
+from WebUI.configs.basicconfig import (ModelType, ModelSize, ModelSubType, GetModelInfoByName, GetModelConfig)
 from fastapi.responses import StreamingResponse
 from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
 from WebUI.Server.db.repository import add_chat_history_to_db, update_chat_history
 from WebUI.Server.chat.StreamHandler import StreamSpeakHandler
 from WebUI.Server.utils import FastAPI
+from typing import Dict, List, Any, Optional, AsyncIterable
 
 def load_causallm_model(app: FastAPI, model_name, model_path, device):
     from transformers import AutoModelForCausalLM, AutoTokenizer
-    from langchain.llms.huggingface_pipeline import HuggingFacePipeline
     tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
     model = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True, torch_dtype="auto", device_map=device)
     app._model = model
@@ -22,7 +20,6 @@ def load_causallm_model(app: FastAPI, model_name, model_path, device):
 def load_llama_model(app: FastAPI, model_name, model_path, device):
     import torch
     from transformers import AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer, pipeline
-    from langchain.llms.huggingface_pipeline import HuggingFacePipeline
     tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
     model = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True, torch_dtype=torch.float16, device_map=device)
     streamer = TextIteratorStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
@@ -75,7 +72,7 @@ def code_model_chat(
         max_tokens: Optional[int],
         prompt_name: str,
 ):
-    if modelinfo == None:
+    if modelinfo is None:
         return json.dumps(
             {"text": "Unusual error!", "chat_history_id": 123},
             ensure_ascii=False)
@@ -130,12 +127,14 @@ def code_model_chat(
             #while(answer.startswith(("'", '"', ' ', ',', '.', '!', '?'))):
             #    answer = answer[1:].strip()
             answer = "```python\n" + answer + "\n```"
-            if speak_handler: speak_handler.on_llm_new_token(answer)
+            if speak_handler: 
+                speak_handler.on_llm_new_token(answer)
             yield json.dumps(
                 {"text": answer, "chat_history_id": chat_history_id},
                 ensure_ascii=False)
             await asyncio.sleep(0.1)
-            if speak_handler: speak_handler.on_llm_end(None)
+            if speak_handler: 
+                speak_handler.on_llm_end(None)
 
         elif model_name == "CodeLlama-7b-Python-hf" or \
              model_name == "CodeLlama-13b-Python-hf" or \

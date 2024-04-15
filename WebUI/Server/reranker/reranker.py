@@ -2,9 +2,8 @@ import os
 import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-from typing import Any, List, Optional
+from typing import Any,  Optional, Sequence
 from sentence_transformers import CrossEncoder
-from typing import Optional, Sequence
 from langchain_core.documents import Document
 from langchain.callbacks.manager import Callbacks
 from langchain.retrievers.document_compressors.base import BaseDocumentCompressor
@@ -101,15 +100,12 @@ class LangchainReranker(BaseDocumentCompressor):
 
 
 if __name__ == "__main__":
-    from configs import (LLM_MODELS,
-                         VECTOR_SEARCH_TOP_K,
-                         SCORE_THRESHOLD,
-                         TEMPERATURE,
+    from configs import (
                          USE_RERANKER,
                          RERANKER_MODEL,
                          RERANKER_MAX_LENGTH,
                          MODEL_PATH)
-    from server.utils import embedding_device
+    from WebUI.Server.utils import embedding_device
 
     if USE_RERANKER:
         reranker_model_path = MODEL_PATH["reranker"].get(RERANKER_MODEL, "BAAI/bge-reranker-large")

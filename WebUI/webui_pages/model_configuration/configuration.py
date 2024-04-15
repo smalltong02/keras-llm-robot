@@ -1,7 +1,9 @@
 import streamlit as st
-from WebUI.webui_pages.utils import *
-from WebUI.configs import *
-from WebUI.webui_pages import *
+from WebUI.webui_pages.utils import ApiRequest
+from WebUI.configs import (ModelType, ModelSize, ModelSubType, GetModelType, GetModelInfoByName, GetModelConfig, GetModelSubType, GetOnlineProvider, GetOnlineModelList, GetModeList, LocalModelExist, GetPresetPromptList,
+                           glob_model_type_list, glob_model_size_list, glob_model_subtype_list)
+from WebUI.webui_pages.utils import check_error_msg, check_success_msg
+from typing import Dict
 
 training_devices_list = ["auto","cpu","gpu","mps"]
 loadbits_list = ["16 bits","8 bits","4 bits"]
@@ -11,16 +13,16 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
     running_model : Dict[str, any] = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str}
     current_model : Dict[str, any] = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "config": dict}
     webui_config = api.get_webui_config()
-    localmodel = webui_config.get("ModelConfig").get("LocalModel")
-    commonmodel = localmodel.get("LLM Model")
-    multimodalmodel = localmodel.get("Multimodal Model")
-    specialmodel = localmodel.get("Special Model")
+    #localmodel = webui_config.get("ModelConfig").get("LocalModel")
+    #commonmodel = localmodel.get("LLM Model")
+    #multimodalmodel = localmodel.get("Multimodal Model")
+    #specialmodel = localmodel.get("Special Model")
     onlinemodel = webui_config.get("ModelConfig").get("OnlineModel")
     chatconfig = webui_config.get("ChatConfiguration")
-    quantconfig = webui_config.get("QuantizationConfiguration")
-    finetunning = webui_config.get("Fine-Tunning")
+    #quantconfig = webui_config.get("QuantizationConfiguration")
+    #finetunning = webui_config.get("Fine-Tunning")
     searchengine = webui_config.get("SearchEngine")
-    prompttemplates = webui_config.get("PromptTemplates")
+    #prompttemplates = webui_config.get("PromptTemplates")
 
     running_model["mname"] = ""
     models_list = list(api.get_running_models())
@@ -108,7 +110,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
             index=model_index,
         )
         current_model["mname"] = model_name
-        if current_model["mname"] != None:
+        if current_model["mname"] is not None:
             if current_model["mname"].endswith("(running)"):
                 current_model["mname"] = current_model["mname"][:-10].strip()
             current_model["config"] = GetModelConfig(webui_config, current_model)
@@ -116,7 +118,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
             disabled = True
             current_model["config"] = {}
 
-        if disabled != True and current_model["mtype"] != ModelType.Online:
+        if disabled is not True and current_model["mtype"] != ModelType.Online:
             pathstr = current_model["config"].get("path")
         else:
             pathstr = ""
@@ -156,8 +158,8 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
             disabled=disabled
         )
         if download_path:
-            with st.spinner(f"Model downloading..., Please do not perform any actions or refresh the page."):
-                if current_model["mname"] == None or current_model["mtype"] == ModelType.Online:
+            with st.spinner("Model downloading..., Please do not perform any actions or refresh the page."):
+                if current_model["mname"] is None or current_model["mtype"] == ModelType.Online:
                     st.error("Download failed!")
                 else:
                     if LocalModelExist(pathstr):
@@ -168,14 +170,14 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                         download_error = False
                         progress_bar = st.progress(0)
                         for t in r:
-                            if error_msg := check_error_msg(t):  # check whether error occured
+                            if _ := check_error_msg(t):  # check whether error occured
                                 download_error = True
                                 st.error(msg)
                                 st.toast(msg, icon="✖")
                                 break
                             tqdm = t.get("percentage", 0.0) / 100
                             progress_bar.progress(tqdm)
-                        if download_error == False:
+                        if download_error is False:
                             progress_bar.progress(1.0)
                             st.success("downloading success!")
                             st.toast("downloading success!", icon="✔")
@@ -315,7 +317,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                         else:
                             chatconfig["do_samples"] = False
 
-                        with st.spinner(f"Saving Parameters, Please do not perform any actions or refresh the page."):
+                        with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
                             r = api.save_model_config(current_model)
                             if msg := check_error_msg(r):
                                 st.toast(msg, icon="✖")
@@ -388,10 +390,10 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                 with st.form("SearchEngine"):
                     col1, col2 = st.columns(2)
                     top_k = searchengine.get("top_k", 3)
-                    search_url = searchengine.get(current_search_engine).get("search_url", "")
+                    #search_url = searchengine.get(current_search_engine).get("search_url", "")
                     api_key = searchengine.get(current_search_engine).get("api_key", "")
                     with col1:
-                        api_key = st.text_input("API KEY", api_key, disabled=disabled)
+                        api_key = st.text_input("API Key", api_key, type="password", disabled=disabled)
                         search_enable = st.checkbox('Enable', value=search_enable, help="After enabling, parameters need to be saved for the configuration to take effect.", disabled=disabled)
                         smart_search = st.checkbox('Smart Search', value=smart_search, help="Let the model handle the question first, and let the model decide whether to invoke the search engine.", disabled=disabled)
                     with col2:
@@ -404,7 +406,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                     if save_parameters:
                         searchengine.get(current_search_engine)["api_key"] = api_key
                         searchengine["top_k"] = top_k
-                        with st.spinner(f"Saving Parameters, Please do not perform any actions or refresh the page."):
+                        with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
                             r = api.save_search_engine_config(searchengine)
                             if msg := check_error_msg(r):
                                 st.toast(msg, icon="✖")
@@ -445,12 +447,18 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                     col1, col2 = st.columns(2)
                     with col1:
                         baseurl = st.text_input("Base URL", current_model["config"].get("baseurl", ""), disabled=disabled)
-                        apikey = st.text_input("API Key", current_model["config"].get("apikey", ""), disabled=disabled)
-                        provider = st.text_input("Provider", current_model["config"].get("provider", ""), disabled=disabled)
+                        apikey = st.text_input("API Key", current_model["config"].get("apikey", ""), type="password", disabled=disabled)
+                        apiproxy = st.text_input("API Proxy", current_model["config"].get("apiproxy", ""), disabled=disabled)
 
                     with col2:
                         apiversion = st.text_input("API Version", current_model["config"].get("apiversion", ""), disabled=disabled)
-                        apiproxy = st.text_input("API Proxy", current_model["config"].get("apiproxy", ""), disabled=disabled)
+                        secretkey = current_model["config"].get("secretkey", None)
+                        if secretkey is not None:
+                            secretkey = st.text_input("Secret Key", secretkey, type="password", disabled=disabled)
+                        else:
+                            st.text_input("Secret Key", "None", disabled=True)
+                        provider = st.text_input("Provider", current_model["config"].get("provider", ""), disabled=True)
+
                     submit_config = st.form_submit_button(
                         "Save API Config",
                         use_container_width=True
@@ -458,12 +466,14 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                     if submit_config:
                         current_model["config"]["baseurl"] = baseurl
                         current_model["config"]["apikey"] = apikey
+                        if secretkey is not None:
+                            current_model["config"]["secretkey"] = secretkey
                         current_model["config"]["provider"] = provider
                         current_model["config"]["apiversion"] = apiversion
                         current_model["config"]["apiproxy"] = apiproxy
                         savename = current_model["mname"]
                         current_model["mname"] = onlinemodel
-                        with st.spinner(f"Saving online config, Please do not perform any actions or refresh the page."):
+                        with st.spinner("Saving online config, Please do not perform any actions or refresh the page."):
                             r = api.save_model_config(current_model)
                             if msg := check_error_msg(r):
                                 st.toast(msg, icon="✖")
@@ -495,10 +505,10 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                 with st.form("SearchEngine"):
                     col1, col2 = st.columns(2)
                     top_k = searchengine.get("top_k", 3)
-                    search_url = searchengine.get(current_search_engine).get("search_url", "")
+                    #search_url = searchengine.get(current_search_engine).get("search_url", "")
                     api_key = searchengine.get(current_search_engine).get("api_key", "")
                     with col1:
-                        api_key = st.text_input("API KEY", api_key, disabled=disabled)
+                        api_key = st.text_input("API KEY", api_key, type="password", disabled=disabled)
                         search_enable = st.checkbox('Enable', value=search_enable, help="After enabling, parameters need to be saved for the configuration to take effect.", disabled=disabled)
                         smart_search = st.checkbox('Smart Search', value=smart_search, help="Let the model handle the question first, and let the model decide whether to invoke the search engine.", disabled=disabled)
                     with col2:
@@ -511,7 +521,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                     if save_parameters:
                         searchengine.get(current_search_engine)["api_key"] = api_key
                         searchengine["top_k"] = top_k
-                        with st.spinner(f"Saving Parameters, Please do not perform any actions or refresh the page."):
+                        with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
                             r = api.save_search_engine_config(searchengine)
                             if msg := check_error_msg(r):
                                 st.toast(msg, icon="✖")

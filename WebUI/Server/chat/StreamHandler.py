@@ -42,12 +42,12 @@ class StreamSpeakHandler(BaseCallbackHandler):
         subscription=None,
         region=None):
         self.initialize = False
-        if subscription == None or subscription == "":
+        if subscription is None or subscription == "":
             if provider == "AzureCloud":
                 subscription=os.environ.get('SPEECH_KEY')
             elif provider == "OpenAICloud":
                 subscription=os.environ.get('OPENAI_API_KEY')
-        if region == None or region == "":
+        if region is None or region == "":
             region=os.environ.get('SPEECH_REGION')
         self.initialize = True
         self.subscription = subscription
@@ -167,7 +167,7 @@ class StreamSpeakHandler(BaseCallbackHandler):
                             else:
                                 audio_stream += chunk
                         audio_segment = AudioSegment.from_mp3(io.BytesIO(audio_stream))
-                    except requests.exceptions.RequestException as error:
+                    except requests.exceptions.RequestException as _:
                         pass
                     return audio_segment
                 if self.subscription is not None and self.subscription != "":

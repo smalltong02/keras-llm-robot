@@ -6,7 +6,6 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from fastapi import Body
 from WebUI.Server.chat.completion import completion
-from WebUI.Server.utils import (FastAPI, MakeFastAPIOffline, BaseResponse)
 from WebUI.configs.serverconfig import OPEN_CROSS_DOMAIN
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import RedirectResponse
@@ -23,9 +22,10 @@ from WebUI.Server.llm_api import (list_running_models, get_running_models, list_
                             get_speech_model, get_speech_data, save_speech_model_config, stop_speech_model, change_speech_model,
                             get_image_recognition_model, save_image_recognition_model_config, eject_image_recognition_model, change_image_recognition_model, get_image_recognition_data,
                             get_image_generation_model, save_image_generation_model_config, eject_image_generation_model, change_image_generation_model, get_image_generation_data,
-                            save_search_engine_config, llm_knowledge_base_chat, llm_search_engine_chat, save_code_interpreter_config, list_search_engines)
+                            get_music_generation_model, save_music_generation_model_config, eject_music_generation_model, change_music_generation_model, get_music_generation_data,
+                            save_search_engine_config, llm_knowledge_base_chat, llm_search_engine_chat, save_code_interpreter_config)
 from WebUI.Server.utils import(BaseResponse, ListResponse, FastAPI, MakeFastAPIOffline,
-                          get_server_configs, get_prompt_template)
+                          get_prompt_template)
 from typing import List, Literal
 from __about__ import __version__
 
@@ -254,6 +254,32 @@ def mount_app_routes(app: FastAPI, run_mode: str = None):
              tags=["Image Generation Model Management"],
              summary="Generate images based on text",
              )(get_image_generation_data)
+    
+    # Music Generation Model interface
+    app.post("/music_model/get_music_generation_model",
+             tags=["Music Generation Model Management"],
+             summary="Get current running Music Generation Model",
+             )(get_music_generation_model)
+    
+    app.post("/music_model/save_music_generation_model_config",
+             tags=["Music Generation Model Management"],
+             summary="Save Music Generation Model configration information",
+             )(save_music_generation_model_config)
+    
+    app.post("/music_model/eject_music_generation_model",
+             tags=["Music Generation Model Management"],
+             summary="Stop Music Generation Model",
+             )(eject_music_generation_model)
+    
+    app.post("/music_model/change_music_generation_model",
+             tags=["Music Generation Model Management"],
+             summary="Switch to new Music Generation Model",
+             )(change_music_generation_model)
+    
+    app.post("/music_model/get_music_generation_data",
+             tags=["Music Generation Model Management"],
+             summary="Generate Music based on text",
+             )(get_music_generation_data)
 
     # Server interface
     app.post("/server/get_webui_config",

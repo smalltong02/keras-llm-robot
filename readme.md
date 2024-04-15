@@ -29,6 +29,17 @@ The project inherits from the Langchain-Chatchat project(https://github.com/chat
       * [6. Function Calling](readme.md#6-Function-Calling)
 
 
+## New Feature Updates
+
+- 🚀 Update Log for 2024-04-14
+  1. Support for the keras-llm-interpreter code interpreter, compatible with Windows, macOS, and Ubuntu operating systems. Provides locally executable binaries and Docker images for running in a sandbox environment.
+  2. Support for models Qwen1.5-4B-Chat and Qwen1.5-7B-Chat.
+   
+- 🚀 Update Log for 2024-02-14
+  1. Support for the open-interpreter code interpreter.
+  2. Support for models gemma-2b and gemma-7b.
+
+
 ## Quick Start
   
   Please first prepare the runtime environment, refer to [Environment Setup](readme.md#Environment-Setup)
@@ -244,7 +255,7 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
     In the configuration interface, you can choose suitable language models to load, categorized as `Foundation Models`, `Multimodal Models`, `Special Models`, and `Online Models`.
 
   1. **`Foundation Models`** Untouched models published on Hugging Face, supporting models with chat templates similar to OpenAI.
-  2. **`Multimodal Models`** (`Not implemented`): Models supporting both voice and text or image and text at the lower level.
+  2. **`Multimodal Models`** Models supporting both voice and text or image and text at the lower level.
   3. **`Code Models`** Code generation model.
   4. **`Special Models`** Quantized models (GGUF) published on Hugging Face or models requiring special chat templates.
   5. **`Online Models`** Supports online language models from OpenAI and Google, such as GPT4-Turbo, Gemini-Pro, GPT4-vision, and Gemini-Pro-vision. Requires OpenAI API Key and Google API Key, which can be configured in the system environment variables or in the configuration interface.
@@ -258,7 +269,7 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
   In the tools & agent interface, you can load auxiliary models such as retrieval, code execution, text-to-speech, speech-to-text, image recognition, image generation, or function calling.
 
   1. **`Retrieval`** Supports both local and online vector databases, local and online embedding models, and various document types. Can provide long-term memory for the Foundation model.
-  2. **`Code Interpreter`** (`Not implemented`)
+  2. **`Code Interpreter`** Supports local interpreter "keras-llm-interpreter".
   3. **`Text-to-Speech`** Supports local model XTTS-v2 and Azure online text-to-speech service. Requires Azure API Key, which can be configured in the system environment variables `SPEECH_KEY` and `SPEECH_REGION`, or in the configuration interface.
   4. **`Speech-to-Text`** Supports local models whisper and fast-whisper and Azure online speech-to-text service. Requires Azure API Key, which can be configured in the system environment variables `SPEECH_KEY` and `SPEECH_REGION`, or in the configuration interface.
   5. **`Image Recognition`** Supports local model blip-image-captioning-large.
@@ -467,7 +478,44 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
   2. **`Code Interpreter`**
 
-      Enable code execution capability for the language model to empower it with actionable functionality for the mind. `Not implemented`
+      Enable code execution capability for the language model to empower it with actionable functionality for the mind.
+
+      Keras-llm-interpreter provides two modes for usage: the first is the local execution mode, which runs code on the local PC, allowing modifications to the local PC environment; the second is the Docker image mode, providing a more secure execution environment as it operates within a sandbox, ensuring that running code does not affect the local PC environment.
+
+      (1) Local Execution Mode
+
+      First, configure the local execution environment:
+      ```bash
+        pip install ipykernel
+        pip install ipython
+
+        python -m ipykernel install --name "python3" --user
+      ```
+
+      (2) Docker Image Mode
+
+      Downloading the Docker image:
+      ```bash
+        1. Execute the command to download the image:
+           docker pull smalltong02/keras-interpreter-terminal
+
+        2. Deploy the container using the following command, adjusting the port as needed:
+           docker run -d -p 20020:20020 smalltong02/keras-interpreter-terminal
+
+        3. Check in the Docker interface to ensure that the image deployment was successful, ensure that the image is running, and listening on port 20020.
+      ```
+
+      (3) Enable the code interpreter and run a task demonstration:
+
+      Enable the code interpreter feature:
+      ![Image1](./img/keras_interpreter_1.png)
+
+      Load the local model Qwen1.5-7B-Chat and begin the task that requires running code:
+      ![Image1](./img/keras_interpreter_2.png)
+
+      Write code for the model and invoke the local code interpreter to execute the code, returning the correct output to the user:
+      ![Image1](./img/keras_interpreter_3.png)
+
 
   3. **`Speech Recognition and Generation`**
 

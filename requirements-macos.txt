@@ -239,3 +239,13 @@ strsimpy==0.2.1
 
 #for code interpreter
 open-interpreter==0.2.0
+websocket-client==1.7.0
+websockets==12.0
+ipykernel==6.29.4
+ipython==8.18.0
+
+# Ali clould
+dashscope==1.15.0
+
+#baidu qianfan
+qianfan==0.3.7

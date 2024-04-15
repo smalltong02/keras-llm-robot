@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import *
+from typing import Dict, List, Union
 from pathlib import Path
 import os
 import copy
@@ -294,7 +294,6 @@ def GeneratePresetPrompt(preset_name: str) -> dict:
 
 def GenerateModelPrompt(inputs: list, input: str) -> Union[str, dict]:
     if len(inputs):
-        index = len(inputs)
         prompt_dict = {key: "" for key in inputs}
         last_key = inputs[-1]
         prompt_dict[last_key] = input
@@ -327,6 +326,9 @@ def ImageModelExist(local_path):
     if total_size_mb > 100:
         return True
     return False
+
+def MusicModelExist(local_path):
+    return ImageModelExist(local_path)
 
 def EmbeddingModelExist(embed_model: str):
     if embed_model:
@@ -451,8 +453,8 @@ def generate_prompt_for_imagegen(model_name : str = "", prompt : str = "", image
         if imagesprompt:
             new_prompt += f". Contents of this image is '{imagesprompt}'"
         print("new_prompt: ", new_prompt)
-        return new_prompt
-    return prompt
+        return new_prompt, True
+    return prompt, False
 
 def generate_prompt_for_smart_search(prompt : str = ""):
     new_prompt = "You are an AI assistant, answering questions based on user inquiries. If you are absolutely certain of the answer to the question, please answer it to the best of your ability and refrain from returning the 'search_engine' command. If you don't know how to answer the question or you require real-time information or need to search the internet before answering questions, then please only return the command: 'search_engine'. \n\n User's question: " + prompt
@@ -490,4 +492,3 @@ def ConvertCompletionRequestToHistory(request: ChatCompletionRequest):
     if answer is not None:
         return [], None 
     return historys, query
-    

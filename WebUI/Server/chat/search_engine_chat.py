@@ -37,7 +37,6 @@ def metaphor_search(
 ) -> List[Dict]:
     from exa_py import Exa
     from markdownify import markdownify
-    from strsimpy.normalized_levenshtein import NormalizedLevenshtein
 
     highlights_options  = {
         "num_sentences": 7, # how long our highlights should be

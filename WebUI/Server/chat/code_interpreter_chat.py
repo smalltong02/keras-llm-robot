@@ -1,21 +1,125 @@
-from fastapi import Body
-from WebUI.configs import GetProviderByName
-from fastapi.responses import StreamingResponse
-from WebUI.Server.chat.utils import History
-from langchain.docstore.document import Document
-from langchain.chains import LLMChain
-import asyncio
 import json
-import os
-from WebUI.Server.utils import wrap_done, get_ChatOpenAI
-from fastapi.concurrency import run_in_threadpool
-from WebUI.Server.utils import get_prompt_template
-from langchain.callbacks import AsyncIteratorCallbackHandler
-from langchain.utilities.bing_search import BingSearchAPIWrapper
-from langchain.utilities.duckduckgo_search import DuckDuckGoSearchAPIWrapper
+import asyncio
+from fastapi import Body
+from fastapi.responses import StreamingResponse
+from WebUI.configs.basicconfig import (ModelType, ModelSize, ModelSubType, GetModelInfoByName)
 from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
-from langchain.prompts.chat import ChatPromptTemplate
-from typing import AsyncIterable, Dict, List, Optional
+from typing import AsyncIterable, Dict
 
-async def code_interpreter_chat():
-    pass
+async def code_interpreter_chat(query: str = Body(..., description="User input: ", examples=["chat"]),
+    stream: bool = Body(False, description="stream output"),
+    interpreter_id: str = Body(..., description="interpreter id"),
+    model_name: str = Body("", description="model name"),
+    temperature: float = Body(0.7, description="LLM Temperature", ge=0.0, le=1.0),
+    ):
+    modelinfo : Dict[str, any] = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str}
+    configinst = InnerJsonConfigWebUIParse()
+    webui_config = configinst.dump()
+    modelinfo["mtype"], modelinfo["msize"], modelinfo["msubtype"] = GetModelInfoByName(webui_config, model_name)
+    modelinfo["mname"] = model_name
+    codeinterpreter = webui_config.get("CodeInterpreter")
+    offline = codeinterpreter.get("offline", False)
+    auto_run = codeinterpreter.get("auto_run", True)
+    safe_mode = codeinterpreter.get("safe_mode", False)
+
+    async def code_interpreter_chat_iterator(query: str,
+        stream: bool = True,
+        interpreter_id: str = "",
+        model_name: str = "",
+        temperature: float = 0.7,
+        offline: bool = False,
+        auto_run: bool = True,
+        safe_mode: bool = False,
+        ) -> AsyncIterable[str]:
+        from WebUI.Server.utils import GetModelApiBaseAddress
+        nonlocal webui_config
+        nonlocal codeinterpreter
+        if interpreter_id == "Open Interpreter":
+            from interpreter import interpreter
+            interpreter.llm.model = "openai/" + model_name
+            interpreter.llm.api_key = "EMPTY"
+            interpreter.auto_run = auto_run
+            interpreter.offline = offline
+            interpreter.safe_mode = safe_mode
+            interpreter.llm.api_base = GetModelApiBaseAddress(modelinfo)
+            text = ""
+            for chunk in interpreter.chat(query, display=False, stream=True):
+                inter_format = chunk.get("format", None)
+                if inter_format is None or inter_format != "execution":
+                    continue
+                print("chunk: ", chunk)
+                inter_content = chunk.get("content", None)
+                if inter_content is None or not isinstance(inter_content, dict):
+                    continue
+                inter_format = inter_content.get("format", None)
+                inter_content = inter_content.get("content", None)
+                if not isinstance(inter_content, str):
+                    continue
+                text +="```" + inter_format + "\n" + inter_content + "```\n"
+                yield json.dumps(
+                    {"text": text},
+                    ensure_ascii=False)
+                await asyncio.sleep(0.1)
+        elif interpreter_id == "Keras Interpreter":
+            from WebUI.Server.interpreter_wrapper.keras_interpreter_wrapper import KerasInterpreter, SafeModeType
+            custom_instructions = codeinterpreter.get(interpreter_id).get("custom_instructions")
+            system_message = codeinterpreter.get(interpreter_id).get("system_message")
+            if system_message == "[default]":
+                system_message = None
+            if custom_instructions == "[default]":
+                custom_instructions = None
+            if system_message is None and custom_instructions is None:
+                interpreter = KerasInterpreter(
+                    model_name=model_name,
+                    offline=offline,
+                    auto_run=auto_run,
+                    safe_mode=SafeModeType.AskMode if safe_mode else SafeModeType.OffMode,
+                    llm_base=GetModelApiBaseAddress(modelinfo),
+                )
+            elif system_message is None:
+                interpreter = KerasInterpreter(
+                    model_name=model_name,
+                    offline=offline,
+                    auto_run=auto_run,
+                    safe_mode=SafeModeType.AskMode if safe_mode else SafeModeType.OffMode,
+                    llm_base=GetModelApiBaseAddress(modelinfo),
+                    custom_instructions=custom_instructions,
+                )
+            elif custom_instructions is None:
+                interpreter = KerasInterpreter(
+                    model_name=model_name,
+                    offline=offline,
+                    auto_run=auto_run,
+                    safe_mode=SafeModeType.AskMode if safe_mode else SafeModeType.OffMode,
+                    llm_base=GetModelApiBaseAddress(modelinfo),
+                    system_message=system_message,
+                )
+            else:
+                interpreter = KerasInterpreter(
+                    model_name=model_name,
+                    offline=offline,
+                    auto_run=auto_run,
+                    safe_mode=SafeModeType.AskMode if safe_mode else SafeModeType.OffMode,
+                    llm_base=GetModelApiBaseAddress(modelinfo),
+                    custom_instructions=custom_instructions,
+                    system_message=system_message,
+                )
+
+            for chunk in interpreter.chat(message=query, stream=stream):
+                print("chunk", chunk)
+                chunk = chunk.get("content", "")
+                yield json.dumps(
+                    {"text": chunk},
+                    ensure_ascii=False)
+                await asyncio.sleep(0.1)               
+
+    return StreamingResponse(code_interpreter_chat_iterator(
+                    query=query,
+                    stream=stream,
+                    interpreter_id=interpreter_id,
+                    model_name=model_name,
+                    temperature=temperature,
+                    offline=offline,
+                    auto_run=auto_run,
+                    safe_mode=safe_mode),
+            media_type="text/event-stream")

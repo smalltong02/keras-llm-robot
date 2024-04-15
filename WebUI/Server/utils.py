@@ -1,20 +1,19 @@
 import pydantic
 from pydantic import BaseModel
-from typing import Dict, Union
-import httpx, os
+import httpx
+import os
 from WebUI.configs.serverconfig import (FSCHAT_CONTROLLER, FSCHAT_OPENAI_API, FSCHAT_MODEL_WORKERS, HTTPX_DEFAULT_TIMEOUT)
 import asyncio
 from pathlib import Path
-from WebUI import workers
 import urllib.request
 from fastapi import FastAPI
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from langchain.chat_models import ChatOpenAI, AzureChatOpenAI, ChatAnthropic
+from langchain.chat_models import ChatOpenAI #AzureChatOpenAI, ChatAnthropic
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.llms import OpenAI, AzureOpenAI, Anthropic
-from typing import Dict, Union, Optional, Literal, Any, List, Callable, Awaitable
-from WebUI.configs.webuiconfig import *
-from WebUI.configs.basicconfig import *
+from typing import Dict, Union, Optional, Literal, Any, List, Callable, Awaitable, Generator, Tuple
+from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
+from WebUI.configs.basicconfig import (ModelType, ModelSize, ModelSubType, GetModelInfoByName, GetModelConfig)
 
 async def wrap_done(fn: Awaitable, event: asyncio.Event):
     """Wrap an awaitable with a event to signal when it's done or an exception is raised."""
@@ -58,13 +57,30 @@ def fschat_openai_api_address() -> str:
     port = FSCHAT_OPENAI_API["port"]
     return f"http://{host}:{port}/v1"
 
-def GetInterpreterBaseAddress(modelinfo: dict) -> str:
+def GetModelApiBaseAddress(modelinfo: dict) -> str:
     if modelinfo["mtype"] != ModelType.Local:
         address = fschat_model_worker_address()
         address += "/v1"
         return address
     address = fschat_openai_api_address()
     return address
+
+def GetKerasInterpreterConfig() -> str:
+    config = {}
+    configinst = InnerJsonConfigWebUIParse()
+    webui_config = configinst.dump()
+    server_config = webui_config.get("ServerConfig")
+    interpreter_config = server_config.get("keras_interpreter")
+
+    config["host"] = getlocalip(server_config.get("default_host_ip"))
+    config["port"] = interpreter_config.get("default").get("port")
+
+    if interpreter_config:
+        keras_interpreter_config = interpreter_config.get("Keras Interpreter")
+        if keras_interpreter_config:
+            config["custom_instructions"] = keras_interpreter_config.get("custom_instructions")
+            config["system_message"] = keras_interpreter_config.get("system_message")
+    return config
 
 def get_httpx_client(
         use_async: bool = False,
@@ -193,7 +209,7 @@ def detect_device() -> Literal["cuda", "mps", "cpu"]:
             return "cuda"
         if torch.backends.mps.is_available():
             return "mps"
-    except:
+    except Exception as _:
         pass
     return "cpu"
         
@@ -387,6 +403,47 @@ def get_image_generation_worker_config(model_name: str = None) -> dict:
             config["torch_compile"] = False
             config["cpu_offload"] = False
             config["refiner"] = False
+    return config
+
+def get_music_generation_worker_config(model_name: str = None) -> dict:
+    config = {}
+    configinst = InnerJsonConfigWebUIParse()
+    webui_config = configinst.dump()
+    server_config = webui_config.get("ServerConfig")
+    config["host"] = getlocalip(server_config.get("default_host_ip"))
+    config["port"] = server_config["music_generation_worker"].get("port")
+
+    if model_name is None or model_name == "":
+        return config
+    imagegen_models = webui_config.get("ModelConfig").get("MusicGeneration")
+    if model_name in imagegen_models:
+        if imagegen_models[model_name].get("type") == "local":
+            config["model_type"] = "local"
+            config["model_path"] = imagegen_models[model_name].get("path")
+            config["device"] = imagegen_models[model_name].get("device")
+            config["loadbits"] = imagegen_models[model_name].get("loadbits")
+            config["Huggingface"] = imagegen_models[model_name].get("Huggingface")
+            subconfig = imagegen_models[model_name].get("config", {})
+            if subconfig:
+                config["seed"] = subconfig.get("seed")
+                config["guiding_scale"] = subconfig.get("guiding_scale")
+                config["max_new_tokens"] = subconfig.get("max_new_tokens")
+                config["do_sample"] = subconfig.get("do_sample")
+            else:
+                config["seed"] = 0
+                config["guiding_scale"] = 3
+                config["max_new_tokens"] = 256
+                config["do_sample"] = True
+        else:
+            config["model_type"] = ""
+            config["model_path"] = ""
+            config["device"] = ""
+            config["loadbits"] = ""
+            config["Huggingface"] = ""
+            config["seed"] = 0
+            config["guiding_scale"] = 3
+            config["max_new_tokens"] = 256
+            config["do_sample"] = True
     return config
 
 def MakeFastAPIOffline(
@@ -620,11 +677,16 @@ def get_ChatOpenAI(
 ) -> ChatOpenAI:
     config = get_model_worker_config(model_name)
     apikey = None
-    if provider != None and provider == "openai-api":
-        apikey = config.get("api_key", "[Your Key]")
-        if apikey == "[Your Key]":
-            apikey = os.environ.get('OPENAI_API_KEY')
-    if apikey == None:
+    if provider is not None:
+        if provider == "openai-api":
+            apikey = config.get("api_key", "[Your Key]")
+            if apikey == "[Your Key]":
+                apikey = os.environ.get('OPENAI_API_KEY')
+        elif provider == "kimi-cloud-api":
+            apikey = config.get("api_key", "[Your Key]")
+            if apikey == "[Your Key]":
+                apikey = os.environ.get('KIMI_API_KEY')
+    if apikey is None:
         apikey = "EMPTY"
     proxy = config.get("api_proxy", "[Private Proxy]")
     if proxy == "[Private Proxy]":
@@ -654,11 +716,11 @@ def get_ChatGoogleAI(
 ) -> ChatOpenAI:
     config = get_model_worker_config(model_name)
     apikey = None
-    if provider != None and provider == "google-api":
+    if provider is not None and provider == "google-api":
         apikey = config.get("api_key", "[Your Key]")
         if apikey == "[Your Key]":
             apikey = os.environ.get('GOOGLE_API_KEY')
-    if apikey == None:
+    if apikey is None:
         apikey = "EMPTY"
     proxy = config.get("api_proxy", "[Private Proxy]")
     if proxy == "[Private Proxy]":
@@ -684,7 +746,7 @@ def torch_gc():
             try:
                 from torch.mps import empty_cache
                 empty_cache()
-            except Exception as e:
+            except Exception as _:
                 msg = ("Please upgrade pytorch to 2.0.0 when platform is MacOS.")
                 print(msg)
     except Exception:

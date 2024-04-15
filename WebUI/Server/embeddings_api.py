@@ -1,5 +1,4 @@
 from langchain.docstore.document import Document
-from WebUI.Server.model_workers.base import ApiEmbeddingsParams
 from WebUI.Server.utils import BaseResponse, list_embed_models, load_embeddings
 from fastapi import Body
 from typing import Dict, List
@@ -48,14 +47,6 @@ async def aembed_texts(
     texts: List[str],
     embed_model: str = "",
     to_query: bool = False,
-) -> BaseResponse:
-    pass
-
-def embed_texts_endpoint(
-        texts: List[str] = Body(..., description="test list", examples=[["hello", "world"]]),
-        embed_model: str = Body("",
-                                description=f"embedding model"),
-        to_query: bool = Body(False, description="query?"),
 ) -> BaseResponse:
     pass
 

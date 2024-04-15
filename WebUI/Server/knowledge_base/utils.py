@@ -10,7 +10,6 @@ from langchain.docstore.document import Document
 from langchain.text_splitter import TextSplitter
 from WebUI.configs.basicconfig import (GetKbConfig, GetKbRootPath, GetTextSplitterDict)
 from WebUI.Server.utils import run_in_thread_pool, get_model_worker_config
-from WebUI.Server.document_loaders import *
 from typing import List, Union,Dict, Tuple, Generator
 
 TEXT_SPLITTER_NAME = "ChineseRecursiveTextSplitter"
@@ -26,7 +25,7 @@ LOADER_DICT = {"UnstructuredHTMLLoader": ['.html'],
                "JSONLoader": [".json"],
                "JSONLinesLoader": [".jsonl"],
                "CSVLoader": [".csv"],
-               # "FilteredCSVLoader": [".csv"], # 需要自己指定，目前还没有支持
+               # "FilteredCSVLoader": [".csv"],
                "RapidOCRPDFLoader": [".pdf"],
                "RapidOCRLoader": ['.png', '.jpg', '.jpeg', '.bmp'],
                "UnstructuredEmailLoader": ['.eml', '.msg'],
@@ -166,7 +165,7 @@ def make_text_splitter(
             try:
                 text_splitter_module = importlib.import_module('text_splitter')
                 TextSplitter = getattr(text_splitter_module, splitter_name)
-            except:
+            except Exception as _:
                 text_splitter_module = importlib.import_module('langchain.text_splitter')
                 TextSplitter = getattr(text_splitter_module, splitter_name)
 
@@ -178,7 +177,7 @@ def make_text_splitter(
                         chunk_size=chunk_size,
                         chunk_overlap=chunk_overlap
                     )
-                except:
+                except Exception as _:
                     text_splitter = TextSplitter.from_tiktoken_encoder(
                         encoding_name=text_splitter_dict[splitter_name]["tokenizer_name_or_path"],
                         chunk_size=chunk_size,
@@ -192,7 +191,6 @@ def make_text_splitter(
 
                 if text_splitter_dict[splitter_name]["tokenizer_name_or_path"] == "gpt2":
                     from transformers import GPT2TokenizerFast
-                    from langchain.text_splitter import CharacterTextSplitter
                     tokenizer = GPT2TokenizerFast.from_pretrained("gpt2")
                 else:
                     from transformers import AutoTokenizer
@@ -211,7 +209,7 @@ def make_text_splitter(
                         chunk_size=chunk_size,
                         chunk_overlap=chunk_overlap
                     )
-                except:
+                except Exception as _:
                     text_splitter = TextSplitter(
                         chunk_size=chunk_size,
                         chunk_overlap=chunk_overlap
@@ -233,7 +231,7 @@ def list_kbs_from_folder():
         for f in dirs:
             if os.path.isdir(os.path.join(kb_root_path, f)):
                 kb_list.append(f)
-    except Exception as e:
+    except Exception as _:
         pass
     return kb_list
 

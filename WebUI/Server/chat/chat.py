@@ -7,7 +7,7 @@ from langchain.callbacks import AsyncIteratorCallbackHandler
 from typing import AsyncIterable
 import asyncio
 import json
-from WebUI.configs import *
+from WebUI.configs import GetProviderByName, generate_new_query
 #from langchain.prompts import PromptTemplate, HumanMessagePromptTemplate, MessagesPlaceholder
 from langchain.prompts.chat import ChatPromptTemplate
 from typing import List, Optional
@@ -77,7 +77,6 @@ async def chat(query: str = Body(..., description="User input: ", examples=["cha
         )
 
         if len(imagesdata):
-            from langchain.chat_models import ChatOpenAI
             from langchain.schema import HumanMessage
             content=[{
                     "type": "text",
