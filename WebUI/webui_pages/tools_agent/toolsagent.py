@@ -398,11 +398,11 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
             with col1:
                 custom_instructions = st.text_input("Custom Instructions", custom_instructions)
                 interpreter_enable = st.checkbox("Enable", value=interpreter_enable, help="After enabling, The code interpreter feature will activate.")
-                auto_run = st.checkbox('Autorun', value=auto_run, help="After enabling, The code will run without asking the user.")
+                #auto_run = st.checkbox('Autorun', value=auto_run, help="After enabling, The code will run without asking the user.")
             with col2:
                 system_message = st.text_input("System Message", system_message)
-                offline = st.checkbox("Offline", value=offline, help="After enabling, The code interpreter will work offline.")
-                safe_mode = st.checkbox('Safe Mode', value=safe_mode, help="After enabling, The running code will be checked for security.")
+                #offline = st.checkbox("Offline", value=offline, help="After enabling, The code interpreter will work offline.")
+                #safe_mode = st.checkbox('Safe Mode', value=safe_mode, help="After enabling, The running code will be checked for security.")
 
             save_parameters = st.form_submit_button(
                 "Save Parameters",

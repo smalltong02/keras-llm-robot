@@ -29,6 +29,16 @@
       * [6. 函数定义](readme-cn.md#6-函数定义)
 
 
+## 新特性更新日志
+
+- 🚀 2024-04-14更新日志
+  1. 支持keras-llm-interpreter代码解释器，支持Windows, Macos和Ubuntu操作系统，并提供本地可运行的执行文件和在沙盒环境中运行的Docker镜像。
+  2. 支持模型Qwen1.5-4B-Chat和Qwen1.5-7B-Chat。
+   
+- 🚀 2024-02-14更新日志
+  1. 支持open-interpreter代码解释器。
+  2. 支持模型gemma-2b和gemma-7b。
+
 ## 快速启动
   
   在启动之前请先准备好运行环境，请参考 [环境配置](readme-cn.md#环境配置)
@@ -257,7 +267,7 @@
   在工具和代理界面中，可以加载辅助模型比如向量检索模型，代码执行模型，文本转语音模型，语音转文本模型，图像识别模型，图像生成模型，或者配置功能调用
 
   1. **`向量检索模型`** 支持本地和在线向量数据库，支持本地和在线向量模型，并且支持多种文档类型。可以为基础模型提供长期记忆力。
-  2. **`代码执行模型`** (`当前功能还未实现`)
+  2. **`代码执行模型`** 支持本地的代码解释器Keras-llm-interpreter。
   3. **`文本转语音模型`** 支持本地模型XTTS-v2，支持Azure在线文本转语音服务，需要提供Azure的API Key。也可以在系统环境变量中配置SPEECH_KEY和SPEECH_REGION，或者在配置界面中单独配置。
   4. **`语音转文本模型`** 支持本地模型whisper，fast-whisper，支持Azure在线语音转文本服务，需要提供Azure的API Key。也可以在系统环境变量中配置SPEECH_KEY和SPEECH_REGION，或者在配置界面中单独配置。
   5. **`图像识别模型`** 支持本地模型blip-image-captioning-large。
@@ -469,7 +479,44 @@
 
   2. **`代码解释器`**
 
-      给语言模型提供代码执行功能，为大脑加上行动力。`该功能还未实现`
+      给语言模型提供代码执行功能，为大脑加上行动力。
+
+      已添加对Keras-llm-interpreter代码解释器的支持。Keras-llm-interpreter提供两种模式为用户使用：第一种是本地执行体模式，这种模式是在本地PC上运行代码，所以该模式可以运行修改本地PC的环境；第二种是Docker镜像模式，它提供了更为安全的运行模式，因为是在沙盒中运行，所以运行代码的效果将不会影响本地PC的环境。
+
+      (1) 本地执行体模式
+
+      请先配置本地执行体的运行环境：
+      ```bash
+        pip install ipykernel
+        pip install ipython
+
+        python -m ipykernel install --name "python3" --user
+      ```
+
+      (2) Docker镜像模式
+
+      请先下载Docker镜像：
+      ```bash
+        1. 执行命令下载镜像 
+           docker pull smalltong02/keras-interpreter-terminal
+
+        2. 使用以下命令部署容器，请按照需求修改端口。
+           docker run -d -p 20020:20020 smalltong02/keras-interpreter-terminal
+
+        3. 在Docker主界面中检查镜像部署是否成功，并确保镜像已经启动，并在端口20020上监听
+      ```
+
+      (3) 开启代码解释器并运行任务演示：
+
+      开启代码解释器特性：
+      ![Image1](./img/keras_interpreter_1.png)
+
+      加载本地模型Qwen1.5-7B-Chat，并开始需要运行代码完成的任务：
+      ![Image1](./img/keras_interpreter_2.png)
+
+      模型编写代码，并调用本地代码解释器运行代码后，返回正确的输出给用户：
+      ![Image1](./img/keras_interpreter_3.png)
+
 
   3. **`语音识别模型`**
 
@@ -506,7 +553,7 @@
 
       ![Image1](./img/dynamic_image_1.gif)
 
-  6. **`网络检索`**
+  5. **`网络检索`**
 
       给语言模型提供网络检索功能，为大脑加上从网络上检索最新知识的能力。
 
@@ -530,7 +577,7 @@
 
       **`支持smart功能，smart功能在回答问题时会让模型自主决定是否使用搜索引擎。`**
 
-  7. **`函数定义`**
+  6. **`函数定义`**
 
       给语言模型提供函数调用功能，为大脑加上使用工具的能力。预计支持Zapier，n8n等自动化平台。`该功能还未实现`
 
