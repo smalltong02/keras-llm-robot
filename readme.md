@@ -31,6 +31,19 @@ The project inherits from the Langchain-Chatchat project(https://github.com/chat
 
 ## New Feature Updates
 
+- 🚀 Update Log for 2024-04-15
+  1. Support for models Orion-14B-Chat, Orion-14B-LongChat and Orion-14B-Chat-Int4. To correctly load the model and perform inference, please install the `flash-attn` library (currently supported only on Linux and Windows).
+  ```bash
+  # download URL for linux:
+  https://github.com/Dao-AILab/flash-attention/releases
+
+  # download URL for Windows:
+  https://github.com/bdashore3/flash-attention/releases
+
+  # install command:
+  pip install *.whl
+  ```
+
 - 🚀 Update Log for 2024-04-14
   1. Support for the keras-llm-interpreter code interpreter, compatible with Windows, macOS, and Ubuntu operating systems. Provides locally executable binaries and Docker images for running in a sandbox environment.
   2. Support for models Qwen1.5-4B-Chat and Qwen1.5-7B-Chat.

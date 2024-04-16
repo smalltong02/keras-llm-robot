@@ -31,6 +31,19 @@
 
 ## 新特性更新日志
 
+- 🚀 2024-04-15更新日志
+  1. 支持模型Orion-14B-Chat, Orion-14B-LongChat和Orion-14B-Chat-Int4。为了正确加载模型并推理，请先安装flash-attn库（目前这个库仅支持Linux和Windows）
+  ```bash
+  # Linux版本下载URL
+  https://github.com/Dao-AILab/flash-attention/releases
+
+  # Windows版本下载URL
+  https://github.com/bdashore3/flash-attention/releases
+
+  # 使用以下命令安装
+  pip install *.whl
+  ```
+
 - 🚀 2024-04-14更新日志
   1. 支持keras-llm-interpreter代码解释器，支持Windows, Macos和Ubuntu操作系统，并提供本地可运行的执行文件和在沙盒环境中运行的Docker镜像。
   2. 支持模型Qwen1.5-4B-Chat和Qwen1.5-7B-Chat。

@@ -909,6 +909,36 @@
                         "preset": "default",
                         "load_type": "fastchat",
                         "Huggingface": "Qwen/Qwen-14B-Chat-Int4"
+                    },
+                    "Orion-14B-Chat": {
+                        "path": "models/llm/Orion-14B-Chat",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "fastchat",
+                        "Huggingface": "OrionStarAI/Orion-14B-Chat"
+                    },
+                    "Orion-14B-LongChat": {
+                        "path": "models/llm/Orion-14B-LongChat",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "fastchat",
+                        "Huggingface": "OrionStarAI/Orion-14B-LongChat"
+                    },
+                    "Orion-14B-Chat-Int4": {
+                        "path": "models/llm/Orion-14B-Chat-Int4",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "fastchat",
+                        "Huggingface": "OrionStarAI/Orion-14B-Chat-Int4"
                     }
                 },
                 "34B Model": {
