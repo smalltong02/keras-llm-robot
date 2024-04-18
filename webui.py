@@ -9,6 +9,7 @@ from WebUI.configs import HTTPX_DEFAULT_TIMEOUT
 from WebUI.webui_pages.dialogue.dialogue import dialogue_page
 from WebUI.webui_pages.model_configuration.configuration import configuration_page
 from WebUI.webui_pages.tools_agent.toolsagent import tools_agent_page
+from WebUI.webui_pages.ai_generator.aigenerator import ai_generator_page
 
 def api_address() -> str:
     host = API_SERVER["host"]
@@ -46,6 +47,10 @@ if __name__ == "__main__":
             "icon": "archive-fill",
             "func": tools_agent_page,
         },
+        "AI Generator": {
+            "icon": "bi bi-robot",
+            "func": ai_generator_page,
+        }
     }
 
     with st.sidebar:
