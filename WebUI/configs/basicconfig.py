@@ -147,9 +147,9 @@ def GetModelInfoByName(webui_config: Dict, name : str):
             if name in modellist:
                 model_size = ModelSize(provider_size % (len(ModelSize) - 1))
                 model_subtype = ModelSubType.Unknown
-                if name == "gpt-4-vision-preview":
+                if name == "gpt-4-vision-preview" or name == "gpt-4-turbo-2024-04-09":
                     model_subtype = ModelSubType.VisionChatModel
-                if name == "gemini-pro-vision":
+                if name == "gemini-pro-vision" or name == "gemini-1.5-pro-latest":
                     model_subtype = ModelSubType.VisionChatModel
                 return ModelType.Online, model_size, model_subtype
             provider_size = provider_size+1
