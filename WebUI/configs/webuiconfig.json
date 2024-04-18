@@ -12,11 +12,13 @@
             "openai-api": {
                 "modellist": [
                     "gpt-3.5-turbo",
-                    "gpt-3.5-turbo-16k",
+                    "gpt-3.5-turbo-0125",
+                    "gpt-3.5-turbo-instruct",
                     "gpt-4",
                     "gpt-4-32k",
-                    "gpt-4-1106-preview",
-                    "gpt-4-vision-preview"
+                    "gpt-4-0125-preview",
+                    "gpt-4-vision-preview",
+                    "gpt-4-turbo-2024-04-09"
                 ],
                 "baseurl": "https://api.openai.com/v1",
                 "load_type": "cloud",
@@ -30,8 +32,7 @@
                 "modellist": [
                     "gemini-pro",
                     "gemini-pro-vision",
-                    "chat-bison-001",
-                    "text-bison-001"
+                    "gemini-1.5-pro-latest"
                 ],
                 "baseurl": "",
                 "load_type": "cloud",
@@ -857,6 +858,16 @@
                         "preset": "default",
                         "load_type": "fastchat",
                         "Huggingface": "google/gemma-7b-it"
+                    },
+                    "Baichuan2-7B-Chat": {
+                        "path": "models/llm/Baichuan2-7B-Chat",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "fastchat",
+                        "Huggingface": "baichuan-inc/Baichuan2-7B-Chat"
                     }
                 },
                 "13B Model": {
@@ -939,6 +950,16 @@
                         "preset": "default",
                         "load_type": "fastchat",
                         "Huggingface": "OrionStarAI/Orion-14B-Chat-Int4"
+                    },
+                    "Baichuan2-13B-Chat": {
+                        "path": "models/llm/Baichuan2-13B-Chat",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "fastchat",
+                        "Huggingface": "baichuan-inc/Baichuan2-13B-Chat"
                     }
                 },
                 "34B Model": {
