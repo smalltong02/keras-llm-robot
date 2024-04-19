@@ -1,6 +1,6 @@
 import streamlit as st
 from WebUI.webui_pages.utils import ApiRequest
-from WebUI.configs import (ModelType, ModelSize, ModelSubType, GetModelType, GetModelInfoByName, GetModelConfig, GetModelSubType, GetOnlineProvider, GetOnlineModelList, GetModeList, LocalModelExist, GetPresetPromptList,
+from WebUI.configs import (ROLEPLAY_TEMPLATES, ModelType, ModelSize, ModelSubType, GetModelType, GetModelInfoByName, GetModelConfig, GetModelSubType, GetOnlineProvider, GetOnlineModelList, GetModeList, LocalModelExist, GetPresetPromptList,
                            glob_model_type_list, glob_model_size_list, glob_model_subtype_list)
 from WebUI.webui_pages.utils import check_error_msg, check_success_msg
 from typing import Dict
@@ -186,7 +186,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
     if current_model["config"]:
         preset_list = GetPresetPromptList()
         if current_model["mtype"] == ModelType.Local or current_model["mtype"] == ModelType.Multimodal or current_model["mtype"] == ModelType.Special or current_model["mtype"] == ModelType.Code:
-            tabparams, tabquant, tabtunning, tabsearch, tabprompt = st.tabs(["Parameters", "Quantization", "Fine-Tunning", "Search Engine", "Prompt Templates"])
+            tabparams, tabquant, tabtunning, tabsearch, tabroleplay = st.tabs(["Parameters", "Quantization", "Fine-Tunning", "Search Engine", "Role Player"])
             with tabparams:
                 with st.form("Parameter"):
                     col1, col2 = st.columns(2)
@@ -416,11 +416,36 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                     st.session_state["current_search_engine"] = {"engine": current_search_engine, "smart": smart_search}
                 else:
                     st.session_state["current_search_engine"] = {}
-            with tabprompt:
-                pass
+            with tabroleplay:
+                roleplay_list = list(ROLEPLAY_TEMPLATES.keys())
+                current_roleplay_state = st.session_state.get("current_roleplayer", {})
+                if current_roleplay_state:
+                    role_enable = True
+                    role_index = roleplay_list.index(current_roleplay_state["roleplayer"])
+                else:
+                    role_index = 0
+                    role_enable = False
+                with st.form("Roleplay"):
+                    current_roleplayer = st.selectbox(
+                        "Please Select Role Player",
+                        roleplay_list,
+                        index=role_index,
+                    )
+                    role_enable = st.checkbox("Enable", value=role_enable, help="After enabling, The Role Play feature will activate.")
+                    save_parameters = st.form_submit_button(
+                        "Save Parameters",
+                        use_container_width=True
+                    )
+                    if save_parameters:
+                        with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
+                            if role_enable:
+                                st.session_state["current_roleplayer"] = {"roleplayer": current_roleplayer}
+                            else:
+                                st.session_state["current_roleplayer"] = {}
+                            st.toast("success save configuration for Code Interpreter.", icon="✔")
         
         elif current_model["mtype"] == ModelType.Online:
-            tabparams, tabapiconfig, tabsearch, tabprompt = st.tabs(["Parameters", "API Config", "Search Engine", "Prompt Templates"])
+            tabparams, tabapiconfig, tabsearch, tabroleplay = st.tabs(["Parameters", "API Config", "Search Engine", "Role Player"])
             with tabparams:
                 with st.form("Parameters"):
                     col1, col2 = st.columns(2)
@@ -532,8 +557,33 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                 else:
                     st.session_state["current_search_engine"] = {}
                     
-            with tabprompt:
-                pass
+            with tabroleplay:
+                roleplay_list = list(ROLEPLAY_TEMPLATES.keys())
+                current_roleplay_state = st.session_state.get("current_roleplayer", {})
+                if current_roleplay_state:
+                    role_enable = True
+                    role_index = roleplay_list.index(current_roleplay_state["roleplayer"])
+                else:
+                    role_index = 0
+                    role_enable = False
+                with st.form("Roleplay"):
+                    current_roleplayer = st.selectbox(
+                        "Please Select Role Player",
+                        roleplay_list,
+                        index=role_index,
+                    )
+                    role_enable = st.checkbox("Enable", value=role_enable, help="After enabling, The Role Play feature will activate.")
+                    save_parameters = st.form_submit_button(
+                        "Save Parameters",
+                        use_container_width=True
+                    )
+                    if save_parameters:
+                        with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
+                            if role_enable:
+                                st.session_state["current_roleplayer"] = {"roleplayer": current_roleplayer}
+                            else:
+                                st.session_state["current_roleplayer"] = {}
+                            st.toast("success save configuration for Code Interpreter.", icon="✔")
     
     st.session_state["current_page"] = "configuration_page"
 

@@ -208,7 +208,7 @@ async def special_chat_iterator(model: Any,
             genai.configure(api_key=apikey)
             model = genai.GenerativeModel(model_name=model_name)
             updated_history = [
-                {'parts': entry['content'], **({'role': 'model'} if entry['role'] == 'assistant' else {'role': entry['role']})}
+                {'parts': entry['content'], **({'role': 'model'} if entry['role'] == 'assistant' else {'role': "user"})}
                 for entry in history
             ]
             
@@ -991,7 +991,7 @@ def special_model_search_engine_chat(
                 genai.configure(api_key=apikey)
                 model = genai.GenerativeModel(model_name=model_name)
                 updated_history = [
-                    {'parts': entry['content'], **({'role': 'model'} if entry['role'] == 'assistant' else {'role': entry['role']})}
+                    {'parts': entry['content'], **({'role': 'model'} if entry['role'] == 'assistant' else {'role': "user"})}
                     for entry in history
                 ]
                 prompt_template = get_prompt_template("search_engine_chat", prompt_name)
