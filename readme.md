@@ -19,7 +19,7 @@ The project inherits from the Langchain-Chatchat project(https://github.com/chat
       * [1. Load Model](readme.md#1-Load-Model)
       * [2. Quantization](readme.md#2-Quantization)
       * [3. Fine-tuning](readme.md#3-Fine-tuning)
-      * [4. Prompt Templates](readme.md#4-Prompt-Templates)
+      * [4. Role Play](readme.md#4-Role-Play)
     * [Auxiliary Model Features](readme.md#Auxiliary-Model-Features)
       * [1. Retrieval](readme.md#1-Retrieval)
       * [2. Code Interpreter](readme.md#2-Code-Interpreter)
@@ -30,6 +30,10 @@ The project inherits from the Langchain-Chatchat project(https://github.com/chat
 
 
 ## New Feature Updates
+
+- 🚀 Update Log for 2024-04-19
+  1. Support for models Meta-Llama-3-8B and Meta-Llama-3-8B-Instruct.
+  2. Introduced a new feature called "Role-Playing," enabling offline or online models to take on different roles. For example, you can have the LLM Model role-play as an "English Translator," "Interviewer," "Novelist," "Product Manager," "Yogi" and more, thereby providing more specialized responses.
 
 - 🚀 Update Log for 2024-04-15
   1. Support for models Orion-14B-Chat, Orion-14B-LongChat and Orion-14B-Chat-Int4. To correctly load the model and perform inference, please install the `flash-attn` library (currently supported only on Linux and Windows).
@@ -396,9 +400,46 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
       You can fine-tune the language model using a private dataset. `Not implemented`
 
-  4. **`Prompt Templates`**
+  4. **`Role Play`**
 
-      Set up a template for prompting the language model in specific scenarios. `Not implemented`
+      You can have offline or online LLM Models play different roles to provide more professional responses.
+
+      Support english and chinese roles.
+
+      Currently supported roles include:
+
+      | Role |
+      | :---- |
+      |English Translator|
+      |Interviewer|
+      |Spoken English Teacher|
+      |Travel Guide|
+      |Advertiser|
+      |Storyteller|
+      |Stand-up Comedian|
+      |Debater|
+      |Screenwriter|
+      |Novelist|
+      |Movie Critic|
+      |Poet|
+      |Rapper|
+      |Motivational Speaker|
+      |Math Teacher|
+      |Career Counselor|
+      |Doctor|
+      |Dentist|
+      |Chef|
+      |Automobile Mechanic|
+      |Text Based Adventure Game|
+      |Fancy Title Generator|
+      |Yogi|
+      |Essay Writer|
+      |Food Critic|
+      |Machine Learning Engineer|
+      |Regex Generator|
+      |Startup Idea Generator|
+      |Product Manager|
+
   
 - ### Auxiliary Model Features
 

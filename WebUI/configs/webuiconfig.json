@@ -148,16 +148,6 @@
                 "apikey": "[Your Key]",
                 "apiproxy": "[Private Proxy]",
                 "provider": "KimiCloud"
-            },
-            "azure-api": {
-                "modellist": [],
-                "baseurl": "",
-                "load_type": "cloud",
-                "apiversion": "",
-                "preset": "default",
-                "apikey": "[Your Key]",
-                "apiproxy": "[Private Proxy]",
-                "provider": "AzureCloud"
             }
         },
         "EmbeddingModel": {
@@ -868,6 +858,26 @@
                         "preset": "default",
                         "load_type": "fastchat",
                         "Huggingface": "baichuan-inc/Baichuan2-7B-Chat"
+                    },
+                    "Meta-Llama-3-8B": {
+                        "path": "models/llm/Meta-Llama-3-8B",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "fastchat",
+                        "Huggingface": "meta-llama/Meta-Llama-3-8B"
+                    },
+                    "Meta-Llama-3-8B-Instruct": {
+                        "path": "models/llm/Meta-Llama-3-8B-Instruct",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "fastchat",
+                        "Huggingface": "meta-llama/Meta-Llama-3-8B-Instruct"
                     }
                 },
                 "13B Model": {

@@ -17,6 +17,7 @@ if not TMP_DIR.exists():
 glob_model_type_list = ["LLM Model","Multimodal Model", "Code Model", "Special Model","Online Model"]
 glob_model_size_list = ["3B Model","7B Model","13B Model","34B Model","70B Model"]
 glob_model_subtype_list = ["Vision Chat Model","Voice Chat Model","Video Chat Model"]
+glob_roleplay_list = [""]
 
 class ModelType(Enum):
     Unknown = 0
@@ -432,36 +433,36 @@ def generate_prompt_for_imagegen(model_name : str = "", prompt : str = "", image
     new_prompt = ""
     if len(model_name) == 0 or len(prompt) == 0:
         return prompt
-    if model_name == "OpenDalleV1.1" or model_name == "ProteusV0.2":        
-        new_prompt = """
-                You need to create prompts for an image generation model based on the user's question. The format of the prompts is the features of the image, separated by commas, with no any other information outputted, for example:
+    #if model_name == "OpenDalleV1.1" or model_name == "ProteusV0.2":        
+    new_prompt = """
+            You need to create prompts for an image generation model based on the user's question. The format of the prompts is the features of the image, separated by commas, with no any other information outputted, for example:
 
-                1. black fluffy gorgeous dangerous cat animal creature, large orange eyes, big fluffy ears, piercing gaze, full moon, dark ambiance, best quality, extremely detailed
-                2. an anime female general laughing, with a military cap, evil smile, sadistic, grim
-                3. John Berkey Style page,ral-oilspill, There is no road ahead,no land, Strangely,the river is still flowing,crossing the void into the mysterious unknown, The end of nothingness,a huge ripple,it is a kind of wave,and it is the law of time that lasts forever in that void, At the end of the infinite void,there is a colorful world,very hazy and mysterious,and it cannot be seen clearly,but it is real, And that's where the river goes
-                4. (impressionistic realism by csybgh), a 50 something male, working in banking, very short dyed dark curly balding hair, Afro-Asiatic ancestry, talks a lot but listens poorly, stuck in the past, wearing a suit, he has a certain charm, bronze skintone, sitting in a bar at night, he is smoking and feeling cool, drunk on plum wine, masterpiece, 8k, hyper detailed, smokey ambiance, perfect hands AND fingers
-                5. Super Closeup Portrait, action shot, Profoundly dark whitish meadow, glass flowers, Stains, space grunge style, Jeanne d'Arc wearing White Olive green used styled Cotton frock, Wielding thin silver sword, Sci-fi vibe, dirty, noisy, Vintage monk style, very detailed, hd
-                6. cinematic film still of Kodak Motion Picture Film: (Sharp Detailed Image) An Oscar winning movie for Best Cinematography a woman in a kimono standing on a subway train in Japan Kodak Motion Picture Film Style, shallow depth of field, vignette, highly detailed, high budget, bokeh, cinemascope, moody, epic, gorgeous, film grain, grainy
-                7. in the style of artgerm, comic style,3D model, mythical seascape, negative space, space quixotic dreams, temporal hallucination, psychedelic, mystical, intricate details, very bright neon colors, (vantablack background:1.5), pointillism, pareidolia, melting, symbolism, very high contrast, chiaroscuro bad quality, bad anatomy, worst quality, low quality, low resolutions, extra fingers, blur, blurry, ugly, wrongs proportions, watermark, image artifacts, lowres, ugly, jpeg artifacts, deformed, noisy image
-                8. ((OpenDAlle!)text logo:1), ~*~aesthetic~*~
-                \n
-                Please generate appropriate prompts for the user's question based on the above example. Please note do not reply to what I say. that the format should only consist of features separated by commas, with no any other information outputted, Just output a prompt.
-                \n
-                """
-        
-        new_prompt += "The user's question is: " + prompt
-        if imagesprompt:
-            new_prompt += f". Contents of this image is '{imagesprompt}'"
-        print("new_prompt: ", new_prompt)
-        return new_prompt, True
-    return prompt, False
+            1. black fluffy gorgeous dangerous cat animal creature, large orange eyes, big fluffy ears, piercing gaze, full moon, dark ambiance, best quality, extremely detailed
+            2. an anime female general laughing, with a military cap, evil smile, sadistic, grim
+            3. John Berkey Style page,ral-oilspill, There is no road ahead,no land, Strangely,the river is still flowing,crossing the void into the mysterious unknown, The end of nothingness,a huge ripple,it is a kind of wave,and it is the law of time that lasts forever in that void, At the end of the infinite void,there is a colorful world,very hazy and mysterious,and it cannot be seen clearly,but it is real, And that's where the river goes
+            4. (impressionistic realism by csybgh), a 50 something male, working in banking, very short dyed dark curly balding hair, Afro-Asiatic ancestry, talks a lot but listens poorly, stuck in the past, wearing a suit, he has a certain charm, bronze skintone, sitting in a bar at night, he is smoking and feeling cool, drunk on plum wine, masterpiece, 8k, hyper detailed, smokey ambiance, perfect hands AND fingers
+            5. Super Closeup Portrait, action shot, Profoundly dark whitish meadow, glass flowers, Stains, space grunge style, Jeanne d'Arc wearing White Olive green used styled Cotton frock, Wielding thin silver sword, Sci-fi vibe, dirty, noisy, Vintage monk style, very detailed, hd
+            6. cinematic film still of Kodak Motion Picture Film: (Sharp Detailed Image) An Oscar winning movie for Best Cinematography a woman in a kimono standing on a subway train in Japan Kodak Motion Picture Film Style, shallow depth of field, vignette, highly detailed, high budget, bokeh, cinemascope, moody, epic, gorgeous, film grain, grainy
+            7. in the style of artgerm, comic style,3D model, mythical seascape, negative space, space quixotic dreams, temporal hallucination, psychedelic, mystical, intricate details, very bright neon colors, (vantablack background:1.5), pointillism, pareidolia, melting, symbolism, very high contrast, chiaroscuro bad quality, bad anatomy, worst quality, low quality, low resolutions, extra fingers, blur, blurry, ugly, wrongs proportions, watermark, image artifacts, lowres, ugly, jpeg artifacts, deformed, noisy image
+            8. ((OpenDAlle!)text logo:1), ~*~aesthetic~*~
+            \n
+            Please generate appropriate prompts for the user's question based on the above example. Please note do not reply to what I say. that the format should only consist of features separated by commas, with no any other information outputted, Just output a prompt.
+            \n
+            """
+    
+    new_prompt += "The user's question is: " + prompt
+    if imagesprompt:
+        new_prompt += f". Contents of this image is '{imagesprompt}'"
+    print("new_prompt: ", new_prompt)
+    return new_prompt, True
+    #return prompt, False
 
 def generate_prompt_for_smart_search(prompt : str = ""):
     new_prompt = "You are an AI assistant, answering questions based on user inquiries. If you are absolutely certain of the answer to the question, please answer it to the best of your ability and refrain from returning the 'search_engine' command. If you don't know how to answer the question or you require real-time information or need to search the internet before answering questions, then please only return the command: 'search_engine'. \n\n User's question: " + prompt
     return new_prompt
 
 def use_search_engine(text : str = ""):
-    return "search_engine" in text
+    return "search_engine" in text.lower()
 
 def ConvertCompletionRequestToHistory(request: ChatCompletionRequest):
     messages = request.messages

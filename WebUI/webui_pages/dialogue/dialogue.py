@@ -13,6 +13,7 @@ from aiortc.contrib.media import MediaRecorder
 from WebUI.configs.basicconfig import (TMP_DIR, ModelType, ModelSize, ModelSubType, GetModelInfoByName, GetTypeName, generate_prompt_for_imagegen, generate_prompt_for_smart_search, 
                                        use_search_engine, glob_multimodal_vision_list, glob_multimodal_voice_list, glob_multimodal_video_list)
 from WebUI.configs.prompttemplates import PROMPT_TEMPLATES
+from WebUI.configs.roleplaytemplates import ROLEPLAY_TEMPLATES
 from io import BytesIO
 from typing import List, Dict, Any
 
@@ -134,6 +135,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
     current_smart = False
     current_search_engine = {}
     code_interpreter = {}
+    role_player = {}
     if st.session_state.get("current_search_engine"):
         current_search_engine = st.session_state["current_search_engine"]
         current_engine_name = current_search_engine["engine"]
@@ -141,6 +143,9 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
     if st.session_state.get("current_interpreter"):
         current_interpreter = st.session_state["current_interpreter"]
         code_interpreter = current_interpreter["interpreter"]
+    if st.session_state.get("current_roleplayer"):
+        current_role_player = st.session_state["current_roleplayer"]
+        role_player = current_role_player
     modelinfo : Dict[str, any] = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str}
     print("voicemodel: ", voicemodel)
     print("imagerecognition_model: ", imagerecognition_model)
@@ -148,6 +153,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
     print("musicgeneration_model: ", musicgeneration_model)
     print("search_engine: ", current_search_engine)
     print("code_interpreter: ", code_interpreter)
+    print("role_player: ", role_player)
 
     dialogue_turns = chatconfig.get("dialogue_turns", 5)
     disabled = False
@@ -598,6 +604,14 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                                 new_prompt = generate_prompt_for_smart_search(prompt)
                             else:
                                 new_prompt = prompt
+                            if role_player:
+                                role_template = ROLEPLAY_TEMPLATES[role_player["roleplayer"]][role_player["language"]]
+                                history = [{
+                                    'content': f'{role_template}',
+                                    'role': 'system'
+                                }] + history
+                                new_prompt = ROLEPLAY_TEMPLATES[role_player["roleplayer"]][role_player["language"]+'-prompt'].format(prompt=new_prompt)
+                                print("ROLEPLAY_TEMPLATES: ", new_prompt)
                             r = api.chat_chat(new_prompt,
                                             imagesdata=imagesdata,
                                             audiosdata=audiosdata,

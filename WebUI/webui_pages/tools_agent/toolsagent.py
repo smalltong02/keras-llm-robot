@@ -68,10 +68,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
     
     if running_model == "":
         running_model = "None"
-    st.caption(
-            f"""<h1 style="font-size: 1.5em; text-align: center; color: #3498db;">Running LLM Model: {running_model}</h1>""",
-            unsafe_allow_html=True,
-        )
+
     tabretrieval, tabinterpreter, tabspeech, tabvoice, tabimager, tabimageg, tabmusic = st.tabs(["Retrieval", "Code Interpreter", "Text-to-Voice", "Voice-to-Text", "Image Recognition", "Image Generation", "Music"])
     with tabretrieval:
         kb_list = {}
