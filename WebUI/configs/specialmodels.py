@@ -385,7 +385,13 @@ async def special_chat_iterator(model: Any,
                 secretkey = "EMPTY"
 
             chat_comp = qianfan.ChatCompletion(ak=apikey, sk=secretkey)
-            messages = history
+            system_list = []
+            if history and history[0]["role"] == "system":
+                system_list = [history.pop(0)]
+                system_list[0]['role'] = "user"
+                system_list.append({"role": "assistant", "content": "OK!"})
+
+            messages = system_list + history
             messages.append({'role': "user",
                          'content': query})
             responses = chat_comp.do(model=model_name, messages=messages, stream=True)

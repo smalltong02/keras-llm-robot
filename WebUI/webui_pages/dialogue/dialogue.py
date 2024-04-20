@@ -145,7 +145,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
         code_interpreter = current_interpreter["interpreter"]
     if st.session_state.get("current_roleplayer"):
         current_role_player = st.session_state["current_roleplayer"]
-        role_player = current_role_player["roleplayer"]
+        role_player = current_role_player
     modelinfo : Dict[str, any] = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str}
     print("voicemodel: ", voicemodel)
     print("imagerecognition_model: ", imagerecognition_model)
@@ -605,11 +605,13 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                             else:
                                 new_prompt = prompt
                             if role_player:
-                                role_template = ROLEPLAY_TEMPLATES[role_player]["system"]
+                                role_template = ROLEPLAY_TEMPLATES[role_player["roleplayer"]][role_player["language"]]
                                 history = [{
                                     'content': f'{role_template}',
                                     'role': 'system'
                                 }] + history
+                                new_prompt = ROLEPLAY_TEMPLATES[role_player["roleplayer"]][role_player["language"]+'-prompt'].format(prompt=new_prompt)
+                                print("ROLEPLAY_TEMPLATES: ", new_prompt)
                             r = api.chat_chat(new_prompt,
                                             imagesdata=imagesdata,
                                             audiosdata=audiosdata,
