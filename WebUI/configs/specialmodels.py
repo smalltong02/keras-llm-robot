@@ -50,20 +50,38 @@ def load_pipeline_model(app: FastAPI, model_name, model_path, device):
     model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype="auto", device_map=device, trust_remote_code=True)
     tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
     streamer = TextIteratorStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
+    configinst = InnerJsonConfigWebUIParse()
+    webui_config = configinst.dump()
+    chatconfig = webui_config.get("ChatConfiguration")
+    temperature = chatconfig.get("temperature")
+    top_p = chatconfig.get("top_p")
+    repetition_penalty = chatconfig.get("repetition_penalty")["cur"]
+    tokens_length = chatconfig.get("tokens_length")["cur"]
     pipe = pipeline(
         "text-generation",
         model=model,
         tokenizer=tokenizer,
-        max_length=1024,
+        max_length=tokens_length,
         do_sample=True,
-        temperature=0.7,
-        top_p=0.95,
-        repetition_penalty=1.2,
+        temperature=temperature,
+        top_p=top_p,
+        repetition_penalty=repetition_penalty,
         streamer=streamer
     )
     pipe.model.config.pad_token_id = pipe.model.config.eos_token_id
+    if model_name.startswith("phi"):
+        pipe.model.config.eos_token_id = tokenizer.eos_token_id
+        pipe.model.config.pad_token_id = pipe.model.config.eos_token_id
+    elif model_name.startswith("Meta-Llama-3"):
+        terminators = [
+            tokenizer.eos_token_id,
+            tokenizer.convert_tokens_to_ids("<|eot_id|>")
+        ]
+        pipe.model.config.eos_token_id = terminators
+        pipe.model.config.pad_token_id = tokenizer.eos_token_id
     llm_model = HuggingFacePipeline(pipeline=pipe)
     app._model = llm_model
+    app._tokenizer = tokenizer
     app._streamer = streamer
     app._model_name = model_name
 
@@ -109,6 +127,7 @@ def init_special_models(app: FastAPI, args):
         load_llamacpp_model(app=app, model_name=model_name, model_path=model_path)
 
 async def special_chat_iterator(model: Any,
+    tokenizer: Any,
     query: str,
     imagesdata: List[str],
     audiosdata: List[str],
@@ -146,10 +165,40 @@ async def special_chat_iterator(model: Any,
         from langchain.prompts import PromptTemplate
         modelconfig = GetModelConfig(webui_config, modelinfo)
         loadtype = modelconfig["load_type"]
-        presetname = modelconfig["preset"]
-        if loadtype != "llamacpp" and loadtype != "pipeline":
-            pass
-        else:
+        if loadtype == "pipeline":
+            prompt = history
+            prompt.append({'role': "user",
+                         'content': "{input}"})
+
+            messages = tokenizer.apply_chat_template(
+                    prompt,
+                    tokenize=False, 
+                    add_generation_prompt=True
+            )
+            prompt = PromptTemplate(template=messages, input_variables=["input"])
+            chain = LLMChain(prompt=prompt, llm=model)
+            def running_chain(chain, query):
+                chain.run(query)
+                print("running_chain exit!")
+            
+            thread = threading.Thread(target=running_chain, args=(chain, query))
+            thread.start()
+            if loadtype == "pipeline":
+                streamer = async_callback
+                for chunk in streamer:
+                    if chunk is not None:
+                        print(chunk, end="")
+                        if speak_handler: 
+                            speak_handler.on_llm_new_token(chunk)
+                        yield json.dumps(
+                            {"text": chunk, "chat_history_id": chat_history_id},
+                            ensure_ascii=False)
+                        await asyncio.sleep(0.1)
+                print("async_callback exit!")
+            if speak_handler: 
+                speak_handler.on_llm_end(None)
+        elif loadtype == "llamacpp":
+            presetname = modelconfig["preset"]
             prompttemplate = GeneratePresetPrompt(presetname)
             if len(prompttemplate):
                 input_variables = prompttemplate["input_variables"]
@@ -162,38 +211,22 @@ async def special_chat_iterator(model: Any,
                 thread = threading.Thread(target=running_chain, args=(chain, input_variables, query))
                 thread.start()
                 noret = False
-                if loadtype == "pipeline":
-                    streamer = async_callback
-                    for chunk in streamer:
-                        if chunk is not None:
-                            print(chunk, end="")
+                while True:
+                    chunk = async_callback.get_tokens()
+                    if chunk is not None:
+                        print(chunk, end="")
+                        if noret is False:
+                            noret = clean_special_text(chunk, prompttemplate)
                             if noret is False:
-                                noret = clean_special_text(chunk, prompttemplate)
-                                if noret is False:
-                                    if speak_handler: 
-                                        speak_handler.on_llm_new_token(chunk)
-                                    yield json.dumps(
-                                        {"text": chunk, "chat_history_id": chat_history_id},
-                                        ensure_ascii=False)
-                                    await asyncio.sleep(0.1)
-                    print("async_callback exit!")
-                elif loadtype == "llamacpp":
-                    while True:
-                        chunk = async_callback.get_tokens()
-                        if chunk is not None:
-                            print(chunk, end="")
-                            if noret is False:
-                                noret = clean_special_text(chunk, prompttemplate)
-                                if noret is False:
-                                    if speak_handler: 
-                                        speak_handler.on_llm_new_token(chunk)
-                                    yield json.dumps(
-                                        {"text": chunk, "chat_history_id": chat_history_id},
-                                        ensure_ascii=False)
-                                    await asyncio.sleep(0.1)
-                        if not thread.is_alive():
-                            print("async_callback exit!")
-                            break
+                                if speak_handler: 
+                                    speak_handler.on_llm_new_token(chunk)
+                                yield json.dumps(
+                                    {"text": chunk, "chat_history_id": chat_history_id},
+                                    ensure_ascii=False)
+                                await asyncio.sleep(0.1)
+                    if not thread.is_alive():
+                        print("async_callback exit!")
+                        break
                 if speak_handler: 
                     speak_handler.on_llm_end(None)
     elif modelinfo["mtype"] == ModelType.Online:
@@ -410,6 +443,7 @@ async def special_chat_iterator(model: Any,
 
 def special_model_chat(
     model: Any,
+    tokenizer: Any,
     async_callback: Any,
     modelinfo: Any,
     query: str,
@@ -426,6 +460,7 @@ def special_model_chat(
 ):    
     return StreamingResponse(special_chat_iterator(
                                             model=model,
+                                            tokenizer=tokenizer,
                                             async_callback=async_callback,
                                             query=query,
                                             imagesdata=imagesdata,
@@ -938,7 +973,7 @@ def model_chat(
     modelinfo["mtype"], modelinfo["msize"], modelinfo["msubtype"] = GetModelInfoByName(webui_config, model_name)
     modelinfo["mname"] = model_name
     if modelinfo["mtype"] == ModelType.Special or modelinfo["mtype"] == ModelType.Online:
-        return special_model_chat(app._model, app._streamer, modelinfo, query, imagesdata, audiosdata, videosdata, imagesprompt, history, stream, speechmodel, temperature, max_tokens, prompt_name)
+        return special_model_chat(app._model, app._tokenizer, app._streamer, modelinfo, query, imagesdata, audiosdata, videosdata, imagesprompt, history, stream, speechmodel, temperature, max_tokens, prompt_name)
     elif modelinfo["mtype"] == ModelType.Code:
         return code_model_chat(app._model, app._tokenizer, app._streamer, modelinfo, query, imagesdata, audiosdata, videosdata, imagesprompt, history, False, speechmodel, temperature, max_tokens, prompt_name)
     elif modelinfo["mtype"] == ModelType.Multimodal:

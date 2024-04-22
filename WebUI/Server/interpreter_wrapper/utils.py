@@ -43,6 +43,20 @@ def extract_markdown_code_blocks(text, languages=None):
     else:
         pattern = r'```(' + '|'.join(languages) + r')\n([\s\S]*?)\n```'
     code_blocks = re.findall(pattern, text, re.IGNORECASE)
+    if not code_blocks:
+        def is_valid_python_code(code_str):
+            import ast
+            try:
+                ast.parse(code_str)
+                return True
+            except SyntaxError:
+                return False
+
+        pattern = r'```\n([\s\S]*?)\n```'
+        unknown_blocks = re.findall(pattern, text, re.IGNORECASE)
+        for block in unknown_blocks:
+            if is_valid_python_code(block):
+                code_blocks.append(('Python', block))
     #code_blocks = [(item[0].strip(), item[1].strip()) for item in code_blocks]
     return code_blocks
 
@@ -61,7 +75,14 @@ def split_with_code_blocks(initial_string, delimiters):
             result_list.append({"role": "assistant", "type": "code", "content": item})
             start = index + len(item)
         else:
-            result_list.append({"role": "assistant", "type": "message", "content": initial_string[start:]})
+            new_item = item.replace("```Python\n", "```\n")
+            index = initial_string.find(new_item, start)
+            if index != -1:
+                result_list.append({"role": "assistant", "type": "message", "content": initial_string[start:index]})
+                result_list.append({"role": "assistant", "type": "code", "content": new_item})
+                start = index + len(new_item)
+            else:
+                result_list.append({"role": "assistant", "type": "message", "content": initial_string[start:]})
             break
 
     if index != -1:

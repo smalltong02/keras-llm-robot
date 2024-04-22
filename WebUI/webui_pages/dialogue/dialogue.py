@@ -543,8 +543,17 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                             if error_msg := check_error_msg(t):  # check whether error occured
                                 st.error(error_msg)
                                 break
-                            text += t.get("text", "")
-                            chat_box.update_msg(text, element_index=0)
+                            content = t.get("text", "")
+                            if content.startswith("image-data:"):
+                                chat_box.ai_say([""])
+                                decoded_data = base64.b64decode(content[len("image-data:"):])
+                                gen_image=Image(BytesIO(decoded_data))
+                                chat_box.update_msg(gen_image, element_index=0, metadata=metadata)
+                                chat_box.ai_say(["Think..."])
+                                text = ""
+                            else:
+                                text += content
+                                chat_box.update_msg(text, element_index=0)
 
                         chat_box.update_msg(text, element_index=0, streaming=False, metadata=metadata)
                         chat_box.show_feedback(**feedback_kwargs,

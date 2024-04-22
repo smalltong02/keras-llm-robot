@@ -34,6 +34,7 @@ class Terminal(BaseTerminal):
         self.config = None
         if self.valid:
              self.config = self.get_terminal_config()
+             self.reinit_terminal()
 
     def get_languages(self):
          if self.config is not None:
@@ -88,6 +89,15 @@ class Terminal(BaseTerminal):
             pass
         return False
     
+    def reinit_terminal(self):
+        url = self.terminal_url + "/reinit_terminal"
+        try:
+            with connect(url) as websocket:
+                websocket.send(" ")
+        except Exception as _:
+                    pass
+        return None
+    
     def get_terminal_config(self):
         url = self.terminal_url + "/get_config"
         try:
@@ -119,6 +129,15 @@ class Terminal(BaseTerminal):
                                 yield answer
                                 continue
                             break
+                        if response["format"] == "image":
+                            image_content = response["content"]
+                            answer = "image-data:" + image_content
+                            print(f"received data: {answer}")
+                            if response["status_code"] == status_code.STATUS_CODE_TRUNK:
+                                yield answer
+                                continue
+                        if response["format"] == "file":
+                             pass
                     else:
                         answer = response["content"]
                         print(f"received error: {answer}")
