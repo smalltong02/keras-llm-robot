@@ -647,26 +647,6 @@
                         "load_type": "fastchat",
                         "Huggingface": "lmsys/fastchat-t5-3b-v1.0"
                     },
-                    "gemma-2b": {
-                        "path": "models/llm/gemma-2b",
-                        "device": "auto",
-                        "maxmemory": 20,
-                        "cputhreads": 4,
-                        "loadbits": 16,
-                        "preset": "default",
-                        "load_type": "fastchat",
-                        "Huggingface": "google/gemma-2b"
-                    },
-                    "gemma-2b-it": {
-                        "path": "models/llm/gemma-2b-it",
-                        "device": "auto",
-                        "maxmemory": 20,
-                        "cputhreads": 4,
-                        "loadbits": 16,
-                        "preset": "default",
-                        "load_type": "fastchat",
-                        "Huggingface": "google/gemma-2b-it"
-                    },
                     "Qwen1.5-4B-Chat": {
                         "path": "models/llm/Qwen1.5-4B-Chat",
                         "device": "auto",
@@ -829,26 +809,6 @@
                         "load_type": "fastchat",
                         "Huggingface": "mistralai/Mistral-7B-Instruct-v0.2"
                     },
-                    "gemma-7b": {
-                        "path": "models/llm/gemma-7b",
-                        "device": "auto",
-                        "maxmemory": 20,
-                        "cputhreads": 4,
-                        "loadbits": 16,
-                        "preset": "default",
-                        "load_type": "fastchat",
-                        "Huggingface": "google/gemma-7b"
-                    },
-                    "gemma-7b-it": {
-                        "path": "models/llm/gemma-7b-it",
-                        "device": "auto",
-                        "maxmemory": 20,
-                        "cputhreads": 4,
-                        "loadbits": 16,
-                        "preset": "default",
-                        "load_type": "fastchat",
-                        "Huggingface": "google/gemma-7b-it"
-                    },
                     "Baichuan2-7B-Chat": {
                         "path": "models/llm/Baichuan2-7B-Chat",
                         "device": "auto",
@@ -868,16 +828,6 @@
                         "preset": "default",
                         "load_type": "fastchat",
                         "Huggingface": "meta-llama/Meta-Llama-3-8B"
-                    },
-                    "Meta-Llama-3-8B-Instruct": {
-                        "path": "models/llm/Meta-Llama-3-8B-Instruct",
-                        "device": "auto",
-                        "maxmemory": 20,
-                        "cputhreads": 4,
-                        "loadbits": 16,
-                        "preset": "default",
-                        "load_type": "fastchat",
-                        "Huggingface": "meta-llama/Meta-Llama-3-8B-Instruct"
                     }
                 },
                 "13B Model": {
@@ -1004,6 +954,16 @@
                         "preset": "default",
                         "load_type": "fastchat",
                         "Huggingface": "meta-llama/Llama-2-70b-chat-hf"
+                    },
+                    "Meta-Llama-3-70B": {
+                        "path": "models/llm/Meta-Llama-3-70B",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "fastchat",
+                        "Huggingface": "meta-llama/Meta-Llama-3-70B"
                     }
                 }
             },
@@ -1155,6 +1115,16 @@
                         "preset": "Phi 2",
                         "load_type": "pipeline",
                         "Huggingface": "microsoft/phi-2"
+                    },
+                    "gemma-2b-it": {
+                        "path": "models/llm/gemma-2b-it",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "ChatML",
+                        "load_type": "pipeline",
+                        "Huggingface": "google/gemma-2b-it"
                     }
                 },
                 "7B Model": {
@@ -1177,6 +1147,26 @@
                         "preset": "ChatML",
                         "load_type": "pipeline",
                         "Huggingface": "teknium/OpenHermes-2.5-Mistral-7B"
+                    },
+                    "gemma-7b-it": {
+                        "path": "models/llm/gemma-7b-it",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "ChatML",
+                        "load_type": "pipeline",
+                        "Huggingface": "google/gemma-7b-it"
+                    },
+                    "Meta-Llama-3-8B-Instruct": {
+                        "path": "models/llm/Meta-Llama-3-8B-Instruct",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "ChatML",
+                        "load_type": "pipeline",
+                        "Huggingface": "meta-llama/Meta-Llama-3-8B-Instruct"
                     }
                 },
                 "13B Model": {},
@@ -1202,7 +1192,18 @@
                         "Huggingface": "TheBloke/Mixtral-8x7B-v0.1-GGUF"
                     }
                 },
-                "70B Model": {}
+                "70B Model": {
+                    "Meta-Llama-3-70B-Instruct": {
+                        "path": "models/llm/Meta-Llama-3-70B-Instruct",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "ChatML",
+                        "load_type": "pipeline",
+                        "Huggingface": "meta-llama/Meta-Llama-3-70B-Instruct"
+                    }
+                }
             }
         }
     },
@@ -1281,9 +1282,9 @@
         "no_repeat_ngram_size": 0,
         "do_samples": false,
         "tokens_length": {
-            "cur": 1000,
+            "cur": 8000,
             "min": 0,
-            "max": 5000,
+            "max": 16384,
             "step": 10
         },
         "seed": {

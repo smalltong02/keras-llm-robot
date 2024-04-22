@@ -133,6 +133,7 @@ def completion_stream_generator(app: FastAPI, request: ChatCompletionRequest):
 
         response = special_chat_iterator(
             model=app._model,
+            tokenizer=app._tokenizer,
             async_callback=app._streamer,
             modelinfo=modelinfo,
             query=query,

@@ -151,7 +151,6 @@ class KerasInterpreter(BaseInterpreter):
             }
             return
 
-
         continuous_no_code = 0
         continuous_task_cycles = 0
         query = history.pop()
@@ -203,21 +202,36 @@ class KerasInterpreter(BaseInterpreter):
                     elif response.get("type") == "code":
                         continuous_no_code = 0
                         code_answer = ""
-                        code_block = code_blocks[index]
-                        for trunk in self.terminal.run(code_block[0], code_block[1]):
-                            code_answer += trunk
                         response["content"] = "\n" + response["content"]
                         yield response
+                        code_block = code_blocks[index]
                         yield {
-                            "role": "terminal",
-                            "type": "code",
-                            "format": "output",
-                            "content": f'\n\nThe code execution is complete, returning the result: {code_answer}',
-                        }
+                                    "role": "terminal",
+                                    "type": "code",
+                                    "format": "output",
+                                    "content": "\n\nExecution completed, the result is: ",
+                                }
+                        for trunk in self.terminal.run(code_block[0], code_block[1]):
+                            if trunk.startswith("image-data:"):
+                                yield {
+                                    "role": "terminal",
+                                    "type": "code",
+                                    "format": "output",
+                                    "content": f'{trunk}',
+                                }
+                                code_answer += "\nSuccessfully drew a picture for the user.\n"
+                            else:
+                                code_answer += trunk
+                                yield {
+                                    "role": "terminal",
+                                    "type": "code",
+                                    "format": "output",
+                                    "content": f'{trunk}',
+                                }
                         query = {
                             "role": "user",
                             "type": "message",
-                            "content": f'The code execution is complete, returning the result: {code_answer}',
+                            "content": f'Execution completed, the result is: "{code_answer}", If the entire task I asked for is done, Please repeat the final result again and say exactly **All tasks done!** If it is impossible, say **The task is impossible.**',
                         }
                         index += 1
 
@@ -248,6 +262,12 @@ class KerasInterpreter(BaseInterpreter):
                     "content": "\n\n" + "Task is impossible!",
                 }
                 break
+            yield {
+                "role": "assistant",
+                "type": "message",
+                "format": "output",
+                "content": "\n\n",
+            }
         return
 
     def _streaming_chat(self, message=None):
