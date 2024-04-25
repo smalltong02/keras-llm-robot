@@ -187,7 +187,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
     if current_model["config"]:
         preset_list = GetPresetPromptList()
         if current_model["mtype"] == ModelType.Local or current_model["mtype"] == ModelType.Multimodal or current_model["mtype"] == ModelType.Special or current_model["mtype"] == ModelType.Code:
-            tabparams, tabsearch, tabroleplay, tabquant, tabtunning = st.tabs(["Parameters", "Search Engine", "Role Player", "Quantization", "Fine-Tunning"])
+            tabparams, tabsearch, tabfuncall, tabroleplay, tabquant, tabtunning = st.tabs(["Parameters", "Search Engine", "Function Calling", "Role Player", "Quantization", "Fine-Tunning"])
             with tabparams:
                 with st.form("Parameter"):
                     col1, col2 = st.columns(2)
@@ -336,25 +336,25 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                         "Methods",
                         methods_lists,
                         index=0,
-                        disabled=disabled
+                        disabled=True
                     )
                     st.selectbox(
                         "Quantization Bits",
                         quantization_list,
                         index=0,
-                        disabled=disabled
+                        disabled=True
                     )
                     format_lists = ["GPTQ", "GGUF", "AWQ"]
                     st.selectbox(
                         "Format",
                         format_lists,
                         index=0,
-                        disabled=disabled
+                        disabled=True
                     )
                     submit_quantization = st.form_submit_button(
                         "Launch",
                         use_container_width=True,
-                        disabled=disabled
+                        disabled=True
                     )
                     if submit_quantization:
                         st.toast("The model quantization has been successful, and the quantized file path is model/llama-2-7b-hf-16bit.bin.", icon="✔")
@@ -364,7 +364,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                     "Please select Device",
                     training_devices_list,
                     index=0,
-                    disabled=disabled
+                    disabled=True
                 )
 
             with tabsearch:
@@ -454,9 +454,11 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                             else:
                                 st.session_state["current_roleplayer"] = {}
                             st.toast("success save configuration for Code Interpreter.", icon="✔")
+            with tabfuncall:
+                pass
         
         elif current_model["mtype"] == ModelType.Online:
-            tabparams, tabapiconfig, tabsearch, tabroleplay = st.tabs(["Parameters", "API Config", "Search Engine", "Role Player"])
+            tabparams, tabapiconfig, tabsearch, tabfuncall, tabroleplay = st.tabs(["Parameters", "API Config", "Search Engine", "Function Calling", "Role Player"])
             with tabparams:
                 with st.form("Parameters"):
                     col1, col2 = st.columns(2)
@@ -605,6 +607,8 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                             else:
                                 st.session_state["current_roleplayer"] = {}
                             st.toast("success save configuration for Code Interpreter.", icon="✔")
+            with tabfuncall:
+                pass
     
     st.session_state["current_page"] = "configuration_page"
 

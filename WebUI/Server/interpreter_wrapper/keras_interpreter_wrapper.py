@@ -1,9 +1,13 @@
 import os
 import time
 import json
+import uuid
+import base64
 import traceback
 from datetime import datetime
 from enum import Enum
+from pathlib import Path
+from WebUI.configs.basicconfig import TMP_DIR
 from WebUI.Server.interpreter_wrapper.default_system_message import (default_local_system_message, default_docker_system_message, force_task_completion_message)
 from WebUI.Server.utils import fschat_openai_api_address, GetKerasInterpreterConfig
 from WebUI.Server.interpreter_wrapper.utils import (TaskResult, extract_markdown_code_blocks, split_with_code_blocks, is_task_completion)
@@ -33,7 +37,7 @@ class KerasInterpreter(BaseInterpreter):
         verbose=False,
         safe_mode=SafeModeType.OffMode,
         docker_mode=False,
-        conversation_history=True,
+        conversation_history=False,
         llm_base=fschat_openai_api_address(),
         system_message=default_local_system_message,
         custom_instructions="",
@@ -64,8 +68,8 @@ class KerasInterpreter(BaseInterpreter):
             model_name=model_name,
             api_base=llm_base,
             streaming=True,
-            temperature=0.2,
-            max_tokens=1000,
+            temperature=0.6,
+            max_tokens=5000,
             )
 
         config = GetKerasInterpreterConfig()
@@ -213,11 +217,15 @@ class KerasInterpreter(BaseInterpreter):
                                 }
                         for trunk in self.terminal.run(code_block[0], code_block[1]):
                             if trunk.startswith("image-data:"):
+                                imgpath = str(TMP_DIR / Path(str(uuid.uuid4()) + ".jpg"))
+                                decoded_data = base64.b64decode(trunk[len("image-data:"):])
+                                with open(imgpath, 'wb') as f:
+                                    f.write(decoded_data)
                                 yield {
                                     "role": "terminal",
                                     "type": "code",
                                     "format": "output",
-                                    "content": f'{trunk}',
+                                    "content": f'image-file:{imgpath}',
                                 }
                                 code_answer += "\nSuccessfully drew a picture for the user.\n"
                             else:

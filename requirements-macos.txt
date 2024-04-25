@@ -53,6 +53,7 @@ frozenlist==1.4.0
 fschat==0.2.34
 fsspec==2023.10.0
 g2pkk==0.1.2
+geocoder==1.38.1
 gitdb==4.0.11
 GitPython==3.1.40
 google-ai-generativelanguage==0.4.0
@@ -206,7 +207,7 @@ torchvision==0.16.1
 tornado==6.3.3
 tqdm==4.66.1
 trainer==0.0.36
-transformers==4.38.1
+transformers==4.40.0
 TTS==0.22.0
 typer==0.9.0
 typing-inspect==0.9.0

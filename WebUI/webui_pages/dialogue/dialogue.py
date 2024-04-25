@@ -551,6 +551,14 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                                 chat_box.update_msg(gen_image, element_index=0, metadata=metadata)
                                 chat_box.ai_say(["Think..."])
                                 text = ""
+                            elif content.startswith("image-file:"):
+                                with open(content[len("image-file:"):], "rb") as f:
+                                    image_bytes = f.read()
+                                    gen_image=Image(BytesIO(image_bytes))
+                                    chat_box.ai_say([""])
+                                    chat_box.update_msg(gen_image, element_index=0, metadata=metadata)
+                                    chat_box.ai_say(["Think..."])
+                                    text = ""
                             else:
                                 text += content
                                 chat_box.update_msg(text, element_index=0)

@@ -168,14 +168,14 @@ async def special_chat_iterator(model: Any,
         if loadtype == "pipeline":
             prompt = history
             prompt.append({'role': "user",
-                         'content': "{input}"})
+                         'content': "{{input}}"})
 
             messages = tokenizer.apply_chat_template(
                     prompt,
                     tokenize=False, 
                     add_generation_prompt=True
             )
-            prompt = PromptTemplate(template=messages, input_variables=["input"])
+            prompt = PromptTemplate(template=messages, template_format="jinja2", input_variables=["input"])
             chain = LLMChain(prompt=prompt, llm=model)
             def running_chain(chain, query):
                 chain.run(query)
