@@ -493,3 +493,26 @@ def ConvertCompletionRequestToHistory(request: ChatCompletionRequest):
     if answer is not None:
         return [], None 
     return historys, query
+
+def ExtractJsonStrings(input_string):
+    import json
+    json_data_list = []
+    stack = []
+    start = None
+
+    for i, char in enumerate(input_string):
+        if char == '{':
+            if not stack:
+                start = i
+            stack.append(char)
+        elif char == '}':
+            if stack:
+                stack.pop()
+                if not stack:
+                    json_str = input_string[start:i+1]
+                    try:
+                        json.loads(json_str)
+                        json_data_list.append(json_str)
+                    except json.JSONDecodeError:
+                        pass
+    return json_data_list

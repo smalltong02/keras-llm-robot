@@ -1353,5 +1353,8 @@
         "auto_run": true,
         "safe_mode": false
     },
-    "PromptTemplates": {}
+    "FunctionCalling": {
+        "max_calling": 5,
+        "calling_list": []
+    }
 }

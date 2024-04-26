@@ -1,3 +1,4 @@
+import copy
 import streamlit as st
 from WebUI.webui_pages.utils import ApiRequest
 from WebUI.configs import (ROLEPLAY_TEMPLATES, ModelType, ModelSize, ModelSubType, GetModelType, GetModelInfoByName, GetModelConfig, GetModelSubType, GetOnlineProvider, GetOnlineModelList, GetModeList, LocalModelExist, GetPresetPromptList,
@@ -23,7 +24,8 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
     #quantconfig = webui_config.get("QuantizationConfiguration")
     #finetunning = webui_config.get("Fine-Tunning")
     searchengine = webui_config.get("SearchEngine")
-    #prompttemplates = webui_config.get("PromptTemplates")
+    functioncalling = webui_config.get("FunctionCalling")
+    calling_enable = False
 
     running_model["mname"] = ""
     models_list = list(api.get_running_models())
@@ -455,7 +457,41 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                                 st.session_state["current_roleplayer"] = {}
                             st.toast("success save configuration for Code Interpreter.", icon="✔")
             with tabfuncall:
-                pass
+                calling_max = functioncalling.get("max_calling", 5)
+                calling_list = copy.deepcopy(functioncalling["calling_list"])
+                function_name_list = [
+                    "get_current_time",
+                    "get_current_location"
+                ]
+                current_function = st.selectbox(
+                        "Please Select Function",
+                        function_name_list,
+                        index=0,
+                    )
+                if current_function in calling_list:
+                    calling_enable = True
+                print("calling_enable-1", calling_enable)
+                with st.form("Funcall"):
+                    calling_enable = st.checkbox("Enable", key="funcall_box", value=calling_enable, help="After enabling, The function will be called automatically.")
+                    print("calling_enable-2", calling_enable)
+                    if calling_enable:
+                        if current_function not in calling_list:
+                            if len(calling_list) >= calling_max:
+                                st.toast(f"Maximum function calling ({calling_max}) limit reached!", icon="✖")
+                            else:
+                                calling_list.append(current_function)
+                    print("calling_list", calling_list)
+                    save_parameters = st.form_submit_button(
+                        "Save Parameters",
+                        use_container_width=True
+                    )
+                    if save_parameters:
+                        with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
+                            r = api.save_function_calling_config(calling_list)
+                            if msg := check_error_msg(r):
+                                st.toast(msg, icon="✖")
+                            elif msg := check_success_msg(r):
+                                st.toast("success save configuration for function calling.", icon="✔")
         
         elif current_model["mtype"] == ModelType.Online:
             tabparams, tabapiconfig, tabsearch, tabfuncall, tabroleplay = st.tabs(["Parameters", "API Config", "Search Engine", "Function Calling", "Role Player"])
