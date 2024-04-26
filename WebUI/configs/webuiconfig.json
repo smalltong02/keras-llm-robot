@@ -1355,6 +1355,9 @@
     },
     "FunctionCalling": {
         "max_calling": 5,
-        "calling_list": []
+        "calling_list": [
+            "get_current_time",
+            "get_current_location"
+        ]
     }
 }

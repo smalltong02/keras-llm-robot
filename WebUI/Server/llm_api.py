@@ -1029,3 +1029,24 @@ def save_code_interpreter_config(
         return BaseResponse(
             code=500,
             msg=f"failed to save chat configration, error: {e}")
+    
+def save_function_calling_config(
+    calling_list: list = Body(..., description="Function Calling configration information"),
+    controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])
+) -> BaseResponse:
+    try:
+        with open("WebUI/configs/webuiconfig.json", 'r+') as file:
+            jsondata = json.load(file)
+            jsondata["FunctionCalling"]["calling_list"]=calling_list
+            file.seek(0)
+            json.dump(jsondata, file, indent=4)
+            file.truncate()
+        return BaseResponse(
+            code=200,
+            msg="success save chat configration!")
+            
+    except Exception as e:
+        print(f'{e.__class__.__name__}: {e}')
+        return BaseResponse(
+            code=500,
+            msg=f"failed to save chat configration, error: {e}")

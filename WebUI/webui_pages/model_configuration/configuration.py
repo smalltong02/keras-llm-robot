@@ -457,12 +457,10 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                                 st.session_state["current_roleplayer"] = {}
                             st.toast("success save configuration for Code Interpreter.", icon="✔")
             with tabfuncall:
+                from WebUI.Server.funcall.funcall import GetFuncallList
                 calling_max = functioncalling.get("max_calling", 5)
                 calling_list = copy.deepcopy(functioncalling["calling_list"])
-                function_name_list = [
-                    "get_current_time",
-                    "get_current_location"
-                ]
+                function_name_list = GetFuncallList()
                 current_function = st.selectbox(
                         "Please Select Function",
                         function_name_list,

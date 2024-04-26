@@ -27,7 +27,6 @@ pymilvus==2.3.5
 frozenlist==1.4.0
 fschat==0.2.32
 fsspec==2023.10.0
-faster-whisper==0.10.0
 geocoder==1.38.1
 gitdb==4.0.11
 GitPython==3.1.40
