@@ -18,8 +18,7 @@ from WebUI.Server.utils import get_prompt_template
 from WebUI.Server.db.repository import add_chat_history_to_db, update_chat_history
 from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
 from langchain.tools import format_tool_to_openai_function
-from WebUI.Server.funcall.funcall import funcall_tools, tool_names
-from langchain.tools.render import render_text_description
+from WebUI.Server.funcall.funcall import funcall_tools, tool_names, GetToolsSystemPrompt
 from langchain.agents.output_parsers import OpenAIFunctionsAgentOutputParser
 from langchain_core.output_parsers import JsonOutputParser
 
@@ -59,6 +58,8 @@ async def chat(query: str = Body(..., description="User input: ", examples=["cha
         configinst = InnerJsonConfigWebUIParse()
         webui_config = configinst.dump()
         async_callback = AsyncIteratorCallbackHandler()
+        functioncalling = webui_config.get("FunctionCalling")
+        calling_enable = functioncalling.get("calling_enable", False)
         callbackslist = [async_callback]
         if len(speechmodel):
             modeltype = speechmodel.get("type", "")
@@ -79,18 +80,16 @@ async def chat(query: str = Body(..., description="User input: ", examples=["cha
             model_name=model_name,
             temperature=temperature,
             max_tokens=max_tokens,
-            #callbacks=callbackslist,
+            callbacks=callbackslist,
         )
         def tool_chain(model_output):
             tool_map = {tool.name: tool for tool in funcall_tools}
             chosen_tool = tool_map[model_output["name"]]
             return itemgetter("arguments") | chosen_tool
-
-        rendered_tools = render_text_description(funcall_tools)
-        tools_system_prompt = f"""You are an assistant that has access to the following set of tools. Here are the names and descriptions for each tool:
-        {rendered_tools}
-        Given the user input, return the name and input of the tool to use. Return your response as a JSON blob with 'name' and 'arguments' keys."""
-        system_msg = History(role="system", content=tools_system_prompt).to_msg_template(False)
+        system_msg = []
+        if calling_enable:
+            tools_system_prompt = GetToolsSystemPrompt()
+            system_msg = History(role="system", content=tools_system_prompt).to_msg_template(False)
         #functions = [format_tool_to_openai_function(t) for t in funcall_tools]
         #llm_with_tools = model.bind_functions(functions)
         #agent_chain = llm_with_tools | OpenAIFunctionsAgentOutputParser()
@@ -123,8 +122,6 @@ async def chat(query: str = Body(..., description="User input: ", examples=["cha
                 [i.to_msg_template() for i in history] + [input_msg])
             #print("chat_prompt: ", chat_prompt)
             chain = LLMChain(prompt=chat_prompt, llm=model)
-            msg = chain.invoke(query)
-            print(msg)
             # Begin a task that runs in the background.
             task = asyncio.create_task(wrap_done(
                 chain.acall({"input": query}),

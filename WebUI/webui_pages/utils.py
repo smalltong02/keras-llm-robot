@@ -1542,11 +1542,11 @@ class ApiRequest:
         return self._httpx_stream2generator(response, as_json=True)
     
     def save_function_calling_config(self,
-        calling_list: list = [],
+        function_calling: dict = {},
         controller_address: str = None,
     ):
         data = {
-            "calling_list": calling_list,
+            "function_calling": function_calling,
             "controller_address": controller_address,
         }
 
