@@ -90,12 +90,6 @@ async def chat(query: str = Body(..., description="User input: ", examples=["cha
         if calling_enable:
             tools_system_prompt = GetToolsSystemPrompt()
             system_msg = History(role="system", content=tools_system_prompt).to_msg_template(False)
-        #functions = [format_tool_to_openai_function(t) for t in funcall_tools]
-        #llm_with_tools = model.bind_functions(functions)
-        #agent_chain = llm_with_tools | OpenAIFunctionsAgentOutputParser()
-        #msg = agent_chain.invoke(query)
-        #result = tool_names[msg.tool].run(msg.tool_input)
-        #print(result)
         if len(imagesdata):
             from langchain.schema import HumanMessage
             content=[{
