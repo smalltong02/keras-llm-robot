@@ -11,7 +11,7 @@ from WebUI.configs.codemodels import code_model_chat
 from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
 from WebUI.Server.db.repository import add_chat_history_to_db, update_chat_history
 from WebUI.Server.chat.StreamHandler import StreamSpeakHandler
-from WebUI.Server.funcall.funcall import funcall_tools, GetToolsSystemPrompt
+from WebUI.Server.funcall.funcall import GetToolsSystemPrompt
 from langchain.chains import LLMChain
 from WebUI.Server.utils import FastAPI
 from typing import List, Dict, Any, Optional, AsyncIterable
@@ -167,11 +167,14 @@ async def special_chat_iterator(model: Any,
     system_msg = {}
     if calling_enable:
         tools_system_prompt = GetToolsSystemPrompt()
-        system_msg = {
-            'role': "system",
-            'content': tools_system_prompt
-        }
-        history = [system_msg] + history
+        if history and history[0].get("role", "") == "system":
+            history[0]["content"] = history[0]["content"] + "\n\n" + tools_system_prompt
+        else:
+            system_msg = {
+                'role': "system",
+                'content': tools_system_prompt
+            }
+            history = [system_msg] + history
     if modelinfo["mtype"] == ModelType.Special:
         from langchain.prompts import PromptTemplate
         modelconfig = GetModelConfig(webui_config, modelinfo)

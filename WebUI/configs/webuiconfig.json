@@ -1364,7 +1364,7 @@
         "safe_mode": false
     },
     "FunctionCalling": {
-        "calling_enable": true,
+        "calling_enable": false,
         "max_calling": 5
     }
 }

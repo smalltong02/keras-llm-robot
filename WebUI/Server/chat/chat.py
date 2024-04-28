@@ -90,6 +90,10 @@ async def chat(query: str = Body(..., description="User input: ", examples=["cha
         if calling_enable:
             tools_system_prompt = GetToolsSystemPrompt()
             system_msg = History(role="system", content=tools_system_prompt).to_msg_template(False)
+            if history and history[0].role == "system":
+                history[0].content = history[0].content + "\n\n" + tools_system_prompt
+            else:
+                history = [system_msg] + history
         if len(imagesdata):
             from langchain.schema import HumanMessage
             content=[{
@@ -112,8 +116,7 @@ async def chat(query: str = Body(..., description="User input: ", examples=["cha
 
             prompt_template = get_prompt_template("llm_chat", prompt_name)
             input_msg = History(role="user", content=prompt_template).to_msg_template(False)
-            chat_prompt = ChatPromptTemplate.from_messages( [system_msg] +
-                [i.to_msg_template() for i in history] + [input_msg])
+            chat_prompt = ChatPromptTemplate.from_messages([i.to_msg_template() for i in history] + [input_msg])
             #print("chat_prompt: ", chat_prompt)
             chain = LLMChain(prompt=chat_prompt, llm=model)
             # Begin a task that runs in the background.
