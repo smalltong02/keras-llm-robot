@@ -5,7 +5,7 @@ LLM_MODELS = [""]
 
 Agent_MODEL = None
 
-KERAS_LLM_VERSION = "1.0.0"
+KERAS_LLM_VERSION = "1.0.3"
 
 MODEL_ROOT_PATH = ""
 # auto, cuda, mps, cpu

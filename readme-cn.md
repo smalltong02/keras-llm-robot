@@ -103,19 +103,35 @@
 
 ## 功能演示
 
-  1. 演示使用了多模态在线模型gpt-4-vision-preview 加 Azure Speech to Text服务：
+  1. Llama-3-8B模型 + Keras代码解释器演示视频：
+
+  [![Alt text](https://img.youtube.com/vi/as__vi8rmDc/0.jpg)](https://youtu.be/as__vi8rmDc)
+
+  2. Phi-3-mini模型 + Keras代码解释器演示视频：
+
+  [![Alt text](https://img.youtube.com/vi/KbHqw7JnG6s/0.jpg)](https://youtu.be/KbHqw7JnG6s)
+
+  3. Llama-3-8B模型 + Function Calling演示视频：
+
+  [![Alt text](https://img.youtube.com/vi/pTthwsNhGok/0.jpg)](https://youtu.be/pTthwsNhGok)
+
+  4. Phi-3-mini模型 + Function Calling演示视频：
+
+  [![Alt text](https://img.youtube.com/vi/YubzzFBhxas/0.jpg)](https://youtu.be/YubzzFBhxas)
+
+  5. 演示使用了多模态在线模型gpt-4-vision-preview 加 Azure Speech to Text服务：
 
   [![Alt text](https://img.youtube.com/vi/7VzZqgg35Ak/0.jpg)](https://www.youtube.com/watch?v=7VzZqgg35Ak)
 
-  2. 对多模态模型gpt-4-vision-preview 和 Gemini-pro-vision：
+  6. 对多模态模型gpt-4-vision-preview 和 Gemini-pro-vision：
    
   [![Alt text](https://img.youtube.com/vi/yFK62Tn_f4Q/0.jpg)](https://www.youtube.com/watch?v=yFK62Tn_f4Q)
 
-  3. 对RAG(Retrieval Augmented Generation)功能的视频演示：
+  7. 对RAG(Retrieval Augmented Generation)功能的视频演示：
   
   [![Alt text](https://img.youtube.com/vi/dyIFLISlskI/0.jpg)](https://www.youtube.com/watch?v=dyIFLISlskI) 
 
-  4. 图像识别和图像生成功能的演示：
+  8. 图像识别和图像生成功能的演示：
   
   文生图的演示，将自然语言转换为图像生成模型的输入语言CLIP，来达到使用自然语言生图的目标:
 
