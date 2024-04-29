@@ -31,6 +31,10 @@ The project inherits from the Langchain-Chatchat project(https://github.com/chat
 
 ## New Feature Updates
 
+- 🚀 Update Log for 2024-04-28
+  1. Support for Function Calling feature.
+  2. Updated Keras LLM Interpreter.
+
 - 🚀 Update Log for 2024-04-19
   1. Support for models Meta-Llama-3-8B and Meta-Llama-3-8B-Instruct.
   2. Introduced a new feature called "Role-Playing," enabling offline or online models to take on different roles. For example, you can have the LLM Model role-play as an "English Translator," "Interviewer," "Novelist," "Product Manager," "Yogi" and more, thereby providing more specialized responses.
@@ -291,7 +295,7 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
   4. **`Speech-to-Text`** Supports local models whisper and fast-whisper and Azure online speech-to-text service. Requires Azure API Key, which can be configured in the system environment variables `SPEECH_KEY` and `SPEECH_REGION`, or in the configuration interface.
   5. **`Image Recognition`** Supports local model blip-image-captioning-large.
   6. **`Image Generation`** Supports local model OpenDalleV1.1 for static image generation and local model stable-video-diffusion-img2vid-xt for dynamic image generation.
-  7. **`Function Calling`** (`Not implemented`)
+  7. **`Function Calling`** You can configure function calling to empower models with the ability to use utilities.
 
 ![Image](./img/Tools_Agent.png)
 
@@ -564,11 +568,19 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
       Enable the code interpreter feature:
       ![Image1](./img/keras_interpreter_1.png)
 
-      Load the local model Qwen1.5-7B-Chat and begin the task that requires running code:
-      ![Image1](./img/keras_interpreter_2.png)
+      Load model Meta-Llama-3-8B-Instruct，Plot Tesla and Apple stock price YTD from 2024:
+      ![Image1](./img/Llama-3-8B-stock-YTD-1.png)
+      ![Image1](./img/Llama-3-8B-stock-YTD-2.png)
 
-      Write code for the model and invoke the local code interpreter to execute the code, returning the correct output to the user:
-      ![Image1](./img/keras_interpreter_3.png)
+      Use Python language to draw an image of a pink pig and display it:
+      ![Image1](./img/Llama-3-8B-pink-pig-1.png)
+      ![Image1](./img/Llama-3-8B-pink-pig-2.png)
+      ![Image1](./img/Llama-3-8B-pink-pig-3.png)
+
+
+      create a word cloud image based on the file "wordcloud.txt" and display it:
+      ![Image1](./img/Llama-3-8B-word-cloud-1.png)
+      ![Image1](./img/Llama-3-8B-word-cloud-2.png)
 
 
   3. **`Speech Recognition and Generation`**
@@ -631,7 +643,17 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
   6. **`Function Calling`**
 
-      Provide the language model with function calling capability, empowering the mind with the ability to use tools. Anticipated support for automation platforms such as Zapier, n8n, and others. `Not implemented`
+      Provide the language model with function calling capability, empowering the mind with the ability to use tools.
+
+      Add two function，get_current_time() return current time；get_current_location() return current location.
+
+      Enable Function Calling Feature:
+
+      ![Image1](./img/Llama-3-8B-function-calling-2.png)
+
+      Disable Function Calling feature:
+
+      ![Image1](./img/Llama-3-8B-function-calling-1.png)
 
 ## Note
 

@@ -1541,6 +1541,25 @@ class ApiRequest:
         )
         return self._httpx_stream2generator(response, as_json=True)
     
+    def save_function_calling_config(self,
+        function_calling: dict = {},
+        controller_address: str = None,
+    ):
+        data = {
+            "function_calling": function_calling,
+            "controller_address": controller_address,
+        }
+
+        response = self.post(
+            "/function_calling/save_function_calling_config",
+            json=data,
+        )
+        
+        if self._use_async:
+            return self.ret_async(response)
+        else:
+            return self.ret_sync(response)
+    
     def _get_response_value(self, response: httpx.Response, as_json: bool = False, value_func: Callable = None,):
         
         def to_json(r):

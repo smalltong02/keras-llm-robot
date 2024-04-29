@@ -1,3 +1,4 @@
+import copy
 import streamlit as st
 from WebUI.webui_pages.utils import ApiRequest
 from WebUI.configs import (ROLEPLAY_TEMPLATES, ModelType, ModelSize, ModelSubType, GetModelType, GetModelInfoByName, GetModelConfig, GetModelSubType, GetOnlineProvider, GetOnlineModelList, GetModeList, LocalModelExist, GetPresetPromptList,
@@ -23,7 +24,8 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
     #quantconfig = webui_config.get("QuantizationConfiguration")
     #finetunning = webui_config.get("Fine-Tunning")
     searchengine = webui_config.get("SearchEngine")
-    #prompttemplates = webui_config.get("PromptTemplates")
+    functioncalling = webui_config.get("FunctionCalling")
+    calling_enable = False
 
     running_model["mname"] = ""
     models_list = list(api.get_running_models())
@@ -187,7 +189,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
     if current_model["config"]:
         preset_list = GetPresetPromptList()
         if current_model["mtype"] == ModelType.Local or current_model["mtype"] == ModelType.Multimodal or current_model["mtype"] == ModelType.Special or current_model["mtype"] == ModelType.Code:
-            tabparams, tabsearch, tabroleplay, tabquant, tabtunning = st.tabs(["Parameters", "Search Engine", "Role Player", "Quantization", "Fine-Tunning"])
+            tabparams, tabsearch, tabfuncall, tabroleplay, tabquant, tabtunning = st.tabs(["Parameters", "Search Engine", "Function Calling", "Role Player", "Quantization", "Fine-Tunning"])
             with tabparams:
                 with st.form("Parameter"):
                     col1, col2 = st.columns(2)
@@ -336,25 +338,25 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                         "Methods",
                         methods_lists,
                         index=0,
-                        disabled=disabled
+                        disabled=True
                     )
                     st.selectbox(
                         "Quantization Bits",
                         quantization_list,
                         index=0,
-                        disabled=disabled
+                        disabled=True
                     )
                     format_lists = ["GPTQ", "GGUF", "AWQ"]
                     st.selectbox(
                         "Format",
                         format_lists,
                         index=0,
-                        disabled=disabled
+                        disabled=True
                     )
                     submit_quantization = st.form_submit_button(
                         "Launch",
                         use_container_width=True,
-                        disabled=disabled
+                        disabled=True
                     )
                     if submit_quantization:
                         st.toast("The model quantization has been successful, and the quantized file path is model/llama-2-7b-hf-16bit.bin.", icon="✔")
@@ -364,7 +366,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                     "Please select Device",
                     training_devices_list,
                     index=0,
-                    disabled=disabled
+                    disabled=True
                 )
 
             with tabsearch:
@@ -454,9 +456,37 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                             else:
                                 st.session_state["current_roleplayer"] = {}
                             st.toast("success save configuration for Code Interpreter.", icon="✔")
+            with tabfuncall:
+                from WebUI.Server.funcall.funcall import GetFuncallList, GetFuncallDescription
+                calling_enable = functioncalling.get("calling_enable", False)
+                calling_max = functioncalling.get("max_calling", 5)
+                current_function = ""
+                function_name_list = GetFuncallList()
+                current_function = st.selectbox(
+                    "Please Check Function",
+                    function_name_list,
+                    index=0,
+                )
+                with st.form("Funcall"):
+                    description = GetFuncallDescription(current_function)
+                    st.text_input("Description", description, disabled=True)
+                    calling_enable = st.checkbox("Enable", key="funcall_box", value=calling_enable, help="After enabling, The function will be called automatically.")
+                    print("calling_enable", calling_enable)
+                    save_parameters = st.form_submit_button(
+                        "Save Parameters",
+                        use_container_width=True
+                    )
+                    if save_parameters:
+                        with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
+                            functioncalling["calling_enable"] = calling_enable
+                            r = api.save_function_calling_config(functioncalling)
+                            if msg := check_error_msg(r):
+                                st.toast(msg, icon="✖")
+                            elif msg := check_success_msg(r):
+                                st.toast("success save configuration for function calling.", icon="✔")
         
         elif current_model["mtype"] == ModelType.Online:
-            tabparams, tabapiconfig, tabsearch, tabroleplay = st.tabs(["Parameters", "API Config", "Search Engine", "Role Player"])
+            tabparams, tabapiconfig, tabsearch, tabfuncall, tabroleplay = st.tabs(["Parameters", "API Config", "Search Engine", "Function Calling", "Role Player"])
             with tabparams:
                 with st.form("Parameters"):
                     col1, col2 = st.columns(2)
@@ -605,6 +635,8 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                             else:
                                 st.session_state["current_roleplayer"] = {}
                             st.toast("success save configuration for Code Interpreter.", icon="✔")
+            with tabfuncall:
+                pass
     
     st.session_state["current_page"] = "configuration_page"
 

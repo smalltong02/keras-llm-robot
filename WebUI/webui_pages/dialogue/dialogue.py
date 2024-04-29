@@ -14,6 +14,7 @@ from WebUI.configs.basicconfig import (TMP_DIR, ModelType, ModelSize, ModelSubTy
                                        use_search_engine, glob_multimodal_vision_list, glob_multimodal_voice_list, glob_multimodal_video_list)
 from WebUI.configs.prompttemplates import PROMPT_TEMPLATES
 from WebUI.configs.roleplaytemplates import ROLEPLAY_TEMPLATES
+from WebUI.Server.funcall.funcall import use_function_calling
 from io import BytesIO
 from typing import List, Dict, Any
 
@@ -131,6 +132,8 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
     imagerecognition_model = api.get_image_recognition_model()
     imagegeneration_model = api.get_image_generation_model()
     musicgeneration_model = api.get_music_generation_model()
+    functioncalling = webui_config.get("FunctionCalling")
+    calling_enable = functioncalling.get("calling_enable", False)
     current_engine_name = ""
     current_smart = False
     current_search_engine = {}
@@ -551,6 +554,14 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                                 chat_box.update_msg(gen_image, element_index=0, metadata=metadata)
                                 chat_box.ai_say(["Think..."])
                                 text = ""
+                            elif content.startswith("image-file:"):
+                                with open(content[len("image-file:"):], "rb") as f:
+                                    image_bytes = f.read()
+                                    gen_image=Image(BytesIO(image_bytes))
+                                    chat_box.ai_say([""])
+                                    chat_box.update_msg(gen_image, element_index=0, metadata=metadata)
+                                    chat_box.ai_say(["Think..."])
+                                    text = ""
                             else:
                                 text += content
                                 chat_box.update_msg(text, element_index=0)
@@ -639,6 +650,9 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                                 chat_box.update_msg(text, element_index=0)
                                 chat_history_id = t.get("chat_history_id", "")
                                 #print("text: ", text)
+                            if calling_enable is True:
+                                text = use_function_calling(text)
+                                print("calling_text: ", text)
                             if current_smart is True and use_search_engine(text):
                                 name = current_engine_name
                                 chat_box.update_msg(f"Searching is now being conducted through `{name}`...", element_index=0)

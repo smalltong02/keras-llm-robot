@@ -11,11 +11,16 @@ from WebUI.configs import GetProviderByName, generate_new_query
 #from langchain.prompts import PromptTemplate, HumanMessagePromptTemplate, MessagesPlaceholder
 from langchain.prompts.chat import ChatPromptTemplate
 from typing import List, Optional
+from operator import itemgetter
 from WebUI.Server.chat.utils import History
 from WebUI.Server.chat.StreamHandler import StreamSpeakHandler
 from WebUI.Server.utils import get_prompt_template
 from WebUI.Server.db.repository import add_chat_history_to_db, update_chat_history
 from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
+from langchain.tools import format_tool_to_openai_function
+from WebUI.Server.funcall.funcall import funcall_tools, tool_names, GetToolsSystemPrompt
+from langchain.agents.output_parsers import OpenAIFunctionsAgentOutputParser
+from langchain_core.output_parsers import JsonOutputParser
 
 async def chat(query: str = Body(..., description="User input: ", examples=["chat"]),
     imagesdata: List[str] = Body([], description="image data", examples=["image"]),
@@ -53,6 +58,8 @@ async def chat(query: str = Body(..., description="User input: ", examples=["cha
         configinst = InnerJsonConfigWebUIParse()
         webui_config = configinst.dump()
         async_callback = AsyncIteratorCallbackHandler()
+        functioncalling = webui_config.get("FunctionCalling")
+        calling_enable = functioncalling.get("calling_enable", False)
         callbackslist = [async_callback]
         if len(speechmodel):
             modeltype = speechmodel.get("type", "")
@@ -75,7 +82,18 @@ async def chat(query: str = Body(..., description="User input: ", examples=["cha
             max_tokens=max_tokens,
             callbacks=callbackslist,
         )
-
+        def tool_chain(model_output):
+            tool_map = {tool.name: tool for tool in funcall_tools}
+            chosen_tool = tool_map[model_output["name"]]
+            return itemgetter("arguments") | chosen_tool
+        system_msg = []
+        if calling_enable:
+            tools_system_prompt = GetToolsSystemPrompt()
+            system_msg = History(role="system", content=tools_system_prompt).to_msg_template(False)
+            if history and history[0].role == "system":
+                history[0].content = history[0].content + "\n\n" + tools_system_prompt
+            else:
+                history = [system_msg] + history
         if len(imagesdata):
             from langchain.schema import HumanMessage
             content=[{
@@ -98,11 +116,9 @@ async def chat(query: str = Body(..., description="User input: ", examples=["cha
 
             prompt_template = get_prompt_template("llm_chat", prompt_name)
             input_msg = History(role="user", content=prompt_template).to_msg_template(False)
-            chat_prompt = ChatPromptTemplate.from_messages(
-                [i.to_msg_template() for i in history] + [input_msg])
+            chat_prompt = ChatPromptTemplate.from_messages([i.to_msg_template() for i in history] + [input_msg])
             #print("chat_prompt: ", chat_prompt)
             chain = LLMChain(prompt=chat_prompt, llm=model)
-
             # Begin a task that runs in the background.
             task = asyncio.create_task(wrap_done(
                 chain.acall({"input": query}),

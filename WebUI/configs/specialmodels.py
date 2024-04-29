@@ -11,6 +11,7 @@ from WebUI.configs.codemodels import code_model_chat
 from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
 from WebUI.Server.db.repository import add_chat_history_to_db, update_chat_history
 from WebUI.Server.chat.StreamHandler import StreamSpeakHandler
+from WebUI.Server.funcall.funcall import GetToolsSystemPrompt
 from langchain.chains import LLMChain
 from WebUI.Server.utils import FastAPI
 from typing import List, Dict, Any, Optional, AsyncIterable
@@ -145,6 +146,8 @@ async def special_chat_iterator(model: Any,
 
     configinst = InnerJsonConfigWebUIParse()
     webui_config = configinst.dump()
+    functioncalling = webui_config.get("FunctionCalling")
+    calling_enable = functioncalling.get("calling_enable", False)
     model_name = modelinfo["mname"]
     speak_handler = None
     if len(speechmodel):
@@ -160,7 +163,18 @@ async def special_chat_iterator(model: Any,
     answer = ""
     chat_history_id = add_chat_history_to_db(chat_type="llm_chat", query=query)
     if imagesprompt:
-            query = generate_new_query(query, imagesprompt)
+        query = generate_new_query(query, imagesprompt)
+    system_msg = {}
+    if calling_enable:
+        tools_system_prompt = GetToolsSystemPrompt()
+        if history and history[0].get("role", "") == "system":
+            history[0]["content"] = history[0]["content"] + "\n\n" + tools_system_prompt
+        else:
+            system_msg = {
+                'role': "system",
+                'content': tools_system_prompt
+            }
+            history = [system_msg] + history
     if modelinfo["mtype"] == ModelType.Special:
         from langchain.prompts import PromptTemplate
         modelconfig = GetModelConfig(webui_config, modelinfo)
@@ -168,14 +182,14 @@ async def special_chat_iterator(model: Any,
         if loadtype == "pipeline":
             prompt = history
             prompt.append({'role': "user",
-                         'content': "{input}"})
+                         'content': "{{input}}"})
 
             messages = tokenizer.apply_chat_template(
                     prompt,
                     tokenize=False, 
                     add_generation_prompt=True
             )
-            prompt = PromptTemplate(template=messages, input_variables=["input"])
+            prompt = PromptTemplate(template=messages, template_format="jinja2", input_variables=["input"])
             chain = LLMChain(prompt=prompt, llm=model)
             def running_chain(chain, query):
                 chain.run(query)

@@ -1125,6 +1125,16 @@
                         "preset": "ChatML",
                         "load_type": "pipeline",
                         "Huggingface": "google/gemma-2b-it"
+                    },
+                    "Phi-3-mini-128k-instruct": {
+                        "path": "models/llm/Phi-3-mini-128k-instruct",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "ChatML",
+                        "load_type": "pipeline",
+                        "Huggingface": "microsoft/Phi-3-mini-128k-instruct"
                     }
                 },
                 "7B Model": {
@@ -1345,13 +1355,12 @@
             "custom_instructions": "[default]",
             "system_message": "[default]"
         },
-        "Open Interpreter": {
-            "custom_instructions": "[default]",
-            "system_message": "[default]"
-        },
         "offline": false,
         "auto_run": true,
         "safe_mode": false
     },
-    "PromptTemplates": {}
+    "FunctionCalling": {
+        "calling_enable": false,
+        "max_calling": 5
+    }
 }

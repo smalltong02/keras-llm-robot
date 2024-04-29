@@ -23,7 +23,7 @@ from WebUI.Server.llm_api import (list_running_models, get_running_models, list_
                             get_image_recognition_model, save_image_recognition_model_config, eject_image_recognition_model, change_image_recognition_model, get_image_recognition_data,
                             get_image_generation_model, save_image_generation_model_config, eject_image_generation_model, change_image_generation_model, get_image_generation_data,
                             get_music_generation_model, save_music_generation_model_config, eject_music_generation_model, change_music_generation_model, get_music_generation_data,
-                            save_search_engine_config, llm_knowledge_base_chat, llm_search_engine_chat, save_code_interpreter_config)
+                            save_search_engine_config, llm_knowledge_base_chat, llm_search_engine_chat, save_code_interpreter_config, save_function_calling_config)
 from WebUI.Server.utils import(BaseResponse, ListResponse, FastAPI, MakeFastAPIOffline,
                           get_prompt_template)
 from typing import List, Literal
@@ -150,6 +150,12 @@ def mount_app_routes(app: FastAPI, run_mode: str = None):
             tags=["Code Interpreter Management"],
             summary="Chat with code interpreter.",
             )(code_interpreter_chat)
+    
+    # function calling interface
+    app.post("/function_calling/save_function_calling_config",
+             tags=["Function Calling Management"],
+             summary="Save config for function calling",
+             )(save_function_calling_config)
     
     # Voice Model interface
     app.post("/voice_model/get_vtot_model",
