@@ -31,6 +31,10 @@
 
 ## 新特性更新日志
 
+- 🚀 2024-04-28更新日志
+  1. 支持Function Calling特性。
+  2. 更新Keras-llm-interpreter代码解释器。
+
 - 🚀 2024-04-19更新日志
   1. 支持模型Meta-Llama-3-8B和Meta-Llama-3-8B-Instruct。
   2. 添加新特性“角色扮演”，可以让离线或者在线的模型扮演不同的角色。比如让语言模型扮演“英语翻译”，“面试官”，“小说家”，“产品经理”，“瑜伽师”等等，从而提供更加专业的回答。
@@ -289,7 +293,7 @@
   4. **`语音转文本模型`** 支持本地模型whisper，fast-whisper，支持Azure在线语音转文本服务，需要提供Azure的API Key。也可以在系统环境变量中配置SPEECH_KEY和SPEECH_REGION，或者在配置界面中单独配置。
   5. **`图像识别模型`** 支持本地模型blip-image-captioning-large。
   6. **`图像生成模型`** 支持本地模型OpenDalleV1.1进行静态图片的生成，支持本地模型stable-video-diffusion-img2vid-xt进行动态图片的生成。
-  7. **`功能调用`** (`当前功能还未实现`)
+  7. **`功能调用`** 可以配置功能调用，为模型加上使用工具的能力。
 
 ![Image](./img/Tools_Agent.png)
 
@@ -565,11 +569,19 @@
       开启代码解释器特性：
       ![Image1](./img/keras_interpreter_1.png)
 
-      加载本地模型Qwen1.5-7B-Chat，并开始需要运行代码完成的任务：
-      ![Image1](./img/keras_interpreter_2.png)
+      加载本地模型Meta-Llama-3-8B-Instruct，开始任务绘制Tesla和Apple今年的股票价格曲线并显示：
+      ![Image1](./img/Llama-3-8B-stock-YTD-1.png)
+      ![Image1](./img/Llama-3-8B-stock-YTD-2.png)
 
-      模型编写代码，并调用本地代码解释器运行代码后，返回正确的输出给用户：
-      ![Image1](./img/keras_interpreter_3.png)
+      开始任务画一只粉色的小猪并显示：
+      ![Image1](./img/Llama-3-8B-pink-pig-1.png)
+      ![Image1](./img/Llama-3-8B-pink-pig-2.png)
+      ![Image1](./img/Llama-3-8B-pink-pig-3.png)
+
+
+      开始任务读取本地文件wordcloud.txt，制作成词云图片并显示：
+      ![Image1](./img/Llama-3-8B-word-cloud-1.png)
+      ![Image1](./img/Llama-3-8B-word-cloud-2.png)
 
 
   3. **`语音识别模型`**
@@ -633,7 +645,17 @@
 
   6. **`函数定义`**
 
-      给语言模型提供函数调用功能，为大脑加上使用工具的能力。预计支持Zapier，n8n等自动化平台。`该功能还未实现`
+      给语言模型提供函数调用功能，为模型加上使用工具的能力。
+
+      添加两个可调用函数，get_current_time()函数将会返回当前的系统时间；get_current_location()函数将会返回当前的位置信息。
+
+      激活Function Calling特性：
+
+      ![Image1](./img/Llama-3-8B-function-calling-2.png)
+
+      禁止Function Calling特性：
+
+      ![Image1](./img/Llama-3-8B-function-calling-1.png)
 
 ## 参考
 
