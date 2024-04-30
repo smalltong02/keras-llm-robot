@@ -1,10 +1,6 @@
 import io
 import base64
-import torch
-import PIL.Image
-import numpy as np
-from typing import *
-from WebUI.webui_pages.utils import *
+from WebUI.configs.basicconfig import TMP_DIR
 from WebUI.Server.utils import detect_device
 
 def init_music_generation_models(config):
@@ -23,9 +19,9 @@ def translate_music_generation_data(model, processor, config, text_data: str = "
     if len(text_data) and model is not None:
         import scipy
         import scipy.io.wavfile as wavfile
-        guiding_scale = config["guiding_scale"]
+        #guiding_scale = config["guiding_scale"]
         max_new_tokens = config["max_new_tokens"]
-        do_sample = config["do_sample"]
+        #do_sample = config["do_sample"]
         device = config.get("device", "auto")
         device = "cuda" if device == "gpu" else detect_device() if device == "auto" else device
         inputs = processor(

@@ -274,13 +274,26 @@
                     "cpu_offload": false,
                     "refiner": false
                 }
+            },
+            "Hyper-SD": {
+                "type": "local",
+                "path": "models/imagegeneration/Hyper-SD",
+                "device": "auto",
+                "loadbits": 16,
+                "Huggingface": "ByteDance/Hyper-SD",
+                "config": {
+                    "seed": -1,
+                    "torch_compile": false,
+                    "cpu_offload": false,
+                    "refiner": false
+                }
             }
         },
         "MusicGeneration": {
             "musicgen-medium": {
                 "type": "local",
                 "path": "models/musicgen/musicgen-medium",
-                "device": "auto",
+                "device": "cpu",
                 "loadbits": 16,
                 "Huggingface": "facebook/musicgen-medium",
                 "config": {
@@ -293,7 +306,7 @@
             "musicgen-large": {
                 "type": "local",
                 "path": "models/musicgen/musicgen-large",
-                "device": "auto",
+                "device": "cpu",
                 "loadbits": 16,
                 "Huggingface": "facebook/musicgen-large",
                 "config": {
@@ -306,7 +319,7 @@
             "musicgen-small": {
                 "type": "local",
                 "path": "models/musicgen/musicgen-small",
-                "device": "auto",
+                "device": "cpu",
                 "loadbits": 16,
                 "Huggingface": "facebook/musicgen-small",
                 "config": {
