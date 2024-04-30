@@ -198,6 +198,20 @@ def init_image_generation_models(config):
             pipe.scheduler = EulerAncestralDiscreteScheduler.from_config(pipe.scheduler.config)
             pipe.to(device)
             return pipe, None
+        elif config["model_name"] == "Hyper-SD":
+            from diffusers import StableDiffusionXLPipeline, LCMScheduler
+            from safetensors.torch import load_file
+            base_id = "models/imagegeneration/stable-diffusion-xl-base-1.0"
+            ckpt = "Hyper-SDXL-1step-Unet.safetensors"
+            model_id = config["model_path"]
+            model_id += "/" + ckpt
+            pipe = StableDiffusionXLPipeline.from_pretrained(base_id, torch_dtype=torch.bfloat16)
+            pipe.to(device=device, dtype=torch.bfloat16)
+            unet_state = load_file(model_id, device=device)
+            pipe.unet.load_state_dict(unet_state)
+            pipe.scheduler = LCMScheduler.from_config(pipe.scheduler.config, timestep_spacing ="trailing")
+            pipe.to(device)
+            return pipe, None
         # elif config["model_name"] == "helloAsian" or config["model_name"] == "hellorealistic_V11":
         #     from diffusers import StableDiffusionPipeline, AutoencoderKL, DPMSolverMultistepScheduler
         #     from safetensors.torch import load_file
@@ -218,7 +232,6 @@ def init_image_generation_models(config):
         #     pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config, use_karras_sigmas=True)
         #     pipe.to(device)
         #     return pipe, None
-
     return None, None
 
 def translate_image_generation_data(model, refiner, config, text_data: str = "", negative_prompt: str = "", btranslate_prompt: bool = False) -> str:
@@ -268,6 +281,20 @@ def translate_image_generation_data(model, refiner, config, text_data: str = "",
                     guidance_scale=7,
                     num_inference_steps=28
                 ).images
+            elif config["model_name"] == "Hyper-SD":
+                seed = config["seed"]
+                if seed == -1:
+                    import random
+                    seed = random.randint(np.iinfo(np.int32).min, np.iinfo(np.int32).max)
+                images = model(
+                        prompt=[text_data]*1,
+                        generator=torch.Generator().manual_seed(int(seed)),
+                        num_inference_steps=1,
+                        guidance_scale=0.,
+                        height=int(1024),
+                        width=int(1024),
+                        timesteps=[800]
+                    ).images
             # elif config["model_name"] == "helloAsian" or config["model_name"] == "hellorealistic_V11":
             #     images = model(
             #         text_data, 
