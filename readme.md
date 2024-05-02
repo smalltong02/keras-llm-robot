@@ -31,6 +31,10 @@ The project inherits from the Langchain-Chatchat project(https://github.com/chat
 
 ## New Feature Updates
 
+- 🚀 Update Log for 2024-05-01
+  1. Fix issue for GGUF model.
+  2. Support for Llama3-8B-Chinese-Chat.
+
 - 🚀 Update Log for 2024-04-28
   1. Support for Function Calling feature.
   2. Updated Keras LLM Interpreter.

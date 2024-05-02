@@ -6,7 +6,7 @@ import threading
 from pathlib import Path
 import google.generativeai as genai
 from fastapi.responses import StreamingResponse
-from WebUI.configs.basicconfig import (TMP_DIR, ModelType, ModelSize, ModelSubType, GetModelInfoByName, GetProviderByName, GetModelConfig, GetGGUFModelPath, generate_new_query, GeneratePresetPrompt, GenerateModelPrompt)
+from WebUI.configs.basicconfig import (TMP_DIR, ModelType, ModelSize, ModelSubType, GetModelInfoByName, GetProviderByName, GetModelConfig, GetGGUFModelPath, generate_new_query, GeneratePresetPrompt)
 from WebUI.configs.codemodels import code_model_chat
 from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
 from WebUI.Server.db.repository import add_chat_history_to_db, update_chat_history
@@ -90,9 +90,11 @@ def load_llamacpp_model(app: FastAPI, model_name, model_path):
     from langchain.llms.llamacpp import LlamaCpp
     from langchain.callbacks.manager import CallbackManager
     from WebUI.Server.chat.StreamHandler import LlamacppStreamCallbackHandler
+    from transformers import AutoTokenizer
     async_callback = LlamacppStreamCallbackHandler()
     callback_manager = CallbackManager([async_callback])
     modellist = GetGGUFModelPath(model_path)
+    tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
     path = model_path + "/" + modellist[0]
     if len(modellist):
         llm_model = LlamaCpp(
@@ -107,6 +109,7 @@ def load_llamacpp_model(app: FastAPI, model_name, model_path):
             streaming=True,
         )
         app._model = llm_model
+        app._tokenizer = tokenizer
         app._streamer = async_callback
         app._model_name = model_name
 
@@ -179,17 +182,17 @@ async def special_chat_iterator(model: Any,
         from langchain.prompts import PromptTemplate
         modelconfig = GetModelConfig(webui_config, modelinfo)
         loadtype = modelconfig["load_type"]
-        if loadtype == "pipeline":
-            prompt = history
-            prompt.append({'role': "user",
-                         'content': "{{input}}"})
+        prompt = history
+        prompt.append({'role': "user",
+                        'content': "{{input}}"})
 
-            messages = tokenizer.apply_chat_template(
-                    prompt,
-                    tokenize=False, 
-                    add_generation_prompt=True
-            )
-            prompt = PromptTemplate(template=messages, template_format="jinja2", input_variables=["input"])
+        messages = tokenizer.apply_chat_template(
+                prompt,
+                tokenize=False, 
+                add_generation_prompt=True
+        )
+        prompt = PromptTemplate(template=messages, template_format="jinja2", input_variables=["input"])
+        if loadtype == "pipeline":
             chain = LLMChain(prompt=prompt, llm=model)
             def running_chain(chain, query):
                 chain.run(query)
@@ -215,34 +218,32 @@ async def special_chat_iterator(model: Any,
             presetname = modelconfig["preset"]
             prompttemplate = GeneratePresetPrompt(presetname)
             if len(prompttemplate):
-                input_variables = prompttemplate["input_variables"]
-                prompt = PromptTemplate(template=prompttemplate["prompt_templates"], input_variables=input_variables)
                 chain = LLMChain(prompt=prompt, llm=model)
-                def running_chain(chain, input_variables, query):
-                    chain.run(GenerateModelPrompt(input_variables, query))
-                    print("running_chain exit!")
-                
-                thread = threading.Thread(target=running_chain, args=(chain, input_variables, query))
-                thread.start()
-                noret = False
-                while True:
-                    chunk = async_callback.get_tokens()
-                    if chunk is not None:
-                        print(chunk, end="")
+            def running_chain(chain, query):
+                chain.run(query)
+                print("running_chain exit!")
+            
+            thread = threading.Thread(target=running_chain, args=(chain, query))
+            thread.start()
+            noret = False
+            while True:
+                chunk = async_callback.get_tokens()
+                if chunk is not None:
+                    print(chunk, end="")
+                    if noret is False:
+                        noret = clean_special_text(chunk, prompttemplate)
                         if noret is False:
-                            noret = clean_special_text(chunk, prompttemplate)
-                            if noret is False:
-                                if speak_handler: 
-                                    speak_handler.on_llm_new_token(chunk)
-                                yield json.dumps(
-                                    {"text": chunk, "chat_history_id": chat_history_id},
-                                    ensure_ascii=False)
-                                await asyncio.sleep(0.1)
-                    if not thread.is_alive():
-                        print("async_callback exit!")
-                        break
-                if speak_handler: 
-                    speak_handler.on_llm_end(None)
+                            if speak_handler: 
+                                speak_handler.on_llm_new_token(chunk)
+                            yield json.dumps(
+                                {"text": chunk, "chat_history_id": chat_history_id},
+                                ensure_ascii=False)
+                            await asyncio.sleep(0.1)
+                if not thread.is_alive():
+                    print("async_callback exit!")
+                    break
+            if speak_handler: 
+                speak_handler.on_llm_end(None)
     elif modelinfo["mtype"] == ModelType.Online:
         provider = GetProviderByName(webui_config, model_name)
         if provider == "google-api":

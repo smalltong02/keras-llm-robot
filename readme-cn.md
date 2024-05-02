@@ -31,6 +31,10 @@
 
 ## 新特性更新日志
 
+- 🚀 2024-05-01更新日志
+  1. 修复问题为GGUF model
+  2. 支持模型Llama3-8B-Chinese-Chat
+
 - 🚀 2024-04-28更新日志
   1. 支持Function Calling特性。
   2. 更新Keras-llm-interpreter代码解释器。
