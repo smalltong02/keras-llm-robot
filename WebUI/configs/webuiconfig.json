@@ -1233,6 +1233,16 @@
                         "preset": "Mistral Instruct",
                         "load_type": "llamacpp",
                         "Huggingface": "TheBloke/Mixtral-8x7B-v0.1-GGUF"
+                    },
+                    "Mixtral-8x7B-Instruct-v0.1-GGUF": {
+                        "path": "models/llm/Mixtral-8x7B-Instruct-v0.1-GGUF",
+                        "device": "cpu",
+                        "maxmemory": 50,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "Mistral Instruct",
+                        "load_type": "llamacpp",
+                        "Huggingface": "TheBloke/Mixtral-8x7B-Instruct-v0.1-GGUF"
                     }
                 },
                 "70B Model": {
