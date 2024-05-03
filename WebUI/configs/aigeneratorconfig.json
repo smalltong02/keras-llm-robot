@@ -1,7 +1,27 @@
 {
     "Chat Solutions": {
         "Intelligent Customer Support": {
-            "descriptions": "Intelligent Customer Service System, capable of answering user questions by accessing information through a knowledge datebase and search."
+            "descriptions": "Intelligent Customer Service System, capable of answering user questions by accessing information through a knowledge datebase and search.",
+            "roleplayer": "Customer Support",
+            "llm_model": "",
+            "voice": {
+                "enable": false,
+                "model": ""
+            },
+            "speech": {
+                "enable": false,
+                "model": "",
+                "speaker": ""
+            },
+            "search_engine": {
+                "enable": false,
+                "name": ""
+            },
+            "knowledge_base": {
+                "enable": false,
+                "name": ""
+            },
+            "function_calling": true
         },
 
         "Language Translation and Localization": {
