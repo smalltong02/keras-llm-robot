@@ -34,3 +34,7 @@ class InnerJsonConfigPresetTempParse(InnerJsonConfigParse):
 class InnerJsonConfigKnowledgeBaseParse(InnerJsonConfigParse):
     def __init__(self):
         super().__init__("WebUI/configs/kbconfig.json")
+
+class InnerJsonConfigAIGeneratorParse(InnerJsonConfigParse):
+    def __init__(self):
+        super().__init__("WebUI/configs/aigeneratorconfig.json")

@@ -459,6 +459,15 @@ class ApiRequest:
         )
         return self._get_response_value(response, as_json=True, value_func=lambda r:r.get("data", {}))
     
+    def get_aigenerator_config(
+            self,
+        ) -> Dict:
+
+        response = self.post(
+            "/server/get_aigenerator_config",
+        )
+        return self._get_response_value(response, as_json=True, value_func=lambda r:r.get("data", {}))
+    
     def ret_sync(self, response):
         return self._get_response_value(response, as_json=True)
 

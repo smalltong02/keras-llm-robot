@@ -10,7 +10,22 @@ ROLEPLAY_TEMPLATES = {
             The statement to be translated is "{prompt}"
         """,
         "chinese-prompt": """
-            需要翻译的语句是“{prompt}”
+            需要翻译的语句是 “{prompt}”
+        """,
+    },
+
+    "Customer Support": {
+        "english": """
+            You are a professional customer service representative, tasked with enhancing communication effectiveness for customers. Communication with customers should be smooth, accurate, and friendly.
+        """,
+        "chinese": """
+            你是一个专业的客服人员，你的任务是帮助提高客户的沟通效果。与客户的沟通要顺畅、准确和友好。
+        """,
+        "english-prompt": """
+            The customer's question is: {prompt}
+        """,
+        "chinese-prompt": """
+            客户的问题是：{prompt}
         """,
     },
     

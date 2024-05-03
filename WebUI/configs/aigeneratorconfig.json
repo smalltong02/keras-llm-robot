@@ -1,5 +1,5 @@
 {
-    "Chat Creative Solutions": {
+    "Chat Solutions": {
         "Intelligent Customer Support": {
             "descriptions": "Intelligent Customer Service System, capable of answering user questions by accessing information through a knowledge datebase and search."
         },
@@ -29,13 +29,17 @@
         }
     },
 
-    "Text Creative Solutions": {
-        
+    "Creative Solutions": {
+        "News Content Generator": {
+            "descriptions": "Utilizing a given topic and conducting web scraping to find relevant news articles, then composing new news pieces through writing."
+        },
 
-    },
+        "Story Idea Generator": {
+            "descriptions": "Combining natural language processing models and speech generation models to create a creative generator capable of generating ideas based on user-input topics. Additionally, utilizing document content analysis tools to gather material about specific topics to aid in generating more relevant and engaging content."
+        },
 
-    "Image Creative Solutions": {
-
-
+        "Comic Idea Generator": {
+            "descriptions": "Based on user-input topics, creating comic strips on specific themes using natural language models and image generation models."
+        }
     }
 }

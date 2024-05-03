@@ -252,9 +252,6 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
         export_btn = cols[0]
         if cols[1].button('New chat', use_container_width=True):
             chat_box.reset_history()
-            if code_interpreter == "Open Interpreter":
-                from interpreter import interpreter
-                interpreter.messages = []
 
         def md_callback(msg: Any):
             user_avatar : str = "User"
