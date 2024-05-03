@@ -1,0 +1,41 @@
+{
+    "Chat Creative Solutions": {
+        "Intelligent Customer Support": {
+            "descriptions": "Intelligent Customer Service System, capable of answering user questions by accessing information through a knowledge datebase and search."
+        },
+
+        "Language Translation and Localization": {
+            "descriptions": "Professional language translation expert will translate your text to the specified language, and also provide spelling and linguistic refinement."
+        },
+
+        "Interactive Learning and Education": {
+            "descriptions": "Interactive learning experience where users can ask questions and receive personalized explanations or guidance."
+        },
+
+        "Virtual Personal Assistant": {
+            "descriptions": "Combining natural language processing with image and speech recognition to create a virtual personal assistant capable of understanding and executing user commands. Integrated with calendar and task management systems, It schedules appointments, sets reminders, or performs other productivity tasks."
+        },
+
+        "Virtual Tour Guide and Travel Planning": {
+            "descriptions": "Creating a virtual tour guide that offers users real-time explanations and recommendations about tourist attractions, history, and culture."
+        },
+
+        "Medical Diagnosis and Health Management": {
+            "descriptions": "Utilizing image recognition models to analyze medical images, assisting doctors in disease diagnosis and treatment plan formulation. Combined with natural language processing models, analyzing medical literature and clinical data to provide doctors with the latest medical information and research findings."
+        },
+
+        "Food Recognition and Nutritional Analysis": {
+            "descriptions": "Using image recognition models to identify various ingredients in food images and automatically calculate the nutritional components of the food. Combined with natural language processing models, providing users with personalized advice and recommendations on dietary habits and nutritional health."
+        }
+    },
+
+    "Text Creative Solutions": {
+        
+
+    },
+
+    "Image Creative Solutions": {
+
+
+    }
+}
