@@ -151,6 +151,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
         role_player = current_role_player
     modelinfo : Dict[str, any] = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str}
     print("voicemodel: ", voicemodel)
+    print("speechmodel: ", speechmodel)
     print("imagerecognition_model: ", imagerecognition_model)
     print("imagegeneration_model: ", imagegeneration_model)
     print("musicgeneration_model: ", musicgeneration_model)

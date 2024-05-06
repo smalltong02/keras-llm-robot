@@ -101,7 +101,7 @@ def load_llamacpp_model(app: FastAPI, model_name, model_path):
             model_path=path,
             do_sample=True,
             temperature=0.7,
-            max_tokens=1024,
+            max_tokens=2048,
             top_p=1,
             verbose=True,
             callback_manager=callback_manager,

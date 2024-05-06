@@ -17,6 +17,8 @@ if not TMP_DIR.exists():
 glob_model_type_list = ["LLM Model","Multimodal Model", "Code Model", "Special Model","Online Model"]
 glob_model_size_list = ["3B Model","7B Model","13B Model","34B Model","70B Model"]
 glob_model_subtype_list = ["Vision Chat Model","Voice Chat Model","Video Chat Model"]
+training_devices_list = ["auto","cpu","gpu","mps"]
+loadbits_list = ["32 bits","16 bits","8 bits"]
 glob_roleplay_list = [""]
 
 class ModelType(Enum):

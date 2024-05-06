@@ -4,6 +4,7 @@
             "descriptions": "Intelligent Customer Service System, capable of answering user questions by accessing information through a knowledge datebase and search.",
             "roleplayer": "Customer Support",
             "llm_model": "",
+            "product_description": "",
             "voice": {
                 "enable": false,
                 "model": ""
@@ -21,7 +22,7 @@
                 "enable": false,
                 "name": ""
             },
-            "function_calling": true
+            "function_calling": false
         },
 
         "Language Translation and Localization": {

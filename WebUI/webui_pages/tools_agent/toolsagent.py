@@ -9,9 +9,7 @@ from WebUI.webui_pages.utils import ApiRequest, check_success_msg, check_error_m
 from typing import List, Dict, Tuple, Literal
 from WebUI.Server.knowledge_base.kb_service.base import (get_kb_details, get_kb_file_details)
 from WebUI.Server.knowledge_base.utils import (get_file_path, LOADER_DICT, CHUNK_SIZE, OVERLAP_SIZE, ZH_TITLE_ENHANCE)
-
-training_devices_list = ["auto","cpu","gpu","mps"]
-loadbits_list = ["32 bits","16 bits","8 bits"]
+from WebUI.configs import training_devices_list, loadbits_list
 
 KB_CREATE_NEW = "[Create New...]"
 
@@ -653,8 +651,10 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                             r = api.change_voice_model(current_voice_model, voicemodel)
                             if msg := check_error_msg(r):
                                 st.error(msg)
+                                st.toast(msg, icon="✖")
                             elif msg := check_success_msg(r):
                                 st.success(msg)
+                                st.toast(msg, icon="✔")
                                 current_voice_model = voicemodel
                         else:
                             st.error("Please download the model to your local machine first.")
