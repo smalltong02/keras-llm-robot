@@ -215,7 +215,7 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                     st.divider()
                     product_description = st.text_input("Product Description", value="", placeholder="[Please describe your product]")
                     running_chat_solution["config"]["llm_model"] = model_name
-                    running_chat_solution["config"]["product_description"] = product_description
+                    running_chat_solution["config"]["description"] = product_description
                     print("chat_solution-1: ", running_chat_solution)
                     st.session_state["current_chat_solution"] = running_chat_solution
 

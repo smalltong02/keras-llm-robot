@@ -996,6 +996,7 @@ def model_chat(
     
 def special_model_search_engine_chat(
     model: Any,
+    tokenizer: Any,
     async_callback: Any,
     modelinfo: Any,
     query: str,
@@ -1007,6 +1008,8 @@ def special_model_search_engine_chat(
     prompt_name: str,
 ):
     async def special_search_chat_iterator(model: Any,
+        tokenizer: Any,
+        async_callback: Any,
         query: str,
         search_engine_name: str,
         history: List[dict] = [],
@@ -1023,50 +1026,53 @@ def special_model_search_engine_chat(
         model_name = modelinfo["mname"]
 
         answer = ""
-        if modelinfo["mtype"] == ModelType.Online:
-            provider = GetProviderByName(webui_config, model_name)
-            if provider == "google-api":
-                model_config = GetModelConfig(webui_config, modelinfo)
-                apikey = model_config.get("apikey", "[Your Key]")
-                if apikey == "[Your Key]" or apikey == "":
-                    apikey = os.environ.get('GOOGLE_API_KEY')
-                if apikey is None:
-                    apikey = "EMPTY"
-                searchengine = webui_config.get("SearchEngine")
-                top_k = searchengine.get("top_k", 3)
-                docs = await lookup_search_engine(query, search_engine_name, top_k)
-                context = "\n".join([doc.page_content for doc in docs])
-                
-                source_documents = [
-                    f"""from [{inum + 1}] [{doc.metadata["source"]}]({doc.metadata["source"]}) \n\n{doc.page_content}\n\n"""
-                    for inum, doc in enumerate(docs)
-                ]
-                if len(source_documents) == 0:
-                    source_documents.append(f"""<span style='color:red'>No relevant information were found. This response is generated based on the LLM Model '{model_name}' itself!</span>""")
+        searchengine = webui_config.get("SearchEngine")
+        top_k = searchengine.get("top_k", 3)
+        docs = await lookup_search_engine(query, search_engine_name, top_k)
+        context = "\n".join([doc.page_content for doc in docs])
+        
+        source_documents = [
+            f"""from [{inum + 1}] [{doc.metadata["source"]}]({doc.metadata["source"]}) \n\n{doc.page_content}\n\n"""
+            for inum, doc in enumerate(docs)
+        ]
+        if len(source_documents) == 0:
+            source_documents.append(f"""<span style='color:red'>No relevant information were found. This response is generated based on the LLM Model '{model_name}' itself!</span>""")
 
-                genai.configure(api_key=apikey)
-                model = genai.GenerativeModel(model_name=model_name)
-                updated_history = [
-                    {'parts': entry['content'], **({'role': 'model'} if entry['role'] == 'assistant' else {'role': "user"})}
-                    for entry in history
-                ]
-                prompt_template = get_prompt_template("search_engine_chat", prompt_name)
-                generation_config = {'temperature': temperature}
-                chat = model.start_chat(history=updated_history)
-                new_query = prompt_template.replace('{{ context }}', context).replace('{{ question }}', query)
-                response = chat.send_message(new_query, generation_config=generation_config, stream=stream)
-
-                for chunk in response:
-                    #print("chunk: ", chunk.text)
-                    answer += chunk.text
-                yield json.dumps({"answer": answer,
-                              "docs": source_documents},
-                             ensure_ascii=False)
-                await asyncio.sleep(0.1)
+        prompt_template = get_prompt_template("search_engine_chat", prompt_name)
+        new_query = prompt_template.replace('{{ context }}', context).replace('{{ question }}', query)
+        response = special_chat_iterator(
+                model=model,
+                tokenizer=tokenizer,
+                async_callback=async_callback,
+                query=new_query,
+                modelinfo=modelinfo,
+                imagesdata=[],
+                audiosdata=[],
+                videosdata=[],
+                imagesprompt=[],
+                history=history,
+                stream=stream,
+                speechmodel={},
+                temperature=temperature,
+                max_tokens=max_tokens,
+                prompt_name="default",
+            )
+        async for tokens in response:
+            if not tokens:
+                continue
+            answer = json.loads(tokens)["text"]
+            yield json.dumps({"answer": answer,
+                            "docs": []},
+                            ensure_ascii=False)
+        yield json.dumps({"answer": "",
+                            "docs": source_documents},
+                            ensure_ascii=False)
 
         
     return StreamingResponse(special_search_chat_iterator(
                                             model=model,
+                                            tokenizer=tokenizer,
+                                            async_callback=async_callback,
                                             query=query,
                                             search_engine_name=search_engine_name,
                                             history=history,
@@ -1092,12 +1098,8 @@ def model_search_engine_chat(
     model_name = app._model_name
     modelinfo["mtype"], modelinfo["msize"], modelinfo["msubtype"] = GetModelInfoByName(webui_config, model_name)
     modelinfo["mname"] = model_name
-    if modelinfo["mtype"] == ModelType.Online:
-        return special_model_search_engine_chat(app._model, app._streamer, modelinfo, query, search_engine_name, history, stream, temperature, max_tokens, prompt_name)
-    elif modelinfo["mtype"] == ModelType.Special:
-        return json.dumps(
-            {"text": "Unsupport code model!"},
-            ensure_ascii=False)
+    if modelinfo["mtype"] == ModelType.Online or modelinfo["mtype"] == ModelType.Special:
+        return special_model_search_engine_chat(app._model, app._tokenizer, app._streamer, modelinfo, query, search_engine_name, history, stream, temperature, max_tokens, prompt_name)
     elif modelinfo["mtype"] == ModelType.Code:
         return json.dumps(
             {"text": "Unsupport code model!"},

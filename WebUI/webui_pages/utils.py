@@ -1568,6 +1568,53 @@ class ApiRequest:
             return self.ret_async(response)
         else:
             return self.ret_sync(response)
+        
+    def chat_solution_chat(
+        self,
+        query: str,
+        imagesdata: List[bytes] = [],
+        audiosdata: List[bytes] = [],
+        videosdata: List[bytes] = [],
+        history: List[dict] = [],
+        stream: bool = True,
+        chat_solution: dict = {},
+        temperature: float = 0.7,
+        max_tokens: int = None,
+        **kwargs,
+    ):
+        imageslist = []
+        audioslist = []
+        videoslist = []
+        if len(imagesdata):
+            for imagedata in imagesdata:
+                imageslist.append(base64.b64encode(imagedata).decode('utf-8'))
+        if len(audiosdata):
+            for audiodata in audiosdata:
+                audioslist.append(base64.b64encode(audiodata).decode('utf-8'))
+        if len(videosdata):
+            for videodata in videosdata:
+                videoslist.append(base64.b64encode(videodata).decode('utf-8'))
+        data = {
+            "query": query,
+            "imagesdata": imageslist,
+            "audiosdata": audioslist,
+            "videosdata": videoslist,
+            "history": history,
+            "stream": stream,
+            "chat_solution": chat_solution,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+        }
+
+        print("received input message:")
+        pprint(data)
+
+        response = self.post(
+            "/chat_solution/chat",
+            json=data,
+            stream=True,
+        )
+        return self._httpx_stream2generator(response, as_json=True)
     
     def _get_response_value(self, response: httpx.Response, as_json: bool = False, value_func: Callable = None,):
         

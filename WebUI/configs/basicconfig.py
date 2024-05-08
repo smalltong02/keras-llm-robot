@@ -1,8 +1,12 @@
 from enum import Enum
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Any
 from pathlib import Path
 import os
 import copy
+import json
+from WebUI.Server.chat.utils import History
+from langchain.prompts.chat import ChatPromptTemplate
+from WebUI.configs.roleplaytemplates import ROLEPLAY_TEMPLATES
 from fastchat.protocol.openai_api_protocol import ChatCompletionRequest
 
 SAVE_CHAT_HISTORY = True
@@ -518,3 +522,102 @@ def ExtractJsonStrings(input_string):
                     except json.JSONDecodeError:
                         pass
     return json_data_list
+
+def use_new_search_engine(json_lists : list = []) ->bool:
+    for item in json_lists:
+        it = json.loads(item)
+        if it.get("name", "") == "search_engine":
+            return True
+    return False
+
+def use_knowledge_base(json_lists : list = []) ->bool:
+    for item in json_lists:
+        it = json.loads(item)
+        if it.get("name", "") == "knowledge_base":
+            return True
+    return False
+
+def use_new_function_calling(json_lists : list = []) ->bool:
+    from WebUI.Server.funcall.funcall import tool_names
+    for item in json_lists:
+        it = json.loads(item)
+        if it.get("name", "") in tool_names:
+            return True
+    return False
+
+def GetSpeechForChatSolution(chat_solution : dict) ->dict:
+    if not chat_solution:
+        return {}
+    if not chat_solution["enable"]:
+        return {}
+    if chat_solution["name"] == "Intelligent Customer Support":
+        config = chat_solution.get("config", {})
+        if not config:
+            return {}
+        speech = config.get("speech", {})
+        if not speech:
+            return {}
+        if speech["enable"]:
+            return speech
+    return {}
+
+def GetSearchEngineForChatSolution(chat_solution : dict) ->dict:
+    if not chat_solution:
+        return {}
+    if not chat_solution["enable"]:
+        return {}
+    if chat_solution["name"] == "Intelligent Customer Support":
+        config = chat_solution.get("config", {})
+        if not config:
+            return {}
+        search_engine = config.get("search_engine", {})
+        if not search_engine:
+            return {}
+        if search_engine["enable"]:
+            return search_engine
+    return {}
+
+def GetKnowledgeBaseForChatSolution(chat_solution : dict) ->dict:
+    if not chat_solution:
+        return {}
+    if not chat_solution["enable"]:
+        return {}
+    if chat_solution["name"] == "Intelligent Customer Support":
+        config = chat_solution.get("config", {})
+        if not config:
+            return {}
+        knowledge_base = config.get("knowledge_base", {})
+        if not knowledge_base:
+            return {}
+        if knowledge_base["enable"]:
+            return knowledge_base
+    return {}
+
+def GetSystemPromptForChatSolution(chat_solution : dict) ->dict:
+    if not chat_solution:
+        return None
+    from WebUI.Server.funcall.funcall import GetToolsSystemPrompt
+    roleplayer = chat_solution["config"]["roleplayer"]
+    description = chat_solution["config"]["description"]
+    role_template = ROLEPLAY_TEMPLATES[roleplayer]["english"]
+    if chat_solution["name"] == "Intelligent Customer Support":
+        search_engine = GetSearchEngineForChatSolution(chat_solution)
+        knowledge_base = GetKnowledgeBaseForChatSolution(chat_solution)
+        function_calling = chat_solution["config"]["function_calling"]
+        system_prompt = role_template
+        if description:
+            system_prompt += f'\nHere is a brief description of the product: "{description}"\n'
+        if knowledge_base:
+            system_prompt += """\nYou have the ability to query the company's product knowledge base. When there are inquiries related to the product, please first submit the question to the knowledge base for a search. 
+            After a successful search, the results will be appended to the end of the question and sent back to you, enabling you to better address the query. Here are the names and descriptions for knowledge base:
+            knowledge_base() - Get search result from knowledge base
+            If you'd like to use the knowledge base, Return your response as a JSON blob with 'name' and 'arguments' keys.\n"""
+        if search_engine:
+            system_prompt += """\nYou have the ability to use a web search engine. When a question exceeds your knowledge scope or when it's beyond the timeframe of your training data, please submit the question to a web search engine for a query first. 
+            After a successful search, the results will be appended to the end of the question and sent back to you, allowing you to better address the query. Here are the names and descriptions for search engine:
+            search_engine() - Get search result from network
+            If you'd like to use a web search engine, Return your response as a JSON blob with 'name' and 'arguments' keys.\n"""
+        if function_calling:
+            tools_prompt = GetToolsSystemPrompt()
+            system_prompt += "\n" + tools_prompt
+        return system_prompt
