@@ -342,7 +342,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                 gb.configure_column("to_del", "Delete", editable=False, width=50, wrapHeaderText=True,
                                     cellEditor="agCheckboxCellEditor", cellRender="agCheckboxCellRenderer")
                 gb.configure_selection()
-                #edit_docs = AgGrid(df, gb.build())
+                edit_docs = AgGrid(df, gb.build())
 
                 # if st.button("Save"):
                 #     # origin_docs = {x["id"]: {"page_content": x["page_content"], "type": x["type"], "metadata": x["metadata"]} for x in docs}
