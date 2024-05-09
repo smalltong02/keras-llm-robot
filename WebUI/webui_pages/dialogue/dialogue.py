@@ -801,10 +801,15 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                     print("d: ", d)
                     if error_msg := check_error_msg(d):  # check whether error occured
                             st.error(error_msg)
-                    elif chunk := d.get("text"):
-                        chat_history_id = d.get("chat_history_id", "")
-                        text += chunk
-                        chat_box.update_msg(text, element_index=0)
+                    else:
+                        chunk = d.get("text", "")
+                        if chunk:
+                            chat_history_id = d.get("chat_history_id", "")
+                            text += chunk
+                            chat_box.update_msg(text, element_index=0)
+                        elif d.get("cmd", "") == "clear":
+                            text = ""
+                            chat_box.update_msg(text, element_index=0)
                 metadata = {
                     "chat_history_id": chat_history_id,
                     }

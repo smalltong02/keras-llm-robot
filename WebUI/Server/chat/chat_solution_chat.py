@@ -41,7 +41,7 @@ async def GetChatPromptFromFromSearchEngine(query: str = "", history: list[Histo
         return None
     prompt_template = f"""The user's question has been searched on the internet. Here is all the content retrieved from the search engine:
     {context}\n
-    The user's original question is: '{query}'
+    The user's original question is: {query}
 """
     input_msg = History(role="user", content=prompt_template).to_msg_template(False)
     chat_prompt = ChatPromptTemplate.from_messages(
@@ -52,8 +52,27 @@ async def GetChatPromptFromKnowledgeBase(query: str = "", history: list[History]
     if not query or not history or not chat_solution:
         return None
 
-async def GetChatPromptFromFunctionCalling(json_lists: list = [], history: list[History] = []) ->Union[ChatPromptTemplate, Any]:
-    pass
+async def GetChatPromptFromFunctionCalling(json_lists: list = [], query: str = "", history: list[History] = []) ->Union[ChatPromptTemplate, Any]:
+    from WebUI.Server.funcall.funcall import RunFunctionCalling
+    if not json_lists or not history:
+        return None
+    result_list = []
+    for item in json_lists:
+        result = RunFunctionCalling(item)
+        if result:
+            result_list.append(result)
+    context = "\n".join(result_list)
+    if not context:
+        return None
+    prompt_template = f"""The function has been executed, and the result is as follows:
+    {context}\n
+    The user's original question is: {query}
+"""
+    input_msg = History(role="user", content=prompt_template).to_msg_template(False)
+    chat_prompt = ChatPromptTemplate.from_messages(
+        [i.to_msg_template() for i in history] + [input_msg])
+    await asyncio.sleep(0.1)
+    return chat_prompt
 
 async def GetChatPromptFromExternalTools(text: str, query: str, history: List[History], chat_solution: Any) ->Union[ChatPromptTemplate, Any]:
     if not text:
@@ -165,47 +184,59 @@ async def chat_solution_chat(
             chain = LLMChain(prompt=chat_prompt, llm=model)
 
             task = asyncio.create_task(wrap_done(
-                chain.arun({"input": query}),
+                chain.acall({"input": query}),
                 async_callback.done),
             )
 
             answer = ""
             chat_history_id = add_chat_history_to_db(chat_type="llm_chat", query=query)
-            # if stream:
-            #     async for token in async_callback.aiter():
-            #         answer += token
-            #         if speak_handler: 
-            #             speak_handler.on_llm_new_token(token)
-            #         yield json.dumps(
-            #             {"text": token, "chat_history_id": chat_history_id},
-            #             ensure_ascii=False)
-            #     if speak_handler: 
-            #         speak_handler.on_llm_end(None)
-            # else:
-            async for token in async_callback.aiter():
-                answer += token
-                if not btalk:
-                    btalk = CallingExternalTools(answer)
-                    if btalk:
-                        new_chat_prompt = await GetChatPromptFromExternalTools(text=answer, query=query, history=history, chat_solution=chat_solution)
-                        if not new_chat_prompt:
-                            btalk = False
-                        else:
-                            chat_prompt = new_chat_prompt
-                            async_callback.done.clear()
-                            break
-            if not btalk:
-                yield json.dumps(
-                    {"text": answer, "chat_history_id": chat_history_id},
-                    ensure_ascii=False)
+            if stream:
+                async for token in async_callback.aiter():
+                    answer += token
+                    if not btalk:
+                        btalk = CallingExternalTools(answer)
+                        if btalk:
+                            new_chat_prompt = await GetChatPromptFromExternalTools(text=answer, query=query, history=history, chat_solution=chat_solution)
+                            if not new_chat_prompt:
+                                btalk = False
+                            else:
+                                chat_prompt = new_chat_prompt
+                                yield json.dumps(
+                                    {"cmd": "clear", "chat_history_id": chat_history_id},
+                                    ensure_ascii=False)
+                                async_callback.done.clear()
+                                break
+                    if speak_handler: 
+                        speak_handler.on_llm_new_token(token)
+                    yield json.dumps(
+                        {"text": token, "chat_history_id": chat_history_id},
+                        ensure_ascii=False)
                 if speak_handler: 
-                    speak_handler.on_llm_new_token(answer)
                     speak_handler.on_llm_end(None)
-
+            else:
+                async for token in async_callback.aiter():
+                    answer += token
+                    if not btalk:
+                        btalk = CallingExternalTools(answer)
+                        if btalk:
+                            new_chat_prompt = await GetChatPromptFromExternalTools(text=answer, query=query, history=history, chat_solution=chat_solution)
+                            if not new_chat_prompt:
+                                btalk = False
+                            else:
+                                chat_prompt = new_chat_prompt
+                                async_callback.done.clear()
+                                break
+                if not btalk:
+                    yield json.dumps(
+                        {"text": answer, "chat_history_id": chat_history_id},
+                        ensure_ascii=False)
+                    if speak_handler: 
+                        speak_handler.on_llm_new_token(answer)
+                        speak_handler.on_llm_end(None)
+            await task
         print("chat_solution_chat_iterator exit!")
         if SAVE_CHAT_HISTORY and len(chat_history_id) > 0:
             update_chat_history(chat_history_id, response=answer)
-        await task
 
     return StreamingResponse(chat_solution_chat_iterator(query=query,
             imagesdata=imagesdata,
