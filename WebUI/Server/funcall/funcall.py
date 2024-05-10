@@ -22,10 +22,24 @@ def get_current_time():
     formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")   
     return formatted_time
 
-funcall_tools = [get_current_location, get_current_time]
+@tool
+def submit_warranty_claim(caption: str, description: str):
+    """Submit warranty claim."""
+    warranty_context = f"""
+     Title: {caption}
+
+     Description: {description}
+"""
+    print(warranty_context)
+    import random
+    repair_number = str(random.randint(100000, 999999))
+    return f"Submitted warranty success. The repair number is: {repair_number}"
+
+funcall_tools = [get_current_location, get_current_time, submit_warranty_claim]
 tool_names = {
     "get_current_location": get_current_location,
     "get_current_time": get_current_time,
+    "submit_warranty_claim": submit_warranty_claim,
 }
 
 def GetFuncallList() ->list:
