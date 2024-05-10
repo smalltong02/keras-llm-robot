@@ -798,7 +798,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                         history=history,
                         chat_solution=running_chat_solution,
                         temperature=temperature):
-                    print("d: ", d)
+                    #print("d: ", d)
                     if error_msg := check_error_msg(d):  # check whether error occured
                             st.error(error_msg)
                     else:

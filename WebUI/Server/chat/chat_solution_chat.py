@@ -5,12 +5,12 @@ from langchain.chains import LLMChain
 from fastapi.responses import StreamingResponse
 from WebUI.Server.chat.utils import History
 from langchain.prompts.chat import ChatPromptTemplate
-from WebUI.configs import SAVE_CHAT_HISTORY
+from WebUI.configs import SAVE_CHAT_HISTORY, USE_RERANKER, GetRerankerModelPath
 from langchain.chat_models import ChatOpenAI
 from langchain.callbacks import AsyncIteratorCallbackHandler
 from WebUI.Server.chat.StreamHandler import StreamSpeakHandler
 from WebUI.configs.basicconfig import (GetProviderByName, GetSpeechModelInfo, GetSpeechForChatSolution, GetSystemPromptForChatSolution)
-from WebUI.Server.utils import wrap_done, get_ChatOpenAI, get_prompt_template, GetModelApiBaseAddress
+from WebUI.Server.utils import wrap_done, get_ChatOpenAI, get_prompt_template, GetModelApiBaseAddress, detect_device
 from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
 from WebUI.configs.basicconfig import (ModelType, ModelSize, ModelSubType, GetModelInfoByName, ExtractJsonStrings, use_new_search_engine, use_knowledge_base, use_new_function_calling)
 from WebUI.Server.db.repository import add_chat_history_to_db, update_chat_history
@@ -49,8 +49,47 @@ async def GetChatPromptFromFromSearchEngine(query: str = "", history: list[Histo
     return chat_prompt
 
 async def GetChatPromptFromKnowledgeBase(query: str = "", history: list[History] = [], chat_solution: Any = None) ->Union[ChatPromptTemplate, Any]:
+    from fastapi.concurrency import run_in_threadpool
+    from WebUI.Server.reranker.reranker import LangchainReranker
+    from WebUI.Server.knowledge_base.kb_doc_api import search_docs
+    from WebUI.Server.knowledge_base.kb_service.base import KBServiceFactory
+    from WebUI.Server.knowledge_base.utils import VECTOR_SEARCH_TOP_K, SCORE_THRESHOLD
     if not query or not history or not chat_solution:
         return None
+    knowledge_base_name = chat_solution["config"]["knowledge_base"]["name"]
+    kb = KBServiceFactory.get_service_by_name(knowledge_base_name)
+    if kb is None:
+        return None
+    docs = await run_in_threadpool(search_docs,
+            query=query,
+            knowledge_base_name=knowledge_base_name,
+            top_k=VECTOR_SEARCH_TOP_K,
+            score_threshold=SCORE_THRESHOLD)
+    if USE_RERANKER:
+            reranker_model_path = GetRerankerModelPath()
+            print("-----------------model path------------------")
+            print(reranker_model_path)
+            reranker_model = LangchainReranker(top_n=VECTOR_SEARCH_TOP_K,
+                                            device=detect_device(),
+                                            max_length=1024,
+                                            model_name_or_path=reranker_model_path
+                                            )
+            print(docs)
+            docs = reranker_model.compress_documents(documents=docs,
+                                                     query=query)
+            print("---------after rerank------------------")
+            print(docs)
+    context = "\n".join([doc.page_content for doc in docs])
+    if not context:
+        return None
+    prompt_template = f"""The user's issue has been searched through the knowledge base. Here is all the content retrieved:
+    {context}\n
+    The user's original question is: {query}
+"""
+    input_msg = History(role="user", content=prompt_template).to_msg_template(False)
+    chat_prompt = ChatPromptTemplate.from_messages(
+        [i.to_msg_template() for i in history] + [input_msg])
+    return chat_prompt
 
 async def GetChatPromptFromFunctionCalling(json_lists: list = [], query: str = "", history: list[History] = []) ->Union[ChatPromptTemplate, Any]:
     from WebUI.Server.funcall.funcall import RunFunctionCalling
@@ -84,10 +123,10 @@ async def GetChatPromptFromExternalTools(text: str, query: str, history: List[Hi
         chat_prompt = await GetChatPromptFromFromSearchEngine(query, history, chat_solution)
         return chat_prompt
     if use_knowledge_base(json_lists):
-        chat_prompt = await  GetChatPromptFromKnowledgeBase(query, history, chat_solution)
+        chat_prompt = await GetChatPromptFromKnowledgeBase(query, history, chat_solution)
         return chat_prompt
     if use_new_function_calling(json_lists):
-        chat_prompt = await  GetChatPromptFromFunctionCalling(json_lists, query, history)
+        chat_prompt = await GetChatPromptFromFunctionCalling(json_lists, query, history)
         return chat_prompt
     return None
 
@@ -121,8 +160,6 @@ async def chat_solution_chat(
         ) -> AsyncIterable[str]:
         configinst = InnerJsonConfigWebUIParse()
         webui_config = configinst.dump()
-        async_callback = AsyncIteratorCallbackHandler()
-        callbackslist = [async_callback]
         if isinstance(max_tokens, int) and max_tokens <= 0:
             max_tokens = None
         model_name = chat_solution["config"]["llm_model"]
@@ -152,46 +189,49 @@ async def chat_solution_chat(
                 'content': system_prompt
             }
             history = [History.from_data(system_msg)] + history
-        if modelinfo["mtype"] == ModelType.Local:
-            provider = GetProviderByName(webui_config, model_name)
-            model = get_ChatOpenAI(
-                provider=provider,
-                model_name=model_name,
-                temperature=temperature,
-                max_tokens=max_tokens,
-                callbacks=callbackslist,
-                )
-        else:
-            api_base = GetModelApiBaseAddress(modelinfo)
-            model = ChatOpenAI(
-                streaming=True,
-                verbose=False,
-                openai_api_key="EMPTY",
-                openai_api_base=api_base,
-                model_name=model_name,
-                temperature=temperature,
-                max_tokens=max_tokens,
-                callbacks=callbackslist,
-            )
         prompt_template = get_prompt_template("llm_chat", "default")
         input_msg = History(role="user", content=prompt_template).to_msg_template(False)
         chat_prompt = ChatPromptTemplate.from_messages(
             [i.to_msg_template() for i in history] + [input_msg])
         
         btalk = True
+        chat_history_id = add_chat_history_to_db(chat_type="llm_chat", query=query)
+        answer = ""
         while btalk:
             btalk = False
+            async_callback = AsyncIteratorCallbackHandler()
+            callbackslist = [async_callback]
+            if modelinfo["mtype"] == ModelType.Local:
+                provider = GetProviderByName(webui_config, model_name)
+                model = get_ChatOpenAI(
+                    provider=provider,
+                    model_name=model_name,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    callbacks=callbackslist,
+                    )
+            else:
+                api_base = GetModelApiBaseAddress(modelinfo)
+                model = ChatOpenAI(
+                    streaming=True,
+                    verbose=False,
+                    openai_api_key="EMPTY",
+                    openai_api_base=api_base,
+                    model_name=model_name,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    callbacks=callbackslist,
+                )
             chain = LLMChain(prompt=chat_prompt, llm=model)
 
             task = asyncio.create_task(wrap_done(
                 chain.acall({"input": query}),
                 async_callback.done),
             )
-
             answer = ""
-            chat_history_id = add_chat_history_to_db(chat_type="llm_chat", query=query)
             if stream:
                 async for token in async_callback.aiter():
+                    print(" ", token)
                     answer += token
                     if not btalk:
                         btalk = CallingExternalTools(answer)
@@ -204,7 +244,6 @@ async def chat_solution_chat(
                                 yield json.dumps(
                                     {"cmd": "clear", "chat_history_id": chat_history_id},
                                     ensure_ascii=False)
-                                async_callback.done.clear()
                                 break
                     if speak_handler: 
                         speak_handler.on_llm_new_token(token)
@@ -224,7 +263,6 @@ async def chat_solution_chat(
                                 btalk = False
                             else:
                                 chat_prompt = new_chat_prompt
-                                async_callback.done.clear()
                                 break
                 if not btalk:
                     yield json.dumps(
