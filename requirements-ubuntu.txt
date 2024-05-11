@@ -102,7 +102,7 @@ sniffio==1.3.0
 SQLAlchemy==2.0.22
 sse-starlette==1.8.2
 starlette==0.27.0
-streamlit==1.28.0
+streamlit==1.29.0
 streamlit-aggrid==0.3.4.post3
 streamlit-chatbox==1.1.11
 streamlit-feedback==0.1.2

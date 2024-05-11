@@ -10,7 +10,7 @@ from WebUI.webui_pages.utils import ApiRequest, check_error_msg
 from streamlit_chatbox import ChatBox, Image, Audio, Video, Markdown
 from streamlit_webrtc import webrtc_streamer, WebRtcMode, ClientSettings
 from aiortc.contrib.media import MediaRecorder
-from WebUI.configs.basicconfig import (TMP_DIR, ModelType, ModelSize, ModelSubType, GetModelInfoByName, GetTypeName, generate_prompt_for_imagegen, generate_prompt_for_smart_search, 
+from WebUI.configs.basicconfig import (TMP_DIR, ModelType, ModelSize, ModelSubType, ToolsType, GetModelInfoByName, GetTypeName, generate_prompt_for_imagegen, generate_prompt_for_smart_search, 
                                        use_search_engine, glob_multimodal_vision_list, glob_multimodal_voice_list, glob_multimodal_video_list)
 from WebUI.configs.prompttemplates import PROMPT_TEMPLATES
 from WebUI.configs.roleplaytemplates import ROLEPLAY_TEMPLATES
@@ -789,6 +789,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                 chat_box.ai_say([
                     "Thinking...",
                 ])
+                new_ai_say = False
                 text = ""
                 chat_history_id = 0
                 for d in api.chat_solution_chat(prompt,
@@ -799,6 +800,11 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                         chat_solution=running_chat_solution,
                         temperature=temperature):
                     #print("d: ", d)
+                    if new_ai_say:
+                        chat_box.ai_say([
+                            "Thinking...",
+                        ])
+                        new_ai_say = False
                     if error_msg := check_error_msg(d):  # check whether error occured
                             st.error(error_msg)
                     else:
@@ -810,11 +816,29 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                         elif d.get("cmd", "") == "clear":
                             text = ""
                             chat_box.update_msg(text, element_index=0)
+                        elif d.get("docs", []):
+                            tooltype = d.get("tooltype", ToolsType.Unknown.value)
+                            tooltype = ToolsType(tooltype)
+                            if tooltype == ToolsType.ToolSearchEngine:
+                                title = "Additional information by Search Engine"
+                            elif tooltype == ToolsType.ToolKnowledgeBase:
+                                title = "Additional information by Knowledge Base"
+                            elif tooltype == ToolsType.ToolFunctionCalling:
+                                title = "Additional information by Function Calling"
+                            else:
+                                title = "Additional information by Unknown Tool"
+                            chat_box.ai_say([
+                                Markdown("...", in_expander=True, title=title, state="complete"),
+                            ])
+                            message = "\n\n".join(d.get("docs", []))
+                            chat_box.update_msg(message, element_index=0, streaming=False)
+                            new_ai_say = True
                 metadata = {
                     "chat_history_id": chat_history_id,
                     }
                 print("asdfadfadqwer")
-                chat_box.update_msg(text, element_index=0, streaming=False, metadata=metadata)
+                if not new_ai_say:
+                    chat_box.update_msg(text, element_index=0, streaming=False, metadata=metadata)
                 chat_box.show_feedback(**feedback_kwargs,
                     key=chat_history_id,
                     on_submit=on_feedback,

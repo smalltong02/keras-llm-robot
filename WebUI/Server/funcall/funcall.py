@@ -29,11 +29,15 @@ def submit_warranty_claim(caption: str, description: str):
      Title: {caption}
 
      Description: {description}
+
+     Sent email to support@sony.com
 """
-    print(warranty_context)
     import random
     repair_number = str(random.randint(100000, 999999))
-    return f"Submitted warranty success. The repair number is: {repair_number}"
+    return f"""Submitted warranty success. The repair number is: {repair_number}\n
+    The content of the email -
+    {warranty_context}
+    """
 
 funcall_tools = [get_current_location, get_current_time, submit_warranty_claim]
 tool_names = {
@@ -63,6 +67,13 @@ def GetToolsSystemPrompt() ->str:
     If tools are needed, return the name and input of the tool to use. Return your response as a JSON blob with 'name' and 'arguments' keys."""
     return tools_system_prompt
 
+def GetFunctionName(json_data: str) ->str:
+    try:
+        func = json.loads(json_data)
+        return func.get("name", "none")
+    except json.JSONDecodeError:
+        return "none"
+    
 def RunFunctionCalling(json_data: str) ->str:
     try:
         func = json.loads(json_data)

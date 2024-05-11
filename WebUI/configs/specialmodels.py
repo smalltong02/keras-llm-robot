@@ -101,7 +101,8 @@ def load_llamacpp_model(app: FastAPI, model_name, model_path):
             model_path=path,
             do_sample=True,
             temperature=0.7,
-            max_tokens=2048,
+            n_ctx=4096,
+            max_tokens=4096,
             top_p=1,
             verbose=True,
             callback_manager=callback_manager,
@@ -399,13 +400,13 @@ async def special_chat_iterator(model: Any,
                     new_sentence += token
                     # Use server-sent-events to stream the response
                     if '\n' in new_sentence:
-                        #print("token: ", new_sentence)
+                        #print("new_sentence: ", new_sentence)
                         yield json.dumps(
                             {"text": new_sentence, "chat_history_id": chat_history_id},
                             ensure_ascii=False)
                         new_sentence = ""
                 if new_sentence:
-                    #print("token: ", new_sentence)
+                    #print("new_sentence: ", new_sentence)
                     yield json.dumps(
                         {"text": new_sentence, "chat_history_id": chat_history_id},
                         ensure_ascii=False)

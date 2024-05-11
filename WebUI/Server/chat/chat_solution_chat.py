@@ -12,7 +12,7 @@ from WebUI.Server.chat.StreamHandler import StreamSpeakHandler
 from WebUI.configs.basicconfig import (GetProviderByName, GetSpeechModelInfo, GetSpeechForChatSolution, GetSystemPromptForChatSolution)
 from WebUI.Server.utils import wrap_done, get_ChatOpenAI, get_prompt_template, GetModelApiBaseAddress, detect_device
 from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
-from WebUI.configs.basicconfig import (ModelType, ModelSize, ModelSubType, GetModelInfoByName, ExtractJsonStrings, use_new_search_engine, use_knowledge_base, use_new_function_calling)
+from WebUI.configs.basicconfig import (ModelType, ModelSize, ModelSubType, ToolsType, GetModelInfoByName, ExtractJsonStrings, use_new_search_engine, use_knowledge_base, use_new_function_calling)
 from WebUI.Server.db.repository import add_chat_history_to_db, update_chat_history
 from typing import AsyncIterable, Dict, List, Optional, Union, Any
 
@@ -33,12 +33,16 @@ def CallingExternalTools(text: str) -> bool:
 async def GetChatPromptFromFromSearchEngine(query: str = "", history: list[History] = [], chat_solution: Any = None) ->Union[ChatPromptTemplate, Any]:
     from WebUI.Server.chat.search_engine_chat import lookup_search_engine
     if not query or not history or not chat_solution:
-        return None
+        return None, []
     search_engine_name = chat_solution["config"]["search_engine"]["name"]
     docs = await lookup_search_engine(query, search_engine_name)
+    source_documents = [
+        f"""from [{inum + 1}] [{doc.metadata["source"]}]({doc.metadata["source"]}) \n\n{doc.page_content}\n\n"""
+        for inum, doc in enumerate(docs)
+    ]
     context = "\n".join([doc.page_content for doc in docs])
     if not context:
-        return None
+        return None, []
     prompt_template = f"""The user's question has been searched on the internet. Here is all the content retrieved from the search engine:
     {context}\n
     The user's original question is: {query}
@@ -46,20 +50,21 @@ async def GetChatPromptFromFromSearchEngine(query: str = "", history: list[Histo
     input_msg = History(role="user", content=prompt_template).to_msg_template(False)
     chat_prompt = ChatPromptTemplate.from_messages(
         [i.to_msg_template() for i in history] + [input_msg])
-    return chat_prompt
+    return chat_prompt, source_documents
 
 async def GetChatPromptFromKnowledgeBase(query: str = "", history: list[History] = [], chat_solution: Any = None) ->Union[ChatPromptTemplate, Any]:
+    from urllib.parse import urlencode
     from fastapi.concurrency import run_in_threadpool
     from WebUI.Server.reranker.reranker import LangchainReranker
     from WebUI.Server.knowledge_base.kb_doc_api import search_docs
     from WebUI.Server.knowledge_base.kb_service.base import KBServiceFactory
     from WebUI.Server.knowledge_base.utils import VECTOR_SEARCH_TOP_K, SCORE_THRESHOLD
     if not query or not history or not chat_solution:
-        return None
+        return None, []
     knowledge_base_name = chat_solution["config"]["knowledge_base"]["name"]
     kb = KBServiceFactory.get_service_by_name(knowledge_base_name)
     if kb is None:
-        return None
+        return None, []
     docs = await run_in_threadpool(search_docs,
             query=query,
             knowledge_base_name=knowledge_base_name,
@@ -79,9 +84,17 @@ async def GetChatPromptFromKnowledgeBase(query: str = "", history: list[History]
                                                      query=query)
             print("---------after rerank------------------")
             print(docs)
+    source_documents = []
+    for inum, doc in enumerate(docs):
+        filename = doc.metadata.get("source")
+        parameters = urlencode({"knowledge_base_name": knowledge_base_name, "file_name": filename})
+        base_url = "/"
+        url = f"{base_url}knowledge_base/download_doc?" + parameters
+        text = f"""from [{inum + 1}] [{filename}]({url}) \n\n{doc.page_content}\n\n"""
+        source_documents.append(text)
     context = "\n".join([doc.page_content for doc in docs])
     if not context:
-        return None
+        return None, []
     prompt_template = f"""The user's issue has been searched through the knowledge base. Here is all the content retrieved:
     {context}\n
     The user's original question is: {query}
@@ -89,20 +102,25 @@ async def GetChatPromptFromKnowledgeBase(query: str = "", history: list[History]
     input_msg = History(role="user", content=prompt_template).to_msg_template(False)
     chat_prompt = ChatPromptTemplate.from_messages(
         [i.to_msg_template() for i in history] + [input_msg])
-    return chat_prompt
+    return chat_prompt, source_documents
 
 async def GetChatPromptFromFunctionCalling(json_lists: list = [], query: str = "", history: list[History] = []) ->Union[ChatPromptTemplate, Any]:
-    from WebUI.Server.funcall.funcall import RunFunctionCalling
+    from WebUI.Server.funcall.funcall import RunFunctionCalling, GetFunctionName
     if not json_lists or not history:
-        return None
+        return None, []
     result_list = []
+    func_name = []
     for item in json_lists:
         result = RunFunctionCalling(item)
         if result:
+            func_name.append(GetFunctionName(item))
             result_list.append(result)
+    source_documents = []
+    for result in enumerate(result_list):
+        source_documents.append(f"function - {func_name[0]}()\n\n{result}")
     context = "\n".join(result_list)
     if not context:
-        return None
+        return None, []
     prompt_template = f"""The function has been executed, and the result is as follows:
     {context}\n
     The user's original question is: {query}
@@ -111,24 +129,24 @@ async def GetChatPromptFromFunctionCalling(json_lists: list = [], query: str = "
     chat_prompt = ChatPromptTemplate.from_messages(
         [i.to_msg_template() for i in history] + [input_msg])
     await asyncio.sleep(0.1)
-    return chat_prompt
+    return chat_prompt, source_documents
 
 async def GetChatPromptFromExternalTools(text: str, query: str, history: List[History], chat_solution: Any) ->Union[ChatPromptTemplate, Any]:
     if not text:
-        return None
+        return None, [], ToolsType.Unknown
     json_lists = ExtractJsonStrings(text)
     if not json_lists:
-        return None
+        return None, [], ToolsType.Unknown
     if use_new_search_engine(json_lists):
-        chat_prompt = await GetChatPromptFromFromSearchEngine(query, history, chat_solution)
-        return chat_prompt
+        chat_prompt, docs = await GetChatPromptFromFromSearchEngine(query, history, chat_solution)
+        return chat_prompt, docs, ToolsType.ToolSearchEngine
     if use_knowledge_base(json_lists):
-        chat_prompt = await GetChatPromptFromKnowledgeBase(query, history, chat_solution)
-        return chat_prompt
+        chat_prompt, docs = await GetChatPromptFromKnowledgeBase(query, history, chat_solution)
+        return chat_prompt, docs, ToolsType.ToolKnowledgeBase
     if use_new_function_calling(json_lists):
-        chat_prompt = await GetChatPromptFromFunctionCalling(json_lists, query, history)
-        return chat_prompt
-    return None
+        chat_prompt, docs = await GetChatPromptFromFunctionCalling(json_lists, query, history)
+        return chat_prompt, docs, ToolsType.ToolFunctionCalling
+    return None, [], ToolsType.Unknown
 
 async def chat_solution_chat(
     query: str = Body(..., description="User input: ", examples=["chat"]),
@@ -197,6 +215,8 @@ async def chat_solution_chat(
         btalk = True
         chat_history_id = add_chat_history_to_db(chat_type="llm_chat", query=query)
         answer = ""
+        docs = []
+        tooltype = ToolsType.Unknown
         while btalk:
             btalk = False
             async_callback = AsyncIteratorCallbackHandler()
@@ -236,7 +256,7 @@ async def chat_solution_chat(
                     if not btalk:
                         btalk = CallingExternalTools(answer)
                         if btalk:
-                            new_chat_prompt = await GetChatPromptFromExternalTools(text=answer, query=query, history=history, chat_solution=chat_solution)
+                            new_chat_prompt, docs, tooltype = await GetChatPromptFromExternalTools(text=answer, query=query, history=history, chat_solution=chat_solution)
                             if not new_chat_prompt:
                                 btalk = False
                             else:
@@ -252,13 +272,17 @@ async def chat_solution_chat(
                         ensure_ascii=False)
                 if speak_handler: 
                     speak_handler.on_llm_end(None)
+                if not btalk and docs:
+                    yield json.dumps({"tooltype": tooltype.value, "docs": docs}, ensure_ascii=False)
+                    docs = []
+                    tooltype = ToolsType.Unknown
             else:
                 async for token in async_callback.aiter():
                     answer += token
                     if not btalk:
                         btalk = CallingExternalTools(answer)
                         if btalk:
-                            new_chat_prompt = await GetChatPromptFromExternalTools(text=answer, query=query, history=history, chat_solution=chat_solution)
+                            new_chat_prompt, docs = await GetChatPromptFromExternalTools(text=answer, query=query, history=history, chat_solution=chat_solution)
                             if not new_chat_prompt:
                                 btalk = False
                             else:
@@ -268,6 +292,9 @@ async def chat_solution_chat(
                     yield json.dumps(
                         {"text": answer, "chat_history_id": chat_history_id},
                         ensure_ascii=False)
+                    if docs:
+                        yield json.dumps({"docs": docs}, ensure_ascii=False)
+                    docs = []
                     if speak_handler: 
                         speak_handler.on_llm_new_token(answer)
                         speak_handler.on_llm_end(None)

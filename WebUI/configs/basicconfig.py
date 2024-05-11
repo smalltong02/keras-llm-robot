@@ -621,3 +621,9 @@ def GetSystemPromptForChatSolution(chat_solution : dict) ->dict:
             tools_prompt = GetToolsSystemPrompt()
             system_prompt += "\n" + tools_prompt
         return system_prompt
+    
+class ToolsType(Enum):
+    Unknown = 0
+    ToolSearchEngine = 1
+    ToolKnowledgeBase = 2
+    ToolFunctionCalling = 3
