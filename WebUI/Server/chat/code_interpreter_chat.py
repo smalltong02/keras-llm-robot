@@ -34,33 +34,7 @@ async def code_interpreter_chat(query: str = Body(..., description="User input: 
         from WebUI.Server.utils import GetModelApiBaseAddress
         nonlocal webui_config
         nonlocal codeinterpreter
-        if interpreter_id == "Open Interpreter":
-            from interpreter import interpreter
-            interpreter.llm.model = "openai/" + model_name
-            interpreter.llm.api_key = "EMPTY"
-            interpreter.auto_run = auto_run
-            interpreter.offline = offline
-            interpreter.safe_mode = safe_mode
-            interpreter.llm.api_base = GetModelApiBaseAddress(modelinfo)
-            text = ""
-            for chunk in interpreter.chat(query, display=False, stream=True):
-                inter_format = chunk.get("format", None)
-                if inter_format is None or inter_format != "execution":
-                    continue
-                print("chunk: ", chunk)
-                inter_content = chunk.get("content", None)
-                if inter_content is None or not isinstance(inter_content, dict):
-                    continue
-                inter_format = inter_content.get("format", None)
-                inter_content = inter_content.get("content", None)
-                if not isinstance(inter_content, str):
-                    continue
-                text +="```" + inter_format + "\n" + inter_content + "```\n"
-                yield json.dumps(
-                    {"text": text},
-                    ensure_ascii=False)
-                await asyncio.sleep(0.1)
-        elif interpreter_id == "Keras Interpreter":
+        if interpreter_id == "Keras Interpreter":
             from WebUI.Server.interpreter_wrapper.keras_interpreter_wrapper import KerasInterpreter, SafeModeType
             custom_instructions = codeinterpreter.get(interpreter_id).get("custom_instructions")
             system_message = codeinterpreter.get(interpreter_id).get("system_message")

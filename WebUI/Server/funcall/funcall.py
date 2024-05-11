@@ -22,10 +22,28 @@ def get_current_time():
     formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")   
     return formatted_time
 
-funcall_tools = [get_current_location, get_current_time]
+@tool
+def submit_warranty_claim(caption: str, description: str):
+    """Submit warranty claim."""
+    warranty_context = f"""
+     Title: {caption}
+
+     Description: {description}
+
+     Sent email to support@sony.com
+"""
+    import random
+    repair_number = str(random.randint(100000, 999999))
+    return f"""Submitted warranty success. The repair number is: {repair_number}\n
+    The content of the email -
+    {warranty_context}
+    """
+
+funcall_tools = [get_current_location, get_current_time, submit_warranty_claim]
 tool_names = {
     "get_current_location": get_current_location,
     "get_current_time": get_current_time,
+    "submit_warranty_claim": submit_warranty_claim,
 }
 
 def GetFuncallList() ->list:
@@ -45,10 +63,17 @@ def GetToolsSystemPrompt() ->str:
     rendered_tools = render_text_description(funcall_tools)
     tools_system_prompt = f"""You can access to the following set of tools. Here are the names and descriptions for each tool:
     {rendered_tools}
-    Given the user input, ou need to use your own judgment whether to use tools. If not needed, please answer the questions to the best of your ability.
+    Given the user input, you need to use your own judgment whether to use tools. If not needed, please answer the questions to the best of your ability.
     If tools are needed, return the name and input of the tool to use. Return your response as a JSON blob with 'name' and 'arguments' keys."""
     return tools_system_prompt
 
+def GetFunctionName(json_data: str) ->str:
+    try:
+        func = json.loads(json_data)
+        return func.get("name", "none")
+    except json.JSONDecodeError:
+        return "none"
+    
 def RunFunctionCalling(json_data: str) ->str:
     try:
         func = json.loads(json_data)
@@ -63,7 +88,7 @@ def RunFunctionCalling(json_data: str) ->str:
     except json.JSONDecodeError:
         return json_data
 
-def split_with_json_blocks(orgin_string: str, json_lists: list[str]):
+def split_with_calling_blocks(orgin_string: str, json_lists: list[str]):
     result_list = []
     start = 0
     index = 0
@@ -88,7 +113,7 @@ def split_with_json_blocks(orgin_string: str, json_lists: list[str]):
 def use_function_calling(text: str) ->str:
     print("calling_text: ", text)
     json_lists = ExtractJsonStrings(text)
-    result_list = split_with_json_blocks(text, json_lists)
+    result_list = split_with_calling_blocks(text, json_lists)
     result_text = ""
     for result in result_list:
         result_text += result

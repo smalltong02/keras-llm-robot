@@ -10,7 +10,7 @@ from WebUI.webui_pages.utils import ApiRequest, check_error_msg
 from streamlit_chatbox import ChatBox, Image, Audio, Video, Markdown
 from streamlit_webrtc import webrtc_streamer, WebRtcMode, ClientSettings
 from aiortc.contrib.media import MediaRecorder
-from WebUI.configs.basicconfig import (TMP_DIR, ModelType, ModelSize, ModelSubType, GetModelInfoByName, GetTypeName, generate_prompt_for_imagegen, generate_prompt_for_smart_search, 
+from WebUI.configs.basicconfig import (TMP_DIR, ModelType, ModelSize, ModelSubType, ToolsType, GetModelInfoByName, GetTypeName, generate_prompt_for_imagegen, generate_prompt_for_smart_search, 
                                        use_search_engine, glob_multimodal_vision_list, glob_multimodal_voice_list, glob_multimodal_video_list)
 from WebUI.configs.prompttemplates import PROMPT_TEMPLATES
 from WebUI.configs.roleplaytemplates import ROLEPLAY_TEMPLATES
@@ -134,6 +134,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
     musicgeneration_model = api.get_music_generation_model()
     functioncalling = webui_config.get("FunctionCalling")
     calling_enable = functioncalling.get("calling_enable", False)
+    running_chat_solution = st.session_state.get("current_chat_solution", {})
     current_engine_name = ""
     current_smart = False
     current_search_engine = {}
@@ -151,12 +152,15 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
         role_player = current_role_player
     modelinfo : Dict[str, any] = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str}
     print("voicemodel: ", voicemodel)
+    print("speechmodel: ", speechmodel)
     print("imagerecognition_model: ", imagerecognition_model)
     print("imagegeneration_model: ", imagegeneration_model)
     print("musicgeneration_model: ", musicgeneration_model)
     print("search_engine: ", current_search_engine)
     print("code_interpreter: ", code_interpreter)
     print("role_player: ", role_player)
+    print("running_chat_solution: ", running_chat_solution)
+    chat_solution_enable = running_chat_solution.get("enable", False)
 
     dialogue_turns = chatconfig.get("dialogue_turns", 5)
     disabled = False
@@ -187,7 +191,9 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                         "Agent Chat",
                         ]
         mode_index = 0
-        if st.session_state.get("selected_kb_name"):
+        if chat_solution_enable:
+            mode_index = 2
+        elif st.session_state.get("selected_kb_name"):
             mode_index = 1
         dialogue_mode = st.selectbox("Please Select Chat Mode:",
                                     dialogue_modes,
@@ -252,9 +258,6 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
         export_btn = cols[0]
         if cols[1].button('New chat', use_container_width=True):
             chat_box.reset_history()
-            if code_interpreter == "Open Interpreter":
-                from interpreter import interpreter
-                interpreter.messages = []
 
         def md_callback(msg: Any):
             user_avatar : str = "User"
@@ -407,26 +410,73 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
         for video in videosdata:
             st.video(data=video)
 
-        model_name = running_model
-        if model_name == "None":
-            model_name = ""
-        st.caption(
-            f"""<p style="font-size: 1.5em; text-align: center; color: #3498db;"><b>{model_name}</b></p>""",
-            unsafe_allow_html=True,
-        )
-        if bshowstatus:
-            placeholder_cpu = st.empty()
-            placeholder_ram = st.empty()
-            gpuname, _, _ = get_gpu_info()
-            if gpuname == "":
-                gpuname = "Unknown"
+        if  chat_solution_enable:
+            solution_name = running_chat_solution["name"]
             st.caption(
-                f"""<p style="font-size: 1em; text-align: center;">GPU Name: {gpuname}</p>""",
+                f"""<p style="font-size: 1.5em; text-align: center; color: #3498db;"><b>{solution_name}</b></p>""",
                 unsafe_allow_html=True,
             )
-            placeholder_gpuutil = st.empty()
-            placeholder_gpumem = st.empty()
-            update_running_status(placeholder_cpu, placeholder_ram, placeholder_gpuutil, placeholder_gpumem, bshowstatus, binit, True)
+            st.divider()
+            model_name = running_chat_solution["config"]["llm_model"]
+            st.caption(
+                f"""<p style="font-size: 1.5em; text-align: left; color: #9932CC;"><b>▪️ {model_name}</b></p>""",
+                unsafe_allow_html=True,
+            )
+            voice_enable = running_chat_solution["config"]["voice"]["enable"]
+            if voice_enable:
+                voice_model = running_chat_solution["config"]["voice"]["model"]
+                st.caption(
+                    f"""<p style="font-size: 1.5em; text-align: left; color: #9932CC;"><b>▪️ {voice_model}</b></p>""",
+                    unsafe_allow_html=True,
+                )
+            speech_enable = running_chat_solution["config"]["speech"]["enable"]
+            if speech_enable:
+                speech_model = running_chat_solution["config"]["speech"]["model"]
+                st.caption(
+                    f"""<p style="font-size: 1.5em; text-align: left; color: #9932CC;"><b>▪️ {speech_model}</b></p>""",
+                    unsafe_allow_html=True,
+                )
+            knowledge_enable = running_chat_solution["config"]["knowledge_base"]["enable"]
+            if knowledge_enable:
+                knowledge_base = running_chat_solution["config"]["knowledge_base"]["name"]
+                st.caption(
+                    f"""<p style="font-size: 1.5em; text-align: left; color: #9932CC;"><b>▪️ KB: {knowledge_base}</b></p>""",
+                    unsafe_allow_html=True,
+                )
+            search_enable = running_chat_solution["config"]["search_engine"]["enable"]
+            if search_enable:
+                search_engine = running_chat_solution["config"]["search_engine"]["name"]
+                st.caption(
+                    f"""<p style="font-size: 1.5em; text-align: left; color: #9932CC;"><b>▪️ Search: {search_engine}</b></p>""",
+                    unsafe_allow_html=True,
+                )
+            calling_enable = running_chat_solution["config"]["function_calling"]
+            if calling_enable:
+                st.caption(
+                    f"""<p style="font-size: 1.5em; text-align: left; color: #9932CC;"><b>▪️ Function Calling: {calling_enable}</b></p>""",
+                    unsafe_allow_html=True,
+                )
+        else:
+            model_name = running_model
+            if model_name == "None":
+                model_name = ""
+            st.caption(
+                f"""<p style="font-size: 1.5em; text-align: center; color: #3498db;"><b>{model_name}</b></p>""",
+                unsafe_allow_html=True,
+            )
+            if bshowstatus:
+                placeholder_cpu = st.empty()
+                placeholder_ram = st.empty()
+                gpuname, _, _ = get_gpu_info()
+                if gpuname == "":
+                    gpuname = "Unknown"
+                st.caption(
+                    f"""<p style="font-size: 1em; text-align: center;">GPU Name: {gpuname}</p>""",
+                    unsafe_allow_html=True,
+                )
+                placeholder_gpuutil = st.empty()
+                placeholder_gpumem = st.empty()
+                update_running_status(placeholder_cpu, placeholder_ram, placeholder_gpuutil, placeholder_gpumem, bshowstatus, binit, True)
 
     if not chat_box.chat_inited:
         chat_box.init_session()
@@ -734,6 +784,65 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                         chat_box.update_msg(text, element_index=0)
                 chat_box.update_msg(text, element_index=0, streaming=False)
                 chat_box.update_msg("\n\n".join(d.get("docs", [])), element_index=1, streaming=False)
+        elif dialogue_mode == "Agent Chat":
+            if chat_solution_enable:
+                chat_box.ai_say([
+                    "Thinking...",
+                ])
+                new_ai_say = False
+                text = ""
+                chat_history_id = 0
+                for d in api.chat_solution_chat(prompt,
+                        imagesdata=imagesdata,
+                        audiosdata=audiosdata,
+                        videosdata=videosdata,
+                        history=history,
+                        chat_solution=running_chat_solution,
+                        temperature=temperature):
+                    #print("d: ", d)
+                    if new_ai_say:
+                        chat_box.ai_say([
+                            "Thinking...",
+                        ])
+                        new_ai_say = False
+                    if error_msg := check_error_msg(d):  # check whether error occured
+                            st.error(error_msg)
+                    else:
+                        chunk = d.get("text", "")
+                        if chunk:
+                            chat_history_id = d.get("chat_history_id", "")
+                            text += chunk
+                            chat_box.update_msg(text, element_index=0)
+                        elif d.get("cmd", "") == "clear":
+                            text = ""
+                            chat_box.update_msg(text, element_index=0)
+                        elif d.get("docs", []):
+                            tooltype = d.get("tooltype", ToolsType.Unknown.value)
+                            tooltype = ToolsType(tooltype)
+                            if tooltype == ToolsType.ToolSearchEngine:
+                                title = "Additional information by Search Engine"
+                            elif tooltype == ToolsType.ToolKnowledgeBase:
+                                title = "Additional information by Knowledge Base"
+                            elif tooltype == ToolsType.ToolFunctionCalling:
+                                title = "Additional information by Function Calling"
+                            else:
+                                title = "Additional information by Unknown Tool"
+                            chat_box.ai_say([
+                                Markdown("...", in_expander=True, title=title, state="complete"),
+                            ])
+                            message = "\n\n".join(d.get("docs", []))
+                            chat_box.update_msg(message, element_index=0, streaming=False)
+                            new_ai_say = True
+                metadata = {
+                    "chat_history_id": chat_history_id,
+                    }
+                print("asdfadfadqwer")
+                if not new_ai_say:
+                    chat_box.update_msg(text, element_index=0, streaming=False, metadata=metadata)
+                chat_box.show_feedback(**feedback_kwargs,
+                    key=chat_history_id,
+                    on_submit=on_feedback,
+                    kwargs={"chat_history_id": chat_history_id, "history_index": len(chat_box.history) - 1})
             
         if bshowstatus:
             while True:

@@ -1,6 +1,6 @@
 from fastapi import Body
 from fastapi.responses import StreamingResponse
-from WebUI.configs import LLM_MODELS, TEMPERATURE, DEF_TOKENS, SAVE_CHAT_HISTORY
+from WebUI.configs import DEF_TOKENS, SAVE_CHAT_HISTORY
 from WebUI.Server.utils import wrap_done, get_ChatOpenAI
 from langchain.chains import LLMChain
 from langchain.callbacks import AsyncIteratorCallbackHandler
@@ -17,10 +17,7 @@ from WebUI.Server.chat.StreamHandler import StreamSpeakHandler
 from WebUI.Server.utils import get_prompt_template
 from WebUI.Server.db.repository import add_chat_history_to_db, update_chat_history
 from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
-from langchain.tools import format_tool_to_openai_function
-from WebUI.Server.funcall.funcall import funcall_tools, tool_names, GetToolsSystemPrompt
-from langchain.agents.output_parsers import OpenAIFunctionsAgentOutputParser
-from langchain_core.output_parsers import JsonOutputParser
+from WebUI.Server.funcall.funcall import funcall_tools, GetToolsSystemPrompt
 
 async def chat(query: str = Body(..., description="User input: ", examples=["chat"]),
     imagesdata: List[str] = Body([], description="image data", examples=["image"]),
@@ -34,9 +31,9 @@ async def chat(query: str = Body(..., description="User input: ", examples=["cha
                                       {"role": "assistant", "content": "I am AI."}]]
                                   ),
     stream: bool = Body(False, description="stream output"),
-    model_name: str = Body(LLM_MODELS[0], description="model name"),
+    model_name: str = Body("", description="model name"),
     speechmodel: dict = Body({}, description="speech model config"),
-    temperature: float = Body(TEMPERATURE, description="LLM Temperature", ge=0.0, le=1.0),
+    temperature: float = Body(0.7, description="LLM Temperature", ge=0.0, le=1.0),
     max_tokens: Optional[int] = Body(None, description="max tokens."),
     prompt_name: str = Body("default", description=""),
     ):
@@ -51,7 +48,7 @@ async def chat(query: str = Body(..., description="User input: ", examples=["cha
                             stream: bool = True,
                             model_name: str = "",
                             speechmodel: dict = {},
-                            temperature: float = TEMPERATURE,
+                            temperature: float = 0.7,
                             max_tokens: Optional[int] = None,
                             prompt_name: str = prompt_name,
                             ) -> AsyncIterable[str]:

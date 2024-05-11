@@ -15,9 +15,10 @@ from WebUI.Server.embeddings_api import embed_texts_endpoint
 from WebUI.Server.chat.openai_chat import openai_chat
 from WebUI.Server.chat.search_engine_chat import search_engine_chat
 from WebUI.Server.chat.code_interpreter_chat import code_interpreter_chat
+from WebUI.Server.chat.chat_solution_chat import chat_solution_chat
 from WebUI.Server.llm_api import (list_running_models, get_running_models, list_config_models,
                             change_llm_model, stop_llm_model, chat_llm_model, download_llm_model,
-                            get_model_config, save_chat_config, save_model_config, get_webui_configs,
+                            get_model_config, save_chat_config, save_model_config, get_webui_configs, get_aigenerator_configs,
                             get_vtot_model, get_vtot_data, stop_vtot_model, change_vtot_model, save_voice_model_config,
                             get_speech_model, get_speech_data, save_speech_model_config, stop_speech_model, change_speech_model,
                             get_image_recognition_model, save_image_recognition_model_config, eject_image_recognition_model, change_image_recognition_model, get_image_recognition_data,
@@ -292,6 +293,11 @@ def mount_app_routes(app: FastAPI, run_mode: str = None):
              tags=["Server State"],
              summary="get webui config",
              )(get_webui_configs)
+    
+    app.post("/server/get_aigenerator_config",
+             tags=["Server State"],
+             summary="get AI generator config",
+             )(get_aigenerator_configs)
 
     @app.post("/server/get_prompt_template",
              tags=["Server State"],
@@ -301,6 +307,12 @@ def mount_app_routes(app: FastAPI, run_mode: str = None):
         name: str = Body("default", description="Template Name"),
     ) -> str:
         return get_prompt_template(type=type, name=name)
+    
+    # chat solution interface
+    app.post("/chat_solution/chat",
+            tags=["Chat Solution Management"],
+            summary="Chat with Chat Solution.",
+            )(chat_solution_chat)
 
     # other interface
     app.post("/other/completion",

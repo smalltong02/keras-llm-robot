@@ -1,4 +1,3 @@
-import copy
 import streamlit as st
 from WebUI.webui_pages.utils import ApiRequest
 from WebUI.configs import (ROLEPLAY_TEMPLATES, ModelType, ModelSize, ModelSubType, GetModelType, GetModelInfoByName, GetModelConfig, GetModelSubType, GetOnlineProvider, GetOnlineModelList, GetModeList, LocalModelExist, GetPresetPromptList,
@@ -459,7 +458,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
             with tabfuncall:
                 from WebUI.Server.funcall.funcall import GetFuncallList, GetFuncallDescription
                 calling_enable = functioncalling.get("calling_enable", False)
-                calling_max = functioncalling.get("max_calling", 5)
+                #calling_max = functioncalling.get("max_calling", 5)
                 current_function = ""
                 function_name_list = GetFuncallList()
                 current_function = st.selectbox(

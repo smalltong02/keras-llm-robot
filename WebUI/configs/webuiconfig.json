@@ -851,6 +851,16 @@
                         "preset": "default",
                         "load_type": "fastchat",
                         "Huggingface": "shenzhi-wang/Llama3-8B-Chinese-Chat"
+                    },
+                    "Llama3-ChatQA-1.5-8B": {
+                        "path": "models/llm/Llama3-ChatQA-1.5-8B",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "fastchat",
+                        "Huggingface": "nvidia/Llama3-ChatQA-1.5-8B"
                     }
                 },
                 "13B Model": {
@@ -1246,6 +1256,16 @@
                     }
                 },
                 "70B Model": {
+                    "Meta-Llama-3-70B-Instruct-GGUF": {
+                        "path": "models/llm/Meta-Llama-3-70B-Instruct-GGUF",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "ChatML",
+                        "load_type": "llamacpp",
+                        "Huggingface": "NousResearch/Meta-Llama-3-70B-Instruct-GGUF"
+                    },
                     "Meta-Llama-3-70B-Instruct": {
                         "path": "models/llm/Meta-Llama-3-70B-Instruct",
                         "device": "auto",

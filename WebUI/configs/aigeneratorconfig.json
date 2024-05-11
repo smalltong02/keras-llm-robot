@@ -1,0 +1,66 @@
+{
+    "Chat Solutions": {
+        "Intelligent Customer Support": {
+            "descriptions": "Intelligent Customer Service System, capable of answering user questions by accessing information through a knowledge datebase and search.",
+            "roleplayer": "Customer Support",
+            "llm_model": "",
+            "description": "",
+            "voice": {
+                "enable": false,
+                "model": ""
+            },
+            "speech": {
+                "enable": false,
+                "model": "",
+                "speaker": ""
+            },
+            "search_engine": {
+                "enable": false,
+                "name": ""
+            },
+            "knowledge_base": {
+                "enable": false,
+                "name": ""
+            },
+            "function_calling": false
+        },
+
+        "Language Translation and Localization": {
+            "descriptions": "Professional language translation expert will translate your text to the specified language, and also provide spelling and linguistic refinement."
+        },
+
+        "Interactive Learning and Education": {
+            "descriptions": "Interactive learning experience where users can ask questions and receive personalized explanations or guidance."
+        },
+
+        "Virtual Personal Assistant": {
+            "descriptions": "Combining natural language processing with image and speech recognition to create a virtual personal assistant capable of understanding and executing user commands. Integrated with calendar and task management systems, It schedules appointments, sets reminders, or performs other productivity tasks."
+        },
+
+        "Virtual Tour Guide and Travel Planning": {
+            "descriptions": "Creating a virtual tour guide that offers users real-time explanations and recommendations about tourist attractions, history, and culture."
+        },
+
+        "Medical Diagnosis and Health Management": {
+            "descriptions": "Utilizing image recognition models to analyze medical images, assisting doctors in disease diagnosis and treatment plan formulation. Combined with natural language processing models, analyzing medical literature and clinical data to provide doctors with the latest medical information and research findings."
+        },
+
+        "Food Recognition and Nutritional Analysis": {
+            "descriptions": "Using image recognition models to identify various ingredients in food images and automatically calculate the nutritional components of the food. Combined with natural language processing models, providing users with personalized advice and recommendations on dietary habits and nutritional health."
+        }
+    },
+
+    "Creative Solutions": {
+        "News Content Generator": {
+            "descriptions": "Utilizing a given topic and conducting web scraping to find relevant news articles, then composing new news pieces through writing."
+        },
+
+        "Story Idea Generator": {
+            "descriptions": "Combining natural language processing models and speech generation models to create a creative generator capable of generating ideas based on user-input topics. Additionally, utilizing document content analysis tools to gather material about specific topics to aid in generating more relevant and engaging content."
+        },
+
+        "Comic Idea Generator": {
+            "descriptions": "Based on user-input topics, creating comic strips on specific themes using natural language models and image generation models."
+        }
+    }
+}

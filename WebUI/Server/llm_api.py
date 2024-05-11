@@ -6,7 +6,7 @@ from WebUI.Server.utils import (BaseResponse, fschat_controller_address, list_co
                           get_image_recognition_worker_config, get_image_generation_worker_config,
                           get_music_generation_worker_config)
 import json
-from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
+from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse, InnerJsonConfigAIGeneratorParse
 from WebUI.configs.basicconfig import (ModelType, ModelSize, ModelSubType, GetSizeName, GetSubTypeName)
 from fastapi.responses import StreamingResponse
 from typing import List, Optional, AsyncIterable
@@ -251,6 +251,18 @@ def get_webui_configs(
         return BaseResponse(
             code=500,
             msg=f"failed to get webui configration, error: {e}")
+    
+def get_aigenerator_configs(
+        controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])
+) -> BaseResponse:
+    try:
+        configinst = InnerJsonConfigAIGeneratorParse()
+        return BaseResponse(data = configinst.dump())
+    except Exception as e:
+        print(f'{e.__class__.__name__}: {e}')
+        return BaseResponse(
+            code=500,
+            msg=f"failed to get AI generator configration, error: {e}")
     
 def save_model_config(
         mtype: int = Body(..., description="Model Type"),
