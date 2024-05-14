@@ -32,8 +32,9 @@ The project inherits from the Langchain-Chatchat project(https://github.com/chat
 ## New Feature Updates
 
 - 🚀 Update Log for 2024-05-13
-  1. Support for Yi-1.5-6B-Chat and Yi-1.5-9B-Chat
-  2. Support for "Intelligent Customer Support"
+  1. Support for gpt-4o of OpenAI
+  2. Support for Yi-1.5-6B-Chat and Yi-1.5-9B-Chat
+  3. Support for "Intelligent Customer Support"
 
 - 🚀 Update Log for 2024-05-01
   1. Fix issue for GGUF model.
