@@ -158,6 +158,8 @@ def GetModelInfoByName(webui_config: Dict, name : str):
                     model_subtype = ModelSubType.VisionChatModel
                 if name == "gemini-pro-vision" or name == "gemini-1.5-pro-latest":
                     model_subtype = ModelSubType.VisionChatModel
+                if name == "yi-vision":
+                    model_subtype = ModelSubType.VisionChatModel
                 return ModelType.Online, model_size, model_subtype
             provider_size = provider_size+1
 
