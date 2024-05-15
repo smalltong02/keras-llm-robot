@@ -686,6 +686,10 @@ def get_ChatOpenAI(
             apikey = config.get("api_key", "[Your Key]")
             if apikey == "[Your Key]":
                 apikey = os.environ.get('KIMI_API_KEY')
+        elif provider == "yi-01ai-api":
+            apikey = config.get("api_key", "[Your Key]")
+            if apikey == "[Your Key]":
+                apikey = os.environ.get('YI_API_KEY')
     if apikey is None:
         apikey = "EMPTY"
     proxy = config.get("api_proxy", "[Private Proxy]")

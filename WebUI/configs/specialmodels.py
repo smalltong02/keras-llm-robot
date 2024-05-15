@@ -366,7 +366,7 @@ async def special_chat_iterator(model: Any,
             if speak_handler: 
                 speak_handler.on_llm_end(None)
 
-        elif provider == "openai-api" or provider == "kimi-cloud-api":
+        elif provider == "openai-api" or provider == "kimi-cloud-api" or provider == "yi-01ai-api":
             from langchain.callbacks import AsyncIteratorCallbackHandler
             from WebUI.Server.utils import wrap_done, get_ChatOpenAI
             from WebUI.Server.utils import get_prompt_template

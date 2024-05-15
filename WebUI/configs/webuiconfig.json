@@ -149,6 +149,26 @@
                 "apikey": "[Your Key]",
                 "apiproxy": "[Private Proxy]",
                 "provider": "KimiCloud"
+            },
+            "yi-01ai-api": {
+                "modellist": [
+                    "yi-large",
+                    "yi-medium",
+                    "yi-vision",
+                    "yi-medium-200k",
+                    "yi-spark",
+                    "yi-large-rag",
+                    "yi-large-turbo",
+                    "yi-large-preview",
+                    "yi-large-rag-preview"
+                ],
+                "baseurl": "https://api.lingyiwanwu.com/v1",
+                "load_type": "cloud",
+                "apiversion": "",
+                "preset": "default",
+                "apikey": "[Your Key]",
+                "apiproxy": "[Private Proxy]",
+                "provider": "YiCloud"
             }
         },
         "EmbeddingModel": {
