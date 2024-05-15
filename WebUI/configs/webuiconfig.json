@@ -996,6 +996,26 @@
                         "preset": "default",
                         "load_type": "fastchat",
                         "Huggingface": "01-ai/Yi-34B-Chat-4bits"
+                    },
+                    "Qwen1.5-32B-Chat-GPTQ-Int4": {
+                        "path": "models/llm/Qwen1.5-32B-Chat-GPTQ-Int4",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "fastchat",
+                        "Huggingface": "Qwen/Qwen1.5-32B-Chat-GPTQ-Int4"
+                    },
+                    "Yi-1.5-34B-Chat-GPTQ-Int4": {
+                        "path": "models/llm/Yi-1.5-34B-Chat-GPTQ-Int4",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "fastchat",
+                        "Huggingface": "modelscope/Yi-1.5-34B-Chat-GPTQ"
                     }
                 },
                 "70B Model": {

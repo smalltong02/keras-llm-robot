@@ -1,0 +1,40 @@
+{
+  "_name_or_path": "/mnt/workspace/.cache/modelscope/01ai/Yi-1___5-34B-Chat",
+  "architectures": [
+    "LlamaForCausalLM"
+  ],
+  "attention_bias": false,
+  "attention_dropout": 0.0,
+  "bos_token_id": 1,
+  "eos_token_id": 2,
+  "hidden_act": "silu",
+  "hidden_size": 7168,
+  "initializer_range": 0.02,
+  "intermediate_size": 20480,
+  "max_position_embeddings": 4096,
+  "model_type": "llama",
+  "num_attention_heads": 56,
+  "num_hidden_layers": 60,
+  "num_key_value_heads": 8,
+  "pad_token_id": 0,
+  "pretraining_tp": 1,
+  "quantization_config": {
+    "bits": 4,
+    "damp_percent": 0.1,
+    "desc_act": false,
+    "group_size": 128,
+	"disable_exllama": true,
+    "modules_in_block_to_quantize": null,
+    "quant_method": "gptq",
+    "sym": true,
+    "true_sequential": true
+  },
+  "rms_norm_eps": 1e-06,
+  "rope_scaling": null,
+  "rope_theta": 5000000.0,
+  "tie_word_embeddings": false,
+  "torch_dtype": "float16",
+  "transformers_version": "4.39.3",
+  "use_cache": false,
+  "vocab_size": 64000
+}
