@@ -70,48 +70,6 @@
   在windows机器上，通过Https服务访问服务器
 
 
-## 功能演示
-
-  1. Llama-3-8B模型 + Keras代码解释器演示视频：
-
-  [![Alt text](https://img.youtube.com/vi/as__vi8rmDc/0.jpg)](https://youtu.be/as__vi8rmDc)
-
-  2. Phi-3-mini模型 + Keras代码解释器演示视频：
-
-  [![Alt text](https://img.youtube.com/vi/KbHqw7JnG6s/0.jpg)](https://youtu.be/KbHqw7JnG6s)
-
-  3. Llama-3-8B模型 + Function Calling演示视频：
-
-  [![Alt text](https://img.youtube.com/vi/pTthwsNhGok/0.jpg)](https://youtu.be/pTthwsNhGok)
-
-  4. Phi-3-mini模型 + Function Calling演示视频：
-
-  [![Alt text](https://img.youtube.com/vi/YubzzFBhxas/0.jpg)](https://youtu.be/YubzzFBhxas)
-
-  5. 演示使用了多模态在线模型gpt-4-vision-preview 加 Azure Speech to Text服务：
-
-  [![Alt text](https://img.youtube.com/vi/7VzZqgg35Ak/0.jpg)](https://www.youtube.com/watch?v=7VzZqgg35Ak)
-
-  6. 对多模态模型gpt-4-vision-preview 和 Gemini-pro-vision：
-   
-  [![Alt text](https://img.youtube.com/vi/yFK62Tn_f4Q/0.jpg)](https://www.youtube.com/watch?v=yFK62Tn_f4Q)
-
-  7. 对RAG(Retrieval Augmented Generation)功能的视频演示：
-  
-  [![Alt text](https://img.youtube.com/vi/dyIFLISlskI/0.jpg)](https://www.youtube.com/watch?v=dyIFLISlskI) 
-
-  8. 图像识别和图像生成功能的演示：
-  
-  文生图的演示，将自然语言转换为图像生成模型的输入语言CLIP，来达到使用自然语言生图的目标:
-
-  ![Image](./img/image_to_image_1.png) | ![Image](./img/image_to_image_2.png)
-
-  ![Image](./img/image_to_image_3.png) | ![Image](./img/image_to_image_4.png)
-
-  根据图片中的物品，创建手工艺品。识别输入图片内容加上自然语言的目标描述，并最终转换为CLIP语言，来达到图生图的目标:
-
-  ![Image](./img/image_creative.png)
-
 ## 项目介绍
 由三个主界面组成，语言模型的聊天界面，语言模型的配置界面，辅助模型的工具和代理界面。
 
@@ -641,6 +599,57 @@
       禁止Function Calling特性：
 
       ![Image1](./img/Llama-3-8B-function-calling-1.png)
+
+
+## 功能演示
+
+  1. YI 1.5 9B Chat模型做智能客服代理演示视频：
+
+  [![Alt text](https://img.youtube.com/vi/wAgNaaqMzV4/0.jpg)](https://youtu.be/wAgNaaqMzV4)
+
+  2. Gemini-1.5-pro模型做智能客服代理演示视频：
+
+  [![Alt text](https://img.youtube.com/vi/GU5yvZiPXFs/0.jpg)](https://youtu.be/GU5yvZiPXFs)
+
+  3. Llama-3-8B模型 + Keras代码解释器演示视频：
+
+  [![Alt text](https://img.youtube.com/vi/as__vi8rmDc/0.jpg)](https://youtu.be/as__vi8rmDc)
+
+  4. Phi-3-mini模型 + Keras代码解释器演示视频：
+
+  [![Alt text](https://img.youtube.com/vi/KbHqw7JnG6s/0.jpg)](https://youtu.be/KbHqw7JnG6s)
+
+  5. Llama-3-8B模型 + Function Calling演示视频：
+
+  [![Alt text](https://img.youtube.com/vi/pTthwsNhGok/0.jpg)](https://youtu.be/pTthwsNhGok)
+
+  6. Phi-3-mini模型 + Function Calling演示视频：
+
+  [![Alt text](https://img.youtube.com/vi/YubzzFBhxas/0.jpg)](https://youtu.be/YubzzFBhxas)
+
+  7. 演示使用了多模态在线模型gpt-4-vision-preview 加 Azure Speech to Text服务：
+
+  [![Alt text](https://img.youtube.com/vi/7VzZqgg35Ak/0.jpg)](https://www.youtube.com/watch?v=7VzZqgg35Ak)
+
+  8. 对多模态模型gpt-4-vision-preview 和 Gemini-pro-vision：
+   
+  [![Alt text](https://img.youtube.com/vi/yFK62Tn_f4Q/0.jpg)](https://www.youtube.com/watch?v=yFK62Tn_f4Q)
+
+  9. 对RAG(Retrieval Augmented Generation)功能的视频演示：
+  
+  [![Alt text](https://img.youtube.com/vi/dyIFLISlskI/0.jpg)](https://www.youtube.com/watch?v=dyIFLISlskI) 
+
+  10. 图像识别和图像生成功能的演示：
+  
+  文生图的演示，将自然语言转换为图像生成模型的输入语言CLIP，来达到使用自然语言生图的目标:
+
+  ![Image](./img/image_to_image_1.png) | ![Image](./img/image_to_image_2.png)
+
+  ![Image](./img/image_to_image_3.png) | ![Image](./img/image_to_image_4.png)
+
+  根据图片中的物品，创建手工艺品。识别输入图片内容加上自然语言的目标描述，并最终转换为CLIP语言，来达到图生图的目标:
+
+  ![Image](./img/image_creative.png)
 
 
 ## 新特性更新日志
