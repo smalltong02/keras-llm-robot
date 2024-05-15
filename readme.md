@@ -29,47 +29,6 @@ The project inherits from the Langchain-Chatchat project(https://github.com/chat
       * [6. Function Calling](readme.md#6-Function-Calling)
 
 
-## New Feature Updates
-
-- 🚀 Update Log for 2024-05-13
-  1. Support for gpt-4o of OpenAI
-  2. Support for Yi-1.5-6B-Chat and Yi-1.5-9B-Chat
-  3. Support for "Intelligent Customer Support"
-
-- 🚀 Update Log for 2024-05-01
-  1. Fix issue for GGUF model.
-  2. Support for Llama3-8B-Chinese-Chat.
-
-- 🚀 Update Log for 2024-04-28
-  1. Support for Function Calling feature.
-  2. Updated Keras LLM Interpreter.
-
-- 🚀 Update Log for 2024-04-19
-  1. Support for models Meta-Llama-3-8B and Meta-Llama-3-8B-Instruct.
-  2. Introduced a new feature called "Role-Playing," enabling offline or online models to take on different roles. For example, you can have the LLM Model role-play as an "English Translator," "Interviewer," "Novelist," "Product Manager," "Yogi" and more, thereby providing more specialized responses.
-
-- 🚀 Update Log for 2024-04-15
-  1. Support for models Orion-14B-Chat, Orion-14B-LongChat and Orion-14B-Chat-Int4. To correctly load the model and perform inference, please install the `flash-attn` library (currently supported only on Linux and Windows).
-  ```bash
-  # download URL for linux:
-  https://github.com/Dao-AILab/flash-attention/releases
-
-  # download URL for Windows:
-  https://github.com/bdashore3/flash-attention/releases
-
-  # install command:
-  pip install *.whl
-  ```
-
-- 🚀 Update Log for 2024-04-14
-  1. Support for the keras-llm-interpreter code interpreter, compatible with Windows, macOS, and Ubuntu operating systems. Provides locally executable binaries and Docker images for running in a sandbox environment.
-  2. Support for models Qwen1.5-4B-Chat and Qwen1.5-7B-Chat.
-   
-- 🚀 Update Log for 2024-02-14
-  1. Support for the open-interpreter code interpreter.
-  2. Support for models gemma-2b and gemma-7b.
-
-
 ## Quick Start
   
   Please first prepare the runtime environment, refer to [Environment Setup](readme.md#Environment-Setup)
@@ -679,6 +638,52 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
       Disable Function Calling feature:
 
       ![Image1](./img/Llama-3-8B-function-calling-1.png)
+
+
+## New Feature Updates
+
+- 🚀 Update Log for 2024-05-14
+  1. Support for YI cloud platform models.
+  2. Support for Qwen1.5-32B-Chat-GPTQ-Int4 and Yi-1.5-34B-Chat-GPTQ-Int4
+
+- 🚀 Update Log for 2024-05-13
+  1. Support for gpt-4o of OpenAI
+  2. Support for Yi-1.5-6B-Chat and Yi-1.5-9B-Chat
+  3. Support for "Intelligent Customer Support"
+
+- 🚀 Update Log for 2024-05-01
+  1. Fix issue for GGUF model.
+  2. Support for Llama3-8B-Chinese-Chat.
+
+- 🚀 Update Log for 2024-04-28
+  1. Support for Function Calling feature.
+  2. Updated Keras LLM Interpreter.
+
+- 🚀 Update Log for 2024-04-19
+  1. Support for models Meta-Llama-3-8B and Meta-Llama-3-8B-Instruct.
+  2. Introduced a new feature called "Role-Playing," enabling offline or online models to take on different roles. For example, you can have the LLM Model role-play as an "English Translator," "Interviewer," "Novelist," "Product Manager," "Yogi" and more, thereby providing more specialized responses.
+
+- 🚀 Update Log for 2024-04-15
+  1. Support for models Orion-14B-Chat, Orion-14B-LongChat and Orion-14B-Chat-Int4. To correctly load the model and perform inference, please install the `flash-attn` library (currently supported only on Linux and Windows).
+  ```bash
+  # download URL for linux:
+  https://github.com/Dao-AILab/flash-attention/releases
+
+  # download URL for Windows:
+  https://github.com/bdashore3/flash-attention/releases
+
+  # install command:
+  pip install *.whl
+  ```
+
+- 🚀 Update Log for 2024-04-14
+  1. Support for the keras-llm-interpreter code interpreter, compatible with Windows, macOS, and Ubuntu operating systems. Provides locally executable binaries and Docker images for running in a sandbox environment.
+  2. Support for models Qwen1.5-4B-Chat and Qwen1.5-7B-Chat.
+   
+- 🚀 Update Log for 2024-02-14
+  1. Support for the open-interpreter code interpreter.
+  2. Support for models gemma-2b and gemma-7b.
+
 
 ## Note
 

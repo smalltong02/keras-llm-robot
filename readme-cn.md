@@ -29,46 +29,6 @@
       * [6. 函数定义](readme-cn.md#6-函数定义)
 
 
-## 新特性更新日志
-
-- 🚀 2024-05-13更新日志
-  1. 支持OpenAI新模型gpt-4o
-  2. 支持模型Yi-1.5-6B-Chat和Yi-1.5-9B-Chat
-  3. 支持智能客服AI代理功能
-
-- 🚀 2024-05-01更新日志
-  1. 修复问题为GGUF model
-  2. 支持模型Llama3-8B-Chinese-Chat
-
-- 🚀 2024-04-28更新日志
-  1. 支持Function Calling特性。
-  2. 更新Keras-llm-interpreter代码解释器。
-
-- 🚀 2024-04-19更新日志
-  1. 支持模型Meta-Llama-3-8B和Meta-Llama-3-8B-Instruct。
-  2. 添加新特性“角色扮演”，可以让离线或者在线的模型扮演不同的角色。比如让语言模型扮演“英语翻译”，“面试官”，“小说家”，“产品经理”，“瑜伽师”等等，从而提供更加专业的回答。
-
-- 🚀 2024-04-15更新日志
-  1. 支持模型Orion-14B-Chat, Orion-14B-LongChat和Orion-14B-Chat-Int4。为了正确加载模型并推理，请先安装flash-attn库（目前这个库仅支持Linux和Windows）
-  ```bash
-  # Linux版本下载URL
-  https://github.com/Dao-AILab/flash-attention/releases
-
-  # Windows版本下载URL
-  https://github.com/bdashore3/flash-attention/releases
-
-  # 使用以下命令安装
-  pip install *.whl
-  ```
-
-- 🚀 2024-04-14更新日志
-  1. 支持keras-llm-interpreter代码解释器，支持Windows, Macos和Ubuntu操作系统，并提供本地可运行的执行文件和在沙盒环境中运行的Docker镜像。
-  2. 支持模型Qwen1.5-4B-Chat和Qwen1.5-7B-Chat。
-   
-- 🚀 2024-02-14更新日志
-  1. 支持open-interpreter代码解释器。
-  2. 支持模型gemma-2b和gemma-7b。
-
 ## 快速启动
   
   在启动之前请先准备好运行环境，请参考 [环境配置](readme-cn.md#环境配置)
@@ -681,6 +641,52 @@
       禁止Function Calling特性：
 
       ![Image1](./img/Llama-3-8B-function-calling-1.png)
+
+
+## 新特性更新日志
+
+- 🚀 2024-05-14更新日志
+  1. 支持YI云平台模型
+  2. 支持模型Qwen1.5-32B-Chat-GPTQ-Int4和Yi-1.5-34B-Chat-GPTQ-Int4
+
+- 🚀 2024-05-13更新日志
+  1. 支持OpenAI新模型gpt-4o
+  2. 支持模型Yi-1.5-6B-Chat和Yi-1.5-9B-Chat
+  3. 支持智能客服AI代理功能
+
+- 🚀 2024-05-01更新日志
+  1. 修复问题为GGUF model
+  2. 支持模型Llama3-8B-Chinese-Chat
+
+- 🚀 2024-04-28更新日志
+  1. 支持Function Calling特性。
+  2. 更新Keras-llm-interpreter代码解释器。
+
+- 🚀 2024-04-19更新日志
+  1. 支持模型Meta-Llama-3-8B和Meta-Llama-3-8B-Instruct。
+  2. 添加新特性“角色扮演”，可以让离线或者在线的模型扮演不同的角色。比如让语言模型扮演“英语翻译”，“面试官”，“小说家”，“产品经理”，“瑜伽师”等等，从而提供更加专业的回答。
+
+- 🚀 2024-04-15更新日志
+  1. 支持模型Orion-14B-Chat, Orion-14B-LongChat和Orion-14B-Chat-Int4。为了正确加载模型并推理，请先安装flash-attn库（目前这个库仅支持Linux和Windows）
+  ```bash
+  # Linux版本下载URL
+  https://github.com/Dao-AILab/flash-attention/releases
+
+  # Windows版本下载URL
+  https://github.com/bdashore3/flash-attention/releases
+
+  # 使用以下命令安装
+  pip install *.whl
+  ```
+
+- 🚀 2024-04-14更新日志
+  1. 支持keras-llm-interpreter代码解释器，支持Windows, Macos和Ubuntu操作系统，并提供本地可运行的执行文件和在沙盒环境中运行的Docker镜像。
+  2. 支持模型Qwen1.5-4B-Chat和Qwen1.5-7B-Chat。
+   
+- 🚀 2024-02-14更新日志
+  1. 支持open-interpreter代码解释器。
+  2. 支持模型gemma-2b和gemma-7b。
+  
 
 ## 参考
 
