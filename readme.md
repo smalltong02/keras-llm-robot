@@ -71,48 +71,6 @@ The project inherits from the Langchain-Chatchat project(https://github.com/chat
   
   Access Server on Windows PC by https service.
 
-## Feature Demonstration
-
-  1. The demonstration Llama-3-8B + Keras Code Interpreter:
-
-  [![Alt text](https://img.youtube.com/vi/as__vi8rmDc/0.jpg)](https://youtu.be/as__vi8rmDc)
-
-  2. The demonstration Phi-3-mini + Keras Code Interpreter:
-
-  [![Alt text](https://img.youtube.com/vi/KbHqw7JnG6s/0.jpg)](https://youtu.be/KbHqw7JnG6s)
-
-  3. The demonstration Llama-3-8B + Function Calling:
-
-  [![Alt text](https://img.youtube.com/vi/pTthwsNhGok/0.jpg)](https://youtu.be/pTthwsNhGok)
-
-  4. The demonstration Phi-3-mini + Function Calling:
-
-  [![Alt text](https://img.youtube.com/vi/YubzzFBhxas/0.jpg)](https://youtu.be/YubzzFBhxas)
-
-  5. The demonstration utilizes a multimodal online model GPT-4-vision-preview along with Azure Speech to Text services:
-
-  [![Alt text](https://img.youtube.com/vi/7VzZqgg35Ak/0.jpg)](https://www.youtube.com/watch?v=7VzZqgg35Ak)
-
-  6. The demonstration gpt-4-vision-preview VS Gemini-pro-vision：
-   
-  [![Alt text](https://img.youtube.com/vi/yFK62Tn_f4Q/0.jpg)](https://www.youtube.com/watch?v=yFK62Tn_f4Q)
-
-  7. The demonstration of the Retrieval Augmented Generation (RAG) feature：
-  
-  [![Alt text](https://img.youtube.com/vi/dyIFLISlskI/0.jpg)](https://www.youtube.com/watch?v=dyIFLISlskI) 
-
-  8. Demonstration of Image Recognition and Image Generation Features：
-  
-  Presentation of text to image, translating natural language into the CLIP for image generation models:
-
-  ![Image](./img/image_to_image_1.png) | ![Image](./img/image_to_image_2.png)
-
-  ![Image](./img/image_to_image_3.png) | ![Image](./img/image_to_image_4.png)
-
-  Creating Handicrafts Based on Items in the Picture:
-
-  ![Image](./img/image_creative.png)
-
 
 ## Project Introduction
 Consists of three main interfaces: the chat interface for language models, the configuration interface for language models, and the tools and agent interface for auxiliary models.
@@ -638,6 +596,57 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
       Disable Function Calling feature:
 
       ![Image1](./img/Llama-3-8B-function-calling-1.png)
+
+
+## Feature Demonstration
+
+  1. The demonstration YI-1.5-9B-Chat + Intelligent Customer Agent:
+
+  [![Alt text](https://img.youtube.com/vi/wAgNaaqMzV4/0.jpg)](https://youtu.be/wAgNaaqMzV4)
+
+  2. Gemini-1.5-pro + Intelligent Customer Agent:
+
+  [![Alt text](https://img.youtube.com/vi/GU5yvZiPXFs/0.jpg)](https://youtu.be/GU5yvZiPXFs)
+
+  3. The demonstration Llama-3-8B + Keras Code Interpreter:
+
+  [![Alt text](https://img.youtube.com/vi/as__vi8rmDc/0.jpg)](https://youtu.be/as__vi8rmDc)
+
+  4. The demonstration Phi-3-mini + Keras Code Interpreter:
+
+  [![Alt text](https://img.youtube.com/vi/KbHqw7JnG6s/0.jpg)](https://youtu.be/KbHqw7JnG6s)
+
+  5. The demonstration Llama-3-8B + Function Calling:
+
+  [![Alt text](https://img.youtube.com/vi/pTthwsNhGok/0.jpg)](https://youtu.be/pTthwsNhGok)
+
+  6. The demonstration Phi-3-mini + Function Calling:
+
+  [![Alt text](https://img.youtube.com/vi/YubzzFBhxas/0.jpg)](https://youtu.be/YubzzFBhxas)
+
+  7. The demonstration utilizes a multimodal online model GPT-4-vision-preview along with Azure Speech to Text services:
+
+  [![Alt text](https://img.youtube.com/vi/7VzZqgg35Ak/0.jpg)](https://www.youtube.com/watch?v=7VzZqgg35Ak)
+
+  8. The demonstration gpt-4-vision-preview VS Gemini-pro-vision：
+   
+  [![Alt text](https://img.youtube.com/vi/yFK62Tn_f4Q/0.jpg)](https://www.youtube.com/watch?v=yFK62Tn_f4Q)
+
+  9. The demonstration of the Retrieval Augmented Generation (RAG) feature：
+  
+  [![Alt text](https://img.youtube.com/vi/dyIFLISlskI/0.jpg)](https://www.youtube.com/watch?v=dyIFLISlskI) 
+
+  10. Demonstration of Image Recognition and Image Generation Features：
+  
+  Presentation of text to image, translating natural language into the CLIP for image generation models:
+
+  ![Image](./img/image_to_image_1.png) | ![Image](./img/image_to_image_2.png)
+
+  ![Image](./img/image_to_image_3.png) | ![Image](./img/image_to_image_4.png)
+
+  Creating Handicrafts Based on Items in the Picture:
+
+  ![Image](./img/image_creative.png)
 
 
 ## New Feature Updates
