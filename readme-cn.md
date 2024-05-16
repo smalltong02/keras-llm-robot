@@ -654,6 +654,10 @@
 
 ## 新特性更新日志
 
+- 🚀 2024-05-15更新日志
+  1. 支持google search
+  2. 修复问题为 duckduckgo
+
 - 🚀 2024-05-14更新日志
   1. 支持YI云平台模型
   2. 支持模型Qwen1.5-32B-Chat-GPTQ-Int4和Yi-1.5-34B-Chat-GPTQ-Int4

@@ -651,6 +651,10 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
 ## New Feature Updates
 
+- 🚀 Update Log for 2024-05-15
+  1. Support for google search
+  2. fix issue for duckduckgo
+
 - 🚀 Update Log for 2024-05-14
   1. Support for YI cloud platform models.
   2. Support for Qwen1.5-32B-Chat-GPTQ-Int4 and Yi-1.5-34B-Chat-GPTQ-Int4
