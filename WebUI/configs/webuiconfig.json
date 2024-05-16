@@ -1450,6 +1450,10 @@
     "QuantizationConfiguration": {},
     "Fine-Tunning": {},
     "SearchEngine": {
+        "google_search": {
+            "search_url": "",
+            "api_key": "YOUR_API_KEY"
+        },
         "duckduckgo": {
             "search_url": "",
             "api_key": ""

@@ -11,6 +11,7 @@ from WebUI.Server.utils import wrap_done, get_ChatOpenAI
 from fastapi.concurrency import run_in_threadpool
 from WebUI.Server.utils import get_prompt_template
 from langchain.callbacks import AsyncIteratorCallbackHandler
+from langchain.utilities.google_search import GoogleSearchAPIWrapper
 from langchain.utilities.bing_search import BingSearchAPIWrapper
 from langchain.utilities.duckduckgo_search import DuckDuckGoSearchAPIWrapper
 from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
@@ -25,6 +26,11 @@ def bing_search(text, search_url, api_key, result_len, **kwargs):
 
 def duckduckgo_search(text, search_url, api_key, result_len, **kwargs):
     search = DuckDuckGoSearchAPIWrapper()
+    return search.results(text, result_len)
+
+def google_search(text, search_url, api_key, result_len, **kwargs):
+    search = GoogleSearchAPIWrapper(google_api_key=api_key,
+                                    google_cse_id=search_url)
     return search.results(text, result_len)
 
 def metaphor_search(
@@ -58,6 +64,7 @@ def metaphor_search(
     return docs
 
 SEARCH_ENGINES = {
+    "google_search": google_search,
     "bing": bing_search,
     "duckduckgo": duckduckgo_search,
     "metaphor": metaphor_search,
@@ -93,6 +100,10 @@ async def lookup_search_engine(
     elif search_engine_name == "metaphor":
         if api_key == "" or api_key == "YOUR_API_KEY":
             api_key = os.environ.get("METAPHOR_API_KEY", "")
+    elif search_engine_name == "google_search":
+        if api_key == "" or api_key == "YOUR_API_KEY":
+            api_key = os.environ.get("GOOGLE_SEARCH_KEY", "")
+        search_url = os.environ.get("GOOGLE_CSE_ID", "")
     results = await run_in_threadpool(search_engine, query, search_url=search_url, api_key=api_key, result_len=top_k)
     docs = search_result2docs(results)
     return docs

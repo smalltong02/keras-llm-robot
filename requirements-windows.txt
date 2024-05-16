@@ -140,7 +140,8 @@ xformers==0.0.23.post1
 diffusers==0.25.1
 
 # for search engine
-duckduckgo-search==4.4
+duckduckgo-search==6.1.0
+google-api-python-client==2.129.0
 exa-py==1.0.8
 markdownify==0.11.6
 strsimpy==0.2.1
