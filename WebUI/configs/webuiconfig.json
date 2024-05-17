@@ -9,6 +9,20 @@
     },
     "ModelConfig": {
         "OnlineModel": {
+            "google-api": {
+                "modellist": [
+                    "gemini-pro",
+                    "gemini-pro-vision",
+                    "gemini-1.5-pro-latest"
+                ],
+                "baseurl": "",
+                "load_type": "cloud",
+                "apiversion": "",
+                "preset": "default",
+                "apikey": "[Your Key]",
+                "apiproxy": "[Private Proxy]",
+                "provider": "GoogleCloud"
+            },
             "openai-api": {
                 "modellist": [
                     "gpt-3.5-turbo",
@@ -28,20 +42,6 @@
                 "apikey": "[Your Key]",
                 "apiproxy": "[Private Proxy]",
                 "provider": "OpenAI"
-            },
-            "google-api": {
-                "modellist": [
-                    "gemini-pro",
-                    "gemini-pro-vision",
-                    "gemini-1.5-pro-latest"
-                ],
-                "baseurl": "",
-                "load_type": "cloud",
-                "apiversion": "",
-                "preset": "default",
-                "apikey": "[Your Key]",
-                "apiproxy": "[Private Proxy]",
-                "provider": "GoogleCloud"
             },
             "ali-cloud-api": {
                 "modellist": [
@@ -382,7 +382,8 @@
             },
             "GoogleVoiceService": {
                 "type": "cloud",
-                "key_json_path": "[Your Key]",
+                "key_json_path": "chatbot-speech-key.json",
+                "language": "zh",
                 "provider": "GoogleCloud",
                 "CloudTemplates": "GoogleVoiceTemplate",
                 "language_code": [
@@ -574,6 +575,439 @@
                 },
                 "CloudTemplates": "",
                 "Huggingface": "coqui/XTTS-v2"
+            },
+            "GoogleSpeechService": {
+                "type": "cloud",
+                "key_json_path": "[Key Path]",
+                "speech_region": "[Your Region]",
+                "provider": "GoogleCloud",
+                "synthesis": {
+                    "en-US": {
+                        "male": [
+                            "en-US-Casual-K",
+                            "en-US-Journey-D",
+                            "en-US-Neural2-A",
+                            "en-US-Neural2-D",
+                            "en-US-Neural2-I",
+                            "en-US-Neural2-J",
+                            "en-US-News-N",
+                            "en-US-Polyglot-1",
+                            "en-US-Standard-A",
+                            "en-US-Standard-B",
+                            "en-US-Standard-D",
+                            "en-US-Standard-I",
+                            "en-US-Standard-J",
+                            "en-US-Studio-Q",
+                            "en-US-Wavenet-A",
+                            "en-US-Wavenet-B",
+                            "en-US-Wavenet-D",
+                            "en-US-Wavenet-I",
+                            "en-US-Wavenet-J"
+                        ],
+                        "female": [
+                            "en-US-Journey-F",
+                            "en-US-Journey-O",
+                            "en-US-Neural2-C",
+                            "en-US-Neural2-E",
+                            "en-US-Neural2-F",
+                            "en-US-Neural2-G",
+                            "en-US-Neural2-H",
+                            "en-US-News-K",
+                            "en-US-News-L",
+                            "en-US-Standard-C",
+                            "en-US-Standard-E",
+                            "en-US-Standard-F",
+                            "en-US-Standard-G",
+                            "en-US-Standard-H",
+                            "en-US-Studio-O",
+                            "en-US-Wavenet-C",
+                            "en-US-Wavenet-E",
+                            "en-US-Wavenet-F",
+                            "en-US-Wavenet-G",
+                            "en-US-Wavenet-H"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "cmn-CN": {
+                        "male": [
+                            "cmn-CN-Standard-B",
+                            "cmn-CN-Standard-C",
+                            "cmn-CN-Wavenet-B",
+                            "cmn-CN-Wavenet-C"
+                        ],
+                        "female": [
+                            "cmn-CN-Standard-A",
+                            "cmn-CN-Standard-D",
+                            "cmn-CN-Wavenet-A",
+                            "cmn-CN-Wavenet-D"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "cmn-TW": {
+                        "male": [
+                            "cmn-TW-Standard-B",
+                            "cmn-TW-Standard-C",
+                            "cmn-TW-Wavenet-B",
+                            "cmn-TW-Wavenet-C"
+                        ],
+                        "female": [
+                            "cmn-TW-Standard-A",
+                            "cmn-TW-Wavenet-A"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "af-ZA": {
+                        "male": [
+                        ],
+                        "female": [
+                            "af-ZA-Standard-A"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "af-XA": {
+                        "male": [
+                            "ar-XA-Standard-B",
+                            "ar-XA-Standard-C",
+                            "ar-XA-Wavenet-B",
+                            "ar-XA-Wavenet-C"
+                        ],
+                        "female": [
+                            "ar-XA-Standard-A",
+                            "ar-XA-Standard-D",
+                            "ar-XA-Wavenet-A",
+                            "ar-XA-Wavenet-D"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "eu-ES": {
+                        "male": [
+                        ],
+                        "female": [
+                            "eu-ES-Standard-A"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "bn-IN": {
+                        "male": [
+                            "bn-IN-Standard-B",
+                            "bn-IN-Standard-D",
+                            "bn-IN-Wavenet-B",
+                            "bn-IN-Wavenet-D"
+                        ],
+                        "female": [
+                            "bn-IN-Standard-A",
+                            "bn-IN-Wavenet-A",
+                            "bn-IN-Wavenet-C"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "bg-BG": {
+                        "male": [
+                        ],
+                        "female": [
+                            "bg-BG-Standard-A"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "ca-ES": {
+                        "male": [
+                        ],
+                        "female": [
+                            "ca-ES-Standard-A"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "yue-HK": {
+                        "male": [
+                            "yue-HK-Standard-B",
+                            "yue-HK-Standard-D"
+                        ],
+                        "female": [
+                            "yue-HK-Standard-A",
+                            "yue-HK-Standard-C"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "cs-CZ": {
+                        "male": [
+                            "yue-HK-Standard-B",
+                            "yue-HK-Standard-D"
+                        ],
+                        "female": [
+                            "cs-CZ-Standard-A",
+                            "cs-CZ-Wavenet-A"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "da-DK": {
+                        "male": [
+                            "da-DK-Standard-C",
+                            "da-DK-Wavenet-C"
+                        ],
+                        "female": [
+                            "da-DK-Neural2-D",
+                            "da-DK-Standard-A",
+                            "da-DK-Standard-D",
+                            "da-DK-Standard-E",
+                            "da-DK-Wavenet-A",
+                            "da-DK-Wavenet-D",
+                            "da-DK-Wavenet-E"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "nl-BE": {
+                        "male": [
+                            "nl-BE-Standard-B",
+                            "nl-BE-Wavenet-B"                        
+                        ],
+                        "female": [
+                            "nl-BE-Standard-A",
+                            "nl-BE-Wavenet-A"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "nl-NL": {
+                        "male": [
+                            "nl-NL-Standard-B",
+                            "nl-NL-Standard-C",
+                            "nl-NL-Wavenet-B",
+                            "nl-NL-Wavenet-C"                   
+                        ],
+                        "female": [
+                            "nl-NL-Standard-A",
+                            "nl-NL-Standard-D",
+                            "nl-NL-Standard-E",
+                            "nl-NL-Wavenet-A",
+                            "nl-NL-Wavenet-D",
+                            "nl-NL-Wavenet-E"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "en-AU": {
+                        "male": [
+                            "en-AU-Neural2-B",
+                            "en-AU-Neural2-D",
+                            "en-AU-News-G",
+                            "en-AU-Polyglot-1",
+                            "en-AU-Standard-B",
+                            "en-AU-Standard-D",
+                            "en-AU-Wavenet-B",
+                            "en-AU-Wavenet-D"
+                        ],
+                        "female": [
+                            "en-AU-Neural2-A",
+                            "en-AU-Neural2-C",
+                            "en-AU-News-E",
+                            "en-AU-News-F",
+                            "en-AU-Standard-A",
+                            "en-AU-Standard-C",
+                            "en-AU-Wavenet-A",
+                            "en-AU-Wavenet-C"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "en-IN": {
+                        "male": [
+                            "en-IN-Neural2-B",
+                            "en-IN-Neural2-C",
+                            "en-IN-Standard-B",
+                            "en-IN-Standard-C",
+                            "en-IN-Wavenet-B",
+                            "en-IN-Wavenet-C"
+                        ],
+                        "female": [
+                            "en-IN-Neural2-A",
+                            "en-IN-Neural2-D",
+                            "en-IN-Standard-A",
+                            "en-IN-Standard-D",
+                            "en-IN-Wavenet-A",
+                            "en-IN-Wavenet-D"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "en-GB": {
+                        "male": [
+                            "en-GB-Neural2-B",
+                            "en-GB-Neural2-D",
+                            "en-GB-News-J",
+                            "en-GB-News-K",
+                            "en-GB-News-L",
+                            "en-GB-News-M",
+                            "en-GB-Standard-B",
+                            "en-GB-Standard-D",
+                            "en-GB-Studio-B",
+                            "en-GB-Wavenet-B",
+                            "en-GB-Wavenet-D"
+                        ],
+                        "female": [
+                            "en-GB-Neural2-A",
+                            "en-GB-Neural2-C",
+                            "en-GB-Neural2-F",
+                            "en-GB-News-G",
+                            "en-GB-News-H",
+                            "en-GB-News-I",
+                            "en-GB-Standard-A",
+                            "en-GB-Standard-C",
+                            "en-GB-Standard-F",
+                            "en-GB-Studio-C",
+                            "en-GB-Wavenet-A",
+                            "en-GB-Wavenet-C",
+                            "en-GB-Wavenet-F"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "fil-PH": {
+                        "male": [
+                            "fil-PH-Standard-C",
+                            "fil-PH-Standard-D",
+                            "fil-PH-Wavenet-C",
+                            "fil-PH-Wavenet-D",
+                            "fil-ph-Neural2-D"
+                        ],
+                        "female": [
+                            "fil-PH-Standard-A",
+                            "fil-PH-Standard-B",
+                            "fil-PH-Wavenet-A",
+                            "fil-PH-Wavenet-B",
+                            "fil-ph-Neural2-A"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "fi-FI": {
+                        "male": [
+                        ],
+                        "female": [
+                            "fi-FI-Standard-A",
+                            "fi-FI-Wavenet-A"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "fr-CA": {
+                        "male": [
+                            "fr-CA-Neural2-B",
+                            "fr-CA-Neural2-D",
+                            "fr-CA-Standard-B",
+                            "fr-CA-Standard-D",
+                            "fr-CA-Wavenet-B",
+                            "fr-CA-Wavenet-D"
+                        ],
+                        "female": [
+                            "fr-CA-Neural2-A",
+                            "fr-CA-Neural2-C",
+                            "fr-CA-Standard-A",
+                            "fr-CA-Standard-C",
+                            "fr-CA-Wavenet-A",
+                            "fr-CA-Wavenet-C"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "fr-FR": {
+                        "male": [
+                            "fr-FR-Neural2-B",
+                            "fr-FR-Neural2-D",
+                            "fr-FR-Polyglot-1",
+                            "fr-FR-Standard-B",
+                            "fr-FR-Standard-D",
+                            "fr-FR-Studio-D",
+                            "fr-FR-Wavenet-B",
+                            "fr-FR-Wavenet-D"
+                        ],
+                        "female": [
+                            "fr-FR-Neural2-A",
+                            "fr-FR-Neural2-C",
+                            "fr-FR-Neural2-E",
+                            "fr-FR-Standard-A",
+                            "fr-FR-Standard-C",
+                            "fr-FR-Standard-E",
+                            "fr-FR-Studio-A",
+                            "fr-FR-Wavenet-A",
+                            "fr-FR-Wavenet-C",
+                            "fr-FR-Wavenet-E"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "gl-ES": {
+                        "male": [
+                        ],
+                        "female": [
+                            "gl-ES-Standard-A"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "de-DE": {
+                        "male": [
+                            "de-DE-Neural2-B",
+                            "de-DE-Neural2-D",
+                            "de-DE-Polyglot-1",
+                            "de-DE-Standard-B",
+                            "de-DE-Standard-D",
+                            "de-DE-Standard-E",
+                            "de-DE-Studio-B",
+                            "de-DE-Wavenet-B",
+                            "de-DE-Wavenet-D",
+                            "de-DE-Wavenet-E"
+                        ],
+                        "female": [
+                            "de-DE-Neural2-A",
+                            "de-DE-Neural2-C",
+                            "de-DE-Neural2-F",
+                            "de-DE-Standard-A",
+                            "de-DE-Standard-C",
+                            "de-DE-Standard-F",
+                            "de-DE-Studio-C",
+                            "de-DE-Wavenet-A",
+                            "de-DE-Wavenet-C",
+                            "de-DE-Wavenet-F"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    }
+                }
             },
             "AzureSpeechService": {
                 "type": "cloud",

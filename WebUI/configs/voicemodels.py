@@ -115,6 +115,27 @@ def cloud_voice_data(config, voice_data: str="") -> str:
                     if cancellation_details.reason == speechsdk.CancellationReason.Error:
                         print("Error details: {}".format(cancellation_details.error_details))
                         print("Did you set the speech resource key and region values?")
+            elif provider == "GoogleCloud":
+                from google.cloud import speech
+                key_json_path = config.get("key_json_path", "[Key Path]")
+                if key_json_path == "[Key Path]":
+                    key_json_path = os.environ.get('GOOGLE_JSON_CREDENTIALS')
+                    if not key_json_path:
+                        return ""
+                language = config.get("language", "en-US")
+                client = speech.SpeechClient.from_service_account_file(key_json_path)
+                config = speech.RecognitionConfig(
+                    encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
+                    sample_rate_hertz=48000,
+                    language_code=language,
+                    audio_channel_count = 2,
+                )
+                audio = speech.RecognitionAudio(content=decoded_data)
+                response = client.recognize(config=config, audio=audio)
+                text = ""
+                for result in response.results:
+                    text = result.alternatives[0].transcript
+                return text
             else:
                 pass
     return ""
