@@ -554,31 +554,60 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                             st.success(msg)
 
         elif modelconfig["type"] == "cloud":
-            with st.form("speech_cloud_model"):
-                keycol, regcol = st.columns(2)
-                with keycol:
-                    speechkey = modelconfig.get("speech_key")
-                    speechkey = st.text_input("Speech Key", speechkey, key="speech_key", type="password")
-                with regcol:
-                    speechregion = modelconfig.get("speech_region")
-                    speechregion = st.text_input("Speech Region", speechregion, key="speech_region")
+            if speechmodel == "AzureSpeechService" or speechmodel == "OpenAISpeechService":
+                with st.form("speech_cloud_model"):
+                    keycol, regcol = st.columns(2)
+                    with keycol:
+                        speechkey = modelconfig.get("speech_key")
+                        speechkey = st.text_input("Speech Key", speechkey, key="speech_key", type="password")
+                    with regcol:
+                        speechregion = modelconfig.get("speech_region")
+                        speechregion = st.text_input("Speech Region", speechregion, key="speech_region")
 
-                save_parameters = st.form_submit_button(
-                    "Save Parameters",
-                    use_container_width=True
-                )
-                if save_parameters:
-                    with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
-                        if speechkey == "" or speechkey == "[Your Key]" or speechregion == "" or speechregion == "[Your Region]":
-                            st.error("Please enter the correct key and region, save failed!")
-                        else:
-                            modelconfig["speech_key"] = speechkey
-                            modelconfig["speech_region"] = speechregion
-                            r = api.save_speech_model_config(speechmodel, modelconfig)
-                            if msg := check_error_msg(r):
-                                st.error(msg)
-                            elif msg := check_success_msg(r):
-                                st.success(msg)
+                    save_parameters = st.form_submit_button(
+                        "Save Parameters",
+                        use_container_width=True
+                    )
+                    if save_parameters:
+                        with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
+                            if speechkey == "" or speechkey == "[Your Key]" or speechregion == "" or speechregion == "[Your Region]":
+                                st.error("Please enter the correct key and region, save failed!")
+                            else:
+                                modelconfig["speech_key"] = speechkey
+                                modelconfig["speech_region"] = speechregion
+                                r = api.save_speech_model_config(speechmodel, modelconfig)
+                                if msg := check_error_msg(r):
+                                    st.error(msg)
+                                elif msg := check_success_msg(r):
+                                    st.success(msg)
+            elif speechmodel == "GoogleSpeechService":
+                with st.form("speech_cloud_model"):
+                    keycol, regcol = st.columns(2)
+                    with keycol:
+                        key_json_path = modelconfig.get("speech_key")
+                        key_json_path = st.text_input("Key Json Path", key_json_path, key="key_json_path-2")
+                    with regcol:
+                        speechregion = modelconfig.get("speech_region")
+                        speechregion = st.text_input("Speech Region", speechregion, key="speech_region", disabled=True)
+                    
+                    save_parameters = st.form_submit_button(
+                        "Save Parameters",
+                        use_container_width=True
+                    )
+                    if save_parameters:
+                        with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
+                            if key_json_path == "" or key_json_path == "[Your Key]":
+                                st.error("Please enter the correct key and region, save failed!")
+                            else:
+                                modelconfig["speech_key"] = key_json_path
+                                modelconfig["speech_region"] = speechregion
+                                r = api.save_speech_model_config(speechmodel, modelconfig)
+                                if msg := check_error_msg(r):
+                                    st.error(msg)
+                                elif msg := check_success_msg(r):
+                                    st.success(msg)
+            else:
+                pass
 
         st.divider()
         col1, col2 = st.columns(2)
@@ -788,31 +817,69 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
             else:
                 pass
         elif modelconfig["type"] == "cloud":
-            with st.form("voice_cloud_model"):
-                keycol, regcol = st.columns(2)
-                with keycol:
-                    voicekey = modelconfig.get("voice_key")
-                    voicekey = st.text_input("Voice Key", voicekey, key="voice_key", type="password")
-                with regcol:
-                    voiceregion = modelconfig.get("voice_region")
-                    voiceregion = st.text_input("Voice Region", voiceregion, key="voice_region")
-
-                save_parameters = st.form_submit_button(
-                    "Save Parameters",
-                    use_container_width=True
-                )
-                if save_parameters:
-                    with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
-                        if voicekey == "" or voicekey == "[Your Key]" or voiceregion == "" or voiceregion == "[Your Region]":
-                            st.error("Please enter the correct key and region, save failed!")
+            if voicemodel == "GoogleVoiceService":
+                with st.form("voice_cloud_model"):
+                    keycol, langcol = st.columns(2)
+                    with keycol:
+                        key_json_path = modelconfig.get("key_json_path")
+                        key_json_path = st.text_input("Key Json Path", key_json_path, key="key_json_path-1")
+                    with langcol:
+                        language_code = modelconfig.get("language", "")
+                        language_code_list = modelconfig.get("language_code")
+                        if language_code in language_code_list:
+                            index = language_code_list.index(language_code)
                         else:
-                            modelconfig["voice_key"] = voicekey
-                            modelconfig["voice_region"] = voiceregion
-                            r = api.save_vtot_model_config(voicemodel, modelconfig)
-                            if msg := check_error_msg(r):
-                                st.error(f"failed to save configuration for model {voicemodel}.")
-                            elif msg := check_success_msg(r):
-                                st.success(f"success save configuration for model {voicemodel}.")
+                            index = 0
+                        language_code = st.selectbox(
+                            "Language",
+                            language_code_list,
+                            index=index
+                        )
+                    save_parameters = st.form_submit_button(
+                        "Save Parameters",
+                        use_container_width=True
+                    )
+                    if save_parameters:
+                        with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
+                            if key_json_path == "" or key_json_path == "[Key Path]" or language_code == "":
+                                st.error("Please enter the key json path and language, save failed!")
+                            else:
+                                modelconfig["key_json_path"] = key_json_path
+                                modelconfig["language"] = language_code
+                                r = api.save_vtot_model_config(voicemodel, modelconfig)
+                                if msg := check_error_msg(r):
+                                    st.error(f"failed to save configuration for model {voicemodel}.")
+                                elif msg := check_success_msg(r):
+                                    st.success(f"success save configuration for model {voicemodel}.")
+
+            elif voicemodel == "AzureVoiceService":
+                with st.form("voice_cloud_model"):
+                    keycol, regcol = st.columns(2)
+                    with keycol:
+                        voicekey = modelconfig.get("voice_key")
+                        voicekey = st.text_input("Voice Key", voicekey, key="voice_key", type="password")
+                    with regcol:
+                        voiceregion = modelconfig.get("voice_region")
+                        voiceregion = st.text_input("Voice Region", voiceregion, key="voice_region")
+
+                    save_parameters = st.form_submit_button(
+                        "Save Parameters",
+                        use_container_width=True
+                    )
+                    if save_parameters:
+                        with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
+                            if voicekey == "" or voicekey == "[Your Key]" or voiceregion == "" or voiceregion == "[Your Region]":
+                                st.error("Please enter the correct key and region, save failed!")
+                            else:
+                                modelconfig["voice_key"] = voicekey
+                                modelconfig["voice_region"] = voiceregion
+                                r = api.save_vtot_model_config(voicemodel, modelconfig)
+                                if msg := check_error_msg(r):
+                                    st.error(f"failed to save configuration for model {voicemodel}.")
+                                elif msg := check_success_msg(r):
+                                    st.success(f"success save configuration for model {voicemodel}.")
+            else:
+                pass
 
     with tabimager:
         imageremodels = webui_config.get("ModelConfig").get("ImageRecognition")

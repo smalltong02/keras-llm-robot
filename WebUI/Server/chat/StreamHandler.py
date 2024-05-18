@@ -183,7 +183,26 @@ class StreamSpeakHandler(BaseCallbackHandler):
                 # response.stream_to_file(self.speech_file)
                 # audio_segment = AudioSegment.from_mp3(file=self.speech_file)
                 # play(audio_segment)
-                    
+            elif self.provider == "GoogleCloud":
+                from google.cloud import texttospeech
+                if self.subscription:
+                    client = texttospeech.TextToSpeechClient.from_service_account_file(self.subscription)
+                    input_text = texttospeech.SynthesisInput(text=text)
+                    result = self.synthesis.split('-', 2)[:2]
+                    language_code = '-'.join(result)
+                    voice = texttospeech.VoiceSelectionParams(
+                        language_code=language_code,
+                        name=self.synthesis,
+                    )
+                    audio_config = texttospeech.AudioConfig(
+                        audio_encoding=texttospeech.AudioEncoding.MP3,
+                    )
+                    response = client.synthesize_speech(
+                        request={"input": input_text, "voice": voice, "audio_config": audio_config}
+                    )
+                    audio_segment = AudioSegment.from_mp3(io.BytesIO(response.audio_content))
+                    play(audio_segment)
+
 class LlamacppStreamCallbackHandler(BaseCallbackHandler):
 
     @property

@@ -354,6 +354,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                 glob_multimodal_vision_list,
                 accept_multiple_files=True,
                 )
+            print("imagefiles: ", imagefiles)
             if len(imagefiles):
                 for imagefile in imagefiles:
                     print("image_file: ", imagefile)

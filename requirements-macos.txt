@@ -63,6 +63,8 @@ google-auth-oauthlib==1.2.0
 google-crc32c==1.5.0
 google-generativeai==0.3.1
 googleapis-common-protos==1.62.0
+google-cloud-speech==2.26.0
+google-cloud-texttospeech==2.16.3
 GPUtil==1.4.0
 greenlet==3.0.1
 gruut==2.2.3
