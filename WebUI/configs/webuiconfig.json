@@ -578,7 +578,7 @@
             },
             "GoogleSpeechService": {
                 "type": "cloud",
-                "key_json_path": "[Key Path]",
+                "speech_key": "chatbot-speech-key.json",
                 "speech_region": "[Your Region]",
                 "provider": "GoogleCloud",
                 "synthesis": {
@@ -663,8 +663,7 @@
                         ]
                     },
                     "af-ZA": {
-                        "male": [
-                        ],
+                        "male": [],
                         "female": [
                             "af-ZA-Standard-A"
                         ],
@@ -690,8 +689,7 @@
                         ]
                     },
                     "eu-ES": {
-                        "male": [
-                        ],
+                        "male": [],
                         "female": [
                             "eu-ES-Standard-A"
                         ],
@@ -716,8 +714,7 @@
                         ]
                     },
                     "bg-BG": {
-                        "male": [
-                        ],
+                        "male": [],
                         "female": [
                             "bg-BG-Standard-A"
                         ],
@@ -726,8 +723,7 @@
                         ]
                     },
                     "ca-ES": {
-                        "male": [
-                        ],
+                        "male": [],
                         "female": [
                             "ca-ES-Standard-A"
                         ],
@@ -782,7 +778,7 @@
                     "nl-BE": {
                         "male": [
                             "nl-BE-Standard-B",
-                            "nl-BE-Wavenet-B"                        
+                            "nl-BE-Wavenet-B"
                         ],
                         "female": [
                             "nl-BE-Standard-A",
@@ -797,7 +793,7 @@
                             "nl-NL-Standard-B",
                             "nl-NL-Standard-C",
                             "nl-NL-Wavenet-B",
-                            "nl-NL-Wavenet-C"                   
+                            "nl-NL-Wavenet-C"
                         ],
                         "female": [
                             "nl-NL-Standard-A",
@@ -910,8 +906,7 @@
                         ]
                     },
                     "fi-FI": {
-                        "male": [
-                        ],
+                        "male": [],
                         "female": [
                             "fi-FI-Standard-A",
                             "fi-FI-Wavenet-A"
@@ -969,8 +964,7 @@
                         ]
                     },
                     "gl-ES": {
-                        "male": [
-                        ],
+                        "male": [],
                         "female": [
                             "gl-ES-Standard-A"
                         ],
@@ -1008,8 +1002,7 @@
                         ]
                     },
                     "el-GR": {
-                        "male": [
-                        ],
+                        "male": [],
                         "female": [
                             "el-GR-Standard-A",
                             "el-GR-Wavenet-A"
@@ -1074,8 +1067,7 @@
                         ]
                     },
                     "hu-HU": {
-                        "male": [
-                        ],
+                        "male": [],
                         "female": [
                             "hu-HU-Standard-A",
                             "hu-HU-Wavenet-A"
@@ -1085,8 +1077,7 @@
                         ]
                     },
                     "is-IS": {
-                        "male": [
-                        ],
+                        "male": [],
                         "female": [
                             "is-IS-Standard-A"
                         ],
@@ -1191,8 +1182,7 @@
                         "male": [
                             "lv-LV-Standard-A"
                         ],
-                        "female": [
-                        ],
+                        "female": [],
                         "non-binary": [
                             ""
                         ]
@@ -1201,8 +1191,7 @@
                         "male": [
                             "lt-LT-Standard-A"
                         ],
-                        "female": [
-                        ],
+                        "female": [],
                         "non-binary": [
                             ""
                         ]
@@ -1349,8 +1338,7 @@
                         ]
                     },
                     "ro-RO": {
-                        "male": [
-                        ],
+                        "male": [],
                         "female": [
                             "ro-RO-Standard-A",
                             "ro-RO-Wavenet-A"
@@ -1379,8 +1367,7 @@
                         ]
                     },
                     "sr-RS": {
-                        "male": [
-                        ],
+                        "male": [],
                         "female": [
                             "sr-RS-Standard-A"
                         ],
@@ -1389,8 +1376,7 @@
                         ]
                     },
                     "sk-SK": {
-                        "male": [
-                        ],
+                        "male": [],
                         "female": [
                             "sk-SK-Standard-A",
                             "sk-SK-Wavenet-A"
@@ -1497,8 +1483,7 @@
                         ]
                     },
                     "th-TH": {
-                        "male": [
-                        ],
+                        "male": [],
                         "female": [
                             "th-TH-Neural2-C",
                             "th-TH-Standard-A"
@@ -1527,8 +1512,7 @@
                         ]
                     },
                     "uk-UA": {
-                        "male": [
-                        ],
+                        "male": [],
                         "female": [
                             "uk-UA-Standard-A",
                             "uk-UA-Wavenet-A"
