@@ -1006,6 +1006,555 @@
                         "non-binary": [
                             ""
                         ]
+                    },
+                    "el-GR": {
+                        "male": [
+                        ],
+                        "female": [
+                            "el-GR-Standard-A",
+                            "el-GR-Wavenet-A"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "gu-IN": {
+                        "male": [
+                            "gu-IN-Standard-B",
+                            "gu-IN-Standard-D",
+                            "gu-IN-Wavenet-B",
+                            "gu-IN-Wavenet-D"
+                        ],
+                        "female": [
+                            "gu-IN-Standard-A",
+                            "gu-IN-Standard-C",
+                            "gu-IN-Wavenet-A",
+                            "gu-IN-Wavenet-C"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "he-IL": {
+                        "male": [
+                            "he-IL-Standard-B",
+                            "he-IL-Standard-D",
+                            "he-IL-Wavenet-B",
+                            "he-IL-Wavenet-D"
+                        ],
+                        "female": [
+                            "he-IL-Standard-A",
+                            "he-IL-Standard-C",
+                            "he-IL-Wavenet-A",
+                            "he-IL-Wavenet-C"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "hi-IN": {
+                        "male": [
+                            "hi-IN-Neural2-B",
+                            "hi-IN-Neural2-C",
+                            "hi-IN-Standard-B",
+                            "hi-IN-Standard-C",
+                            "hi-IN-Wavenet-B",
+                            "hi-IN-Wavenet-C"
+                        ],
+                        "female": [
+                            "hi-IN-Neural2-A",
+                            "hi-IN-Neural2-D",
+                            "hi-IN-Standard-A",
+                            "hi-IN-Standard-D",
+                            "hi-IN-Wavenet-A",
+                            "hi-IN-Wavenet-D"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "hu-HU": {
+                        "male": [
+                        ],
+                        "female": [
+                            "hu-HU-Standard-A",
+                            "hu-HU-Wavenet-A"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "is-IS": {
+                        "male": [
+                        ],
+                        "female": [
+                            "is-IS-Standard-A"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "id-ID": {
+                        "male": [
+                            "id-ID-Standard-B",
+                            "id-ID-Standard-C",
+                            "id-ID-Wavenet-B",
+                            "id-ID-Wavenet-C"
+                        ],
+                        "female": [
+                            "id-ID-Standard-A",
+                            "id-ID-Standard-D",
+                            "id-ID-Wavenet-A",
+                            "id-ID-Wavenet-D"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "it-IT": {
+                        "male": [
+                            "it-IT-Neural2-C",
+                            "it-IT-Standard-C",
+                            "it-IT-Standard-D",
+                            "it-IT-Wavenet-C",
+                            "it-IT-Wavenet-D"
+                        ],
+                        "female": [
+                            "it-IT-Neural2-A",
+                            "it-IT-Standard-A",
+                            "it-IT-Standard-B",
+                            "it-IT-Wavenet-A",
+                            "it-IT-Wavenet-B"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "ja-JP": {
+                        "male": [
+                            "ja-JP-Neural2-C",
+                            "ja-JP-Neural2-D",
+                            "ja-JP-Standard-C",
+                            "ja-JP-Standard-D",
+                            "ja-JP-Wavenet-C",
+                            "ja-JP-Wavenet-D"
+                        ],
+                        "female": [
+                            "ja-JP-Neural2-B",
+                            "ja-JP-Standard-A",
+                            "ja-JP-Standard-B",
+                            "ja-JP-Wavenet-A",
+                            "ja-JP-Wavenet-B"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "kn-IN": {
+                        "male": [
+                            "kn-IN-Standard-B",
+                            "kn-IN-Standard-D",
+                            "kn-IN-Wavenet-B",
+                            "kn-IN-Wavenet-D"
+                        ],
+                        "female": [
+                            "kn-IN-Standard-A",
+                            "kn-IN-Standard-C",
+                            "kn-IN-Wavenet-A",
+                            "kn-IN-Wavenet-C"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "ko-KR": {
+                        "male": [
+                            "ko-KR-Neural2-C",
+                            "ko-KR-Standard-C",
+                            "ko-KR-Standard-D",
+                            "ko-KR-Wavenet-C",
+                            "ko-KR-Wavenet-D"
+                        ],
+                        "female": [
+                            "ko-KR-Neural2-A",
+                            "ko-KR-Neural2-B",
+                            "ko-KR-Standard-A",
+                            "ko-KR-Standard-B",
+                            "ko-KR-Wavenet-A",
+                            "ko-KR-Wavenet-B"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "lv-LV": {
+                        "male": [
+                            "lv-LV-Standard-A"
+                        ],
+                        "female": [
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "lt-LT": {
+                        "male": [
+                            "lt-LT-Standard-A"
+                        ],
+                        "female": [
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "ms-MY": {
+                        "male": [
+                            "ms-MY-Standard-B",
+                            "ms-MY-Standard-D",
+                            "ms-MY-Wavenet-B",
+                            "ms-MY-Wavenet-D"
+                        ],
+                        "female": [
+                            "ms-MY-Standard-A",
+                            "ms-MY-Standard-C",
+                            "ms-MY-Wavenet-A",
+                            "ms-MY-Wavenet-C"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "ml-IN": {
+                        "male": [
+                            "ml-IN-Standard-B",
+                            "ml-IN-Standard-D",
+                            "ml-IN-Wavenet-B",
+                            "ml-IN-Wavenet-D"
+                        ],
+                        "female": [
+                            "ml-IN-Standard-A",
+                            "ml-IN-Standard-C",
+                            "ml-IN-Wavenet-A",
+                            "ml-IN-Wavenet-C"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "mr-IN": {
+                        "male": [
+                            "mr-IN-Standard-B",
+                            "mr-IN-Wavenet-B"
+                        ],
+                        "female": [
+                            "mr-IN-Standard-A",
+                            "mr-IN-Standard-C",
+                            "mr-IN-Wavenet-A",
+                            "mr-IN-Wavenet-C"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "nb-NO": {
+                        "male": [
+                            "nb-NO-Standard-B",
+                            "nb-NO-Standard-D",
+                            "nb-NO-Wavenet-B",
+                            "nb-NO-Wavenet-D"
+                        ],
+                        "female": [
+                            "nb-NO-Standard-A",
+                            "nb-NO-Standard-C",
+                            "nb-NO-Standard-E",
+                            "nb-NO-Wavenet-A",
+                            "nb-NO-Wavenet-C",
+                            "nb-NO-Wavenet-E"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "pl-PL": {
+                        "male": [
+                            "pl-PL-Standard-B",
+                            "pl-PL-Standard-C",
+                            "pl-PL-Wavenet-B",
+                            "pl-PL-Wavenet-C"
+                        ],
+                        "female": [
+                            "pl-PL-Standard-A",
+                            "pl-PL-Standard-D",
+                            "pl-PL-Standard-E",
+                            "pl-PL-Wavenet-A",
+                            "pl-PL-Wavenet-D",
+                            "pl-PL-Wavenet-E"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "pt-BR": {
+                        "male": [
+                            "pt-BR-Neural2-B",
+                            "pt-BR-Standard-B",
+                            "pt-BR-Studio-B",
+                            "pt-BR-Wavenet-B"
+                        ],
+                        "female": [
+                            "pt-BR-Neural2-A",
+                            "pt-BR-Neural2-C",
+                            "pt-BR-Standard-A",
+                            "pt-BR-Standard-C",
+                            "pt-BR-Studio-C",
+                            "pt-BR-Wavenet-A",
+                            "pt-BR-Wavenet-C"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "pt-PT": {
+                        "male": [
+                            "pt-PT-Standard-B",
+                            "pt-PT-Standard-C",
+                            "pt-PT-Wavenet-B",
+                            "pt-PT-Wavenet-C"
+                        ],
+                        "female": [
+                            "pt-PT-Standard-A",
+                            "pt-PT-Standard-D",
+                            "pt-PT-Wavenet-A",
+                            "pt-PT-Wavenet-D"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "pa-IN": {
+                        "male": [
+                            "pa-IN-Standard-B",
+                            "pa-IN-Standard-D",
+                            "pa-IN-Wavenet-B",
+                            "pa-IN-Wavenet-D"
+                        ],
+                        "female": [
+                            "pa-IN-Standard-A",
+                            "pa-IN-Standard-C",
+                            "pa-IN-Wavenet-A",
+                            "pa-IN-Wavenet-C"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "ro-RO": {
+                        "male": [
+                        ],
+                        "female": [
+                            "ro-RO-Standard-A",
+                            "ro-RO-Wavenet-A"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "ru-RU": {
+                        "male": [
+                            "ru-RU-Standard-B",
+                            "ru-RU-Standard-D",
+                            "ru-RU-Wavenet-B",
+                            "ru-RU-Wavenet-D"
+                        ],
+                        "female": [
+                            "ru-RU-Standard-A",
+                            "ru-RU-Standard-C",
+                            "ru-RU-Standard-E",
+                            "ru-RU-Wavenet-A",
+                            "ru-RU-Wavenet-C",
+                            "ru-RU-Wavenet-E"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "sr-RS": {
+                        "male": [
+                        ],
+                        "female": [
+                            "sr-RS-Standard-A"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "sk-SK": {
+                        "male": [
+                        ],
+                        "female": [
+                            "sk-SK-Standard-A",
+                            "sk-SK-Wavenet-A"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "es-ES": {
+                        "male": [
+                            "es-ES-Neural2-B",
+                            "es-ES-Neural2-F",
+                            "es-ES-Polyglot-1",
+                            "es-ES-Standard-B",
+                            "es-ES-Studio-F",
+                            "es-ES-Wavenet-B"
+                        ],
+                        "female": [
+                            "es-ES-Neural2-A",
+                            "es-ES-Neural2-C",
+                            "es-ES-Neural2-D",
+                            "es-ES-Neural2-E",
+                            "es-ES-Standard-A",
+                            "es-ES-Standard-C",
+                            "es-ES-Standard-D",
+                            "es-ES-Studio-C",
+                            "es-ES-Wavenet-C",
+                            "es-ES-Wavenet-D"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "es-US": {
+                        "male": [
+                            "es-US-Neural2-B",
+                            "es-US-Neural2-C",
+                            "es-US-News-D",
+                            "es-US-News-E",
+                            "es-US-Polyglot-1",
+                            "es-US-Standard-B",
+                            "es-US-Standard-C",
+                            "es-US-Studio-B",
+                            "es-US-Wavenet-B",
+                            "es-US-Wavenet-C"
+                        ],
+                        "female": [
+                            "es-US-Neural2-A",
+                            "es-US-News-F",
+                            "es-US-News-G",
+                            "es-US-Standard-A",
+                            "es-US-Wavenet-A"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "sv-SE": {
+                        "male": [
+                            "es-US-Wavenet-C",
+                            "sv-SE-Standard-D",
+                            "sv-SE-Standard-E",
+                            "sv-SE-Wavenet-C",
+                            "sv-SE-Wavenet-E"
+                        ],
+                        "female": [
+                            "sv-SE-Standard-A",
+                            "sv-SE-Standard-B",
+                            "sv-SE-Standard-C",
+                            "sv-SE-Wavenet-A",
+                            "sv-SE-Wavenet-B",
+                            "sv-SE-Wavenet-D"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "ta-IN": {
+                        "male": [
+                            "ta-IN-Standard-B",
+                            "ta-IN-Standard-D",
+                            "ta-IN-Wavenet-B",
+                            "ta-IN-Wavenet-D"
+                        ],
+                        "female": [
+                            "ta-IN-Standard-A",
+                            "ta-IN-Standard-C",
+                            "ta-IN-Wavenet-A",
+                            "ta-IN-Wavenet-C"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "te-IN": {
+                        "male": [
+                            "te-IN-Standard-B"
+                        ],
+                        "female": [
+                            "te-IN-Standard-A"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "th-TH": {
+                        "male": [
+                        ],
+                        "female": [
+                            "th-TH-Neural2-C",
+                            "th-TH-Standard-A"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "tr-TR": {
+                        "male": [
+                            "tr-TR-Standard-B",
+                            "tr-TR-Standard-E",
+                            "tr-TR-Wavenet-B",
+                            "tr-TR-Wavenet-E"
+                        ],
+                        "female": [
+                            "tr-TR-Standard-A",
+                            "tr-TR-Standard-C",
+                            "tr-TR-Standard-D",
+                            "tr-TR-Wavenet-A",
+                            "tr-TR-Wavenet-C",
+                            "tr-TR-Wavenet-D"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "uk-UA": {
+                        "male": [
+                        ],
+                        "female": [
+                            "uk-UA-Standard-A",
+                            "uk-UA-Wavenet-A"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
+                    },
+                    "vi-VN": {
+                        "male": [
+                            "vi-VN-Neural2-D",
+                            "vi-VN-Standard-B",
+                            "vi-VN-Standard-D",
+                            "vi-VN-Wavenet-B",
+                            "vi-VN-Wavenet-D"
+                        ],
+                        "female": [
+                            "vi-VN-Neural2-A",
+                            "vi-VN-Standard-A",
+                            "vi-VN-Standard-C",
+                            "vi-VN-Wavenet-A",
+                            "vi-VN-Wavenet-C"
+                        ],
+                        "non-binary": [
+                            ""
+                        ]
                     }
                 }
             },
