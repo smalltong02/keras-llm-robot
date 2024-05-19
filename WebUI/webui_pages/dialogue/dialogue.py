@@ -10,7 +10,7 @@ from WebUI.webui_pages.utils import ApiRequest, check_error_msg
 from streamlit_chatbox import ChatBox, Image, Audio, Video, Markdown
 from streamlit_webrtc import webrtc_streamer, WebRtcMode, ClientSettings
 from aiortc.contrib.media import MediaRecorder
-from WebUI.configs.basicconfig import (TMP_DIR, ModelType, ModelSize, ModelSubType, ToolsType, GetModelInfoByName, GetTypeName, generate_prompt_for_imagegen, generate_prompt_for_smart_search, 
+from WebUI.configs.basicconfig import (TMP_DIR, ModelType, ModelSize, ModelSubType, ToolsType, glob_language_code, GetModelInfoByName, GetTypeName, generate_prompt_for_imagegen, generate_prompt_for_smart_search, 
                                        use_search_engine, glob_multimodal_vision_list, glob_multimodal_voice_list, glob_multimodal_video_list)
 from WebUI.configs.prompttemplates import PROMPT_TEMPLATES
 from WebUI.configs.roleplaytemplates import ROLEPLAY_TEMPLATES
@@ -437,21 +437,21 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                     f"""<p style="font-size: 1.5em; text-align: left; color: #9932CC;"><b>▪️ {speech_model}</b></p>""",
                     unsafe_allow_html=True,
                 )
-            knowledge_enable = running_chat_solution["config"]["knowledge_base"]["enable"]
+            knowledge_enable = running_chat_solution["config"].get("knowledge_base", {}).get("enable", False)
             if knowledge_enable:
                 knowledge_base = running_chat_solution["config"]["knowledge_base"]["name"]
                 st.caption(
                     f"""<p style="font-size: 1.5em; text-align: left; color: #9932CC;"><b>▪️ KB: {knowledge_base}</b></p>""",
                     unsafe_allow_html=True,
                 )
-            search_enable = running_chat_solution["config"]["search_engine"]["enable"]
+            search_enable = running_chat_solution["config"].get("search_engine", {}).get("enable", False)
             if search_enable:
                 search_engine = running_chat_solution["config"]["search_engine"]["name"]
                 st.caption(
                     f"""<p style="font-size: 1.5em; text-align: left; color: #9932CC;"><b>▪️ Search: {search_engine}</b></p>""",
                     unsafe_allow_html=True,
                 )
-            calling_enable = running_chat_solution["config"]["function_calling"]
+            calling_enable = running_chat_solution["config"].get("function_calling", False)
             if calling_enable:
                 st.caption(
                     f"""<p style="font-size: 1.5em; text-align: left; color: #9932CC;"><b>▪️ Function Calling: {calling_enable}</b></p>""",

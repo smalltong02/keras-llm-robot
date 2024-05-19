@@ -26,7 +26,19 @@
         },
 
         "Language Translation and Localization": {
-            "descriptions": "Professional language translation expert will translate your text to the specified language, and also provide spelling and linguistic refinement."
+            "descriptions": "Professional real-time language translation experts will transcribe and refine your speech, then translate it into the specified language.",
+            "roleplayer": "Spoken Language Translation Assistant",
+            "llm_model": "",
+            "voice": {
+                "enable": false,
+                "model": "",
+                "language": ""
+            },
+            "speech": {
+                "enable": false,
+                "model": "",
+                "speaker": ""
+            }
         },
 
         "Interactive Learning and Education": {

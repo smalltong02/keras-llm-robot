@@ -24,6 +24,11 @@ glob_model_subtype_list = ["Vision Chat Model","Voice Chat Model","Video Chat Mo
 training_devices_list = ["auto","cpu","gpu","mps"]
 loadbits_list = ["32 bits","16 bits","8 bits"]
 glob_roleplay_list = [""]
+glob_language_code = ["en-US","zh","af-ZA","sq-AL","am-ET","ar-DZ","ar-BH","ar-EG","ar-IQ","ar-IL","ar-JO","ar-KW","ar-LB","ar-MR","ar-MA","ar-OM","ar-QA","ar-SA","ar-PS","ar-SY","ar-TN","ar-AE","ar-YE","hy-AM","az-AZ","eu-ES","bn-BD","bn-IN","bs-BA","bg-BG",
+                    "my-MM","ca-ES","yue-Hant-HK","zh-TW","hr-HR","cs-CZ","da-DK","nl-BE","nl-NL","en-AU","en-CA","en-GH","en-HK","en-IN","en-IE","en-KE","en-NZ","en-NG","en-PK","en-PH","en-SG","en-ZA","en-TZ","en-GB","et-EE","fil-PH","fi-FI","fr-BE","fr-CA",
+                    "fr-FR","fr-CH","gl-ES","ka-GE","de-AT","de-DE","de-CH","el-GR","gu-IN","iw-IL","hi-IN","hu-HU","is-IS","id-ID","it-IT","it-CH","ja-JP","jv-ID","kn-IN","kk-KZ","km-KH","rw-RW","ko-KR","lo-LA","lv-LV","lt-LT","mk-MK","ms-MY","ml-IN","mr-IN",
+                    "mn-MN","ne-NP","no-NO","fa-IR","pl-PL","pt-BR","pt-PT","pa-Guru-IN","ro-RO","ru-RU","sr-RS","si-LK","sk-SK","sl-SI","st-ZA","es-AR","es-BO","es-CL","es-CO","es-CR","es-DO","es-EC","es-SV","es-GT","es-HN","es-MX","es-NI","es-PA","es-PY",
+                    "es-PE","es-PR","es-ES","es-US","es-UY","es-VE","su-ID","sw-KE","sw-TZ","ss-Latn-ZA","sv-SE","ta-IN","ta-MY","ta-SG","ta-LK","te-IN","th-TH","ts-ZA","tn-Latn-ZA","tr-TR","uk-UA","ur-IN","ur-PK","uz-UZ","ve-ZA","vi-VN","xh-ZA","zu-ZA"]
 
 class ModelType(Enum):
     Unknown = 0
@@ -552,7 +557,7 @@ def GetSpeechForChatSolution(chat_solution : dict) ->dict:
         return {}
     if not chat_solution["enable"]:
         return {}
-    if chat_solution["name"] == "Intelligent Customer Support":
+    if chat_solution["name"] == "Intelligent Customer Support" or chat_solution["name"] == "Language Translation and Localization":
         config = chat_solution.get("config", {})
         if not config:
             return {}
@@ -600,9 +605,9 @@ def GetSystemPromptForChatSolution(chat_solution : dict) ->dict:
         return None
     from WebUI.Server.funcall.funcall import GetToolsSystemPrompt
     roleplayer = chat_solution["config"]["roleplayer"]
-    description = chat_solution["config"]["description"]
     role_template = ROLEPLAY_TEMPLATES[roleplayer]["english"]
     if chat_solution["name"] == "Intelligent Customer Support":
+        description = chat_solution["config"]["description"]
         search_engine = GetSearchEngineForChatSolution(chat_solution)
         knowledge_base = GetKnowledgeBaseForChatSolution(chat_solution)
         function_calling = chat_solution["config"]["function_calling"]
@@ -623,6 +628,19 @@ def GetSystemPromptForChatSolution(chat_solution : dict) ->dict:
             tools_prompt = GetToolsSystemPrompt()
             system_prompt += "\n" + tools_prompt
         return system_prompt
+    elif chat_solution["name"] == "Language Translation and Localization":
+        if not chat_solution["config"]["voice"]["enable"]:
+            return ""
+        s_language = chat_solution["config"]["voice"]["language"]
+        if not chat_solution["config"]["speech"]["enable"]:
+            return ""
+        speaker = chat_solution["config"]["speech"]["speaker"]
+        result = speaker.split('-', 2)[:2]
+        d_language = '-'.join(result)
+        system_prompt = role_template.format(d_language=d_language, s_language=s_language)
+        return system_prompt
+    else:
+        return ""
     
 class ToolsType(Enum):
     Unknown = 0

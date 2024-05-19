@@ -383,7 +383,7 @@
             "GoogleVoiceService": {
                 "type": "cloud",
                 "key_json_path": "chatbot-speech-key.json",
-                "language": "zh",
+                "language": "fr-FR",
                 "provider": "GoogleCloud",
                 "CloudTemplates": "GoogleVoiceTemplate",
                 "language_code": [
