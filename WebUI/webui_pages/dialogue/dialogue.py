@@ -164,6 +164,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
 
     dialogue_turns = chatconfig.get("dialogue_turns", 5)
     disabled = False
+    voice_language = ""
     voice_prompt = ""
     binit = True
     if st.session_state.get("current_page", "") == "dialogue_page":
@@ -327,10 +328,13 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                     try:
                         voice_prompt = api.get_vtot_data(voice_data)
                         print("voice_prompt: ", voice_prompt)
-                        if voice_prompt:
+                        voice_language, voice_prompt = voice_prompt.split(":", 1)
+                        if voice_language and voice_prompt:
                             st.success("Translation finished!")
                         else:
                             st.error("Translation failed...")
+                            voice_language = ""
+                            voice_prompt = ""
                         if running_model == "" or running_model == "None":
                             voice_prompt = ""
                     except Exception as e:
@@ -437,21 +441,21 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                     f"""<p style="font-size: 1.5em; text-align: left; color: #9932CC;"><b>▪️ {speech_model}</b></p>""",
                     unsafe_allow_html=True,
                 )
-            knowledge_enable = running_chat_solution["config"]["knowledge_base"]["enable"]
+            knowledge_enable = running_chat_solution["config"].get("knowledge_base", {}).get("enable", False)
             if knowledge_enable:
                 knowledge_base = running_chat_solution["config"]["knowledge_base"]["name"]
                 st.caption(
                     f"""<p style="font-size: 1.5em; text-align: left; color: #9932CC;"><b>▪️ KB: {knowledge_base}</b></p>""",
                     unsafe_allow_html=True,
                 )
-            search_enable = running_chat_solution["config"]["search_engine"]["enable"]
+            search_enable = running_chat_solution["config"].get("search_engine", {}).get("enable", False)
             if search_enable:
                 search_engine = running_chat_solution["config"]["search_engine"]["name"]
                 st.caption(
                     f"""<p style="font-size: 1.5em; text-align: left; color: #9932CC;"><b>▪️ Search: {search_engine}</b></p>""",
                     unsafe_allow_html=True,
                 )
-            calling_enable = running_chat_solution["config"]["function_calling"]
+            calling_enable = running_chat_solution["config"].get("function_calling", False)
             if calling_enable:
                 st.caption(
                     f"""<p style="font-size: 1.5em; text-align: left; color: #9932CC;"><b>▪️ Function Calling: {calling_enable}</b></p>""",
@@ -794,6 +798,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                 text = ""
                 chat_history_id = 0
                 for d in api.chat_solution_chat(prompt,
+                        prompt_language=voice_language,
                         imagesdata=imagesdata,
                         audiosdata=audiosdata,
                         videosdata=videosdata,
@@ -837,7 +842,6 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                 metadata = {
                     "chat_history_id": chat_history_id,
                     }
-                print("asdfadfadqwer")
                 if not new_ai_say:
                     chat_box.update_msg(text, element_index=0, streaming=False, metadata=metadata)
                 chat_box.show_feedback(**feedback_kwargs,

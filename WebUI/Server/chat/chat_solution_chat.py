@@ -9,8 +9,8 @@ from WebUI.configs import SAVE_CHAT_HISTORY, USE_RERANKER, GetRerankerModelPath
 from langchain.chat_models import ChatOpenAI
 from langchain.callbacks import AsyncIteratorCallbackHandler
 from WebUI.Server.chat.StreamHandler import StreamSpeakHandler
-from WebUI.configs.basicconfig import (GetProviderByName, GetSpeechModelInfo, GetSpeechForChatSolution, GetSystemPromptForChatSolution)
-from WebUI.Server.utils import wrap_done, get_ChatOpenAI, get_prompt_template, GetModelApiBaseAddress, detect_device
+from WebUI.configs.basicconfig import (GetProviderByName, GetSpeechModelInfo, GetPromptChatSolution, GetSpeechForChatSolution, GetSystemPromptForChatSolution)
+from WebUI.Server.utils import wrap_done, get_ChatOpenAI, GetModelApiBaseAddress, detect_device
 from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
 from WebUI.configs.basicconfig import (ModelType, ModelSize, ModelSubType, ToolsType, GetModelInfoByName, ExtractJsonStrings, use_new_search_engine, use_knowledge_base, use_new_function_calling)
 from WebUI.Server.db.repository import add_chat_history_to_db, update_chat_history
@@ -150,6 +150,7 @@ async def GetChatPromptFromExternalTools(text: str, query: str, history: List[Hi
 
 async def chat_solution_chat(
     query: str = Body(..., description="User input: ", examples=["chat"]),
+    prompt_language: str = Body("", description="prompt language", examples=["en-US"]),
     imagesdata: List[str] = Body([], description="image data", examples=["image"]),
     audiosdata: List[str] = Body([], description="audio data", examples=["audio"]),
     videosdata: List[str] = Body([], description="video data", examples=["video"]),
@@ -167,6 +168,7 @@ async def chat_solution_chat(
     history = [History.from_data(h) for h in history]
 
     async def chat_solution_chat_iterator(query: str,
+        prompt_language: str = "",
         imagesdata: List[str] = [],
         audiosdata: List[str] = [],
         videosdata: List[str] = [],
@@ -178,6 +180,7 @@ async def chat_solution_chat(
         ) -> AsyncIterable[str]:
         configinst = InnerJsonConfigWebUIParse()
         webui_config = configinst.dump()
+        print("prompt_language: ", prompt_language)
         if isinstance(max_tokens, int) and max_tokens <= 0:
             max_tokens = None
         model_name = chat_solution["config"]["llm_model"]
@@ -185,7 +188,7 @@ async def chat_solution_chat(
         modelinfo["mtype"], modelinfo["msize"], modelinfo["msubtype"] = GetModelInfoByName(webui_config, model_name)
         modelinfo["mname"] = model_name
         speak_handler = None
-        speech = GetSpeechForChatSolution(chat_solution)
+        speech = GetSpeechForChatSolution(chat_solution, prompt_language)
         if speech:
             config = GetSpeechModelInfo(webui_config, speech.get("model", ""))
             if len(config):
@@ -207,7 +210,7 @@ async def chat_solution_chat(
                 'content': system_prompt
             }
             history = [History.from_data(system_msg)] + history
-        prompt_template = get_prompt_template("llm_chat", "default")
+        prompt_template = GetPromptChatSolution(chat_solution, "english-prompt")
         input_msg = History(role="user", content=prompt_template).to_msg_template(False)
         chat_prompt = ChatPromptTemplate.from_messages(
             [i.to_msg_template() for i in history] + [input_msg])
@@ -245,7 +248,7 @@ async def chat_solution_chat(
             chain = LLMChain(prompt=chat_prompt, llm=model)
 
             task = asyncio.create_task(wrap_done(
-                chain.acall({"input": query}),
+                chain.acall({"prompt": query}),
                 async_callback.done),
             )
             answer = ""
@@ -304,6 +307,7 @@ async def chat_solution_chat(
             update_chat_history(chat_history_id, response=answer)
 
     return StreamingResponse(chat_solution_chat_iterator(query=query,
+            prompt_language=prompt_language,
             imagesdata=imagesdata,
             audiosdata=audiosdata,
             videosdata=videosdata,

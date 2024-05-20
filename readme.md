@@ -27,6 +27,9 @@ The project inherits from the Langchain-Chatchat project(https://github.com/chat
       * [4. Image Recognition](readme.md#4-Image-Recognition)
       * [5. Network Search Engine](readme-cn.md#5-Network-Search-Engine)
       * [6. Function Calling](readme.md#6-Function-Calling)
+    * [AI Generator](readme.md#ai-generator-Features)
+      * [1. Intelligent Customer Service Agent](readme.md#1-Customer-Agent)
+      * [2. Real-time Language Translation Agent](readme.md#2-Translation-Agent)
 
 
 ## Quick Start
@@ -649,7 +652,51 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
   ![Image](./img/image_creative.png)
 
 
+- ### AI Generator
+
+    We combine various models and tools to create efficient and productive AI agents.
+
+  1. **`Intelligent Customer Service Agent`**
+
+    The design goal of the intelligent customer service agent is to provide users with efficient, personalized, and accurate customer service, thereby improving customer experience and satisfaction. To achieve this goal, intelligent customer service agents typically should possess the following capabilities:
+
+    (1) Natural Language Processing (NLP) Capability: Intelligent customer service agents need to understand user input in natural language, including text, speech, or images. NLP techniques can assist the agent in understanding user intents, questions, or needs.
+
+    (2) Knowledge Base Management Capability: The agent should be able to manage and update a knowledge base, including FAQs, solutions, product information, etc. Continuous updating and optimization of the knowledge base can enhance the agent's accuracy and speed in problem-solving.
+
+    (3) Automatic Response and Routing: The agent should automatically identify user queries and provide relevant responses or route them to appropriate human agents or departments. This helps in reducing user wait times and improving service efficiency.
+
+    (4) Personalized Recommendations and Suggestions: Based on user history and behavior, the agent should offer personalized recommendations and suggestions to help users find solutions or products more quickly.
+
+    (5) Multi-Channel Support: The agent should provide service across various communication channels, including website chat, mobile apps, social media, etc. This ensures meeting user needs across different platforms and maintaining a consistent service experience.
+
+    (6) User Authentication and Data Security: The agent should authenticate users and ensure the security and privacy of user data, thereby building user trust and complying with relevant laws and regulations.
+
+
+  2. **`Real-time Language Translation Agent`**
+
+    The design goal of the AI real-time language translation agent is to achieve real-time translation between different languages, enabling users to smoothly engage in cross-language communication and interaction. To achieve this goal, AI real-time language translation agents typically should possess the following capabilities:
+
+    (1) Multi-Language Support: The agent should support translation across multiple languages, including common global languages and regional dialects, to cater to diverse user needs.
+
+    (2) Real-time Translation: The agent should translate user input text or speech into the target language in real-time, displaying or playing back the translation promptly to ensure timely and fluent communication.
+
+    (3) High Accuracy: The agent should maintain high translation accuracy, accurately conveying the meaning of the original language and avoiding ambiguity and misunderstandings as much as possible.
+
+    (4) Contextual Understanding: The agent needs to understand the context of the text or speech and translate accordingly to ensure that the translation aligns with the context and effectively communicates the message.
+
+    (5) Speech Recognition and Synthesis: For speech input and output, the agent needs to have speech recognition and synthesis capabilities to enable speech translation functionality.
+
+    (6) Personalization Settings: The agent should allow users to personalize settings according to their preferences and needs, such as selecting preferred languages, adjusting translation speeds, etc.
+
+    (7) Data Security and Privacy Protection: The agent should ensure the security and privacy of user-input text or speech data, adhering to relevant data protection laws and standards.
+
+
 ## New Feature Updates
+
+- 🚀 Update Log for 2024-05-20
+  1. Added support for the online model platform Groq.
+  2. Introduced features "Intelligent Customer Agent" and "Real-time Translation Agent."
 
 - 🚀 Update Log for 2024-05-15
   1. Support for google search

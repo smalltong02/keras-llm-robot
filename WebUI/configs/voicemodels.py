@@ -1,5 +1,6 @@
 import io
 import os
+import json
 import torch
 import base64
 from WebUI.Server.utils import detect_device
@@ -85,6 +86,7 @@ def translate_voice_data(model, config, voice_data: str = "") -> str:
 def cloud_voice_data(config, voice_data: str="") -> str:
     if len(voice_data):
         decoded_data = base64.b64decode(voice_data)
+        language_code = config.get("language", ["en-US"])
         if isinstance(config, dict):
             provider = config["provider"]
             if provider == "AzureCloud":
@@ -96,7 +98,7 @@ def cloud_voice_data(config, voice_data: str="") -> str:
                 if voiceregion == "[Your Region]":
                     voiceregion = os.environ.get('SPEECH_REGION')
                 speech_config = speechsdk.SpeechConfig(subscription=voicekey, region=voiceregion)
-                auto_detect_source_language_config = speechsdk.languageconfig.AutoDetectSourceLanguageConfig(languages=["en-US", "zh-CN"])
+                auto_detect_source_language_config = speechsdk.languageconfig.AutoDetectSourceLanguageConfig(languages=language_code)
                 file_name = str(TMP_DIR / "recognizer.wav")
                 with open(file_name, "wb") as file:
                     file.write(decoded_data)
@@ -104,9 +106,14 @@ def cloud_voice_data(config, voice_data: str="") -> str:
                 speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, audio_config=audio_config, auto_detect_source_language_config=auto_detect_source_language_config)
                 
                 speech_recognition_result = speech_recognizer.recognize_once_async().get()
+                primary_language = language_code[0]
                 if speech_recognition_result.reason == speechsdk.ResultReason.RecognizedSpeech:
                     print("Recognized: {}".format(speech_recognition_result.text))
-                    return speech_recognition_result.text
+                    if speech_recognition_result.json:
+                        json_result = json.loads(speech_recognition_result.json)
+                        primary_language = json_result["PrimaryLanguage"]["Language"]
+                    text = primary_language + ":" + speech_recognition_result.text
+                    return text
                 elif speech_recognition_result.reason == speechsdk.ResultReason.NoMatch:
                     print("No speech could be recognized: {}".format(speech_recognition_result.no_match_details))
                 elif speech_recognition_result.reason == speechsdk.ResultReason.Canceled:
@@ -116,25 +123,32 @@ def cloud_voice_data(config, voice_data: str="") -> str:
                         print("Error details: {}".format(cancellation_details.error_details))
                         print("Did you set the speech resource key and region values?")
             elif provider == "GoogleCloud":
-                from google.cloud import speech
+                from google.cloud import speech_v1p1beta1 as speech
                 key_json_path = config.get("key_json_path", "[Key Path]")
                 if key_json_path == "[Key Path]":
                     key_json_path = os.environ.get('GOOGLE_JSON_CREDENTIALS')
                     if not key_json_path:
                         return ""
-                language = config.get("language", "en-US")
+                first_language = language_code[0]
+                second_language = []
+                if len(language_code) > 1:
+                    second_language = language_code[1:]
                 client = speech.SpeechClient.from_service_account_file(key_json_path)
                 config = speech.RecognitionConfig(
                     encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
                     sample_rate_hertz=48000,
-                    language_code=language,
+                    language_code=first_language,
+                    alternative_language_codes=second_language,
                     audio_channel_count = 2,
                 )
                 audio = speech.RecognitionAudio(content=decoded_data)
                 response = client.recognize(config=config, audio=audio)
                 text = ""
+                language_code = first_language
                 for result in response.results:
+                    language_code = result.language_code
                     text = result.alternatives[0].transcript
+                text = language_code + ":" + text
                 return text
             else:
                 pass

@@ -1,12 +1,12 @@
 from enum import Enum
-from typing import Dict, List, Union, Any
+from typing import Dict, List, Union, Optional
 from pathlib import Path
 import os
 import copy
 import json
 from WebUI.Server.chat.utils import History
 from langchain.prompts.chat import ChatPromptTemplate
-from WebUI.configs.roleplaytemplates import ROLEPLAY_TEMPLATES
+from WebUI.configs.roleplaytemplates import CATEGORICAL_ROLEPLAY_TEMPLATES
 from fastchat.protocol.openai_api_protocol import ChatCompletionRequest
 
 SAVE_CHAT_HISTORY = True
@@ -547,12 +547,28 @@ def use_new_function_calling(json_lists : list = []) ->bool:
             return True
     return False
 
-def GetSpeechForChatSolution(chat_solution : dict) ->dict:
+def GetPromptChatSolution(chat_solution : dict, prompt_name: str) -> str:
+    if not chat_solution:
+        return "{{prompt}}"
+    if not chat_solution["enable"]:
+        return "{{prompt}}"
+    if chat_solution["name"] == "Intelligent Customer Support" or chat_solution["name"] == "Language Translation and Localization":
+        config = chat_solution.get("config", {})
+        if not config:
+            return "{{prompt}}"
+        roleplayer = config.get("roleplayer", {})
+        if not roleplayer:
+            return "{{prompt}}"
+        prompt = CATEGORICAL_ROLEPLAY_TEMPLATES[roleplayer][prompt_name]
+        return prompt
+    return {}
+
+def GetSpeechForChatSolution(chat_solution : dict, prompt_language : str) ->dict:
     if not chat_solution:
         return {}
     if not chat_solution["enable"]:
         return {}
-    if chat_solution["name"] == "Intelligent Customer Support":
+    if chat_solution["name"] == "Intelligent Customer Support" or chat_solution["name"] == "Language Translation and Localization":
         config = chat_solution.get("config", {})
         if not config:
             return {}
@@ -560,6 +576,43 @@ def GetSpeechForChatSolution(chat_solution : dict) ->dict:
         if not speech:
             return {}
         if speech["enable"]:
+            if prompt_language:
+                speaker = speech["speaker"]
+                result = speaker.split('-', 2)[:2]
+                language_code = '-'.join(result)
+                parts = prompt_language.split('-')
+                parts[1] = parts[1].upper()
+                prompt_language = '-'.join(parts)
+                if prompt_language != language_code:
+                    return speech
+                else:
+                    voice_model = config.get("voice", {}).get("model", "")
+                    if voice_model:
+                        from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
+                        configinst = InnerJsonConfigWebUIParse()
+                        webui_config = configinst.dump()
+                        vtotmodel = webui_config.get("ModelConfig").get("VtoTModel").get(voice_model)
+                        language_list = vtotmodel.get("language")
+                        if language_list and prompt_language in language_list:
+                            other_language = ""
+                            for lang in language_list:
+                                if lang != prompt_language:
+                                    other_language = lang
+                                    break
+                            if other_language:
+                                spmodel = webui_config.get("ModelConfig").get("TtoVModel").get(speech["model"])
+                                language_config = spmodel.get("synthesis", {}).get(other_language, {})
+                                if language_config:
+                                    male_list = language_config.get("male", [])
+                                    female_list = language_config.get("female", [])
+                                    if male_list or female_list:
+                                        new_speaker = ""
+                                        if male_list:
+                                            new_speaker = male_list[0]
+                                        elif female_list:
+                                            new_speaker = female_list[0]
+                                        if new_speaker:
+                                            speech["speaker"] = new_speaker
             return speech
     return {}
 
@@ -600,9 +653,9 @@ def GetSystemPromptForChatSolution(chat_solution : dict) ->dict:
         return None
     from WebUI.Server.funcall.funcall import GetToolsSystemPrompt
     roleplayer = chat_solution["config"]["roleplayer"]
-    description = chat_solution["config"]["description"]
-    role_template = ROLEPLAY_TEMPLATES[roleplayer]["english"]
+    role_template = CATEGORICAL_ROLEPLAY_TEMPLATES[roleplayer]["english"]
     if chat_solution["name"] == "Intelligent Customer Support":
+        description = chat_solution["config"]["description"]
         search_engine = GetSearchEngineForChatSolution(chat_solution)
         knowledge_base = GetKnowledgeBaseForChatSolution(chat_solution)
         function_calling = chat_solution["config"]["function_calling"]
@@ -623,6 +676,19 @@ def GetSystemPromptForChatSolution(chat_solution : dict) ->dict:
             tools_prompt = GetToolsSystemPrompt()
             system_prompt += "\n" + tools_prompt
         return system_prompt
+    elif chat_solution["name"] == "Language Translation and Localization":
+        if not chat_solution["config"]["voice"]["enable"]:
+            return ""
+        s_language = chat_solution["config"]["voice"]["language"]
+        if not chat_solution["config"]["speech"]["enable"]:
+            return ""
+        speaker = chat_solution["config"]["speech"]["speaker"]
+        result = speaker.split('-', 2)[:2]
+        d_language = '-'.join(result)
+        system_prompt = role_template.format(d_language=d_language, s_language=s_language)
+        return system_prompt
+    else:
+        return ""
     
 class ToolsType(Enum):
     Unknown = 0

@@ -454,6 +454,36 @@ async def special_chat_iterator(model: Any,
                     speak_handler.on_llm_new_token(response.output.choices[0]['message']['content'])
             if speak_handler: 
                 speak_handler.on_llm_end(None)
+        
+        elif provider == "groq-api":
+            from groq import Groq
+            model_config = GetModelConfig(webui_config, modelinfo)
+            apikey = model_config.get("apikey", "[Your Key]")
+            if apikey == "[Your Key]" or apikey == "":
+                apikey = os.environ.get('GROQ_API_KEY')
+            if apikey is None:
+                apikey = "EMPTY"
+
+            messages = history
+            messages.append({'role': "user",
+                         'content': query})
+            
+            client = Groq(
+                api_key=apikey,
+            )
+            chat_completion = client.chat.completions.create(
+                messages=messages,
+                model=model_name,
+            )
+            response = chat_completion.choices[0].message.content
+            yield json.dumps(
+                {"text": response, "chat_history_id": chat_history_id},
+                ensure_ascii=False)
+            await asyncio.sleep(0.1)
+            if speak_handler: 
+                speak_handler.on_llm_new_token(response)
+            if speak_handler: 
+                speak_handler.on_llm_end(None)
             
     update_chat_history(chat_history_id, response=answer)
 
