@@ -43,6 +43,21 @@
                 "apiproxy": "[Private Proxy]",
                 "provider": "OpenAI"
             },
+            "groq-api": {
+                "modellist": [
+                    "Gemma-7b-It",
+                    "Llama3-8b-8192",
+                    "Mixtral-8x7b-32768",
+                    "Llama3-70b-8192"
+                ],
+                "baseurl": "",
+                "load_type": "cloud",
+                "apiversion": "",
+                "preset": "default",
+                "apikey": "[Your Key]",
+                "apiproxy": "[Private Proxy]",
+                "provider": "GroqCloud"
+            },
             "ali-cloud-api": {
                 "modellist": [
                     "qwen-max-longcontext",
@@ -356,7 +371,8 @@
                 "type": "cloud",
                 "key_json_path": "chatbot-speech-key.json",
                 "language": [
-                    "zh-CN"
+                    "en-US",
+                    "ja-JP"
                 ],
                 "provider": "GoogleCloud",
                 "CloudTemplates": "GoogleVoiceTemplate",
@@ -514,8 +530,7 @@
                 "voice_key": "[Your Key]",
                 "voice_region": "[Your Region]",
                 "language": [
-                    "zh-CN",
-                    "en-US"
+                    "ja-JP"
                 ],
                 "provider": "AzureCloud",
                 "CloudTemplates": "AzureVoiceTemplate",

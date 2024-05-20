@@ -20,6 +20,7 @@ dataclasses-json==0.6.1
 fastapi==0.104.1
 faiss-cpu==1.7.4
 filelock==3.9.0
+groq==0.6.0
 pgvector==0.2.4
 psycopg2==2.9.9
 pymupdf==1.23.15
