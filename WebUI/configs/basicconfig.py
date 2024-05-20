@@ -1,12 +1,12 @@
 from enum import Enum
-from typing import Dict, List, Union, Any
+from typing import Dict, List, Union, Optional
 from pathlib import Path
 import os
 import copy
 import json
 from WebUI.Server.chat.utils import History
 from langchain.prompts.chat import ChatPromptTemplate
-from WebUI.configs.roleplaytemplates import ROLEPLAY_TEMPLATES
+from WebUI.configs.roleplaytemplates import CATEGORICAL_ROLEPLAY_TEMPLATES
 from fastchat.protocol.openai_api_protocol import ChatCompletionRequest
 
 SAVE_CHAT_HISTORY = True
@@ -24,11 +24,6 @@ glob_model_subtype_list = ["Vision Chat Model","Voice Chat Model","Video Chat Mo
 training_devices_list = ["auto","cpu","gpu","mps"]
 loadbits_list = ["32 bits","16 bits","8 bits"]
 glob_roleplay_list = [""]
-glob_language_code = ["en-US","zh","af-ZA","sq-AL","am-ET","ar-DZ","ar-BH","ar-EG","ar-IQ","ar-IL","ar-JO","ar-KW","ar-LB","ar-MR","ar-MA","ar-OM","ar-QA","ar-SA","ar-PS","ar-SY","ar-TN","ar-AE","ar-YE","hy-AM","az-AZ","eu-ES","bn-BD","bn-IN","bs-BA","bg-BG",
-                    "my-MM","ca-ES","yue-Hant-HK","zh-TW","hr-HR","cs-CZ","da-DK","nl-BE","nl-NL","en-AU","en-CA","en-GH","en-HK","en-IN","en-IE","en-KE","en-NZ","en-NG","en-PK","en-PH","en-SG","en-ZA","en-TZ","en-GB","et-EE","fil-PH","fi-FI","fr-BE","fr-CA",
-                    "fr-FR","fr-CH","gl-ES","ka-GE","de-AT","de-DE","de-CH","el-GR","gu-IN","iw-IL","hi-IN","hu-HU","is-IS","id-ID","it-IT","it-CH","ja-JP","jv-ID","kn-IN","kk-KZ","km-KH","rw-RW","ko-KR","lo-LA","lv-LV","lt-LT","mk-MK","ms-MY","ml-IN","mr-IN",
-                    "mn-MN","ne-NP","no-NO","fa-IR","pl-PL","pt-BR","pt-PT","pa-Guru-IN","ro-RO","ru-RU","sr-RS","si-LK","sk-SK","sl-SI","st-ZA","es-AR","es-BO","es-CL","es-CO","es-CR","es-DO","es-EC","es-SV","es-GT","es-HN","es-MX","es-NI","es-PA","es-PY",
-                    "es-PE","es-PR","es-ES","es-US","es-UY","es-VE","su-ID","sw-KE","sw-TZ","ss-Latn-ZA","sv-SE","ta-IN","ta-MY","ta-SG","ta-LK","te-IN","th-TH","ts-ZA","tn-Latn-ZA","tr-TR","uk-UA","ur-IN","ur-PK","uz-UZ","ve-ZA","vi-VN","xh-ZA","zu-ZA"]
 
 class ModelType(Enum):
     Unknown = 0
@@ -552,7 +547,23 @@ def use_new_function_calling(json_lists : list = []) ->bool:
             return True
     return False
 
-def GetSpeechForChatSolution(chat_solution : dict) ->dict:
+def GetPromptChatSolution(chat_solution : dict, prompt_name: str) -> str:
+    if not chat_solution:
+        return "{{prompt}}"
+    if not chat_solution["enable"]:
+        return "{{prompt}}"
+    if chat_solution["name"] == "Intelligent Customer Support" or chat_solution["name"] == "Language Translation and Localization":
+        config = chat_solution.get("config", {})
+        if not config:
+            return "{{prompt}}"
+        roleplayer = config.get("roleplayer", {})
+        if not roleplayer:
+            return "{{prompt}}"
+        prompt = CATEGORICAL_ROLEPLAY_TEMPLATES[roleplayer][prompt_name]
+        return prompt
+    return {}
+
+def GetSpeechForChatSolution(chat_solution : dict, prompt_language : str) ->dict:
     if not chat_solution:
         return {}
     if not chat_solution["enable"]:
@@ -565,6 +576,43 @@ def GetSpeechForChatSolution(chat_solution : dict) ->dict:
         if not speech:
             return {}
         if speech["enable"]:
+            if prompt_language:
+                speaker = speech["speaker"]
+                result = speaker.split('-', 2)[:2]
+                language_code = '-'.join(result)
+                parts = prompt_language.split('-')
+                parts[1] = parts[1].upper()
+                prompt_language = '-'.join(parts)
+                if prompt_language != language_code:
+                    return speech
+                else:
+                    voice_model = config.get("voice", {}).get("model", "")
+                    if voice_model:
+                        from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
+                        configinst = InnerJsonConfigWebUIParse()
+                        webui_config = configinst.dump()
+                        vtotmodel = webui_config.get("ModelConfig").get("VtoTModel").get(voice_model)
+                        language_list = vtotmodel.get("language")
+                        if language_list and prompt_language in language_list:
+                            other_language = ""
+                            for lang in language_list:
+                                if lang != prompt_language:
+                                    other_language = lang
+                                    break
+                            if other_language:
+                                spmodel = webui_config.get("ModelConfig").get("TtoVModel").get(speech["model"])
+                                language_config = spmodel.get("synthesis", {}).get(other_language, {})
+                                if language_config:
+                                    male_list = language_config.get("male", [])
+                                    female_list = language_config.get("female", [])
+                                    if male_list or female_list:
+                                        new_speaker = ""
+                                        if male_list:
+                                            new_speaker = male_list[0]
+                                        elif female_list:
+                                            new_speaker = female_list[0]
+                                        if new_speaker:
+                                            speech["speaker"] = new_speaker
             return speech
     return {}
 
@@ -605,7 +653,7 @@ def GetSystemPromptForChatSolution(chat_solution : dict) ->dict:
         return None
     from WebUI.Server.funcall.funcall import GetToolsSystemPrompt
     roleplayer = chat_solution["config"]["roleplayer"]
-    role_template = ROLEPLAY_TEMPLATES[roleplayer]["english"]
+    role_template = CATEGORICAL_ROLEPLAY_TEMPLATES[roleplayer]["english"]
     if chat_solution["name"] == "Intelligent Customer Support":
         description = chat_solution["config"]["description"]
         search_engine = GetSearchEngineForChatSolution(chat_solution)

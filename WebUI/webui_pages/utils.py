@@ -1572,6 +1572,7 @@ class ApiRequest:
     def chat_solution_chat(
         self,
         query: str,
+        prompt_language: str = "",
         imagesdata: List[bytes] = [],
         audiosdata: List[bytes] = [],
         videosdata: List[bytes] = [],
@@ -1596,6 +1597,7 @@ class ApiRequest:
                 videoslist.append(base64.b64encode(videodata).decode('utf-8'))
         data = {
             "query": query,
+            "prompt_language": prompt_language,
             "imagesdata": imageslist,
             "audiosdata": audioslist,
             "videosdata": videoslist,

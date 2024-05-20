@@ -3,7 +3,7 @@ import streamlit as st
 from WebUI.webui_pages.utils import ApiRequest
 from WebUI.Server.funcall.funcall import GetFuncallList, GetFuncallDescription
 from WebUI.webui_pages.utils import check_error_msg, check_success_msg
-from WebUI.configs import (ModelType, ModelSize, ModelSubType, glob_language_code, GetModelType, GetModelConfig, GetModelSubType, GetOnlineProvider, GetOnlineModelList, GetModeList, LocalModelExist, GetPresetPromptList,
+from WebUI.configs import (ModelType, ModelSize, ModelSubType, GetModelType, GetModelConfig, GetModelSubType, GetOnlineProvider, GetOnlineModelList, GetModeList, LocalModelExist, GetPresetPromptList,
     glob_model_type_list, glob_model_size_list, glob_model_subtype_list)
 from WebUI.Server.knowledge_base.kb_service.base import get_kb_details
 
@@ -243,28 +243,28 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                                     index=0,
                                     key="sel_voice_model",
                                 )
-                            modelconfig = vtotmodel[voicemodel]
+                            voice_modelconfig = vtotmodel[voicemodel]
+                            language_code_list = voice_modelconfig.get("language_code", [])
                             language_code = st.selectbox(
                                 "Please Select language",
-                                glob_language_code,
+                                language_code_list,
                                 index=0,
                             )
                         with col2:
-                            if modelconfig["type"] == "local":
+                            if voice_modelconfig["type"] == "local":
                                 if voicemodel is not None:
                                     pathstr = vtotmodel[voicemodel].get("path")
                                 else:
                                     pathstr = ""
                                 st.text_input("Local Path", pathstr, key="vo_local_path", disabled=True)
-                            elif modelconfig["type"] == "cloud":
-                                pathstr = modelconfig.get("path")
+                            elif voice_modelconfig["type"] == "cloud":
+                                pathstr = voice_modelconfig.get("path")
                                 st.text_input("Cloud Path", pathstr, key="vo_cloud_path", disabled=True)
                         running_chat_solution["config"]["voice"]["enable"] = True
                         running_chat_solution["config"]["voice"]["model"] = voicemodel
-                        running_chat_solution["config"]["voice"]["language"] = language_code
-                        if voicemodel == "GoogleVoiceService":
-                            modelconfig["language"] = language_code
-                            api.save_vtot_model_config(voicemodel, modelconfig)
+                        running_chat_solution["config"]["voice"]["language"] = [language_code]
+                        voice_modelconfig["language"] = [language_code]
+                        api.save_vtot_model_config(voicemodel, voice_modelconfig)
                     
                     st.divider()
                     speech_enable = st.checkbox('Speech Enable', value=False)
@@ -625,28 +625,28 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                                     index=0,
                                     key="sel_voice_model",
                                 )
-                            modelconfig = vtotmodel[voicemodel]
+                            voice_modelconfig = vtotmodel[voicemodel]
+                            language_code_list = voice_modelconfig.get("language_code", [])
                             language_code = st.selectbox(
                                 "Please Select language",
-                                glob_language_code,
+                                language_code_list,
                                 index=0,
                             )
                         with col2:
-                            if modelconfig["type"] == "local":
+                            if voice_modelconfig["type"] == "local":
                                 if voicemodel is not None:
                                     pathstr = vtotmodel[voicemodel].get("path")
                                 else:
                                     pathstr = ""
                                 st.text_input("Local Path", pathstr, key="vo_local_path", disabled=True)
-                            elif modelconfig["type"] == "cloud":
-                                pathstr = modelconfig.get("path")
+                            elif voice_modelconfig["type"] == "cloud":
+                                pathstr = voice_modelconfig.get("path")
                                 st.text_input("Cloud Path", pathstr, key="vo_cloud_path", disabled=True)
                         running_chat_solution["config"]["voice"]["enable"] = True
                         running_chat_solution["config"]["voice"]["model"] = voicemodel
-                        running_chat_solution["config"]["voice"]["language"] = language_code
-                        if voicemodel == "GoogleVoiceService":
-                            modelconfig["language"] = language_code
-                            api.save_vtot_model_config(voicemodel, modelconfig)
+                        running_chat_solution["config"]["voice"]["language"] = [language_code]
+                        voice_modelconfig["language"] = [language_code]
+                        api.save_vtot_model_config(voicemodel, voice_modelconfig)
                     
                     st.divider()
                     speech_enable = st.checkbox('Speech Enable', value=True)
@@ -714,6 +714,17 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                         running_chat_solution["config"]["speech"]["enable"] = True
                         running_chat_solution["config"]["speech"]["model"] = speechmodel
                         running_chat_solution["config"]["speech"]["speaker"] = speaker
+                        if running_chat_solution["config"]["voice"]["enable"] and speaker:
+                            if speechmodel == "OpenAISpeechService":
+                                language_code = "en-US"
+                            else:
+                                result = speaker.split('-', 2)[:2]
+                                language_code = '-'.join(result)
+                            if language_code not in running_chat_solution["config"]["voice"]["language"]:
+                                running_chat_solution["config"]["voice"]["language"].append(language_code)
+                            if language_code not in voice_modelconfig["language"]:
+                                voice_modelconfig["language"].append(language_code)
+                                api.save_vtot_model_config(voicemodel, voice_modelconfig)
 
                     st.divider()
                     roleplayer = running_chat_solution["config"]["roleplayer"]

@@ -10,7 +10,7 @@ from WebUI.webui_pages.utils import ApiRequest, check_error_msg
 from streamlit_chatbox import ChatBox, Image, Audio, Video, Markdown
 from streamlit_webrtc import webrtc_streamer, WebRtcMode, ClientSettings
 from aiortc.contrib.media import MediaRecorder
-from WebUI.configs.basicconfig import (TMP_DIR, ModelType, ModelSize, ModelSubType, ToolsType, glob_language_code, GetModelInfoByName, GetTypeName, generate_prompt_for_imagegen, generate_prompt_for_smart_search, 
+from WebUI.configs.basicconfig import (TMP_DIR, ModelType, ModelSize, ModelSubType, ToolsType, GetModelInfoByName, GetTypeName, generate_prompt_for_imagegen, generate_prompt_for_smart_search, 
                                        use_search_engine, glob_multimodal_vision_list, glob_multimodal_voice_list, glob_multimodal_video_list)
 from WebUI.configs.prompttemplates import PROMPT_TEMPLATES
 from WebUI.configs.roleplaytemplates import ROLEPLAY_TEMPLATES
@@ -164,6 +164,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
 
     dialogue_turns = chatconfig.get("dialogue_turns", 5)
     disabled = False
+    voice_language = ""
     voice_prompt = ""
     binit = True
     if st.session_state.get("current_page", "") == "dialogue_page":
@@ -327,10 +328,13 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                     try:
                         voice_prompt = api.get_vtot_data(voice_data)
                         print("voice_prompt: ", voice_prompt)
-                        if voice_prompt:
+                        voice_language, voice_prompt = voice_prompt.split(":", 1)
+                        if voice_language and voice_prompt:
                             st.success("Translation finished!")
                         else:
                             st.error("Translation failed...")
+                            voice_language = ""
+                            voice_prompt = ""
                         if running_model == "" or running_model == "None":
                             voice_prompt = ""
                     except Exception as e:
@@ -794,6 +798,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                 text = ""
                 chat_history_id = 0
                 for d in api.chat_solution_chat(prompt,
+                        prompt_language=voice_language,
                         imagesdata=imagesdata,
                         audiosdata=audiosdata,
                         videosdata=videosdata,
@@ -837,7 +842,6 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                 metadata = {
                     "chat_history_id": chat_history_id,
                     }
-                print("asdfadfadqwer")
                 if not new_ai_say:
                     chat_box.update_msg(text, element_index=0, streaming=False, metadata=metadata)
                 chat_box.show_feedback(**feedback_kwargs,

@@ -825,7 +825,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                         key_json_path = st.text_input("Key Json Path", key_json_path, key="key_json_path-1")
                     with langcol:
                         language_code = modelconfig.get("language", "")
-                        language_code_list = modelconfig.get("language_code")
+                        language_code_list = modelconfig.get("language_code", [])
                         if language_code in language_code_list:
                             index = language_code_list.index(language_code)
                         else:
@@ -845,7 +845,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                                 st.error("Please enter the key json path and language, save failed!")
                             else:
                                 modelconfig["key_json_path"] = key_json_path
-                                modelconfig["language"] = language_code
+                                modelconfig["language"] = [language_code]
                                 r = api.save_vtot_model_config(voicemodel, modelconfig)
                                 if msg := check_error_msg(r):
                                     st.error(f"failed to save configuration for model {voicemodel}.")
@@ -858,6 +858,17 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                     with keycol:
                         voicekey = modelconfig.get("voice_key")
                         voicekey = st.text_input("Voice Key", voicekey, key="voice_key", type="password")
+                        language_code = modelconfig.get("language", "")
+                        language_code_list = modelconfig.get("language_code", [])
+                        if language_code in language_code_list:
+                            index = language_code_list.index(language_code)
+                        else:
+                            index = 0
+                        language_code = st.selectbox(
+                            "Language",
+                            language_code_list,
+                            index=index
+                        )
                     with regcol:
                         voiceregion = modelconfig.get("voice_region")
                         voiceregion = st.text_input("Voice Region", voiceregion, key="voice_region")
@@ -873,6 +884,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                             else:
                                 modelconfig["voice_key"] = voicekey
                                 modelconfig["voice_region"] = voiceregion
+                                modelconfig["language"] = [language_code]
                                 r = api.save_vtot_model_config(voicemodel, modelconfig)
                                 if msg := check_error_msg(r):
                                     st.error(f"failed to save configuration for model {voicemodel}.")
