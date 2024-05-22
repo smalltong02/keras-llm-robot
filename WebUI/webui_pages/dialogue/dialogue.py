@@ -535,8 +535,8 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
     # import googlemaps
     # import folium
     # from streamlit_folium import st_folium
-    # gmaps = googlemaps.Client(key="AIzaSyBXbFDo_kLL5tjYN2NfF7hNtlRpvUsABrM")
-    # geocode_result = gmaps.geocode("20382 91B Ave, Langley BC, V1M 2G1")
+    # gmaps = googlemaps.Client(key="***")
+    # geocode_result = gmaps.geocode("***")
     # location = geocode_result[0]['geometry']['location']
     # print("location: ", location)
     # coordinates = [location['lat'], location['lng']]
