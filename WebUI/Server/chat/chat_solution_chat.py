@@ -14,6 +14,8 @@ from WebUI.Server.utils import wrap_done, get_ChatOpenAI, GetModelApiBaseAddress
 from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
 from WebUI.configs.basicconfig import (ModelType, ModelSize, ModelSubType, ToolsType, GetModelInfoByName, ExtractJsonStrings, use_new_search_engine, use_knowledge_base, use_new_function_calling)
 from WebUI.Server.db.repository import add_chat_history_to_db, update_chat_history
+from WebUI.Server.funcall.google_toolboxes.credential import init_credential, FULL_SCOPES
+from WebUI.Server.funcall.google_toolboxes.gmail_funcall import search_in_gmails
 from typing import AsyncIterable, Dict, List, Optional, Union, Any
 
 def CallingExternalTools(text: str) -> bool:
@@ -181,6 +183,13 @@ async def chat_solution_chat(
         configinst = InnerJsonConfigWebUIParse()
         webui_config = configinst.dump()
         print("prompt_language: ", prompt_language)
+
+        # test
+        # init_credential("google_credentials.json", FULL_SCOPES)
+        # search_criteria = "from: 'confirmation@aircanada.ca' AND after:2023/09/01 AND before:2024/03/01"
+        # email_messages = search_in_gmails(search_criteria)
+        # print("email_messages: ", email_messages)
+
         if isinstance(max_tokens, int) and max_tokens <= 0:
             max_tokens = None
         model_name = chat_solution["config"]["llm_model"]

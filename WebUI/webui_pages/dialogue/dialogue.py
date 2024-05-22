@@ -531,7 +531,19 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
         imagesdata = []
         audiosdata = []
         videosdata = []
-    
+
+    # import googlemaps
+    # import folium
+    # from streamlit_folium import st_folium
+    # gmaps = googlemaps.Client(key="AIzaSyBXbFDo_kLL5tjYN2NfF7hNtlRpvUsABrM")
+    # geocode_result = gmaps.geocode("20382 91B Ave, Langley BC, V1M 2G1")
+    # location = geocode_result[0]['geometry']['location']
+    # print("location: ", location)
+    # coordinates = [location['lat'], location['lng']]
+    # m = folium.Map(location=coordinates, zoom_start=16)
+    # folium.Marker(coordinates, popup="My Home").add_to(m)
+    # st_data = st_folium(m, width=725)
+
     btranslate_prompt = False
     if prompt is not None and prompt != "":
         print("prompt: ", prompt)

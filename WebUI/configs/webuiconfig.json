@@ -372,7 +372,7 @@
                 "key_json_path": "chatbot-speech-key.json",
                 "language": [
                     "en-US",
-                    "ja-JP"
+                    "cmn-CN"
                 ],
                 "provider": "GoogleCloud",
                 "CloudTemplates": "GoogleVoiceTemplate",
@@ -2619,6 +2619,12 @@
                 "host": "default_host_ip",
                 "port": 20020
             }
+        },
+        "google_oauth-2": {
+            "default": {
+                "host": "default_host_ip",
+                "port": 20030
+            }
         }
     },
     "ChatConfiguration": {
@@ -2708,5 +2714,17 @@
     "FunctionCalling": {
         "calling_enable": false,
         "max_calling": 5
+    },
+    "ToolBoxes": {
+        "Google ToolBoxes": {
+            "Google Maps": {},
+            "Google Mail": {},
+            "Google Youtube": {},
+            "Google Calendar": {},
+            "Google Drive": {},
+            "Google Docs": {},
+            "Google Sheets": {},
+            "Google Forms": {}
+        }
     }
 }

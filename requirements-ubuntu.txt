@@ -111,6 +111,7 @@ streamlit-chatbox==1.1.11
 streamlit-feedback==0.1.2
 streamlit-option-menu==0.3.6
 streamlit-webrtc==0.47.1
+streamlit-folium==0.20.0
 svgwrite==1.4.3
 sympy==1.12
 tenacity==8.2.3
@@ -160,3 +161,7 @@ dashscope==1.15.0
 
 #baidu qianfan
 qianfan==0.3.7
+
+#google toolboxes
+googlemaps==4.10.0
+google-auth-oauthlib==1.2.0

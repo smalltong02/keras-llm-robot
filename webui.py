@@ -43,7 +43,7 @@ if __name__ == "__main__":
             "icon": "magic",
             "func": configuration_page,
         },
-        "Tools & Agent": {
+        "ToolBoxes": {
             "icon": "archive-fill",
             "func": tools_agent_page,
         },

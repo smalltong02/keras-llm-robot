@@ -67,7 +67,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
     if running_model == "":
         running_model = "None"
 
-    tabretrieval, tabinterpreter, tabspeech, tabvoice, tabimager, tabimageg, tabmusic = st.tabs(["Retrieval", "Code Interpreter", "Text-to-Voice", "Voice-to-Text", "Image Recognition", "Image Generation", "Music"])
+    tabretrieval, tabinterpreter, tabspeech, tabvoice, tabimager, tabimageg, tabmusic, tabextra = st.tabs(["Retrieval", "Code Interpreter", "Text-to-Voice", "Voice-to-Text", "Image Recognition", "Image Generation", "Music", "Extra"])
     with tabretrieval:
         kb_list = {}
         try:
@@ -1323,6 +1323,23 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
 
         elif modelconfig["type"] == "cloud":
             pass
+
+    with tabextra:
+        toolboxes = webui_config.get("ToolBoxes")
+        google_toolboxes = {}
+        if toolboxes:
+            google_toolboxes = toolboxes.get("Google ToolBoxes")
+
+        if google_toolboxes:
+            toolboxes_lists = []
+            for key, value in google_toolboxes.items():
+                if isinstance(value, dict):
+                    toolboxes_lists.append(key)
+            google_tool = st.selectbox(
+                "Google ToolBoxes:",
+                toolboxes_lists,
+                index=0
+            )
 
     st.session_state["current_page"] = "retrieval_agent_page"
 

@@ -14,6 +14,9 @@ OPEN_CROSS_DOMAIN = False
 # The server will listen on all available network interfaces.
 DEFAULT_BIND_HOST = "0.0.0.0"
 
+# The Google OAuth
+GOOGLE_OAUTH_PORT = 20030
+
 #webui server
 WEBUI_SERVER = {
     "host": DEFAULT_BIND_HOST,
