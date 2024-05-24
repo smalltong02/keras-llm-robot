@@ -257,3 +257,5 @@ qianfan==0.3.7
 
 #google toolboxes
 googlemaps==4.10.0
+google-auth-oauthlib==1.2.0
+google-api-python-client==2.130.0

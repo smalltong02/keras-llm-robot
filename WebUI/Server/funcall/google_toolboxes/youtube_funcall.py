@@ -68,7 +68,20 @@ def get_youtube_video_url(title: str) ->str:
     """ Get URL about Youtube video from your own Youtube channel. """
     return get_youtube_video_url_i(title)
 
-# youtube_toolboxes = [get_youtube_video_url]
-# youtube_tool_names = {
-#     "get_youtube_video_url": get_youtube_video_url,
-# }
+youtube_toolboxes = [get_youtube_video_url]
+youtube_tool_names = {
+    "get_youtube_video_url": get_youtube_video_url,
+}
+
+def GetYoutubeFuncallList() ->list:
+    funcall_list = []
+    for call_tool in youtube_toolboxes:
+        funcall_list.append(call_tool.name)
+    return funcall_list
+
+def GetYoutubeFuncallDescription(func_name: str = "") ->str:
+    description = ""
+    for call_tool in youtube_toolboxes:
+        if func_name == call_tool.name:
+            description = call_tool.description
+    return description

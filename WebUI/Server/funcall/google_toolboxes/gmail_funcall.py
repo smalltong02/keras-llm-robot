@@ -189,7 +189,9 @@ def gmail_send_mail(subject: str, body: str, to_address: str, from_address: str,
             .send(userId="me", body=create_message)
             .execute()
         )
-        email_messages = f"Email create successful, id: {send_message["id"]}\nmessage: {send_message["message"]}"
+        id = send_message.get("id")
+        message = send_message.get("message")
+        email_messages = f"Email create successful, id: {id}\nmessage: {message}"
     except Exception as e:
         email_messages = f"Email create failed, error: {e}"
         print(f"create_draft_in_gmails Error: {e}")
@@ -217,3 +219,16 @@ email_tool_names = {
     "create_draft_in_emails": create_draft_in_emails,
     "send_mail_in_emails": send_mail_in_emails
 }
+
+def GetMailFuncallList() ->list:
+    funcall_list = []
+    for call_tool in email_toolboxes:
+        funcall_list.append(call_tool.name)
+    return funcall_list
+
+def GetMailFuncallDescription(func_name: str = "") ->str:
+    description = ""
+    for call_tool in email_toolboxes:
+        if func_name == call_tool.name:
+            description = call_tool.description
+    return description

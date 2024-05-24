@@ -2717,29 +2717,32 @@
     },
     "ToolBoxes": {
         "Google ToolBoxes": {
-            "Google Maps": {
-                "enable": false
-            },
-            "Google Mail": {
-                "enable": false
-            },
-            "Google Youtube": {
-                "enable": false
-            },
-            "Google Calendar": {
-                "enable": false
-            },
-            "Google Drive": {
-                "enable": false
-            },
-            "Google Docs": {
-                "enable": false
-            },
-            "Google Sheets": {
-                "enable": false
-            },
-            "Google Forms": {
-                "enable": false
+            "credential": "[Your Key]",
+            "Tools": {
+                "Google Maps": {
+                    "enable": true
+                },
+                "Google Mail": {
+                    "enable": true
+                },
+                "Google Youtube": {
+                    "enable": true
+                },
+                "Google Calendar": {
+                    "enable": true
+                },
+                "Google Drive": {
+                    "enable": true
+                },
+                "Google Docs": {
+                    "enable": false
+                },
+                "Google Sheets": {
+                    "enable": false
+                },
+                "Google Forms": {
+                    "enable": false
+                }
             }
         }
     }

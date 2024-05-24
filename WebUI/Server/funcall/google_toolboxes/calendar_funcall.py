@@ -105,3 +105,16 @@ calendar_tool_names = {
     "get_event_from_calendar": get_event_from_calendar,
     "create_event_to_calendar": create_event_to_calendar,
 }
+
+def GetCalendarFuncallList() ->list:
+    funcall_list = []
+    for call_tool in calendar_toolboxes:
+        funcall_list.append(call_tool.name)
+    return funcall_list
+
+def GetCalendarFuncallDescription(func_name: str = "") ->str:
+    description = ""
+    for call_tool in calendar_toolboxes:
+        if func_name == call_tool.name:
+            description = call_tool.description
+    return description

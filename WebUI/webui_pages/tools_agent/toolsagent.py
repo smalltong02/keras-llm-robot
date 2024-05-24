@@ -1331,17 +1331,82 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
             google_toolboxes = toolboxes.get("Google ToolBoxes")
 
         if google_toolboxes:
+            from WebUI.Server.funcall.google_toolboxes.gmail_funcall import GetMailFuncallList, GetMailFuncallDescription
+            from WebUI.Server.funcall.google_toolboxes.gmap_funcall import GetMapFuncallList, GetMapFuncallDescription
+            from WebUI.Server.funcall.google_toolboxes.calendar_funcall import GetCalendarFuncallList, GetCalendarFuncallDescription
+            from WebUI.Server.funcall.google_toolboxes.gcloud_funcall import GetStorageFuncallList, GetStorageFuncallDescription
+            from WebUI.Server.funcall.google_toolboxes.youtube_funcall import GetYoutubeFuncallList, GetYoutubeFuncallDescription
             toolboxes_lists = []
-            for key, value in google_toolboxes.items():
+            for key, value in google_toolboxes.get("Tools").items():
                 if isinstance(value, dict):
                     toolboxes_lists.append(key)
-            google_tool = st.selectbox(
-                "Google ToolBoxes:",
-                toolboxes_lists,
-                index=0
-            )
-            if google_tool:
-                pass
+            google_credential = google_toolboxes.get("credential")
+            print("credential: ", google_credential)
+            current_function = ""
+            function_name_list = []
+            col1, col2 = st.columns(2)
+            with col1:
+                google_tool = st.selectbox(
+                    "Google ToolBoxes:",
+                    toolboxes_lists,
+                    index=0
+                )
+                if google_tool == "Google Mail":
+                    function_name_list = GetMailFuncallList()
+                elif google_tool == "Google Maps":
+                    function_name_list = GetMapFuncallList()
+                elif google_tool == "Google Calendar":
+                    function_name_list = GetCalendarFuncallList()
+                elif google_tool == "Google Drive":
+                    function_name_list = GetStorageFuncallList()
+                elif google_tool == "Google Youtube":
+                    function_name_list = GetYoutubeFuncallList()
+                calling_enable = google_toolboxes.get("Tools").get(google_tool).get("enable", False)
+                calling_enable = st.checkbox("Enable", key="funcall_box", value=calling_enable, help="After enabling, The function will be called automatically.")
+                print("google_tool", google_tool)
+                print("calling_enable", calling_enable)
+                google_toolboxes.get("Tools")[google_tool]["enable"] = calling_enable
+                print(google_toolboxes)
+            with col2:
+                current_function = st.selectbox(
+                    "Please Check Function",
+                    function_name_list,
+                    index=0,
+                )
+            if current_function:
+                with st.form("Funcall"):
+                    google_credential = st.text_input("Google Credential", google_credential, key="google_credential")
+                    function_description = ""
+                    if google_tool == "Google Mail":
+                        function_description = GetMailFuncallDescription(current_function)
+                    elif google_tool == "Google Maps":
+                        function_description = GetMapFuncallDescription(current_function)
+                    elif google_tool == "Google Calendar":
+                        function_description = GetCalendarFuncallDescription(current_function)
+                    elif google_tool == "Google Drive":
+                        function_description = GetStorageFuncallDescription(current_function)
+                    elif google_tool == "Google Youtube":
+                        function_description = GetYoutubeFuncallDescription(current_function)
+                    st.text_input("Description", function_description, disabled=True)
+                    save_parameters = st.form_submit_button(
+                        "Save Parameters",
+                        use_container_width=True
+                    )
+                    if save_parameters:
+                        with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
+                            if not google_credential or google_credential == "[Your Key]":
+                                st.error("Please input google credential.")
+                            else:
+                                toolboxes["Google ToolBoxes"]["credential"] = google_credential
+                                r = api.save_google_toolboxes_config(google_toolboxes)
+                                if msg := check_error_msg(r):
+                                    st.error(msg)
+                                    st.toast(msg, icon="✖")
+                                elif msg := check_success_msg(r):
+                                    st.success("success save configuration for google toolboxes.")
+                                    st.toast("success save configuration for google toolboxes.", icon="✔")
+
+            st.divider()
 
     st.session_state["current_page"] = "retrieval_agent_page"
 

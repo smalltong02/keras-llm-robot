@@ -105,12 +105,18 @@ def search_in_gdrive(search_criteria: str) ->str:
         for item in file_items:
             #full_path = get_gcloud_path(service, item.get("parents", ""))
             prefix = f"This is file #{file_counts}: \n"
-            file_name = f"File Name: {item.get('name', "")} \n"
-            file_id = f"File Id: {item.get('id', "")} \n"
-            file_size = f"File Size: {item.get('size', "")} \n"
-            file_created_time = f"Created Time: {item.get('createdTime', "")} \n"
-            file_modified_time = f"Modified Time: {item.get('modifiedTime', "")} \n"
-            file_mime_type = f"Mime Type: {item.get('mimeType', "")} \n"
+            name = item.get("name", "")
+            file_name = f"File Name: {name} \n"
+            id = item.get("id", "")
+            file_id = f"File Id: {id} \n"
+            size = item.get("size", "")
+            file_size = f"File Size: {size} \n"
+            create_time = item.get("createdTime", "")
+            file_created_time = f"Created Time: {create_time} \n"
+            modified_time = item.get("modifiedTime", "")
+            file_modified_time = f"Modified Time: {modified_time} \n"
+            mime_type = item.get("mimeType", "")
+            file_mime_type = f"Mime Type: {mime_type} \n"
             if gdrive_messages:
                 gdrive_messages += "\n\n"
             gdrive_messages += f"{prefix}{file_name}{file_id}{file_size}{file_created_time}{file_modified_time}{file_mime_type}"
@@ -198,3 +204,16 @@ drive_tool_names = {
     "download_from_cloud_storage": download_from_cloud_storage,
     "upload_to_cloud_storage": upload_to_cloud_storage,
 }
+
+def GetStorageFuncallList() ->list:
+    funcall_list = []
+    for call_tool in drive_toolboxes:
+        funcall_list.append(call_tool.name)
+    return funcall_list
+
+def GetStorageFuncallDescription(func_name: str = "") ->str:
+    description = ""
+    for call_tool in drive_toolboxes:
+        if func_name == call_tool.name:
+            description = call_tool.description
+    return description

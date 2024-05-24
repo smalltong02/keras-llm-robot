@@ -1055,10 +1055,31 @@ def save_function_calling_config(
             file.truncate()
         return BaseResponse(
             code=200,
-            msg="success save chat configration!")
+            msg="success save function calling configration!")
             
     except Exception as e:
         print(f'{e.__class__.__name__}: {e}')
         return BaseResponse(
             code=500,
-            msg=f"failed to save chat configration, error: {e}")
+            msg=f"failed to save function calling configration, error: {e}")
+    
+def save_google_toolboxes_config(
+    google_toolboxes: dict = Body(..., description="Google Toolboxes configration information"),
+    controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])
+) -> BaseResponse:
+    try:
+        with open("WebUI/configs/webuiconfig.json", 'r+') as file:
+            jsondata = json.load(file)
+            jsondata["ToolBoxes"]["Google ToolBoxes"]=google_toolboxes
+            file.seek(0)
+            json.dump(jsondata, file, indent=4)
+            file.truncate()
+        return BaseResponse(
+            code=200,
+            msg="success save google toolboxes configration!")
+            
+    except Exception as e:
+        print(f'{e.__class__.__name__}: {e}')
+        return BaseResponse(
+            code=500,
+            msg=f"failed to save google toolboxes configration, error: {e}")

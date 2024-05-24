@@ -32,3 +32,16 @@ map_toolboxes = [get_map_url]
 map_tool_names = {
     "get_map_url": get_map_url,
 }
+
+def GetMapFuncallList() ->list:
+    funcall_list = []
+    for call_tool in map_toolboxes:
+        funcall_list.append(call_tool.name)
+    return funcall_list
+
+def GetMapFuncallDescription(func_name: str = "") ->str:
+    description = ""
+    for call_tool in map_toolboxes:
+        if func_name == call_tool.name:
+            description = call_tool.description
+    return description
