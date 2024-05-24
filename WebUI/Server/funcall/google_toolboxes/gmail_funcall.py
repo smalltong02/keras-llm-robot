@@ -211,9 +211,9 @@ def send_mail_in_emails(subject: str, body: str, to_address: str, from_address: 
     """send mail in email."""
     return gmail_send_mail(subject, body, to_address, from_address, attachment_file)
 
-# email_toolboxes = [search_in_emails, create_draft_in_emails, send_mail_in_emails]
-# email_tool_names = {
-#     "search_in_emails": search_in_emails,
-#     "create_draft_in_emails": create_draft_in_emails,
-#     "send_mail_in_emails": send_mail_in_emails
-# }
+email_toolboxes = [search_in_emails, create_draft_in_emails, send_mail_in_emails]
+email_tool_names = {
+    "search_in_emails": search_in_emails,
+    "create_draft_in_emails": create_draft_in_emails,
+    "send_mail_in_emails": send_mail_in_emails
+}

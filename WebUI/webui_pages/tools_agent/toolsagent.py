@@ -1340,6 +1340,8 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                 toolboxes_lists,
                 index=0
             )
+            if google_tool:
+                pass
 
     st.session_state["current_page"] = "retrieval_agent_page"
 

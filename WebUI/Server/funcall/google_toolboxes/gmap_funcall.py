@@ -28,7 +28,7 @@ def get_map_url(address) ->str:
     """Get the URL of a Google Map for the given address."""
     return get_gmap_url(address)
 
-# map_toolboxes = [get_map_url]
-# map_tool_names = {
-#     "get_map_url": get_map_url,
-# }
+map_toolboxes = [get_map_url]
+map_tool_names = {
+    "get_map_url": get_map_url,
+}

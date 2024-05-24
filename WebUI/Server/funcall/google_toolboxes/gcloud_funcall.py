@@ -192,9 +192,9 @@ def upload_to_cloud_storage(upload_file: str) ->str:
     """upload file to cloud storage."""
     return upload_to_gdrive(upload_file)
 
-# drive_toolboxes = [search_in_cloud_storage, download_from_cloud_storage, upload_to_cloud_storage]
-# drive_tool_names = {
-#     "search_in_cloud_storage": search_in_cloud_storage,
-#     "download_from_cloud_storage": download_from_cloud_storage,
-#     "upload_to_cloud_storage": upload_to_cloud_storage,
-# }
+drive_toolboxes = [search_in_cloud_storage, download_from_cloud_storage, upload_to_cloud_storage]
+drive_tool_names = {
+    "search_in_cloud_storage": search_in_cloud_storage,
+    "download_from_cloud_storage": download_from_cloud_storage,
+    "upload_to_cloud_storage": upload_to_cloud_storage,
+}

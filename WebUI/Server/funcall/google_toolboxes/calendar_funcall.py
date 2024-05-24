@@ -100,8 +100,8 @@ def create_event_to_calendar(new_event: str) ->str:
     """create event to calendar."""
     return create_event_to_gcalendar(new_event)
 
-# calendar_toolboxes = [get_event_from_calendar, create_event_to_calendar]
-# calendar_tool_names = {
-#     "get_event_from_calendar": get_event_from_calendar,
-#     "create_event_to_calendar": create_event_to_calendar,
-# }
+calendar_toolboxes = [get_event_from_calendar, create_event_to_calendar]
+calendar_tool_names = {
+    "get_event_from_calendar": get_event_from_calendar,
+    "create_event_to_calendar": create_event_to_calendar,
+}
