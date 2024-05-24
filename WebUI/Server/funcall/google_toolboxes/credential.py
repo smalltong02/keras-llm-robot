@@ -6,10 +6,6 @@ from WebUI.configs import (GOOGLE_OAUTH_PORT)
 
 GOOGLE_TOKEN_FILE = "google_token.json"
 
-READONLY_SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
-MODIFY_SCOPES = ["https://www.googleapis.com/auth/gmail.modify"]
-FULL_SCOPES = ["https://mail.google.com/"]
-
 glob_credentials = None
 
 def init_credential(credentials_path: str, scopes: list[str]) -> bool:

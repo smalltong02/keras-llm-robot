@@ -14,8 +14,6 @@ from WebUI.Server.utils import wrap_done, get_ChatOpenAI, GetModelApiBaseAddress
 from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
 from WebUI.configs.basicconfig import (ModelType, ModelSize, ModelSubType, ToolsType, GetModelInfoByName, ExtractJsonStrings, use_new_search_engine, use_knowledge_base, use_new_function_calling)
 from WebUI.Server.db.repository import add_chat_history_to_db, update_chat_history
-from WebUI.Server.funcall.google_toolboxes.credential import init_credential, FULL_SCOPES
-from WebUI.Server.funcall.google_toolboxes.gmail_funcall import search_in_gmails
 from typing import AsyncIterable, Dict, List, Optional, Union, Any
 
 def CallingExternalTools(text: str) -> bool:
