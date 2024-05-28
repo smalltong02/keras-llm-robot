@@ -1063,6 +1063,22 @@ def save_function_calling_config(
             code=500,
             msg=f"failed to save function calling configration, error: {e}")
     
+def is_calling_enable(
+    controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()]),
+    placeholder: str = Body(None, description="Not use"),
+) -> BaseResponse:
+    try:
+        from WebUI.configs.basicconfig import is_function_calling_enable
+        enable = is_function_calling_enable()
+        return BaseResponse(data=enable)
+        
+    except Exception as e:
+        print(f'{e.__class__.__name__}: {e}')
+        return BaseResponse(
+            code=500,
+            data=False,
+            msg=f"failed to get calling enable from controller: {controller_address} error: {e}")
+    
 def save_google_toolboxes_config(
     google_toolboxes: dict = Body(..., description="Google Toolboxes configration information"),
     controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])

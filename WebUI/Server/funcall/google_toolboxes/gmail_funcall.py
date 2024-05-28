@@ -12,7 +12,11 @@ def search_in_gmails(search_criteria: str) ->str:
     """search mail in gmail. The parameter 'search_criteria' conforms to Gmail's advanced search syntax format."""
     from WebUI.Server.funcall.google_toolboxes.credential import glob_credentials
     if not glob_credentials:
-        return "Credentials not found. This error is unrecoverable."
+        from WebUI.Server.funcall.google_toolboxes.credential import init_credential
+        init_credential()
+        from WebUI.Server.funcall.google_toolboxes.credential import glob_credentials
+        if not glob_credentials:
+            return "Credentials not found. This error is unrecoverable."
     
     email_messages = ""
     try:
@@ -105,7 +109,11 @@ def create_draft_in_gmails(subject: str, body: str, to_address: str, from_addres
     from email.message import EmailMessage
     from WebUI.Server.funcall.google_toolboxes.credential import glob_credentials
     if not glob_credentials:
-        return "Credentials not found. This error is unrecoverable."
+        from WebUI.Server.funcall.google_toolboxes.credential import init_credential
+        init_credential()
+        from WebUI.Server.funcall.google_toolboxes.credential import glob_credentials
+        if not glob_credentials:
+            return "Credentials not found. This error is unrecoverable."
     
     if not to_address or not from_address:
         return "Call failed, This function call must include the 'to' and 'from' parameters."
@@ -142,7 +150,7 @@ def create_draft_in_gmails(subject: str, body: str, to_address: str, from_addres
             .create(userId="me", body=create_message)
             .execute()
         )
-        email_messages = f"Draft create successful, Draft id: {draft['id']}\nDraft message: {draft['message']}"
+        email_messages = f"Draft create successful, Draft id: `{draft['id']}`\nDraft message: `{draft['message']}`"
     except Exception as e:
         email_messages = f"Draft create failed, error: {e}"
         print(f"create_draft_in_gmails Error: {e}")
@@ -153,7 +161,11 @@ def gmail_send_mail(subject: str, body: str, to_address: str, from_address: str,
     from email.message import EmailMessage
     from WebUI.Server.funcall.google_toolboxes.credential import glob_credentials
     if not glob_credentials:
-        return "Credentials not found. This error is unrecoverable."
+        from WebUI.Server.funcall.google_toolboxes.credential import init_credential
+        init_credential()
+        from WebUI.Server.funcall.google_toolboxes.credential import glob_credentials
+        if not glob_credentials:
+            return "Credentials not found. This error is unrecoverable."
     
     if not to_address or not from_address:
         return "Call failed, This function call must include the 'to' and 'from' parameters."
@@ -170,13 +182,14 @@ def gmail_send_mail(subject: str, body: str, to_address: str, from_address: str,
         message["Subject"] = subject
 
         # attachment
-        attachment_part = build_file_part(attachment_file)
-        message.add_attachment(
-            attachment_part.get_payload(decode=True),
-            maintype=attachment_part.get_content_maintype(),
-            subtype=attachment_part.get_content_subtype(),
-            filename=attachment_part.get_filename()
-        )
+        if os.path.exists(attachment_file):
+            attachment_part = build_file_part(attachment_file)
+            message.add_attachment(
+                attachment_part.get_payload(decode=True),
+                maintype=attachment_part.get_content_maintype(),
+                subtype=attachment_part.get_content_subtype(),
+                filename=attachment_part.get_filename()
+            )
 
         # encoded message
         encoded_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
@@ -190,8 +203,7 @@ def gmail_send_mail(subject: str, body: str, to_address: str, from_address: str,
             .execute()
         )
         id = send_message.get("id")
-        message = send_message.get("message")
-        email_messages = f"Email create successful, id: {id}\nmessage: {message}"
+        email_messages = f"Email create successful, id: `{id}`"
     except Exception as e:
         email_messages = f"Email create failed, error: {e}"
         print(f"create_draft_in_gmails Error: {e}")
@@ -200,17 +212,72 @@ def gmail_send_mail(subject: str, body: str, to_address: str, from_address: str,
 
 @tool
 def search_in_emails(search_criteria: str) ->str:
-    """search mail in email. The parameter 'search_criteria' conforms to email's advanced search syntax format."""
+    """search mail in email. The parameter 'search_criteria' conforms to email's advanced search syntax format.
+        Here is an example of calling the function 'search_in_emails':
+            User: Please check my email for messages with the subject containing "HipsHook Project" sent on May 30th, 2024.
+            Bot: Okay, I will call the function 'search_in_emails' to help you find the email.
+            {
+                "name": search_in_emails,
+                "arguments": {
+                    "search_criteria": "subject: 'HipsHook Project' AND after:2024/05/30"
+                }
+            }
+            API Output: "This is email #1:\nSubject: HipsHook Project Introduction \nSummary: This is a brief introduction to the HipsHook Project."
+            Bot: An email has been found: 
+                Subject: HipsHook Project Introduction
+                Summary: This is a brief introduction to the HipsHook Project.
+    """
     return search_in_gmails(search_criteria)
 
 @tool
 def create_draft_in_emails(subject: str, body: str, to_address: str, from_address: str, attachment_file: str) ->bool:
-    """create draft mail in email."""
+    """create draft mail in email.
+        Here is an example of calling the function 'create_draft_in_emails':
+            User: Please help me create an email draft with the following details:
+                Subject: Happy Birthday
+                Body: Hi Lyn, happy birthday to you!
+                To: dave@gmail.com
+                From: lyn@gmail.com
+                attachment_file: "./gift_card.png"
+            Bot: Okay, I will call the function 'create_draft_in_emails' to help you create an email draft.
+            {
+                "name": create_draft_in_emails,
+                "arguments": {
+                    "subject": "Happy Birthday",
+                    "body": "Hi Lyn, happy birthday to you!",
+                    "to_address": "dave@gmail.com",
+                    "from_address": "lyn@gmail.com",
+                    "attachment_file": "./gift_card.png"
+                }
+            }
+            API Output: "Draft create successful, Draft id: 18748946\nDraft message: "
+            Bot: Draft create successful, Draft id is '18748946'. You can login to email to check it.
+    """
     return create_draft_in_gmails(subject, body, to_address, from_address, attachment_file)
 
 @tool
 def send_mail_in_emails(subject: str, body: str, to_address: str, from_address: str, attachment_file: str) ->bool:
-    """send mail in email."""
+    """send mail in email.
+        Here is an example of calling the function 'send_mail_in_emails':
+            User: Please help me send an email to dave:
+                Subject: The issue regarding property fees.
+                Body: Hi Dave, Congratulations! I have helped you apply for a reduction in property fees, and the property management has approved it. Your property fees will be reduced by 10% each month!
+                To: dave@gmail.com
+                From: me
+            Bot: Okay, I will call the function 'send_mail_in_emails' to help you send this email.
+            {
+                "name": send_mail_in_emails,
+                "arguments": {
+                    "subject": "The issue regarding property fees.",
+                    "body": "Hi Dave, Congratulations! I have helped you apply for a reduction in property fees, and the property management has approved it. Your property fees will be reduced by 10% each month!",
+                    "to_address": "dave@gmail.com",
+                    "from_address": "me",
+                    "attachment_file": ""
+                }
+            }
+            API Output: "Email send successful, id: 47587987\message: [message]"
+            Bot: Email send successful, Email id is '47587987'. You can login to email to check it.
+    """
     return gmail_send_mail(subject, body, to_address, from_address, attachment_file)
 
 email_toolboxes = [search_in_emails, create_draft_in_emails, send_mail_in_emails]
@@ -232,3 +299,16 @@ def GetMailFuncallDescription(func_name: str = "") ->str:
         if func_name == call_tool.name:
             description = call_tool.description
     return description
+
+def is_email_enable() ->bool:
+    from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
+    configinst = InnerJsonConfigWebUIParse()
+    tool_boxes = configinst.get("ToolBoxes")
+    if not tool_boxes:
+        return False
+    google_toolboxes = tool_boxes.get("Google ToolBoxes")
+    if not google_toolboxes:
+        return False
+    email = google_toolboxes.get("Tools").get("Google Mail")
+    enable = email.get("enable", False)
+    return enable

@@ -1588,6 +1588,20 @@ class ApiRequest:
         else:
             return self.ret_sync(response)
         
+    def is_calling_enable(self,
+        controller_address: str = None,
+    ):
+        data = {
+            "controller_address": controller_address,
+        }
+
+        response = self.post(
+            "/function_calling/is_calling_enable",
+            json=data,
+        )
+        
+        return self._get_response_value(response, as_json=True, value_func=lambda r:r.get("data", False))
+        
     def chat_solution_chat(
         self,
         query: str,

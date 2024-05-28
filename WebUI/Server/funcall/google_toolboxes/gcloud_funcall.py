@@ -90,7 +90,11 @@ def search_in_gdrive(search_criteria: str) ->str:
     """search file in google drive. The parameter 'search_criteria' conforms to google drive's advanced search syntax format."""
     from WebUI.Server.funcall.google_toolboxes.credential import glob_credentials
     if not glob_credentials:
-        return "Credentials not found. This error is unrecoverable."
+        from WebUI.Server.funcall.google_toolboxes.credential import init_credential
+        init_credential()
+        from WebUI.Server.funcall.google_toolboxes.credential import glob_credentials
+        if not glob_credentials:
+            return "Credentials not found. This error is unrecoverable."
     
     gdrive_messages = ""
     service = build("drive", "v3", credentials=glob_credentials)
@@ -110,7 +114,7 @@ def search_in_gdrive(search_criteria: str) ->str:
             id = item.get("id", "")
             file_id = f"File Id: {id} \n"
             size = item.get("size", "")
-            file_size = f"File Size: {size} \n"
+            file_size = f"File Size: {size} bytes\n"
             create_time = item.get("createdTime", "")
             file_created_time = f"Created Time: {create_time} \n"
             modified_time = item.get("modifiedTime", "")
@@ -130,7 +134,11 @@ def download_from_gdrive(search_criteria: str, download_path: str) ->str:
     """download file from google drive."""
     from WebUI.Server.funcall.google_toolboxes.credential import glob_credentials
     if not glob_credentials:
-        return "Credentials not found. This error is unrecoverable."
+        from WebUI.Server.funcall.google_toolboxes.credential import init_credential
+        init_credential()
+        from WebUI.Server.funcall.google_toolboxes.credential import glob_credentials
+        if not glob_credentials:
+            return "Credentials not found. This error is unrecoverable."
     
     gdrive_messages = ""
     service = build("drive", "v3", credentials=glob_credentials)
@@ -160,7 +168,11 @@ def upload_to_gdrive(upload_file: str) ->str:
     """upload file to google drive."""
     from WebUI.Server.funcall.google_toolboxes.credential import glob_credentials
     if not glob_credentials:
-        return "Credentials not found. This error is unrecoverable."
+        from WebUI.Server.funcall.google_toolboxes.credential import init_credential
+        init_credential()
+        from WebUI.Server.funcall.google_toolboxes.credential import glob_credentials
+        if not glob_credentials:
+            return "Credentials not found. This error is unrecoverable."
     
     gdrive_messages = ""
     service = build("drive", "v3", credentials=glob_credentials)
@@ -185,17 +197,69 @@ def upload_to_gdrive(upload_file: str) ->str:
 
 @tool
 def search_in_cloud_storage(search_criteria: str) ->str:
-    """search in cloud storage."""
+    """search in cloud storage.
+    Here is an example of calling the function 'search_in_cloud_storage':
+        User: Please help me find the file 'HipsHook Project' in my cloud storage.
+        Bot: Okay, I will call the function 'search_in_cloud_storage' to search your cloud storage.
+        {
+            "name": search_in_cloud_storage,
+            "arguments": {
+                "search_criteria": "name contains 'HipsHook Project' and 'me' in owners"
+            }
+        }
+        API Output: "
+        This is file #1:
+            File Name: Anti-Exploit in HipsHook Project Introduction
+            File id: 83918919
+            File Size: 875845 bytes
+            Created Time: 2024-04-20T15:23:46.123456-07:00
+            Modified Time: 2024-05-15T09:45:22.123456-07:00
+            Mime Type: application/pdf
+        "
+        Bot: I found the file 'Anti-Exploit in HipsHook Project Introduction' in your cloud storage.
+            File Information:
+             File Name: Anti-Exploit in HipsHook Project Introduction
+             File id: 83918919
+             File Size: 875845 bytes
+             Created Time: 2024-04-20T15:23:46.123456-07:00
+             Modified Time: 2024-05-15T09:45:22.123456-07:00
+             Mime Type: application/pdf
+    """
     return search_in_gdrive(search_criteria)
 
 @tool
 def download_from_cloud_storage(search_criteria: str, download_path: str) ->str:
-    """download from cloud storage."""
+    """download from cloud storage.
+        Here is an example of calling the function 'download_from_cloud_storage':
+        User: Please help me find the file 'HipsHook Project' in my cloud storage and download it to local folder "download".
+        Bot: Okay, I will call the function 'download_from_cloud_storage' to download file.
+        {
+            "name": download_from_cloud_storage,
+            "arguments": {
+                "search_criteria": "name contains 'HipsHook Project' and 'me' in owners",
+                "download_path": "download"
+            }
+        }
+        API Output: "file 'Anti-Exploit in HipsHook Project Introduction.pdf' downloaded successfully."
+        Bot: I have successfully downloaded the file 'Anti-Exploit in HipsHook Project Introduction.pdf' to the 'download' folder. Please check it.
+    """
     return download_from_gdrive(search_criteria, download_path)
 
 @tool
 def upload_to_cloud_storage(upload_file: str) ->str:
-    """upload file to cloud storage."""
+    """upload file to cloud storage.
+    Here is an example of calling the function 'upload_to_cloud_storage':
+        User: Please help me upload file 'Rootkit Analytics.docx' to my cloud storage.
+        Bot: Okay, I will call the function 'upload_to_cloud_storage' to upload file.
+        {
+            "name": upload_to_cloud_storage,
+            "arguments": {
+                "upload_file": "Rootkit Analytics.docx"
+            }
+        }
+        API Output: "file 'Rootkit Analytics.docx' upload successfully."
+        Bot: I have successfully upload the file 'Rootkit Analytics.docx' to your cloud storage. Please check it.
+    """
     return upload_to_gdrive(upload_file)
 
 drive_toolboxes = [search_in_cloud_storage, download_from_cloud_storage, upload_to_cloud_storage]
@@ -217,3 +281,16 @@ def GetStorageFuncallDescription(func_name: str = "") ->str:
         if func_name == call_tool.name:
             description = call_tool.description
     return description
+
+def is_cloud_storage_enable() ->bool:
+    from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
+    configinst = InnerJsonConfigWebUIParse()
+    tool_boxes = configinst.get("ToolBoxes")
+    if not tool_boxes:
+        return False
+    google_toolboxes = tool_boxes.get("Google ToolBoxes")
+    if not google_toolboxes:
+        return False
+    storage = google_toolboxes.get("Tools").get("Google Drive")
+    enable = storage.get("enable", False)
+    return enable

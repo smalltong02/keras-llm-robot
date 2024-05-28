@@ -371,8 +371,7 @@
                 "type": "cloud",
                 "key_json_path": "chatbot-speech-key.json",
                 "language": [
-                    "en-US",
-                    "cmn-CN"
+                    "en-US"
                 ],
                 "provider": "GoogleCloud",
                 "CloudTemplates": "GoogleVoiceTemplate",
@@ -2120,6 +2119,16 @@
                         "preset": "default",
                         "load_type": "fastchat",
                         "Huggingface": "01-ai/Yi-1.5-9B-Chat"
+                    },
+                    "Yi-1.5-9B-Chat-16K": {
+                        "path": "models/llm/Yi-1.5-9B-Chat-16K",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "fastchat",
+                        "Huggingface": "01-ai/Yi-1.5-9B-Chat-16K"
                     }
                 },
                 "13B Model": {
@@ -2640,9 +2649,9 @@
         "no_repeat_ngram_size": 0,
         "do_samples": false,
         "tokens_length": {
-            "cur": 8000,
+            "cur": 32768,
             "min": 0,
-            "max": 16384,
+            "max": 131072,
             "step": 10
         },
         "seed": {
@@ -2717,22 +2726,22 @@
     },
     "ToolBoxes": {
         "Google ToolBoxes": {
-            "credential": "[Your Key]",
+            "credential": "google_credentials.json",
             "Tools": {
                 "Google Maps": {
-                    "enable": true
+                    "enable": false
                 },
                 "Google Mail": {
-                    "enable": true
+                    "enable": false
                 },
                 "Google Youtube": {
-                    "enable": true
+                    "enable": false
                 },
                 "Google Calendar": {
-                    "enable": true
+                    "enable": false
                 },
                 "Google Drive": {
-                    "enable": true
+                    "enable": false
                 },
                 "Google Docs": {
                     "enable": false

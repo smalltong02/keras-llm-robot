@@ -480,4 +480,19 @@ CATEGORICAL_ROLEPLAY_TEMPLATES = {
             需要翻译的语句是 “{{prompt}}”
         """,
     },
+
+    "Personal Secretary": {
+        "english": """
+            You are now my secretary, and you need to help me solve problems in my personal life or at work. Your name is {assistant_name}
+        """,
+        "chinese": """
+            你现在是我的秘书，你需要帮助我解决生活或者工作上的问题。你的名字是{assistant_name}
+        """,
+        "english-prompt": """
+            Please help me solve the problem: "{{prompt}}"
+        """,
+        "chinese-prompt": """
+            请帮我解决问题： “{{prompt}}”
+        """,
+    },
 }

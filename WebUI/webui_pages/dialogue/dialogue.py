@@ -11,10 +11,9 @@ from streamlit_chatbox import ChatBox, Image, Audio, Video, Markdown
 from streamlit_webrtc import webrtc_streamer, WebRtcMode, ClientSettings
 from aiortc.contrib.media import MediaRecorder
 from WebUI.configs.basicconfig import (TMP_DIR, ModelType, ModelSize, ModelSubType, ToolsType, GetModelInfoByName, GetTypeName, generate_prompt_for_imagegen, generate_prompt_for_smart_search, 
-                                       use_search_engine, glob_multimodal_vision_list, glob_multimodal_voice_list, glob_multimodal_video_list)
+                                       use_search_engine, call_calling, glob_multimodal_vision_list, glob_multimodal_voice_list, glob_multimodal_video_list)
 from WebUI.configs.prompttemplates import PROMPT_TEMPLATES
 from WebUI.configs.roleplaytemplates import ROLEPLAY_TEMPLATES
-from WebUI.Server.funcall.funcall import use_function_calling
 from io import BytesIO
 from typing import List, Dict, Any
 
@@ -132,8 +131,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
     imagerecognition_model = api.get_image_recognition_model()
     imagegeneration_model = api.get_image_generation_model()
     musicgeneration_model = api.get_music_generation_model()
-    functioncalling = webui_config.get("FunctionCalling")
-    calling_enable = functioncalling.get("calling_enable", False)
+    calling_enable = api.is_calling_enable()
     running_chat_solution = st.session_state.get("current_chat_solution", {})
     current_engine_name = ""
     current_smart = False
@@ -157,6 +155,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
     print("imagegeneration_model: ", imagegeneration_model)
     print("musicgeneration_model: ", musicgeneration_model)
     print("search_engine: ", current_search_engine)
+    print("calling_enable: ", calling_enable)
     print("code_interpreter: ", code_interpreter)
     print("role_player: ", role_player)
     print("running_chat_solution: ", running_chat_solution)
@@ -461,6 +460,12 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                     f"""<p style="font-size: 1.5em; text-align: left; color: #9932CC;"><b>▪️ Function Calling: {calling_enable}</b></p>""",
                     unsafe_allow_html=True,
                 )
+            toolboxes_enable = running_chat_solution["config"].get("toolboxes", False)
+            if toolboxes_enable:
+                st.caption(
+                    f"""<p style="font-size: 1.5em; text-align: left; color: #9932CC;"><b>▪️ ToolBoxes: {toolboxes_enable}</b></p>""",
+                    unsafe_allow_html=True,
+                )
         else:
             model_name = running_model
             if model_name == "None":
@@ -713,13 +718,24 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                                 if error_msg := check_error_msg(t):  # check whether error occured
                                     st.error(error_msg)
                                     break
-                                text += t.get("text", "")
-                                chat_box.update_msg(text, element_index=0)
-                                chat_history_id = t.get("chat_history_id", "")
+                                else:
+                                    if t.get("text", ""):
+                                        chat_history_id = t.get("chat_history_id", "")
+                                        text += t.get("text", "")
+                                        chat_box.update_msg(text, element_index=0)
+                                    elif t.get("clear", ""):
+                                        chat_history_id = t.get("chat_history_id", "")
+                                        text = t.get("clear", "")
+                                        chat_box.update_msg(text, element_index=0)
+                                        text = ""
+                                    elif t.get("user", ""):
+                                        chat_history_id = t.get("chat_history_id", "")
+                                        chat_box.user_say(t.get("user", ""))
+                                        chat_box.ai_say(["Thinking...", ""])
                                 #print("text: ", text)
-                            if calling_enable is True:
-                                text = use_function_calling(text)
-                                print("calling_text: ", text)
+                            # if calling_enable is True:
+                            #     text = call_calling(text)
+                            #     print("calling_text: ", text)
                             if current_smart is True and use_search_engine(text):
                                 name = current_engine_name
                                 chat_box.update_msg(f"Searching is now being conducted through `{name}`...", element_index=0)
@@ -806,7 +822,6 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                 chat_box.ai_say([
                     "Thinking...",
                 ])
-                new_ai_say = False
                 text = ""
                 chat_history_id = 0
                 for d in api.chat_solution_chat(prompt,
@@ -818,11 +833,6 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                         chat_solution=running_chat_solution,
                         temperature=temperature):
                     #print("d: ", d)
-                    if new_ai_say:
-                        chat_box.ai_say([
-                            "Thinking...",
-                        ])
-                        new_ai_say = False
                     if error_msg := check_error_msg(d):  # check whether error occured
                             st.error(error_msg)
                     else:
@@ -831,10 +841,12 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                             chat_history_id = d.get("chat_history_id", "")
                             text += chunk
                             chat_box.update_msg(text, element_index=0)
-                        elif d.get("cmd", "") == "clear":
-                            text = ""
+                        elif d.get("clear", ""):
+                            chat_history_id = d.get("chat_history_id", "")
+                            text = d.get("clear", "")
                             chat_box.update_msg(text, element_index=0)
-                        elif d.get("docs", []):
+                            text = ""
+                        elif d.get("user", ""):
                             tooltype = d.get("tooltype", ToolsType.Unknown.value)
                             tooltype = ToolsType(tooltype)
                             if tooltype == ToolsType.ToolSearchEngine:
@@ -843,19 +855,18 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                                 title = "Additional information by Knowledge Base"
                             elif tooltype == ToolsType.ToolFunctionCalling:
                                 title = "Additional information by Function Calling"
+                            elif tooltype == ToolsType.ToolToolBoxes:
+                                title = "Additional information by ToolBoxes"
                             else:
                                 title = "Additional information by Unknown Tool"
-                            chat_box.ai_say([
-                                Markdown("...", in_expander=True, title=title, state="complete"),
-                            ])
+                            chat_box.user_say(d.get("user", ""))
+                            chat_box.ai_say(["Thinking...", Markdown("...", in_expander=True, title=title, state="complete")])
+                        elif d.get("docs", []):
                             message = "\n\n".join(d.get("docs", []))
-                            chat_box.update_msg(message, element_index=0, streaming=False)
-                            new_ai_say = True
+                            chat_box.update_msg(Markdown(message, in_expander=True, title=title, state="complete"), element_index=1, streaming=False)
                 metadata = {
                     "chat_history_id": chat_history_id,
                     }
-                if not new_ai_say:
-                    chat_box.update_msg(text, element_index=0, streaming=False, metadata=metadata)
                 chat_box.show_feedback(**feedback_kwargs,
                     key=chat_history_id,
                     on_submit=on_feedback,

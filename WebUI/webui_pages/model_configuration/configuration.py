@@ -635,7 +635,33 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                                 st.session_state["current_roleplayer"] = {}
                             st.toast("success save configuration for Code Interpreter.", icon="✔")
             with tabfuncall:
-                pass
+                from WebUI.Server.funcall.funcall import GetFuncallList, GetFuncallDescription
+                calling_enable = functioncalling.get("calling_enable", False)
+                #calling_max = functioncalling.get("max_calling", 5)
+                current_function = ""
+                function_name_list = GetFuncallList()
+                current_function = st.selectbox(
+                    "Please Check Function",
+                    function_name_list,
+                    index=0,
+                )
+                with st.form("Funcall"):
+                    description = GetFuncallDescription(current_function)
+                    st.text_input("Description", description, disabled=True)
+                    calling_enable = st.checkbox("Enable", key="funcall_box", value=calling_enable, help="After enabling, The function will be called automatically.")
+                    print("calling_enable", calling_enable)
+                    save_parameters = st.form_submit_button(
+                        "Save Parameters",
+                        use_container_width=True
+                    )
+                    if save_parameters:
+                        with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
+                            functioncalling["calling_enable"] = calling_enable
+                            r = api.save_function_calling_config(functioncalling)
+                            if msg := check_error_msg(r):
+                                st.toast(msg, icon="✖")
+                            elif msg := check_success_msg(r):
+                                st.toast("success save configuration for function calling.", icon="✔")
     
     st.session_state["current_page"] = "configuration_page"
 

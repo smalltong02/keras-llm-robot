@@ -22,7 +22,11 @@ def get_youtube_video_url_i(title: str) ->str:
 
     from WebUI.Server.funcall.google_toolboxes.credential import glob_credentials
     if not glob_credentials:
-        return "Credentials not found. This error is unrecoverable."
+        from WebUI.Server.funcall.google_toolboxes.credential import init_credential
+        init_credential()
+        from WebUI.Server.funcall.google_toolboxes.credential import glob_credentials
+        if not glob_credentials:
+            return "Credentials not found. This error is unrecoverable."
 
     youtube_message = ""
     service = build('youtube', 'v3', credentials=glob_credentials)
@@ -46,11 +50,11 @@ def get_youtube_video_url_i(title: str) ->str:
 
                 for item in playlist_items.get("items", {}):
                     video_title = item.get("snippet", {}).get("title")
-                    video_title_low = [title.lower() for title in video_title]
-                    if title.lower() in video_title_low:
+                    if title.lower() in video_title.lower():
+                        video_description = item.get("snippet", {}).get("description")
                         video_id = item.get("snippet", {}).get("resourceId", {}).get("videoId")
                         video_url = get_video_url(service, video_id)
-                        youtube_message = f" The video found:\n  video title: '{video_title}'\n  video url: '{video_url}'"
+                        youtube_message = f" The video found:\n  video title: '{video_title}'\n video description: '{video_description}'\n  video url: '{video_url}'"
                         break
                 if youtube_message:
                     break    
@@ -60,12 +64,28 @@ def get_youtube_video_url_i(title: str) ->str:
     except Exception as e:
         youtube_message = f"get video url failed, error: {e}"
         print(f"get_youtube_video_url Error: {e}")
+    if not youtube_message:
+        youtube_message = "The video not found."
     return youtube_message
 
 
 @tool
 def get_youtube_video_url(title: str) ->str:
-    """ Get URL about Youtube video from your own Youtube channel. """
+    """ Get URL about Youtube video from your own Youtube channel. 
+        Here is an example of calling the function 'get_youtube_video_url':
+        User: Please retrieve the shared URL of the video 'Language Translation' from my YouTube channel.
+        Bot: Okay, I will call the function 'get_youtube_video_url' to get this video URL.
+        {
+            "name": get_youtube_video_url,
+            "arguments": {
+                "title": "Language Translation"
+            }
+        }
+        API Output: "The video found:
+            video title: 'Real-time Language Translation Agent'
+            video url: 'https://youtu.be/H78ABFocRrQ'
+        Bot: The video has been successfully found, and its shared URL is 'https://youtu.be/H78ABFocRrQ'
+    """
     return get_youtube_video_url_i(title)
 
 youtube_toolboxes = [get_youtube_video_url]
@@ -85,3 +105,16 @@ def GetYoutubeFuncallDescription(func_name: str = "") ->str:
         if func_name == call_tool.name:
             description = call_tool.description
     return description
+
+def is_youtube_enable() ->bool:
+    from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
+    configinst = InnerJsonConfigWebUIParse()
+    tool_boxes = configinst.get("ToolBoxes")
+    if not tool_boxes:
+        return False
+    google_toolboxes = tool_boxes.get("Google ToolBoxes")
+    if not google_toolboxes:
+        return False
+    youtube = google_toolboxes.get("Tools").get("Google Youtube")
+    enable = youtube.get("enable", False)
+    return enable
