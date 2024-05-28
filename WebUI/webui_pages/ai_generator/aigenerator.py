@@ -3,8 +3,8 @@ import streamlit as st
 from WebUI.webui_pages.utils import ApiRequest
 from WebUI.Server.funcall.funcall import GetFuncallList, GetFuncallDescription
 from WebUI.webui_pages.utils import check_error_msg, check_success_msg
-from WebUI.configs import (ModelType, ModelSize, ModelSubType, GetModelType, GetModelConfig, GetModelSubType, GetOnlineProvider, GetOnlineModelList, GetModeList, LocalModelExist, GetPresetPromptList,
-    glob_model_type_list, glob_model_size_list, glob_model_subtype_list)
+from WebUI.configs import (ModelType, ModelSize, ModelSubType, GetModelType, GetModelConfig, GetModelSubType, GetOnlineProvider, GetOnlineModelList, GetModeList,
+    glob_model_type_list, glob_model_size_list, glob_model_subtype_list, glob_assistant_name)
 from WebUI.Server.knowledge_base.kb_service.base import get_kb_details
 
 def last_stage_chat_solution(chat_solution: str, stage: int) -> bool:
@@ -14,6 +14,9 @@ def last_stage_chat_solution(chat_solution: str, stage: int) -> bool:
                 return True
         elif chat_solution == "Language Translation and Localization":
             if stage == 3:
+                return True
+        elif chat_solution == "Virtual Personal Assistant":
+            if stage == 4:
                 return True
         else:
             return True
@@ -794,6 +797,396 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                                 elif msg := check_success_msg(r):
                                     st.success(msg)
                                     st.toast(msg, icon="✔")
+                        if not load_error:
+                            st.success("Load all configurations successfully!")
+                            st.toast("Load all configurations successfully!", icon="✔")
+                            running_chat_solution["enable"] = True
+                    print("chat_solution-4: ", running_chat_solution)
+                    st.session_state["current_chat_solution"] = running_chat_solution
+
+        elif running_chat_solution["name"] == "Virtual Personal Assistant":
+            if running_chat_solution["enable"]:
+                st.markdown("**Step 4: Release Model and Configuration**")
+                eject_error = False
+                eject_cfg_button = st.button(
+                    "Eject Configuration",
+                    use_container_width=True,
+                )
+                if eject_cfg_button:
+                    running_chat_solution["enable"] = False
+                    llm_model = running_chat_solution["config"]["llm_model"]
+                    with st.spinner(f"Release LLM Model: `{llm_model}`, Please do not perform any actions or refresh the page."):
+                        r = api.eject_llm_model(llm_model)
+                        if msg := check_error_msg(r):
+                            st.error(msg)
+                            st.toast(msg, icon="✖")
+                            eject_error = True
+                        elif msg := check_success_msg(r):
+                            st.success(msg)
+                            st.toast(msg, icon="✔")
+                    if not eject_error and running_chat_solution["config"]["voice"]["enable"]:
+                        voice_model = running_chat_solution["config"]["voice"]["model"]
+                        with st.spinner(f"Release Voice Model: `{voice_model}`, Please do not perform any actions or refresh the page."):
+                            r = api.eject_voice_model(voice_model)
+                            if msg := check_error_msg(r):
+                                st.error(msg)
+                                st.toast(msg, icon="✖")
+                                load_error = True
+                            elif msg := check_success_msg(r):
+                                st.success(msg)
+                                st.toast(msg, icon="✔")
+                    if not eject_error and running_chat_solution["config"]["speech"]["enable"]:
+                        speech_model = running_chat_solution["config"]["speech"]["model"]
+                        with st.spinner(f"Release Speech Model: `{speech_model}`, Please do not perform any actions or refresh the page."):
+                            r = api.eject_speech_model(speech_model)
+                            if msg := check_error_msg(r):
+                                st.error(msg)
+                                st.toast(msg, icon="✖")
+                                load_error = True
+                            elif msg := check_success_msg(r):
+                                st.success(msg)
+                                st.toast(msg, icon="✔")
+                    if not eject_error:
+                        st.success("Release all configurations successfully!")
+                        st.toast("Release all configurations successfully!", icon="✔")
+                        st.session_state["current_chat_solution"] = {}
+
+            else:   
+                if running_chat_solution["stage"] == 1:
+                    st.divider()
+                    st.markdown("**Step 1:  Please Select the LLM Model and Assistant name**")
+                    col1, col2 = st.columns(2)
+                    current_model : Dict[str, any] = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "config": dict}
+                    with col1:
+                        modeltype = st.selectbox(
+                            "Please Select Model Type",
+                            glob_model_type_list,
+                            index=0,
+                            key="sel_model_type",
+                        )
+                        current_model["mtype"] = GetModelType(modeltype)
+                        type_index = current_model["mtype"].value - 1
+                    with col2:
+                        if type_index == ModelType.Local.value - 1 or type_index == ModelType.Special.value - 1 or type_index == ModelType.Code.value - 1:
+                            modelsize = st.selectbox(
+                                "Please Select Model Size",
+                                glob_model_size_list,
+                                index=0,
+                                key="sel_model_size",
+                            )
+                            size_index = glob_model_size_list.index(modelsize)
+                            current_model["msubtype"] = ModelSubType.Unknown
+                            current_model["msize"] = ModelSize(size_index + 1)
+                        elif type_index == ModelType.Multimodal.value - 1:
+                            submodel = st.selectbox(
+                                    "Please Select Sub Model",
+                                    glob_model_subtype_list,
+                                    index=0,
+                                    key="sel_sub_model",
+                                )
+                            current_model["msubtype"] = GetModelSubType(submodel)
+                            current_model["msize"] = ModelSize.Unknown
+                        elif type_index == ModelType.Online.value - 1:
+                            online_model_list = GetOnlineProvider(webui_config)
+                            onlinemodel = st.selectbox(
+                                    "Please Select Online Provider",
+                                    online_model_list,
+                                    index=0,
+                                    key="sel_online_provider",
+                                )
+                            current_model["msubtype"] = ModelSubType.Unknown
+                            current_model["msize"] = ModelSize.Unknown
+                            size_index = online_model_list.index(onlinemodel)
+                            online_model_list = GetOnlineModelList(webui_config, onlinemodel)
+                    if type_index != ModelType.Online.value - 1:
+                        model_list = GetModeList(webui_config, current_model)
+                    else:
+                        model_list = online_model_list
+                    st.divider()
+                    col1, col2 = st.columns(2)
+                    model_name = ""
+                    with col1:
+                        model_name = st.selectbox(
+                            "Please Select Model Name",
+                            model_list,
+                            index=0,
+                            key="sel_model_name",
+                        )
+                        current_model["mname"] = model_name
+                        if current_model["mname"] is not None:
+                            current_model["config"] = GetModelConfig(webui_config, current_model)
+
+                        if current_model["mtype"] != ModelType.Online:
+                            pathstr = current_model["config"].get("path")
+                        else:
+                            pathstr = ""
+
+                    with col2:
+                        pathstr = st.text_input("Local Path", pathstr, disabled=True)
+                    st.divider()
+                    assistant_name = st.selectbox(
+                            "Please Select Assistant Name",
+                            glob_assistant_name,
+                            index=0,
+                            key="sel_assistant_name",
+                        )
+                    running_chat_solution["config"]["llm_model"] = model_name
+                    running_chat_solution["config"]["assistant_name"] = assistant_name
+                    print("chat_solution-1: ", running_chat_solution)
+                    st.session_state["current_chat_solution"] = running_chat_solution
+
+                if running_chat_solution["stage"] == 2:
+                    st.markdown("**Step 2: To decide whether to use Voice and Speech Model**")
+                    voice_enable = st.checkbox('Voice Enable', value=False)
+                    running_chat_solution["config"]["voice"]["enable"] = False
+                    running_chat_solution["config"]["voice"]["model"] = ""
+                    if voice_enable:
+                        vtotmodel = webui_config.get("ModelConfig").get("VtoTModel")
+                        vtotmodel_lists = [f"{key}" for key in vtotmodel]
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            voicemodel = st.selectbox(
+                                    "Please Select Voice Model",
+                                    vtotmodel_lists,
+                                    index=0,
+                                    key="sel_voice_model",
+                                )
+                            voice_modelconfig = vtotmodel[voicemodel]
+                            language_code_list = voice_modelconfig.get("language_code", [])
+                            language_code = st.selectbox(
+                                "Please Select language",
+                                language_code_list,
+                                index=0,
+                            )
+                        with col2:
+                            if voice_modelconfig["type"] == "local":
+                                if voicemodel is not None:
+                                    pathstr = vtotmodel[voicemodel].get("path")
+                                else:
+                                    pathstr = ""
+                                st.text_input("Local Path", pathstr, key="vo_local_path", disabled=True)
+                            elif voice_modelconfig["type"] == "cloud":
+                                pathstr = voice_modelconfig.get("path")
+                                st.text_input("Cloud Path", pathstr, key="vo_cloud_path", disabled=True)
+                        running_chat_solution["config"]["voice"]["enable"] = True
+                        running_chat_solution["config"]["voice"]["model"] = voicemodel
+                        running_chat_solution["config"]["voice"]["language"] = [language_code]
+                        voice_modelconfig["language"] = [language_code]
+                        api.save_vtot_model_config(voicemodel, voice_modelconfig)
+                    
+                    st.divider()
+                    speech_enable = st.checkbox('Speech Enable', value=False)
+                    running_chat_solution["config"]["speech"]["enable"] = False
+                    running_chat_solution["config"]["speech"]["model"] = ""
+                    running_chat_solution["config"]["speech"]["speaker"] = ""
+                    if speech_enable:
+                        ttovmodel = webui_config.get("ModelConfig").get("TtoVModel")
+                        ttovmodel_lists = [f"{key}" for key in ttovmodel]
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            speechmodel = st.selectbox(
+                                    "Please Select Speech Model",
+                                    ttovmodel_lists,
+                                    index=0,
+                                    key="sel_speech_model",
+                                )
+                        modelconfig = ttovmodel[speechmodel]
+                        synthesisconfig = modelconfig["synthesis"]
+                        with col2:
+                            if modelconfig["type"] == "local":
+                                pathstr = modelconfig.get("path")
+                                st.text_input("Local Path", pathstr, key="sp_local_path", disabled=True)
+                            elif modelconfig["type"] == "cloud":
+                                pathstr = modelconfig.get("path")
+                                st.text_input("Cloud Path", pathstr, key="sp_cloud_path", disabled=True)
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            templates_list = [modelconfig.get("CloudTemplates", "")]
+                            _ = st.selectbox(
+                                "Please Select templates",
+                                templates_list,
+                                index=0,
+                                key="sel_templates",
+                                disabled=True
+                            )
+                            lang_index = 0
+                            language_list = list(synthesisconfig.keys())
+                            language = st.selectbox(
+                                "Please Select language",
+                                language_list,
+                                index=lang_index,
+                                key="sel_language",
+                            )
+                            
+                        with col2:
+                            sex_index = 0
+                            sex_list = list(synthesisconfig[language].keys())
+                            sex = st.selectbox(
+                                "Please Select Sex",
+                                sex_list,
+                                index=sex_index,
+                                key="sel_sex",
+                            )
+                            speaker_index = 0
+                            speaker_list = synthesisconfig[language][sex]
+                            speaker = st.selectbox(
+                                "Please Select Speaker",
+                                speaker_list,
+                                index=speaker_index,
+                                key="sel_speaker",
+                            )
+                            if speaker:
+                                st.session_state["speaker"] = speaker
+                        running_chat_solution["config"]["speech"]["enable"] = True
+                        running_chat_solution["config"]["speech"]["model"] = speechmodel
+                        running_chat_solution["config"]["speech"]["speaker"] = speaker
+
+                    st.divider()
+                    roleplayer = running_chat_solution["config"]["roleplayer"]
+                    st.text_input("Roleplayer:", roleplayer, key="roleplayer", disabled=True)
+                    print("chat_solution-2: ", running_chat_solution)
+                    st.session_state["current_chat_solution"] = running_chat_solution
+                if running_chat_solution["stage"] == 3:
+                    st.markdown("**Step 3: To decide whether to use Knowledge Base, Search Engine and ToolBoxes**")
+                    knowledge_enable = st.checkbox('Knowledge Base Enable', value=False)
+                    running_chat_solution["config"]["knowledge_base"]["enable"] = False
+                    running_chat_solution["config"]["knowledge_base"]["name"] = ""
+                    if knowledge_enable:
+                        kb_list = {}
+                        try:
+                            kb_details = get_kb_details()
+                            if len(kb_details):
+                                kb_list = {x["kb_name"]: x for x in kb_details}
+                        except Exception as _:
+                            st.error("Get Knowledge Base failed!")
+                            st.stop()
+                        kb_names = list(kb_list.keys())
+                        selected_kb = st.selectbox(
+                            "Knowledge Base:",
+                            kb_names,
+                            index=0
+                        )
+                        running_chat_solution["config"]["knowledge_base"]["enable"] = True
+                        running_chat_solution["config"]["knowledge_base"]["name"] = selected_kb
+                    st.divider()
+                    search_enable = st.checkbox('Search Engine Enable', value=False)
+                    running_chat_solution["config"]["search_engine"]["enable"] = False
+                    running_chat_solution["config"]["search_engine"]["name"] = ""
+                    if search_enable:
+                        search_engine_list = []
+                        searchengine = webui_config.get("SearchEngine")
+                        for key, value in searchengine.items():
+                            if isinstance(value, dict):
+                                search_engine_list.append(key)
+
+                        search_engine = st.selectbox(
+                            "Please select Search Engine",
+                            search_engine_list,
+                            index=0,
+                        )
+                        if search_engine:
+                            running_chat_solution["config"]["search_engine"]["enable"] = True
+                            running_chat_solution["config"]["search_engine"]["name"] = search_engine
+                    st.divider()
+                    toolboxes_enable = st.checkbox('ToolBoxes Enable', value=False)
+                    running_chat_solution["config"]["toolboxes"] = ""
+                    if toolboxes_enable:
+                        toolboxes = webui_config.get("ToolBoxes")
+                        toolboxes_list = list(toolboxes.keys())
+
+                        current_toolboxes = st.selectbox(
+                            "Please Select ToolBoxes",
+                            toolboxes_list,
+                            index=0,
+                        )
+                        running_chat_solution["config"]["toolboxes"] = current_toolboxes
+                    print("chat_solution-3: ", running_chat_solution)
+                    st.session_state["current_chat_solution"] = running_chat_solution
+                if running_chat_solution["stage"] == 4:
+                    st.markdown("**Step 4: Loading Model and Configuration**")
+                    load_cfg_button = st.button(
+                        "Load Configuration",
+                        use_container_width=True,
+                    )
+                    load_error = False
+                    if load_cfg_button:
+                        with st.spinner("Checking all configurations...."):
+                            # first check configuration
+                            if not running_chat_solution["config"]["llm_model"]:
+                                st.error("LLM Model is not configured!")
+                                st.toast("LLM Model is not configured!", icon="✖")
+                                load_error = True
+                            if running_chat_solution["config"]["voice"]["enable"] and not running_chat_solution["config"]["voice"]["model"]:
+                                st.error("Voice model configuration error!")
+                                st.toast("Voice model configuration error!", icon="✖")
+                                load_error = True
+                            if running_chat_solution["config"]["speech"]["enable"] and not running_chat_solution["config"]["speech"]["model"]:
+                                st.error("Speech model configuration error!")
+                                st.toast("Speech model configuration error!", icon="✖")
+                                load_error = True
+                            if running_chat_solution["config"]["knowledge_base"]["enable"] and not running_chat_solution["config"]["knowledge_base"]["name"]:
+                                st.error("Knowledge Base configuration error!")
+                                st.toast("Knowledge Base configuration error!", icon="✖")
+                                load_error = True
+                            if running_chat_solution["config"]["search_engine"]["enable"] and not running_chat_solution["config"]["search_engine"]["name"]:
+                                st.error("Search Engine configuration error!")
+                                st.toast("Search Engine configuration error!", icon="✖")
+                                load_error = True
+                        if not load_error:
+                            llm_model = running_chat_solution["config"]["llm_model"]
+                            with st.spinner(f"Loading LLM Model: `{llm_model}`, Please do not perform any actions or refresh the page."):
+                                models_list = list(api.get_running_models())
+                                running_model = ""
+                                if len(models_list):
+                                    running_model = models_list[0]
+                                r = api.change_llm_model(running_model, llm_model)
+                                if msg := check_error_msg(r):
+                                    st.error(msg)
+                                    st.toast(msg, icon="✖")
+                                    load_error = True
+                                elif msg := check_success_msg(r):
+                                    st.success(msg)
+                                    st.toast(msg, icon="✔")
+                        if not load_error and running_chat_solution["config"]["voice"]["enable"]:
+                            voice_model = running_chat_solution["config"]["voice"]["model"]
+                            with st.spinner(f"Loading Voice Model: `{voice_model}`, Please do not perform any actions or refresh the page."):
+                                current_voice_model = api.get_vtot_model()
+                                r = api.change_voice_model(current_voice_model, voice_model)
+                                if msg := check_error_msg(r):
+                                    st.error(msg)
+                                    st.toast(msg, icon="✖")
+                                    load_error = True
+                                elif msg := check_success_msg(r):
+                                    st.success(msg)
+                                    st.toast(msg, icon="✔")
+                        if not load_error and running_chat_solution["config"]["speech"]["enable"]:
+                            speech_model = running_chat_solution["config"]["speech"]["model"]
+                            speaker = running_chat_solution["config"]["speech"]["speaker"]
+                            with st.spinner(f"Loading Speech Model: `{speech_model}`, Please do not perform any actions or refresh the page."):
+                                current_speech_model = api.get_ttov_model()
+                                current_speech_model = current_speech_model.get("model", "")
+                                r = api.change_speech_model(current_speech_model, speech_model, speaker)
+                                if msg := check_error_msg(r):
+                                    st.error(msg)
+                                    st.toast(msg, icon="✖")
+                                    load_error = True
+                                elif msg := check_success_msg(r):
+                                    st.success(msg)
+                                    st.toast(msg, icon="✔")
+                        if not load_error and running_chat_solution["config"]["knowledge_base"]["enable"]:
+                            knowledge_base = running_chat_solution["config"]["knowledge_base"]["name"]
+                            with st.spinner(f"Loading Knowledge Base: `{knowledge_base}`, Please do not perform any actions or refresh the page."):
+                                st.success(f"Load Knowledge Base `{knowledge_base}` successfully!")
+                                st.toast(f"Load Knowledge Base `{knowledge_base}` successfully!", icon="✔")
+                        if not load_error and running_chat_solution["config"]["search_engine"]["enable"]:
+                            search_engine = running_chat_solution["config"]["search_engine"]["name"]
+                            with st.spinner(f"Enabling Search Engine: `{search_engine}`, Please do not perform any actions or refresh the page."):
+                                st.success(f"Enable Search Engine `{search_engine}` successfully!")
+                                st.toast(f"Enable Search Engine `{search_engine}` successfully!", icon="✔")
+                        if not load_error and running_chat_solution["config"]["toolboxes"]:
+                            with st.spinner("Enabling ToolBoxes, Please do not perform any actions or refresh the page."):
+                                st.success("Enable ToolBoxes successfully!")
+                                st.toast("Enable ToolBoxes successfully!", icon="✔")
                         if not load_error:
                             st.success("Load all configurations successfully!")
                             st.toast("Load all configurations successfully!", icon="✔")

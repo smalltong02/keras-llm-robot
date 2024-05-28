@@ -1569,6 +1569,39 @@ class ApiRequest:
         else:
             return self.ret_sync(response)
         
+    def save_google_toolboxes_config(self,
+        google_toolboxes: dict = {},
+        controller_address: str = None,
+    ):
+        data = {
+            "google_toolboxes": google_toolboxes,
+            "controller_address": controller_address,
+        }
+
+        response = self.post(
+            "/google_toolboxes/save_google_toolboxes_config",
+            json=data,
+        )
+        
+        if self._use_async:
+            return self.ret_async(response)
+        else:
+            return self.ret_sync(response)
+        
+    def is_calling_enable(self,
+        controller_address: str = None,
+    ):
+        data = {
+            "controller_address": controller_address,
+        }
+
+        response = self.post(
+            "/function_calling/is_calling_enable",
+            json=data,
+        )
+        
+        return self._get_response_value(response, as_json=True, value_func=lambda r:r.get("data", False))
+        
     def chat_solution_chat(
         self,
         query: str,

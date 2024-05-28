@@ -41,12 +41,33 @@
             }
         },
 
-        "Interactive Learning and Education": {
-            "descriptions": "Interactive learning experience where users can ask questions and receive personalized explanations or guidance."
+        "Virtual Personal Assistant": {
+            "descriptions": "Combining natural language processing with image and speech recognition to create a virtual personal assistant capable of understanding and executing user commands. Integrated with calendar and task management systems, It schedules appointments, sets reminders, or performs other productivity tasks.",
+            "roleplayer": "Personal Secretary",
+            "llm_model": "",
+            "assistant_name": "",
+            "voice": {
+                "enable": false,
+                "model": ""
+            },
+            "speech": {
+                "enable": false,
+                "model": "",
+                "speaker": ""
+            },
+            "search_engine": {
+                "enable": false,
+                "name": ""
+            },
+            "knowledge_base": {
+                "enable": false,
+                "name": ""
+            },
+            "toolboxes": ""
         },
 
-        "Virtual Personal Assistant": {
-            "descriptions": "Combining natural language processing with image and speech recognition to create a virtual personal assistant capable of understanding and executing user commands. Integrated with calendar and task management systems, It schedules appointments, sets reminders, or performs other productivity tasks."
+        "Interactive Learning and Education": {
+            "descriptions": "Interactive learning experience where users can ask questions and receive personalized explanations or guidance."
         },
 
         "Virtual Tour Guide and Travel Planning": {
