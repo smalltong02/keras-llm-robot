@@ -27,9 +27,11 @@ The project inherits from the Langchain-Chatchat project(https://github.com/chat
       * [4. Image Recognition](readme.md#4-Image-Recognition)
       * [5. Network Search Engine](readme-cn.md#5-Network-Search-Engine)
       * [6. Function Calling](readme.md#6-Function-Calling)
+      * [7. ToolBoxes](readme-cn.md#7-ToolBoxes)
     * [AI Generator](readme.md#ai-generator-Features)
       * [1. Intelligent Customer Service Agent](readme.md#1-Customer-Agent)
       * [2. Real-time Language Translation Agent](readme.md#2-Translation-Agent)
+      * [3. Virtual Personal Assistant Agent](readme-cn.md#3-Personal-Assistant)
 
 
 ## Quick Start
@@ -601,6 +603,15 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
       ![Image1](./img/Llama-3-8B-function-calling-1.png)
 
 
+  7. **`ToolBoxes`**
+
+  Providing a Toolbox Functionality for Language Models: Enhance the Model with More Tools
+
+  Supported Google ToolBoxes, Tools included: "Google Mail", "Google Calendar", "Google Drive", "Google Maps", "YouTube"
+  
+  By integrating these tools, the model can efficiently perform tasks such as sending emails, managing reminders, handling cloud storage, navigating maps, and searching for YouTube videos.
+
+
 - ### AI Generator
 
     We combine various models and tools to create efficient and productive AI agents.
@@ -639,6 +650,47 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
     (6) Personalization Settings: The agent should allow users to personalize settings according to their preferences and needs, such as selecting preferred languages, adjusting translation speeds, etc.
 
     (7) Data Security and Privacy Protection: The agent should ensure the security and privacy of user-input text or speech data, adhering to relevant data protection laws and standards.
+
+
+  3. **`Virtual Personal Assistant Agent`**
+
+    Combining natural language processing with image and speech recognition to create a virtual personal assistant capable of understanding and executing user commands. 
+
+    (1) Enhancing Productivity and Efficiency:
+
+      Automating routine tasks such as scheduling, setting reminders, and sending emails, allowing users to focus on more important work.
+      Providing intelligent recommendations and personalized suggestions to help users complete tasks more efficiently.
+
+    (2) Improving User Experience:
+
+      Offering 24/7 service, eliminating the need to wait for human customer support.
+      Providing natural language interaction, making communication with the assistant smoother and more intuitive.
+      Customizing services based on the user's habits and preferences.
+
+    (3) Information Management and Retrieval:
+
+      Quickly obtaining and organizing information to answer user questions and provide real-time advice and decision support.
+      Automating data processing and analysis, such as handling documents and generating reports.
+
+    (4) Supporting Decision-Making and Planning:
+
+      Helping users make more informed decisions by providing relevant information and analysis.
+      Supporting complex planning and scheduling, such as travel arrangements and project management.
+
+    (5) Enhancing Communication and Collaboration:
+
+      Assisting with team communication management, arranging meetings, and recording meeting minutes.
+      Providing translation and language support to help users work in different language environments.
+
+    (6) Improving Quality of Life:
+
+      Offering health management, fitness advice, and psychological counseling services to help users maintain a healthy lifestyle.
+      Providing entertainment and learning resource recommendations to enrich users' leisure time.
+
+    (7) Supporting Innovation and Creativity:
+
+      Helping users brainstorm and providing creative ideas and inspiration.
+      Assisting with creative tasks such as writing and designing.
 
 
 ## Feature Demonstration
@@ -693,6 +745,10 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
 
 ## New Feature Updates
+
+- 🚀 Update Log for 2024-05-28
+  1. Support Google ToolBoxes: "Google Mail", "Google Calendar", "Google Drive", "Google Maps", "Youtube"
+  2. Introduced features "Virtual Personal Assistant".
 
 - 🚀 Update Log for 2024-05-20
   1. Added support for the online model platform Groq.
