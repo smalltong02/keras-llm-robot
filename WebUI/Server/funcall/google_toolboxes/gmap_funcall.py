@@ -30,7 +30,7 @@ def get_map_url(address) ->str:
         User: Please help me mark the McDonald's address '20394 88 Ave, Langley Twp, BC V1M 2Y4' on the map and generate its map URL.
         Bot: Okay, I will call the function 'get_map_url' to mark this address on the map.
         {
-            "name": get_map_url,
+            "name": "get_map_url",
             "arguments": {
                 "address": "20394 88 Ave, Langley Twp, BC V1M 2Y4"
             }

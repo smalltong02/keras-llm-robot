@@ -137,7 +137,7 @@ def get_event_from_calendar(start_time:str, end_time:str) ->str:
             User: Please check today's schedule and report my availability for today.
             Bot: Okay, I will call the function 'get_event_from_calendar' to get your schedule today.
             {
-                "name": get_event_from_calendar,
+                "name": "get_event_from_calendar",
                 "arguments": {
                     "start_time": "08:00:00",
                     "end_time": "18:00:00",
@@ -167,7 +167,7 @@ def create_event_to_calendar(new_event: dict) ->str:
             User: Please add an appointment reminder in Calendar. There is an optometry appointment on June 1st at 11:00 AM, I will have a dental cleaning and an examination.
             Bot: Okay, I will call the function 'get_event_from_calendar' to get your schedule on June 1st.
             {
-                "name": get_event_from_calendar,
+                "name": "get_event_from_calendar",
                 "arguments": {
                     "start_time": "2024-06-01T08:00:00",
                     "end_time": "2024-06-01T18:00:00",
@@ -181,7 +181,7 @@ def create_event_to_calendar(new_event: dict) ->str:
                 htmlLink: https://calendar.google.com/calendar/event?eid=cGV0ZXJ5aW8nMjAyMzAwMjlAZ16haWwuY34t
             Bot: According to schedule, You have 2 hours window of free time after 11:00, so you can schedule something during that time. I will call the function 'create_event_to_calendar' to create this event to your calendar.
             {
-                "name": create_event_to_calendar,
+                "name": "create_event_to_calendar",
                 "arguments": {
                     "new_event": {
                         "summary": "optometry appointment",

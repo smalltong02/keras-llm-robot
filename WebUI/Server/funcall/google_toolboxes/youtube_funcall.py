@@ -76,7 +76,7 @@ def get_youtube_video_url(title: str) ->str:
         User: Please retrieve the shared URL of the video 'Language Translation' from my YouTube channel.
         Bot: Okay, I will call the function 'get_youtube_video_url' to get this video URL.
         {
-            "name": get_youtube_video_url,
+            "name": "get_youtube_video_url",
             "arguments": {
                 "title": "Language Translation"
             }
