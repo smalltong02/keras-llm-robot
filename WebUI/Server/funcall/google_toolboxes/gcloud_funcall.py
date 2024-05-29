@@ -202,7 +202,7 @@ def search_in_cloud_storage(search_criteria: str) ->str:
         User: Please help me find the file 'HipsHook Project' in my cloud storage.
         Bot: Okay, I will call the function 'search_in_cloud_storage' to search your cloud storage.
         {
-            "name": search_in_cloud_storage,
+            "name": "search_in_cloud_storage",
             "arguments": {
                 "search_criteria": "name contains 'HipsHook Project' and 'me' in owners"
             }
@@ -234,7 +234,7 @@ def download_from_cloud_storage(search_criteria: str, download_path: str) ->str:
         User: Please help me find the file 'HipsHook Project' in my cloud storage and download it to local folder "download".
         Bot: Okay, I will call the function 'download_from_cloud_storage' to download file.
         {
-            "name": download_from_cloud_storage,
+            "name": "download_from_cloud_storage",
             "arguments": {
                 "search_criteria": "name contains 'HipsHook Project' and 'me' in owners",
                 "download_path": "download"
@@ -252,7 +252,7 @@ def upload_to_cloud_storage(upload_file: str) ->str:
         User: Please help me upload file 'Rootkit Analytics.docx' to my cloud storage.
         Bot: Okay, I will call the function 'upload_to_cloud_storage' to upload file.
         {
-            "name": upload_to_cloud_storage,
+            "name": "upload_to_cloud_storage",
             "arguments": {
                 "upload_file": "Rootkit Analytics.docx"
             }

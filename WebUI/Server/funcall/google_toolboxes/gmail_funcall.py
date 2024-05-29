@@ -217,7 +217,7 @@ def search_in_emails(search_criteria: str) ->str:
             User: Please check my email for messages with the subject containing "HipsHook Project" sent on May 30th, 2024.
             Bot: Okay, I will call the function 'search_in_emails' to help you find the email.
             {
-                "name": search_in_emails,
+                "name": "search_in_emails",
                 "arguments": {
                     "search_criteria": "subject: 'HipsHook Project' AND after:2024/05/30"
                 }
@@ -241,7 +241,7 @@ def create_draft_in_emails(subject: str, body: str, to_address: str, from_addres
                 attachment_file: "./gift_card.png"
             Bot: Okay, I will call the function 'create_draft_in_emails' to help you create an email draft.
             {
-                "name": create_draft_in_emails,
+                "name": "create_draft_in_emails",
                 "arguments": {
                     "subject": "Happy Birthday",
                     "body": "Hi Lyn, happy birthday to you!",
@@ -266,7 +266,7 @@ def send_mail_in_emails(subject: str, body: str, to_address: str, from_address: 
                 From: me
             Bot: Okay, I will call the function 'send_mail_in_emails' to help you send this email.
             {
-                "name": send_mail_in_emails,
+                "name": "send_mail_in_emails",
                 "arguments": {
                     "subject": "The issue regarding property fees.",
                     "body": "Hi Dave, Congratulations! I have helped you apply for a reduction in property fees, and the property management has approved it. Your property fees will be reduced by 10% each month!",
