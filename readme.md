@@ -695,43 +695,51 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
 ## Feature Demonstration
 
-  1. The demonstration YI-1.5-9B-Chat + Intelligent Customer Agent:
+  1. Agent for Virtual Personal Assistant：
+
+  [![Alt text](https://img.youtube.com/vi/kFmcbZqsMEs/0.jpg)](https://youtu.be/kFmcbZqsMEs)
+
+  2. Real-time Language Translation Agent：
+
+  [![Alt text](https://img.youtube.com/vi/H78ABFocRrQ/0.jpg)](https://youtu.be/H78ABFocRrQ)
+
+  3. The demonstration YI-1.5-9B-Chat + Intelligent Customer Agent:
 
   [![Alt text](https://img.youtube.com/vi/wAgNaaqMzV4/0.jpg)](https://youtu.be/wAgNaaqMzV4)
 
-  2. Gemini-1.5-pro + Intelligent Customer Agent:
+  4. Gemini-1.5-pro + Intelligent Customer Agent:
 
   [![Alt text](https://img.youtube.com/vi/GU5yvZiPXFs/0.jpg)](https://youtu.be/GU5yvZiPXFs)
 
-  3. The demonstration Llama-3-8B + Keras Code Interpreter:
+  5. The demonstration Llama-3-8B + Keras Code Interpreter:
 
   [![Alt text](https://img.youtube.com/vi/as__vi8rmDc/0.jpg)](https://youtu.be/as__vi8rmDc)
 
-  4. The demonstration Phi-3-mini + Keras Code Interpreter:
+  6. The demonstration Phi-3-mini + Keras Code Interpreter:
 
   [![Alt text](https://img.youtube.com/vi/KbHqw7JnG6s/0.jpg)](https://youtu.be/KbHqw7JnG6s)
 
-  5. The demonstration Llama-3-8B + Function Calling:
+  7. The demonstration Llama-3-8B + Function Calling:
 
   [![Alt text](https://img.youtube.com/vi/pTthwsNhGok/0.jpg)](https://youtu.be/pTthwsNhGok)
 
-  6. The demonstration Phi-3-mini + Function Calling:
+  8. The demonstration Phi-3-mini + Function Calling:
 
   [![Alt text](https://img.youtube.com/vi/YubzzFBhxas/0.jpg)](https://youtu.be/YubzzFBhxas)
 
-  7. The demonstration utilizes a multimodal online model GPT-4-vision-preview along with Azure Speech to Text services:
+  9. The demonstration utilizes a multimodal online model GPT-4-vision-preview along with Azure Speech to Text services:
 
   [![Alt text](https://img.youtube.com/vi/7VzZqgg35Ak/0.jpg)](https://www.youtube.com/watch?v=7VzZqgg35Ak)
 
-  8. The demonstration gpt-4-vision-preview VS Gemini-pro-vision：
+  10. The demonstration gpt-4-vision-preview VS Gemini-pro-vision：
    
   [![Alt text](https://img.youtube.com/vi/yFK62Tn_f4Q/0.jpg)](https://www.youtube.com/watch?v=yFK62Tn_f4Q)
 
-  9. The demonstration of the Retrieval Augmented Generation (RAG) feature：
+  11. The demonstration of the Retrieval Augmented Generation (RAG) feature：
   
   [![Alt text](https://img.youtube.com/vi/dyIFLISlskI/0.jpg)](https://www.youtube.com/watch?v=dyIFLISlskI) 
 
-  10. Demonstration of Image Recognition and Image Generation Features：
+  12. Demonstration of Image Recognition and Image Generation Features：
   
   Presentation of text to image, translating natural language into the CLIP for image generation models:
 
