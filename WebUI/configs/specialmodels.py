@@ -1204,6 +1204,54 @@ def multimodal_model_chat(
             await asyncio.sleep(0.1)
             if speak_handler: 
                 speak_handler.on_llm_end(None)
+
+        elif model_name == "Phi-3-vision-128k-instruct":
+            from transformers import AutoProcessor
+            configinst = InnerJsonConfigWebUIParse()
+            webui_config = configinst.dump()
+            model_config = webui_config.get("ModelConfig").get("LocalModel").get("Multimodal Model").get("Vision Chat Model").get(model_name)
+            model_id = model_config.get("path")
+            device = model_config.get("device", "auto")
+            device = "cuda" if device == "gpu" else detect_device() if device == "auto" else device
+            if not model_id:
+                model_id = model_config.get("Huggingface")
+            processor = AutoProcessor.from_pretrained(model_id, trust_remote_code=True)
+
+            img_list = []
+            count = 1
+            image_prompt = f"<|image_{count}|>"
+            for image in imagesdata:
+                decoded_data = base64.b64decode(image)
+                imagedata = BytesIO(decoded_data)
+                image_rgb = Image.open(imagedata)#.convert('RGB')
+                img_list.append(image_rgb)
+                if image_prompt:
+                    image_prompt = f"<|image_{count}|>"
+                else:
+                    image_prompt += "\n" + f"<|image_{count}|>"
+                count += 1
+
+            chat_prompt = {"role": "user", "content": f"{image_prompt}\n{query}"}
+            message = history + [chat_prompt]
+            prompt = processor.tokenizer.apply_chat_template(message, tokenize=False, add_generation_prompt=True)
+            inputs = processor(prompt, img_list, return_tensors="pt").to(device) 
+            generation_args = { 
+                "max_new_tokens": max_tokens, 
+                "temperature": temperature, 
+                "do_sample": False, 
+            } 
+            generate_ids = model.generate(**inputs, eos_token_id=processor.tokenizer.eos_token_id, **generation_args) 
+            # remove input tokens 
+            generate_ids = generate_ids[:, inputs['input_ids'].shape[1]:]
+            response = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0] 
+            if speak_handler: 
+                speak_handler.on_llm_new_token(answer)
+            yield json.dumps(
+                {"text": response, "chat_history_id": chat_history_id},
+                ensure_ascii=False)
+            await asyncio.sleep(0.1)
+            if speak_handler: 
+                speak_handler.on_llm_end(None)
         
         update_chat_history(chat_history_id, response=answer)
         

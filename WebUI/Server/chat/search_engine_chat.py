@@ -103,7 +103,10 @@ async def lookup_search_engine(
     elif search_engine_name == "google_search":
         if api_key == "" or api_key == "YOUR_API_KEY":
             api_key = os.environ.get("GOOGLE_SEARCH_KEY", "")
-        search_url = os.environ.get("GOOGLE_CSE_ID", "")
+        cse_id = config.get("cse_id", "")
+        if cse_id == "" or cse_id == "YOUR_CSE_ID":
+            cse_id = os.environ.get("GOOGLE_CSE_ID", "")
+        search_url = cse_id
     results = await run_in_threadpool(search_engine, query, search_url=search_url, api_key=api_key, result_len=top_k)
     docs = search_result2docs(results)
     return docs
