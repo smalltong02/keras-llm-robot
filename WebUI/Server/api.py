@@ -69,7 +69,7 @@ def mount_app_routes(app: FastAPI, run_mode: str = None):
     
     app.post("/llm_model/save_chat_config",
              tags=["Chat"],
-             summary="Save chat configration information",
+             summary="Save chat configuration information",
              )(save_chat_config)
 
     app.post("/chat/feedback",
@@ -93,17 +93,17 @@ def mount_app_routes(app: FastAPI, run_mode: str = None):
 
     app.post("/llm_model/list_config_models",
              tags=["LLM Model Management"],
-             summary="List Model configration information",
+             summary="List Model configuration information",
              )(list_config_models)
 
     app.post("/llm_model/get_model_config",
              tags=["LLM Model Management"],
-             summary="Get Model configration information",
+             summary="Get Model configuration information",
              )(get_model_config)
     
     app.post("/llm_model/save_model_config",
              tags=["LLM Model Management"],
-             summary="Save Model configration information",
+             summary="Save Model configuration information",
              )(save_model_config)
 
     app.post("/llm_model/stop",
@@ -183,7 +183,7 @@ def mount_app_routes(app: FastAPI, run_mode: str = None):
     
     app.post("/voice_model/save_voice_model_config",
              tags=["Voice Model Management"],
-             summary="Save Voice Model configration information",
+             summary="Save Voice Model configuration information",
              )(save_voice_model_config)
     
     app.post("/voice_model/stop",
@@ -209,7 +209,7 @@ def mount_app_routes(app: FastAPI, run_mode: str = None):
     
     app.post("/speech_model/save_speech_model_config",
              tags=["Speech Model Management"],
-             summary="Save Speech Model configration information",
+             summary="Save Speech Model configuration information",
              )(save_speech_model_config)
     
     app.post("/speech_model/stop",
@@ -230,7 +230,7 @@ def mount_app_routes(app: FastAPI, run_mode: str = None):
     
     app.post("/image_model/save_image_recognition_model_config",
              tags=["Image Recognition Model Management"],
-             summary="Save Image Recognition Model configration information",
+             summary="Save Image Recognition Model configuration information",
              )(save_image_recognition_model_config)
     
     app.post("/image_model/eject_image_recognition_model",
@@ -256,7 +256,7 @@ def mount_app_routes(app: FastAPI, run_mode: str = None):
     
     app.post("/image_model/save_image_generation_model_config",
              tags=["Image Generation Model Management"],
-             summary="Save Image Generation Model configration information",
+             summary="Save Image Generation Model configuration information",
              )(save_image_generation_model_config)
     
     app.post("/image_model/eject_image_generation_model",
@@ -282,7 +282,7 @@ def mount_app_routes(app: FastAPI, run_mode: str = None):
     
     app.post("/music_model/save_music_generation_model_config",
              tags=["Music Generation Model Management"],
-             summary="Save Music Generation Model configration information",
+             summary="Save Music Generation Model configuration information",
              )(save_music_generation_model_config)
     
     app.post("/music_model/eject_music_generation_model",
