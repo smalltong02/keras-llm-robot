@@ -392,13 +392,15 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                 with st.form("SearchEngine"):
                     col1, col2 = st.columns(2)
                     top_k = searchengine.get("top_k", 3)
-                    #search_url = searchengine.get(current_search_engine).get("search_url", "")
+                    cse_id = searchengine.get(current_search_engine).get("cse_id", None)
                     api_key = searchengine.get(current_search_engine).get("api_key", "")
                     with col1:
                         api_key = st.text_input("API Key", api_key, type="password", disabled=disabled)
                         search_enable = st.checkbox('Enable', value=search_enable, help="After enabling, parameters need to be saved for the configuration to take effect.", disabled=disabled)
                         smart_search = st.checkbox('Smart Search', value=smart_search, help="Let the model handle the question first, and let the model decide whether to invoke the search engine.", disabled=disabled)
                     with col2:
+                        if cse_id is not None:
+                            cse_id = st.text_input("Google CSE ID", cse_id, type="password", disabled=disabled)
                         top_k = st.slider("Top_k", 1, 10, top_k, 1, disabled=disabled)
                     save_parameters = st.form_submit_button(
                         "Save Parameters",
@@ -407,6 +409,8 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                     )
                     if save_parameters:
                         searchengine.get(current_search_engine)["api_key"] = api_key
+                        if cse_id is not None:
+                            searchengine.get(current_search_engine)["cse_id"] = cse_id
                         searchengine["top_k"] = top_k
                         with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
                             r = api.save_search_engine_config(searchengine)

@@ -2695,7 +2695,8 @@
     "SearchEngine": {
         "google_search": {
             "search_url": "",
-            "api_key": "YOUR_API_KEY"
+            "api_key": "YOUR_API_KEY",
+            "cse_id": "YOUR_CSE_ID"
         },
         "duckduckgo": {
             "search_url": "",
