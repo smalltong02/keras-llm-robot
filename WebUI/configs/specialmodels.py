@@ -195,7 +195,7 @@ async def special_chat_iterator(model: Any,
         while btalk:
             answer = ""
             btalk = False
-            prompt = []
+            prompt = history
             prompt.append({'role': "user",
                             'content': "{{input}}"})
 
