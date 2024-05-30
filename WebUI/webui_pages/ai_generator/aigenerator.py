@@ -215,6 +215,8 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                         current_model["mname"] = model_name
                         if current_model["mname"] is not None:
                             current_model["config"] = GetModelConfig(webui_config, current_model)
+                        else:
+                            current_model["config"] = {}
 
                         if current_model["mtype"] != ModelType.Online:
                             pathstr = current_model["config"].get("path")
@@ -232,7 +234,7 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
 
                 if running_chat_solution["stage"] == 2:
                     st.markdown("**Step 2: To decide whether to use Voice and Speech Model**")
-                    voice_enable = st.checkbox('Voice Enable', value=False)
+                    voice_enable = st.checkbox('Enable Voice', value=False)
                     running_chat_solution["config"]["voice"]["enable"] = False
                     running_chat_solution["config"]["voice"]["model"] = ""
                     if voice_enable:
@@ -270,7 +272,7 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                         api.save_vtot_model_config(voicemodel, voice_modelconfig)
                     
                     st.divider()
-                    speech_enable = st.checkbox('Speech Enable', value=False)
+                    speech_enable = st.checkbox('Enable Speech', value=False)
                     running_chat_solution["config"]["speech"]["enable"] = False
                     running_chat_solution["config"]["speech"]["model"] = ""
                     running_chat_solution["config"]["speech"]["speaker"] = ""
@@ -343,7 +345,7 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                     st.session_state["current_chat_solution"] = running_chat_solution
                 if running_chat_solution["stage"] == 3:
                     st.markdown("**Step 3: To decide whether to use Knowledge Base, Search Engine and Function Calling**")
-                    knowledge_enable = st.checkbox('Knowledge Base Enable', value=False)
+                    knowledge_enable = st.checkbox('Knowledge Base', value=False)
                     running_chat_solution["config"]["knowledge_base"]["enable"] = False
                     running_chat_solution["config"]["knowledge_base"]["name"] = ""
                     if knowledge_enable:
@@ -364,7 +366,7 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                         running_chat_solution["config"]["knowledge_base"]["enable"] = True
                         running_chat_solution["config"]["knowledge_base"]["name"] = selected_kb
                     st.divider()
-                    search_enable = st.checkbox('Search Engine Enable', value=False)
+                    search_enable = st.checkbox('Search Engine', value=False)
                     running_chat_solution["config"]["search_engine"]["enable"] = False
                     running_chat_solution["config"]["search_engine"]["name"] = ""
                     if search_enable:
@@ -383,7 +385,7 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                             running_chat_solution["config"]["search_engine"]["enable"] = True
                             running_chat_solution["config"]["search_engine"]["name"] = search_engine
                     st.divider()
-                    function_calling_enable = st.checkbox('Function Calling Enable', value=False)
+                    function_calling_enable = st.checkbox('Function Calling', value=False)
                     running_chat_solution["config"]["function_calling"] = False
                     if function_calling_enable:
                         function_name_list = GetFuncallList()
@@ -600,6 +602,8 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                         current_model["mname"] = model_name
                         if current_model["mname"] is not None:
                             current_model["config"] = GetModelConfig(webui_config, current_model)
+                        else:
+                            current_model["config"] = {}
 
                         if current_model["mtype"] != ModelType.Online:
                             pathstr = current_model["config"].get("path")
@@ -614,7 +618,7 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
 
                 if running_chat_solution["stage"] == 2:
                     st.markdown("**Step 2: To decide Voice and Speech Model**")
-                    voice_enable = st.checkbox('Voice Enable', value=True)
+                    voice_enable = st.checkbox('Enable Voice', value=True)
                     running_chat_solution["config"]["voice"]["enable"] = False
                     running_chat_solution["config"]["voice"]["model"] = ""
                     if voice_enable:
@@ -652,7 +656,7 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                         api.save_vtot_model_config(voicemodel, voice_modelconfig)
                     
                     st.divider()
-                    speech_enable = st.checkbox('Speech Enable', value=True)
+                    speech_enable = st.checkbox('Enable Speech', value=True)
                     running_chat_solution["config"]["speech"]["enable"] = False
                     running_chat_solution["config"]["speech"]["model"] = ""
                     running_chat_solution["config"]["speech"]["speaker"] = ""
@@ -915,6 +919,8 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                         current_model["mname"] = model_name
                         if current_model["mname"] is not None:
                             current_model["config"] = GetModelConfig(webui_config, current_model)
+                        else:
+                            current_model["config"] = {}
 
                         if current_model["mtype"] != ModelType.Online:
                             pathstr = current_model["config"].get("path")
@@ -937,7 +943,7 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
 
                 if running_chat_solution["stage"] == 2:
                     st.markdown("**Step 2: To decide whether to use Voice and Speech Model**")
-                    voice_enable = st.checkbox('Voice Enable', value=False)
+                    voice_enable = st.checkbox('Enable Voice', value=False)
                     running_chat_solution["config"]["voice"]["enable"] = False
                     running_chat_solution["config"]["voice"]["model"] = ""
                     if voice_enable:
@@ -975,7 +981,7 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                         api.save_vtot_model_config(voicemodel, voice_modelconfig)
                     
                     st.divider()
-                    speech_enable = st.checkbox('Speech Enable', value=False)
+                    speech_enable = st.checkbox('Enable Speech', value=False)
                     running_chat_solution["config"]["speech"]["enable"] = False
                     running_chat_solution["config"]["speech"]["model"] = ""
                     running_chat_solution["config"]["speech"]["speaker"] = ""
@@ -1048,7 +1054,7 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                     st.session_state["current_chat_solution"] = running_chat_solution
                 if running_chat_solution["stage"] == 3:
                     st.markdown("**Step 3: To decide whether to use Knowledge Base, Search Engine and ToolBoxes**")
-                    knowledge_enable = st.checkbox('Knowledge Base Enable', value=False)
+                    knowledge_enable = st.checkbox('Knowledge Base', value=False)
                     running_chat_solution["config"]["knowledge_base"]["enable"] = False
                     running_chat_solution["config"]["knowledge_base"]["name"] = ""
                     if knowledge_enable:
@@ -1069,7 +1075,7 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                         running_chat_solution["config"]["knowledge_base"]["enable"] = True
                         running_chat_solution["config"]["knowledge_base"]["name"] = selected_kb
                     st.divider()
-                    search_enable = st.checkbox('Search Engine Enable', value=False)
+                    search_enable = st.checkbox('Search Engine', value=False)
                     running_chat_solution["config"]["search_engine"]["enable"] = False
                     running_chat_solution["config"]["search_engine"]["name"] = ""
                     if search_enable:
@@ -1088,7 +1094,7 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                             running_chat_solution["config"]["search_engine"]["enable"] = True
                             running_chat_solution["config"]["search_engine"]["name"] = search_engine
                     st.divider()
-                    toolboxes_enable = st.checkbox('ToolBoxes Enable', value=False)
+                    toolboxes_enable = st.checkbox('ToolBoxes', value=False)
                     running_chat_solution["config"]["toolboxes"] = ""
                     if toolboxes_enable:
                         toolboxes = webui_config.get("ToolBoxes")
