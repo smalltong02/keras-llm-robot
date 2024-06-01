@@ -117,6 +117,8 @@
             },
             "baidu-cloud-api": {
                 "modellist": [
+                    "ERNIE-4.0-8K-0329",
+                    "ERNIE-4.0-8K-0104",
                     "ERNIE-4.0-8K",
                     "ERNIE-3.5-8K",
                     "ERNIE-3.5-8K-0205",
