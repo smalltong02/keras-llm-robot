@@ -117,6 +117,8 @@
             },
             "baidu-cloud-api": {
                 "modellist": [
+                    "ERNIE-4.0-8K-0329",
+                    "ERNIE-4.0-8K-0104",
                     "ERNIE-4.0-8K",
                     "ERNIE-3.5-8K",
                     "ERNIE-3.5-8K-0205",
@@ -2290,6 +2292,16 @@
             },
             "Multimodal Model": {
                 "Vision Chat Model": {
+                    "Phi-3-vision-128k-instruct": {
+                        "path": "models/multimodal/image-chat/Phi-3-vision-128k-instruct",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "causallm",
+                        "Huggingface": "microsoft/Phi-3-vision-128k-instruct"
+                    },
                     "cogvlm-chat-hf": {
                         "path": "models/multimodal/image-chat/cogvlm-chat-hf",
                         "device": "auto",

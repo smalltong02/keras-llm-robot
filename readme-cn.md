@@ -756,6 +756,9 @@
 
 ## 新特性更新日志
 
+- 🚀 2024-06-02更新日志
+  1. 支持模型Phi-3-vision-128k-instruct。
+
 - 🚀 2024-05-28更新日志
   1. 添加Google ToolBoxes："Google Mail", "Google Calendar", "Google Drive", "Google Maps", "Youtube"
   2. 支持“虚拟私人助理”特性。

@@ -754,6 +754,9 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
 ## New Feature Updates
 
+- 🚀 Update Log for 2024-06-02
+  1. Support for Phi-3-vision-128k-instruct
+
 - 🚀 Update Log for 2024-05-28
   1. Support Google ToolBoxes: "Google Mail", "Google Calendar", "Google Drive", "Google Maps", "Youtube"
   2. Introduced features "Virtual Personal Assistant".
