@@ -1234,11 +1234,11 @@ def multimodal_model_chat(
             chat_prompt = {"role": "user", "content": f"{image_prompt}\n{query}"}
             message = history + [chat_prompt]
             prompt = processor.tokenizer.apply_chat_template(message, tokenize=False, add_generation_prompt=True)
-            inputs = processor(prompt, img_list, return_tensors="pt").to(device) 
+            inputs = processor(prompt, img_list, return_tensors="pt").to(device)
             generation_args = { 
-                "max_new_tokens": max_tokens, 
+                "max_new_tokens": 500, 
                 "temperature": temperature, 
-                "do_sample": False, 
+                "do_sample": True, 
             } 
             generate_ids = model.generate(**inputs, eos_token_id=processor.tokenizer.eos_token_id, **generation_args) 
             # remove input tokens 

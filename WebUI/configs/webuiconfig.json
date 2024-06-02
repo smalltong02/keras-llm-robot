@@ -2292,6 +2292,16 @@
             },
             "Multimodal Model": {
                 "Vision Chat Model": {
+                    "Phi-3-vision-128k-instruct": {
+                        "path": "models/multimodal/image-chat/Phi-3-vision-128k-instruct",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "causallm",
+                        "Huggingface": "microsoft/Phi-3-vision-128k-instruct"
+                    },
                     "cogvlm-chat-hf": {
                         "path": "models/multimodal/image-chat/cogvlm-chat-hf",
                         "device": "auto",
