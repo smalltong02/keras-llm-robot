@@ -773,9 +773,11 @@ def load_causallm_model(app: FastAPI, model_name, model_path, device):
     app._model_name = model_name
 
 def load_automodel_model(app: FastAPI, model_name, model_path, device):
+    import torch
     from transformers import AutoTokenizer, AutoModel
     tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
-    model = AutoModel.from_pretrained(model_path, device_map=device, trust_remote_code=True).half()
+    model = AutoModel.from_pretrained(model_path, device_map=device, trust_remote_code=True, torch_dtype=torch.float16)
+    model = model.to(device=device)
     app._model = model
     app._tokenizer = tokenizer
     app._model_name = model_name
@@ -1250,6 +1252,36 @@ def multimodal_model_chat(
                 {"text": response, "chat_history_id": chat_history_id},
                 ensure_ascii=False)
             await asyncio.sleep(0.1)
+            if speak_handler: 
+                speak_handler.on_llm_end(None)
+
+        elif model_name == "MiniCPM-Llama3-V-2_5":
+            img_list = []
+            for image in imagesdata:
+                decoded_data = base64.b64decode(image)
+                imagedata = BytesIO(decoded_data)
+                image_rgb = Image.open(imagedata).convert('RGB')
+                img_list.append(image_rgb)
+            chat_prompt = {'role': 'user', 'content': query}
+            message = history + [chat_prompt]
+            response = model.chat(
+                image=img_list[0],
+                msgs=message,
+                tokenizer=tokenizer,
+                sampling=True,
+                temperature=temperature,
+                stream=True
+            )
+
+            generated_text = ""
+            for new_text in response:
+                generated_text += new_text
+                if speak_handler: 
+                    speak_handler.on_llm_new_token(new_text)
+                yield json.dumps(
+                    {"text": new_text, "chat_history_id": chat_history_id},
+                    ensure_ascii=False)
+                await asyncio.sleep(0.1)
             if speak_handler: 
                 speak_handler.on_llm_end(None)
         

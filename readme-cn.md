@@ -191,12 +191,27 @@
           pip install open_clip_torch
         ```
 
-  11.   如果仅想在本地进行部署，可以使用python启动WebUI，http://127.0.0.1:8818
+  11. 一些模型的加载，以及微调和量化功能需要`flash-attn`和`bitsandbytes`库，请使用如下方法安装。
+  ```bash
+  # Linux版本安装命令，需要大约1小时编译安装时间。
+  pip install flash-attn
+  pip install bitsandbytes
+
+  # Windows版本下载URL，请选择正确的CUDA Tookit版本，Torch版本和Python版本。
+  https://github.com/bdashore3/flash-attention/releases
+  https://github.com/jllllll/bitsandbytes-windows-webui/releases
+  # 下载后请使用以下命令安装
+  pip install *.whl
+
+  # MacOS版本不支持
+  ```
+
+  12.   如果仅想在本地进行部署，可以使用python启动WebUI，http://127.0.0.1:8818
   ```bash
   python __webgui_server__.py --webui
   ```
 
-  12.   如果需要在云服务器上部署，并在本地访问WebUI，请使用反向代理，并以HTTPS协议启动WebUI。在本地请使用https://127.0.0.1:4480 打开WebUI，在远端使用 https://[server ip]:4480 打开WebUI。
+  13.   如果需要在云服务器上部署，并在本地访问WebUI，请使用反向代理，并以HTTPS协议启动WebUI。在本地请使用https://127.0.0.1:4480 打开WebUI，在远端使用 https://[server ip]:4480 打开WebUI。
   ```bash
   // 批处理内部默认使用的虚拟环境是 keras-llm-robot，如果想使用其它的虚拟环境名称，请自行修改批处理文件
   webui-startup-windows.bat
@@ -756,8 +771,20 @@
 
 ## 新特性更新日志
 
+- 🚀 2024-06-03更新日志
+  1. 支持多模态模型MiniCPM-Llama3-V-2_5
+
 - 🚀 2024-06-02更新日志
-  1. 支持模型Phi-3-vision-128k-instruct。
+  1. 支持多模态模型Phi-3-vision-128k-instruct，为了正确加载模型并推理，请先安装flash-attn库。
+  ```bash
+  # Linux版本安装命令，需要大约1小时编译安装时间。
+  pip install flash-attn
+
+  # Windows版本下载URL，请选择正确的CUDA Tookit版本，Torch版本和Python版本。
+  https://github.com/bdashore3/flash-attention/releases
+  # 下载后请使用以下命令安装
+  pip install *.whl
+  ```
 
 - 🚀 2024-05-28更新日志
   1. 添加Google ToolBoxes："Google Mail", "Google Calendar", "Google Drive", "Google Maps", "Youtube"
