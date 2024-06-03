@@ -188,46 +188,49 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
            pip install kornia
            pip install open_clip_torch
         ```
+
     11. Some model loading, as well as fine-tuning and quantization features require the `flash-attn` and `bitsandbytes` libraries, please install them using the following method.
    
-    ```bash
-    # For Linux，Takes about 1 hour to compile and install。
-    pip install flash-attn
-    pip install bitsandbytes
+      ```bash
+      # For Linux，Takes about 1 hour to compile and install。
+      pip install flash-attn
+      pip install bitsandbytes
 
-    # The Download URL of Windows, Please take care to select the correct CUDA Tookit version, Torch version and Python version.
-    https://github.com/bdashore3/flash-attention/releases
-    https://github.com/jllllll/bitsandbytes-windows-webui/releases
-    # After downloading, please use the following command to install
-    pip install *.whl
+      # The Download URL of Windows, Please take care to select the correct CUDA Tookit version, Torch version and Python version.
+      https://github.com/bdashore3/flash-attention/releases
+      https://github.com/jllllll/bitsandbytes-windows-webui/releases
+      # After downloading, please use the following command to install
+      pip install *.whl
 
-    # MacOS version is not supported
-    ```
+      # MacOS version is not supported
+      ```
 
   12.  If run locally, start the Web UI using Python at http://127.0.0.1:8818:
-  ```bash
-  python __webgui_server__.py --webui
-  ```
+  
+      ```bash
+      python __webgui_server__.py --webui
+      ```
 
   13.   If deploying on a cloud server and accessing the Web UI locally, use reverse proxy and start the Web UI with HTTPS. Access using https://127.0.0.1:4480 on locally, and use the https interface at https://[server ip]:4480 on remotely:
-  ```bash
-  // By default, the batch file uses the virtual environment named keras-llm-robot,
-  // Modify the batch file if using a different virtual environment name.
-
-  webui-startup-windows.bat
   
-  // ubuntu(linux)
+      ```bash
+      // By default, the batch file uses the virtual environment named keras-llm-robot,
+      // Modify the batch file if using a different virtual environment name.
 
-  python __webgui_server__.py --webui
-  chmod +x ./tools/ssl-proxy-linux
-  ./tools/ssl-proxy-linux -from 0.0.0.0:4480 -to 127.0.0.1:8818
+      webui-startup-windows.bat
+      
+      // ubuntu(linux)
 
-  // MacOS
+      python __webgui_server__.py --webui
+      chmod +x ./tools/ssl-proxy-linux
+      ./tools/ssl-proxy-linux -from 0.0.0.0:4480 -to 127.0.0.1:8818
 
-  python __webgui_server__.py --webui
-  chmod +x ./tools/ssl-proxy-darwin
-  ./tools/ssl-proxy-darwin -from 0.0.0.0:4480 -to 127.0.0.1:8818
-  ```
+      // MacOS
+
+      python __webgui_server__.py --webui
+      chmod +x ./tools/ssl-proxy-darwin
+      ./tools/ssl-proxy-darwin -from 0.0.0.0:4480 -to 127.0.0.1:8818
+      ```
 
 ## Feature Overview
 

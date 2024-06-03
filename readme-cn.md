@@ -193,40 +193,42 @@
 
   11. 一些模型的加载，以及微调和量化功能需要`flash-attn`和`bitsandbytes`库，请使用如下方法安装。
   
-  ```bash
-  # Linux版本安装命令，需要大约1小时编译安装时间。
-  pip install flash-attn
-  pip install bitsandbytes
+      ```bash
+      # Linux版本安装命令，需要大约1小时编译安装时间。
+      pip install flash-attn
+      pip install bitsandbytes
 
-  # Windows版本下载URL，请选择正确的CUDA Tookit版本，Torch版本和Python版本。
-  https://github.com/bdashore3/flash-attention/releases
-  https://github.com/jllllll/bitsandbytes-windows-webui/releases
-  # 下载后请使用以下命令安装
-  pip install *.whl
+      # Windows版本下载URL，请选择正确的CUDA Tookit版本，Torch版本和Python版本。
+      https://github.com/bdashore3/flash-attention/releases
+      https://github.com/jllllll/bitsandbytes-windows-webui/releases
+      # 下载后请使用以下命令安装
+      pip install *.whl
 
-  # MacOS版本不支持
-  ```
+      # MacOS版本不支持
+      ```
 
   12.    如果仅想在本地进行部署，可以使用python启动WebUI，http://127.0.0.1:8818
-  ```bash
-  python __webgui_server__.py --webui
-  ```
+  
+      ```bash
+      python __webgui_server__.py --webui
+      ```
 
   13.    如果需要在云服务器上部署，并在本地访问WebUI，请使用反向代理，并以HTTPS协议启动WebUI。在本地请使用https://127.0.0.1:4480 打开WebUI，在远端使用 https://[server ip]:4480 打开WebUI。
-  ```bash
-  // 批处理内部默认使用的虚拟环境是 keras-llm-robot，如果想使用其它的虚拟环境名称，请自行修改批处理文件
-  webui-startup-windows.bat
   
-  // ubuntu(linux)平台
-  python __webgui_server__.py --webui
-  chmod +x ./tools/ssl-proxy-linux
-  ./tools/ssl-proxy-linux -from 0.0.0.0:4480 -to 127.0.0.1:8818
+      ```bash
+      // 批处理内部默认使用的虚拟环境是 keras-llm-robot，如果想使用其它的虚拟环境名称，请自行修改批处理文件
+      webui-startup-windows.bat
+      
+      // ubuntu(linux)平台
+      python __webgui_server__.py --webui
+      chmod +x ./tools/ssl-proxy-linux
+      ./tools/ssl-proxy-linux -from 0.0.0.0:4480 -to 127.0.0.1:8818
 
-  // MacOS平台
-  python __webgui_server__.py --webui
-  chmod +x ./tools/ssl-proxy-darwin
-  ./tools/ssl-proxy-darwin -from 0.0.0.0:4480 -to 127.0.0.1:8818
-  ```
+      // MacOS平台
+      python __webgui_server__.py --webui
+      chmod +x ./tools/ssl-proxy-darwin
+      ./tools/ssl-proxy-darwin -from 0.0.0.0:4480 -to 127.0.0.1:8818
+      ```
 
 ## 功能介绍
 
