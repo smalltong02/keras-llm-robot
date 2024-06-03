@@ -203,12 +203,12 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
     # MacOS version is not supported
     ```
 
-  11.  If run locally, start the Web UI using Python at http://127.0.0.1:8818:
+  12.  If run locally, start the Web UI using Python at http://127.0.0.1:8818:
   ```bash
   python __webgui_server__.py --webui
   ```
 
-  12.  If deploying on a cloud server and accessing the Web UI locally, use reverse proxy and start the Web UI with HTTPS. Access using https://127.0.0.1:4480 on locally, and use the https interface at https://[server ip]:4480 on remotely:
+  13.  If deploying on a cloud server and accessing the Web UI locally, use reverse proxy and start the Web UI with HTTPS. Access using https://127.0.0.1:4480 on locally, and use the https interface at https://[server ip]:4480 on remotely:
   ```bash
   // By default, the batch file uses the virtual environment named keras-llm-robot,
   // Modify the batch file if using a different virtual environment name.
