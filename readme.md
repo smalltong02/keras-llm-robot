@@ -188,13 +188,27 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
            pip install kornia
            pip install open_clip_torch
         ```
+    11. Some model loading, as well as fine-tuning and quantization features require the `flash-attn` and `bitsandbytes` libraries, please install them using the following method.
+    ```bash
+    # For Linux，Takes about 1 hour to compile and install。
+    pip install flash-attn
+    pip install bitsandbytes
 
-  11.  If run locally, start the Web UI using Python at http://127.0.0.1:8818:
+    # The Download URL of Windows, Please take care to select the correct CUDA Tookit version, Torch version and Python version.
+    https://github.com/bdashore3/flash-attention/releases
+    https://github.com/jllllll/bitsandbytes-windows-webui/releases
+    # After downloading, please use the following command to install
+    pip install *.whl
+
+    # MacOS version is not supported
+    ```
+
+  12.  If run locally, start the Web UI using Python at http://127.0.0.1:8818:
   ```bash
   python __webgui_server__.py --webui
   ```
 
-  12.  If deploying on a cloud server and accessing the Web UI locally, use reverse proxy and start the Web UI with HTTPS. Access using https://127.0.0.1:4480 on locally, and use the https interface at https://[server ip]:4480 on remotely:
+  13.  If deploying on a cloud server and accessing the Web UI locally, use reverse proxy and start the Web UI with HTTPS. Access using https://127.0.0.1:4480 on locally, and use the https interface at https://[server ip]:4480 on remotely:
   ```bash
   // By default, the batch file uses the virtual environment named keras-llm-robot,
   // Modify the batch file if using a different virtual environment name.
@@ -754,8 +768,20 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
 ## New Feature Updates
 
+- 🚀 2024-06-03更新日志
+  1. 支持多模态模型MiniCPM-Llama3-V-2_5
+
 - 🚀 Update Log for 2024-06-02
-  1. Support for Phi-3-vision-128k-instruct
+  1. Support for Phi-3-vision-128k-instruct, please install the `flash-attn` library first.
+  ```bash
+  # for Linux, Takes about 1 hour to compile and install.
+  pip install flash-attn
+
+  # Download URL of Windows，Please take care to select the correct CUDA Tookit version, Torch version and Python version.
+  https://github.com/bdashore3/flash-attention/releases
+  # After downloading, please use the following command to install
+  pip install *.whl
+  ```
 
 - 🚀 Update Log for 2024-05-28
   1. Support Google ToolBoxes: "Google Mail", "Google Calendar", "Google Drive", "Google Maps", "Youtube"

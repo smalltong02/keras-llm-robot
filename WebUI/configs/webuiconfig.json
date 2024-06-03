@@ -2292,6 +2292,16 @@
             },
             "Multimodal Model": {
                 "Vision Chat Model": {
+                    "MiniCPM-Llama3-V-2_5": {
+                        "path": "models/multimodal/image-chat/MiniCPM-Llama3-V-2_5",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "automodel",
+                        "Huggingface": "openbmb/MiniCPM-Llama3-V-2_5"
+                    },
                     "Phi-3-vision-128k-instruct": {
                         "path": "models/multimodal/image-chat/Phi-3-vision-128k-instruct",
                         "device": "auto",
