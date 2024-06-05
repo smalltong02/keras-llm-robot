@@ -21,7 +21,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
     onlinemodel = webui_config.get("ModelConfig").get("OnlineModel")
     chatconfig = webui_config.get("ChatConfiguration")
     #quantconfig = webui_config.get("QuantizationConfiguration")
-    #finetunning = webui_config.get("Fine-Tunning")
+    finetuning = webui_config.get("Fine-Tuning")
     searchengine = webui_config.get("SearchEngine")
     functioncalling = webui_config.get("FunctionCalling")
     calling_enable = False
@@ -188,7 +188,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
     if current_model["config"]:
         preset_list = GetPresetPromptList()
         if current_model["mtype"] == ModelType.Local or current_model["mtype"] == ModelType.Multimodal or current_model["mtype"] == ModelType.Special or current_model["mtype"] == ModelType.Code:
-            tabparams, tabsearch, tabfuncall, tabroleplay, tabquant, tabtunning = st.tabs(["Parameters", "Search Engine", "Function Calling", "Role Player", "Quantization", "Fine-Tunning"])
+            tabparams, tabsearch, tabfuncall, tabroleplay, tabquant, tabtuning = st.tabs(["Parameters", "Search Engine", "Function Calling", "Role Player", "Quantization", "Fine-Tuning"])
             with tabparams:
                 with st.form("Parameter"):
                     col1, col2 = st.columns(2)
@@ -360,13 +360,161 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                     if submit_quantization:
                         st.toast("The model quantization has been successful, and the quantized file path is model/llama-2-7b-hf-16bit.bin.", icon="✔")
 
-            with tabtunning:
-                st.selectbox(
-                    "Please select Device",
-                    training_devices_list,
+            with tabtuning:
+                from WebUI.configs.basicconfig import glob_compute_type_list, glob_save_strategy_list, glob_optimizer_list, glob_lr_scheduler_list, glob_Lora_rank_list, glob_save_model_list, glob_save_method_list, glob_quantization_method_list
+                finetuning_list = []
+                for key, value in finetuning.items():
+                    if isinstance(value, dict):
+                        finetuning_list.append(key)
+                current_finetuning_library = st.selectbox(
+                    "Please select Fine-Tuning Library",
+                    finetuning_list,
                     index=0,
-                    disabled=True
+                    disabled=disabled
                 )
+                tun_basic_config = finetuning[current_finetuning_library].get("basic_config", {})
+                tun_train_config = finetuning[current_finetuning_library].get("train_config", {})
+                tun_lora_config = finetuning[current_finetuning_library].get("lora_config", {})
+                tun_dataset_config = finetuning[current_finetuning_library].get("dataset_config", {})
+                tun_output_config = finetuning[current_finetuning_library].get("output_config", {})
+
+                with st.form("Fine-Tuning"):
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        compute_type = tun_basic_config.get("compute_type", "fp16")
+                        compute_index = glob_compute_type_list.index(compute_type)
+                        compute_type = st.selectbox(
+                            "Compute type",
+                            glob_compute_type_list,
+                            index=compute_index,
+                            disabled=disabled
+                        )
+                        load_in_4bit = tun_basic_config.get("load_in_4bit", False)
+                        load_in_4bit = st.checkbox('load_in_4bit', value=load_in_4bit, disabled=disabled)
+                    with col2:
+                        seq_length = tun_basic_config.get("seq_length", 512)
+                        seq_length = st.slider("Sentence length", 16, 32000, seq_length, 1, disabled=disabled)
+                    st.divider()
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        learning_rate = tun_train_config.get("lr", 5e-5)
+                        learning_rate = st.text_input("Learning rate", learning_rate, disabled=disabled)
+                        batch_size = tun_train_config.get("batch_size", 5)
+                        batch_size = st.number_input("Batch size", value = batch_size, min_value=1, max_value=512, disabled=disabled)
+                        gradient_steps = tun_train_config.get("gradient_steps", 2)
+                        gradient_steps = st.number_input("Gradient steps", value = gradient_steps, min_value=1, max_value=64, disabled=disabled)
+                        logging_steps = tun_train_config.get("logging_steps", 10)
+                        logging_steps = st.number_input("Logging steps", value = logging_steps, min_value=1, max_value=64, disabled=disabled)
+                        save_steps = tun_train_config.get("save_steps", 10)
+                        save_steps = st.number_input("Save steps", value = save_steps, min_value=1, max_value=10000, disabled=disabled)
+                        weight_decay = tun_train_config.get("weight_decay", 0.0)
+                        weight_decay = st.slider("Weight decay", 0.0, 1.0, weight_decay, 0.1, disabled=disabled)
+                        seed = tun_train_config.get("seed", -1)
+                        seed = st.number_input("Seed (-1 for random)", value = seed, min_value=-1, max_value=10000, disabled=disabled)
+                        packing = tun_train_config.get("packing", False)
+                        packing = st.checkbox("Packing", value = packing, disabled=disabled)
+                    with col2:
+                        epochs = tun_train_config.get("epochs", 10)
+                        epochs = st.number_input("Epochs", value = epochs, min_value=1, max_value=10000, disabled=disabled)
+                        num_proc = tun_train_config.get("num_proc", 2)
+                        num_proc = st.number_input("Process Nums", value = num_proc, min_value=1, max_value=32, disabled=disabled)
+                        warmup_steps = tun_train_config.get("warmup_steps", 2)
+                        warmup_steps = st.number_input("Warmup steps", value = warmup_steps, min_value=1, max_value=64, disabled=disabled)
+                        save_strategy = tun_basic_config.get("save_strategy", "steps")
+                        save_strategy_index = glob_save_strategy_list.index(save_strategy)
+                        save_strategy = st.selectbox(
+                            "Save strategy",
+                            glob_save_strategy_list,
+                            index=save_strategy_index,
+                            disabled=disabled
+                        )
+                        optim = tun_train_config.get("optim", "adamw_torch")
+                        optim_index = glob_optimizer_list.index(optim)
+                        optim = st.selectbox(
+                            "Optimizer",
+                            glob_optimizer_list,
+                            index=optim_index,
+                            disabled=disabled
+                        )
+                        lr_scheduler = tun_train_config.get("lr_scheduler", "linear")
+                        lr_scheduler_index = glob_lr_scheduler_list.index(lr_scheduler)
+                        lr_scheduler = st.selectbox(
+                            "LR Scheduler",
+                            glob_lr_scheduler_list,
+                            index=lr_scheduler_index,
+                            disabled=disabled
+                        )
+                    st.divider()
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        lora_rank = tun_lora_config.get("lora_rank", 8)
+                        lora_rank_index = glob_Lora_rank_list.index(lora_rank)
+                        lora_rank = st.selectbox(
+                            "Lora Rank",
+                            glob_Lora_rank_list,
+                            index=lora_rank_index,
+                            disabled=disabled
+                        )
+                        lora_alpha = tun_lora_config.get("lora_alpha", 32)
+                        lora_alpha = st.number_input("Lora Alpha", value = lora_alpha, min_value=1, max_value=512, disabled=disabled)
+                        use_gradient_checkpointing = tun_lora_config.get("use_gradient_checkpointing", "unsloth")
+                        use_gradient_checkpointing = st.text_input("Gradient Checkpointing", use_gradient_checkpointing, disabled=True)
+                        use_rslora = tun_lora_config.get("use_rslora", False)
+                        use_rslora = st.checkbox("Use rslora", use_rslora, disabled=disabled)
+                    with col2:
+                        target_modules_list = tun_lora_config.get("target_modules", "q_proj")
+                        target_modules = ','.join(target_modules_list)
+                        target_modules = st.text_input("Target Modules", target_modules, disabled=disabled)
+                        lora_dropout = tun_lora_config.get("lora_dropout", 0)
+                        lora_dropout = st.number_input("Lora Alpha", value = lora_dropout, min_value=0.0, max_value=1.0, disabled=disabled)
+                        random_state = tun_lora_config.get("random_state", 128)
+                        random_state = st.number_input("Random State", value = random_state, min_value=0, max_value=10000, disabled=disabled)
+                    st.divider()
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        dataset_path = tun_dataset_config.get("dataset_path", "")
+                        dataset_path = st.text_input("Dataset Path", dataset_path, disabled=disabled)
+                    with col2:
+                        checkpoint_path = tun_dataset_config.get("checkpoint_path", "")
+                        checkpoint_path = st.text_input("Checkpoint Path", checkpoint_path, disabled=disabled)
+                    st.divider()
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        output_path = tun_output_config.get("output_path", "")
+                        output_path = st.text_input("Output Path", output_path, disabled=disabled)
+                        save_method = tun_output_config.get("save_method", "lora")
+                        save_method_index = glob_save_method_list.index(save_method)
+                        save_method = st.selectbox(
+                            "Save Method",
+                            glob_save_method_list,
+                            index=save_method_index,
+                            disabled=disabled
+                        )
+                    with col2:
+                        output_format = tun_output_config.get("output_format", "full")
+                        output_format_index = glob_save_model_list.index(output_format)
+                        output_format = st.selectbox(
+                            "Output Format",
+                            glob_save_model_list,
+                            index=output_format_index,
+                            disabled=disabled
+                        )
+                        quantization_method = tun_output_config.get("quantization_method", "f16")
+                        quantization_method_index = glob_quantization_method_list.index(quantization_method)
+                        quantization_method = st.selectbox(
+                            "Quantization Method",
+                            glob_quantization_method_list,
+                            index=quantization_method_index,
+                            disabled=disabled
+                        )
+
+                    fine_tuning_btn = st.form_submit_button(
+                        "Fine-Tuning",
+                        use_container_width=True,
+                        disabled=disabled
+                    )
+                    if fine_tuning_btn:
+                        pass
 
             with tabsearch:
                 search_enable = False

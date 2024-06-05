@@ -2713,7 +2713,52 @@
         }
     },
     "QuantizationConfiguration": {},
-    "Fine-Tunning": {},
+    "Fine-Tuning": {
+        "unsloth": {
+            "basic_config": {
+                "compute_type": "fp16",
+                "load_in_4bit": false,
+                "seq_length": 2048
+            },
+            "train_config": {
+                "lr": 5e-5,
+                "epochs": 50,
+                "batch_size": 2,
+                "num_proc": 2,
+                "gradient_steps": 4,
+                "warmup_steps": 5,
+                "logging_steps": 10,
+                "save_strategy": "steps",
+                "save_steps": 100,
+                "optim": "adamw_8bit",
+                "weight_decay": 0.01,
+                "lr_scheduler": "linear",
+                "seed": 3407,
+                "packing": false
+            },
+            "lora_config": {
+                "lora_rank": 16,
+                "target_modules": [
+                    "q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"
+                ],
+                "lora_alpha": 16,
+                "lora_dropout": 0.0,
+                "use_gradient_checkpointing": "unsloth",
+                "random_state": 3407,
+                "use_rslora": false
+            },
+            "dataset_config": {
+                "dataset_path": "",
+                "checkpoint_path": ""
+            },
+            "output_config": {
+                "output_path": "",
+                "output_format": "gguf",
+                "save_method": "merged_4bit",
+                "quantization_method": "f16"
+            }
+        }
+    },
     "SearchEngine": {
         "google_search": {
             "search_url": "",

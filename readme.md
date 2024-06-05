@@ -367,7 +367,15 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
   3. **`Fine-tuning`**
 
-      You can fine-tune the language model using a private dataset. `Not implemented`
+      You can fine-tune the language model using a private dataset. The current integration includes the open-source project `unsloth` and allows model fine-tuning on Linux systems.
+
+      ```bash
+      # Preparations for fine-tuning: after installing requirements-ubuntu.txt, follow these steps to install the necessary packages for model fine-tuning.
+        1. pip install "unsloth[colab-new] @ git+https://github.com/unslothai/unsloth.git"
+        2. pip install --no-deps trl peft accelerate bitsandbytes
+      ```
+
+      Currently, `unsloth` supports the following models: Qwen 1.5 (7B, 14B, 32B, 72B), Llama3-8B, Mistral (v0.3)-7B, Gemma, CodeGemma, ORPO, DPO Zephyr, Phi-3 mini & medium, TinyLlama
 
   4. **`Role Play`**
 

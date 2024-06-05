@@ -25,6 +25,16 @@ training_devices_list = ["auto","cpu","gpu","mps"]
 loadbits_list = ["32 bits","16 bits","8 bits"]
 glob_roleplay_list = [""]
 glob_assistant_name = ["James","Michael","William","David","John","Emily","Sarah","Jessica","Elizabeth","Jennifer"]
+glob_compute_type_list = ["fp16","fp32","fp8"]
+glob_save_strategy_list = ["no", "epoch", "steps"]
+glob_optimizer_list = ["adamw_hf", "adamw_torch", "adamw_torch_fused", "adamw_torch_xla", "adamw_torch_npu_fused", "adamw_apex_fused", "adafactor", "adamw_anyprecision", "sgd", "adagrad", "adamw_bnb_8bit", "adamw_8bit", "lion_8bit",
+                       "lion_32bit", "paged_adamw_32bit", "paged_adamw_8bit", "paged_lion_32bit", "paged_lion_8bit", "rmsprop", "rmsprop_bnb", "rmsprop_bnb_8bit", "rmsprop_bnb_32bit", "galore_adamw", "galore_adamw_8bit", "galore_adafactor",
+                       "galore_adamw_layerwise", "galore_adamw_8bit_layerwise", "galore_adafactor_layerwise"]
+glob_lr_scheduler_list = ["linear", "cosine", "cosine_with_restarts", "polynomial", "constant", "constant_with_warmup", "inverse_sqrt", "reduce_lr_on_plateau", "cosine_with_min_lr"]
+glob_Lora_rank_list = [1, 2, 4, 8, 16, 32, 64]
+glob_save_model_list = ["full", "lora", "gguf"]
+glob_save_method_list = ["lora", "merged_16bit", "merged_4bit"]
+glob_quantization_method_list = ["not_quantized", "fast_quantized", "quantized", "f32", "f16", "q8_0", "q4_k_m", "q5_k_m", "q2_k", "q3_k_l", "q3_k_m", "q3_k_s", "q4_0", "q4_1", "q4_k_s", "q4_k", "q5_k", "q5_0", "q5_1", "q5_k_s", "q6_k", "iq2_xxs", "iq2_xs", "iq3_xxs", "q3_k_xs"]
 
 class ModelType(Enum):
     Unknown = 0

@@ -244,7 +244,7 @@
   4. **`特殊模型`** Huggingface上发布的量化模型(GGUF)或者需要特殊聊天模版的模型
   5. **`在线模型`** 支持OpenAI和Google的在线语言模型，比如GPT4-Turbo和Gemini-Pro模型，或者在线的多模态模型GPT4-vision和Gemini-Pro-vision。需要提供OpenAI的API Key和Google API Key。可以在系统环境变量中配置OPENAI_API_KEY和GOOGLE_API_KEY，或者在配置界面中单独配置。
 
-  `目前参数可以配置加载设备和加载位数，模型量化，模型微调配置功能还未实现`
+  `目前参数可以配置加载设备和加载位数，模型量化功能还未实现`
 
 ![Image1](./img/Configuration.png)
 
@@ -369,7 +369,17 @@
 
   3. **`模型微调`**
 
-      可以使用私有数据集，对语言模型进行微调。`该功能还未实现`
+      可以使用私有数据集，对语言模型进行微调。当前集成了`unsloth`开源项目并可以在Linux系统中对模型进行微调。
+
+      ```bash
+      # 微调前的准备工作，您需要在安装requirements-ubuntu.txt之后，按以下步骤安装以支持模型微调。
+        1. pip install "unsloth[colab-new] @ git+https://github.com/unslothai/unsloth.git"
+        2. pip install --no-deps trl peft accelerate bitsandbytes
+      ```
+
+    当前`unsloth`支持的模型包含Qwen 1.5(7B, 14B, 32B, 72B), Llama3-8B, Mistral(v0.3)-7B, Gemma, CodeGemma, ORPO, DPO Zephyr, Phi-3 mini & medium, TinyLlama
+
+
 
   4. **`角色扮演`**
 
