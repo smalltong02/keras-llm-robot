@@ -2292,6 +2292,16 @@
             },
             "Multimodal Model": {
                 "Vision Chat Model": {
+                    "glm-4v-9b": {
+                        "path": "models/multimodal/image-chat/glm-4v-9b",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "causallm",
+                        "Huggingface": "THUDM/glm-4v-9b"
+                    },
                     "MiniCPM-Llama3-V-2_5": {
                         "path": "models/multimodal/image-chat/MiniCPM-Llama3-V-2_5",
                         "device": "auto",
@@ -2530,6 +2540,26 @@
                         "preset": "ChatML",
                         "load_type": "llamacpp",
                         "Huggingface": "shenzhi-wang/Llama3-8B-Chinese-Chat-GGUF-8bit"
+                    },
+                    "glm-4-9b-chat": {
+                        "path": "models/llm/glm-4-9b-chat",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "pipeline",
+                        "Huggingface": "THUDM/glm-4-9b-chat"
+                    },
+                    "glm-4-9b-chat-1m": {
+                        "path": "models/llm/glm-4-9b-chat-1m",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "pipeline",
+                        "Huggingface": "01-ai/glm-4-9b-chat-1m"
                     }
                 },
                 "13B Model": {},

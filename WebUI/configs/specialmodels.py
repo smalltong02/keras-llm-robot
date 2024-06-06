@@ -1285,6 +1285,35 @@ def multimodal_model_chat(
             if speak_handler: 
                 speak_handler.on_llm_end(None)
         
+        elif model_name == "glm-4v-9b":
+            img_list = []
+            for image in imagesdata:
+                decoded_data = base64.b64decode(image)
+                imagedata = BytesIO(decoded_data)
+                image_rgb = Image.open(imagedata).convert('RGB')
+                img_list.append(image_rgb)
+            inputs = tokenizer.apply_chat_template([{"role": "user", "image": img_list[0], "content": query}],
+                                       add_generation_prompt=True, tokenize=True, return_tensors="pt",
+                                       return_dict=True)
+            model_config = webui_config.get("ModelConfig").get("LocalModel").get("Multimodal Model").get("Vision Chat Model").get(model_name)
+            device = model_config.get("device", "auto")
+            device = "cuda" if device == "gpu" else detect_device() if device == "auto" else device
+            inputs = inputs.to(device)
+            gen_kwargs = {"max_length": 2500, "do_sample": True, "top_k": 1}
+            answer = ""
+            with torch.no_grad():
+                outputs = model.generate(**inputs, **gen_kwargs)
+                outputs = outputs[:, inputs['input_ids'].shape[1]:]
+                answer = tokenizer.decode(outputs[0])
+            if speak_handler: 
+                speak_handler.on_llm_new_token(answer)
+            yield json.dumps(
+                {"text": answer, "chat_history_id": chat_history_id},
+                ensure_ascii=False)
+            await asyncio.sleep(0.1)
+            if speak_handler: 
+                speak_handler.on_llm_end(None)
+
         update_chat_history(chat_history_id, response=answer)
         
     return StreamingResponse(multimodal_chat_iterator(

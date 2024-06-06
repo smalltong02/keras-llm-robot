@@ -780,6 +780,9 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
 ## New Feature Updates
 
+- 🚀 Update Log for 2024-06-05
+  1. Support for glm-4v-9b, glm-4-9b-chat, glm-4-9b-chat-1m
+
 - 🚀 Update Log for 2024-06-03
   1. Support for MiniCPM-Llama3-V-2_5
 
