@@ -2793,7 +2793,7 @@
                 "seq_length": 2048
             },
             "train_config": {
-                "lr": 5e-5,
+                "lr": 5e-05,
                 "epochs": 50,
                 "batch_size": 2,
                 "num_proc": 2,
@@ -2811,7 +2811,13 @@
             "lora_config": {
                 "lora_rank": 16,
                 "target_modules": [
-                    "q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"
+                    "q_proj",
+                    "k_proj",
+                    "v_proj",
+                    "o_proj",
+                    "gate_proj",
+                    "up_proj",
+                    "down_proj"
                 ],
                 "lora_alpha": 16,
                 "lora_dropout": 0.0,
@@ -2861,7 +2867,7 @@
         "safe_mode": false
     },
     "FunctionCalling": {
-        "calling_enable": false,
+        "calling_enable": true,
         "max_calling": 5
     },
     "ToolBoxes": {

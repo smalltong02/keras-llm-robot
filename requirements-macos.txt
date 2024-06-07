@@ -62,7 +62,7 @@ google-api-core==2.15.0
 google-auth==2.25.2
 google-auth-oauthlib==1.2.0
 google-crc32c==1.5.0
-google-generativeai==0.3.1
+google-generativeai==0.6.0
 googleapis-common-protos==1.62.0
 google-cloud-speech==2.26.0
 google-cloud-texttospeech==2.16.3
@@ -96,7 +96,6 @@ jsonschema-specifications==2023.7.1
 kiwisolver==1.4.5
 langchain==0.0.335
 langchain-experimental==0.0.39
-langchain-google-genai==0.0.5
 langcodes==3.3.0
 langsmith==0.0.63
 lazy_loader==0.3

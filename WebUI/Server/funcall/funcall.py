@@ -2,7 +2,7 @@ import json
 import datetime
 import geocoder
 from langchain_core.tools import tool
-#from WebUI.configs.basicconfig import ExtractJsonStrings
+import google.generativeai as genai
 
 @tool
 def get_current_location():
@@ -26,7 +26,7 @@ def get_current_location():
 
 @tool
 def get_current_time():
-    """Get current time.
+    """Get the current local time.
     Here is an example of calling the function 'get_current_time':
         User: Do you know the current time?
         Bot: Okay, I will call the function 'get_current_time' to help you get current time.
@@ -43,7 +43,12 @@ def get_current_time():
 
 @tool
 def submit_warranty_claim(caption: str, description: str):
-    """Submit warranty claim.
+    """Submit a repair order for a customer.
+
+    Parameters:
+        caption (string): Title of repair order.
+        description (string): A detailed description of the damaged goods, including customer information.
+
     Here is an example of calling the function 'submit_warranty_claim':
         User: My network adapter is broken. Please help me submit a repair request.
         Bot: Sure, please provide the following information:
@@ -84,6 +89,47 @@ tool_names = {
     "get_current_time": get_current_time,
     "submit_warranty_claim": submit_warranty_claim,
 }
+
+# for google gemini
+get_current_weather_func = genai.protos.Tool(
+    function_declarations=[
+      genai.protos.FunctionDeclaration(
+        name='get_current_location',
+        description="Get current location information.",
+        parameters=None
+      )
+    ])
+
+get_current_time_func = genai.protos.Tool(
+    function_declarations=[
+      genai.protos.FunctionDeclaration(
+        name='get_current_time',
+        description="Get the current local time.",
+        parameters=None
+      )
+    ])
+
+submit_warranty_claim_func = genai.protos.Tool(
+    function_declarations=[
+      genai.protos.FunctionDeclaration(
+        name='submit_warranty_claim',
+        description="Submit a repair order for a customer.",
+        parameters=genai.protos.Schema(
+            type=genai.protos.Type.OBJECT,
+            properties={
+                'caption':genai.protos.Schema(type=genai.protos.Type.STRING, description="Title of repair order"),
+                'description':genai.protos.Schema(type=genai.protos.Type.STRING, description="A detailed description of the damaged goods, including customer information")
+            },
+            required=['caption','description']
+        )
+      )
+    ])
+
+google_funcall_tools = [
+        get_current_weather_func,
+        get_current_time_func,
+        submit_warranty_claim_func,
+    ]
 
 def GetFuncallList() ->list:
     funcall_list = []

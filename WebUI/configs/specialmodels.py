@@ -157,6 +157,7 @@ async def special_chat_iterator(model: Any,
 
     configinst = InnerJsonConfigWebUIParse()
     webui_config = configinst.dump()
+    support_tools = modelinfo.get("config", {}).get("support_tools", False)
     calling_enable = is_function_calling_enable()
     model_name = modelinfo["mname"]
     speak_handler = None
@@ -176,7 +177,7 @@ async def special_chat_iterator(model: Any,
     if imagesprompt:
         query = generate_new_query(query, imagesprompt)
     system_msg = {}
-    if calling_enable:
+    if calling_enable and not support_tools:
         tools_system_prompt = GetToolsSystemPrompt()
         if history and history[0].get("role", "") == "system":
             history[0]["content"] = history[0]["content"] + "\n\n" + tools_system_prompt
@@ -307,7 +308,13 @@ async def special_chat_iterator(model: Any,
             if apikey is None:
                 apikey = "EMPTY"
             genai.configure(api_key=apikey)
-            model = genai.GenerativeModel(model_name=model_name)
+            calling_tools =[]
+            enable_automatic_function_calling = False
+            if calling_enable:
+                from WebUI.Server.funcall.funcall import google_funcall_tools
+                calling_tools = google_funcall_tools
+                stream = False
+            model = genai.GenerativeModel(model_name=model_name, tools=calling_tools)
             generation_config = {'temperature': temperature}
 
             while btalk:
@@ -361,38 +368,24 @@ async def special_chat_iterator(model: Any,
                     if speak_handler: 
                         speak_handler.on_llm_end(None)
                 else:
-                    for chunk in response:
+                    if hasattr(response, 'parts'):
+                        for part in response.parts:
+                            if fn := part.function_call:
+                                #btalk = True
+                                args = ", ".join(f"{key}={val}" for key, val in fn.args.items())
+                                answer = f"{fn.name}({args})"
+                                print(answer)
+                                yield json.dumps(
+                                    {"text": answer, "chat_history_id": chat_history_id},
+                                    ensure_ascii=False)
+                    elif hasattr(response, 'text'):
                         if speak_handler: 
-                            speak_handler.on_llm_new_token(chunk.text)
-                        answer += chunk.text
-                    if not btalk and calling_enable:
-                        new_query, new_answer = call_calling(answer)
-                        if new_query:
-                            btalk = True
-                            pattern = r'\"(.*?)\"'
-                            match = re.search(pattern, new_query)
-                            if match:
-                                function_call = match.group(1)
-                            new_answer = new_answer + "\n" + f'It is necessary to call the function `{function_call}` to get more information.'
-                            yield json.dumps(
-                                {"clear": new_answer, "chat_history_id": chat_history_id},
-                                ensure_ascii=False)
-                            yield json.dumps(
-                                {"user": f'The function `{function_call}` was called.', "chat_history_id": chat_history_id},
-                                ensure_ascii=False)
-                            new_history = await CreateChatHistoryFromCallCalling(query=query, new_answer=new_answer, history=history)
-                            history = new_history
-                            query = new_query
-                        else:
-                            yield json.dumps(
-                                {"text": answer, "chat_history_id": chat_history_id},
-                                ensure_ascii=False)
-                            await asyncio.sleep(0.1)
-                    else:
+                            speak_handler.on_llm_new_token(response.text)
+                        answer = response.text
                         yield json.dumps(
                             {"text": answer, "chat_history_id": chat_history_id},
                             ensure_ascii=False)
-                        await asyncio.sleep(0.1)
+                    await asyncio.sleep(0.1)
                     if speak_handler: 
                         speak_handler.on_llm_end(None)
         elif provider == "ali-cloud-api":
@@ -1348,6 +1341,8 @@ def model_chat(
     modelinfo : Dict[str, any] = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "config": dict}
     model_name = app._model_name
     modelinfo["mtype"], modelinfo["msize"], modelinfo["msubtype"] = GetModelInfoByName(webui_config, model_name)
+    modelinfo["mname"] = model_name
+    modelinfo["config"] = GetModelConfig(webui_config, modelinfo)
     modelinfo["mname"] = model_name
     if modelinfo["mtype"] == ModelType.Special or modelinfo["mtype"] == ModelType.Online:
         return special_model_chat(app._model, app._tokenizer, app._streamer, modelinfo, query, imagesdata, audiosdata, videosdata, imagesprompt, history, stream, speechmodel, temperature, max_tokens, prompt_name)
