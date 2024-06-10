@@ -642,6 +642,8 @@
 
       模型可以使用这些工具发送邮件，添加提醒，从云存储上下载或上传文件，查看地图，搜索Youtube视频等。
 
+      **`需要在Google Cloud Platform上申请账号，并且生成 OAuth 2.0 的凭证，下载 Json 格式的 Token 之后再从WebUI中导入才可以使用Google ToolBox功能`**
+
 
 - ### AI创造者
 

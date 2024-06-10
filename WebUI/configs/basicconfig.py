@@ -821,6 +821,25 @@ def GetCredentialsPath() ->str:
         credential = ""
     return credential
 
+def RunFunctionCallingorToolBoxes(json_data: str) -> str:
+    from WebUI.Server.funcall.funcall import RunNormalFunctionCalling
+    from WebUI.Server.funcall.google_toolboxes.credential import RunFunctionCallingInToolBoxes
+    if not json_data:
+        return ""
+    func_name, result = RunNormalFunctionCalling(json_data)
+    if not func_name:
+        func_name, result = RunFunctionCallingInToolBoxes(json_data)
+    if not func_name:
+        return ""
+    return result
+
+def CallFunctionCallingInString(func_name: str="", args: dict={}):
+    if not func_name:
+        return ""
+    json_data = json.dumps({"name": func_name, "arguments": args})
+    return RunFunctionCallingorToolBoxes(json_data)
+    
+
 def CallingExternalTools(text: str) -> bool:
     if not text:
         return False, ""

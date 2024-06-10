@@ -637,6 +637,7 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
   
   By integrating these tools, the model can efficiently perform tasks such as sending emails, managing reminders, handling cloud storage, navigating maps, and searching for YouTube videos.
 
+  **`To use the Google ToolBox feature, you need to sign up for an account on Google Cloud Platform, generate OAuth 2.0 credentials, download the token in JSON format, and then import it through the WebUI.`**
 
 - ### AI Generator
 
