@@ -2,6 +2,7 @@ import os
 from langchain_core.tools import tool
 from googleapiclient.discovery import build
 from typing import Any
+import google.generativeai as genai
 
 DRIVE_READONLY_SCOPES = ["https://www.googleapis.com/auth/drive.metadata.readonly"]
 DRIVE_FULL_SCOPES = ["https://www.googleapis.com/auth/drive"]
@@ -268,6 +269,59 @@ drive_tool_names = {
     "download_from_cloud_storage": download_from_cloud_storage,
     "upload_to_cloud_storage": upload_to_cloud_storage,
 }
+
+# for google gemini
+search_in_cloud_storage_func = genai.protos.Tool(
+    function_declarations=[
+      genai.protos.FunctionDeclaration(
+        name='search_in_cloud_storage',
+        description="Search document in cloud storage.",
+        parameters=genai.protos.Schema(
+            type=genai.protos.Type.OBJECT,
+            properties={
+                'search_criteria':genai.protos.Schema(type=genai.protos.Type.STRING, description="""Use the advanced search syntax like the Google Drive API, Here's an example: name contains "HipsHook Project" and "me" in owners"""),
+            },
+            required=['search_criteria']
+        )
+      )
+    ])
+
+download_from_cloud_storage_func = genai.protos.Tool(
+    function_declarations=[
+      genai.protos.FunctionDeclaration(
+        name='download_from_cloud_storage',
+        description="Download document from cloud storage.",
+        parameters=genai.protos.Schema(
+            type=genai.protos.Type.OBJECT,
+            properties={
+                'search_criteria':genai.protos.Schema(type=genai.protos.Type.STRING, description="""Use the advanced search syntax like the Google Drive API, Here's an example: name contains "HipsHook Project" and "me" in owners"""),
+                'download_path':genai.protos.Schema(type=genai.protos.Type.STRING, description="This is folder path."),
+            },
+            required=['search_criteria', 'download_path']
+        )
+      )
+    ])
+
+upload_to_cloud_storage_func = genai.protos.Tool(
+    function_declarations=[
+      genai.protos.FunctionDeclaration(
+        name='upload_to_cloud_storage',
+        description="send mail in email.",
+        parameters=genai.protos.Schema(
+            type=genai.protos.Type.OBJECT,
+            properties={
+                'upload_file':genai.protos.Schema(type=genai.protos.Type.STRING, description="This is file path."),
+            },
+            required=['upload_file']
+        )
+      )
+    ])
+
+google_cloud_tools = [
+        search_in_cloud_storage_func,
+        download_from_cloud_storage_func,
+        upload_to_cloud_storage_func,
+    ]
 
 def GetStorageFuncallList() ->list:
     funcall_list = []

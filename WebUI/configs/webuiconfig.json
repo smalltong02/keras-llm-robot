@@ -11,8 +11,7 @@
         "OnlineModel": {
             "google-api": {
                 "modellist": [
-                    "gemini-pro",
-                    "gemini-pro-vision",
+                    "gemini-1.5-flash",
                     "gemini-1.5-pro-latest"
                 ],
                 "baseurl": "",
@@ -27,12 +26,6 @@
             "openai-api": {
                 "modellist": [
                     "gpt-3.5-turbo",
-                    "gpt-3.5-turbo-0125",
-                    "gpt-3.5-turbo-instruct",
-                    "gpt-4",
-                    "gpt-4-32k",
-                    "gpt-4-0125-preview",
-                    "gpt-4-vision-preview",
                     "gpt-4-turbo",
                     "gpt-4o"
                 ],
@@ -42,7 +35,7 @@
                 "preset": "default",
                 "apikey": "[Your Key]",
                 "apiproxy": "[Private Proxy]",
-                "support_tools": true,
+                "support_tools": false,
                 "provider": "OpenAI"
             },
             "groq-api": {
@@ -58,7 +51,7 @@
                 "preset": "default",
                 "apikey": "[Your Key]",
                 "apiproxy": "[Private Proxy]",
-                "support_tools": true,
+                "support_tools": false,
                 "provider": "GroqCloud"
             },
             "ali-cloud-api": {
@@ -170,7 +163,7 @@
                 "preset": "default",
                 "apikey": "[Your Key]",
                 "apiproxy": "[Private Proxy]",
-                "support_tools": true,
+                "support_tools": false,
                 "provider": "KimiCloud"
             },
             "yi-01ai-api": {
@@ -538,7 +531,7 @@
                 "voice_key": "[Your Key]",
                 "voice_region": "[Your Region]",
                 "language": [
-                    "ja-JP"
+                    "en-US"
                 ],
                 "provider": "AzureCloud",
                 "CloudTemplates": "AzureVoiceTemplate",
@@ -1927,7 +1920,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "fastchat",
-                        "support_tools": true,
+                        "support_tools": false,
                         "Huggingface": "Qwen/Qwen1.5-4B-Chat"
                     }
                 },
@@ -1984,7 +1977,7 @@
                         "loadbits": 8,
                         "preset": "default",
                         "load_type": "fastchat",
-                        "support_tools": true,
+                        "support_tools": false,
                         "Huggingface": "THUDM/chatglm3-6b"
                     },
                     "tigerbot-7b-chat": {
@@ -2050,7 +2043,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "fastchat",
-                        "support_tools": true,
+                        "support_tools": false,
                         "Huggingface": "Qwen/Qwen1.5-7B-Chat"
                     },
                     "fuyu-8b": {
@@ -2262,7 +2255,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "fastchat",
-                        "support_tools": true,
+                        "support_tools": false,
                         "Huggingface": "Qwen/Qwen1.5-32B-Chat-GPTQ-Int4"
                     },
                     "Yi-1.5-34B-Chat-GPTQ-Int4": {
@@ -2595,7 +2588,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "pipeline",
-                        "support_tools": true,
+                        "support_tools": false,
                         "Huggingface": "THUDM/glm-4-9b-chat"
                     },
                     "glm-4-9b-chat-1m": {
@@ -2606,7 +2599,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "pipeline",
-                        "support_tools": true,
+                        "support_tools": false,
                         "Huggingface": "01-ai/glm-4-9b-chat-1m"
                     }
                 },
@@ -2878,36 +2871,96 @@
         "safe_mode": false
     },
     "FunctionCalling": {
-        "calling_enable": true,
-        "max_calling": 5
+        "calling_enable": true
     },
     "ToolBoxes": {
         "Google ToolBoxes": {
             "credential": "google_credentials.json",
             "Tools": {
                 "Google Maps": {
-                    "enable": false
+                    "enable": true
                 },
                 "Google Mail": {
-                    "enable": false
+                    "enable": true
                 },
                 "Google Youtube": {
-                    "enable": false
+                    "enable": true
                 },
                 "Google Calendar": {
-                    "enable": false
+                    "enable": true
                 },
                 "Google Drive": {
-                    "enable": false
+                    "enable": true
                 },
                 "Google Docs": {
-                    "enable": false
+                    "enable": true
                 },
                 "Google Sheets": {
-                    "enable": false
+                    "enable": true
                 },
                 "Google Forms": {
-                    "enable": false
+                    "enable": true
+                }
+            }
+        }
+    },
+    "CurrentRunningConfig": {
+        "chat_solution": {
+            "name": "Virtual Personal Assistant",
+            "assistant_name": "Jessica"
+        },
+        "search_engine": {
+            "name": "duckduckgo"
+        },
+        "knowledge_base": {
+            "name": "PS5"
+        },
+        "normal_calling": {
+            "enable": true
+        },
+        "code_interpreter": {
+            "name": ""
+        },
+        "role_player": {
+            "name": "Personal Secretary",
+            "language": "english"
+        },
+        "voice": {
+            "name": "",
+            "language": ""
+        },
+        "speech": {
+            "name": "",
+            "speaker": ""
+        },
+        "ToolBoxes": {
+            "Google ToolBoxes": {
+                "credential": "google_credentials.json",
+                "Tools": {
+                    "Google Maps": {
+                        "enable": true
+                    },
+                    "Google Mail": {
+                        "enable": true
+                    },
+                    "Google Youtube": {
+                        "enable": true
+                    },
+                    "Google Calendar": {
+                        "enable": true
+                    },
+                    "Google Drive": {
+                        "enable": true
+                    },
+                    "Google Docs": {
+                        "enable": true
+                    },
+                    "Google Sheets": {
+                        "enable": true
+                    },
+                    "Google Forms": {
+                        "enable": true
+                    }
                 }
             }
         }

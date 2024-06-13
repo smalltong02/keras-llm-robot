@@ -62,6 +62,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
     current_imagere_model = api.get_image_recognition_model()
     current_imagegen_model = api.get_image_generation_model()
     current_musicgen_model = api.get_music_generation_model()
+    current_running_config = api.get_current_running_config()
     voicemodel = None
     
     if running_model == "":
@@ -364,17 +365,17 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                 #             st.toast("Update Document Success!")
                 #         else:
                 #             st.toast("Update Document Failed!")
-
+        current_running_config["knowledge_base"]["name"] = st.session_state["selected_kb_name"]
+        api.save_current_running_config(current_running_config)
     with tabinterpreter:
         codeinterpreter = webui_config.get("CodeInterpreter")
         codeinterpreter_lists = []
         for key, value in codeinterpreter.items():
             if isinstance(value, dict):
                 codeinterpreter_lists.append(key)
-        current_interpreter_state = st.session_state.get("current_interpreter", {})
-        if current_interpreter_state:
+        if current_running_config["code_interpreter"]["name"]:
             interpreter_enable = True
-            index = codeinterpreter_lists.index(current_interpreter_state["interpreter"])
+            index = codeinterpreter_lists.index(current_running_config["code_interpreter"]["name"])
         else:
             index = 0
             interpreter_enable = False
@@ -416,9 +417,10 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                     elif msg := check_success_msg(r):
                         st.toast("success save configuration for Code Interpreter.", icon="✔")
         if interpreter_enable:
-            st.session_state["current_interpreter"] = {"interpreter": current_interpreter}
+            current_running_config["code_interpreter"]["name"] = current_interpreter
         else:
-            st.session_state["current_interpreter"] = {}
+            current_running_config["code_interpreter"]["name"] = ""
+        api.save_current_running_config(current_running_config)
 
     pathstr = ""
     with tabspeech:
@@ -451,6 +453,8 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                         elif msg := check_success_msg(r):
                             st.success(msg)
                             current_speech_model = {"model": "", "speaker": ""}
+                            current_running_config["speech"]["name"] = ""
+                            current_running_config["speech"]["speaker"] = ""
                 else:
                     with st.spinner(f"Loading Model: `{speechmodel}`, Please do not perform any actions or refresh the page."):
                         provider = ttovmodel[speechmodel].get("provider", "")
@@ -463,9 +467,12 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                             elif msg := check_success_msg(r):
                                 st.success(msg)
                                 current_speech_model = {"model": speechmodel, "speaker": speaker}
+                                current_running_config["speech"]["name"] = speechmodel
+                                current_running_config["speech"]["speaker"] = speaker
                         else:
                             st.error("Please download the model to your local machine first.")
-
+                api.save_current_running_config(current_running_config)
+                
         modelconfig = ttovmodel[speechmodel]
         synthesisconfig = modelconfig["synthesis"]
         #print(modelconfig)
@@ -570,16 +577,13 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                     )
                     if save_parameters:
                         with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
-                            if speechkey == "" or speechkey == "[Your Key]" or speechregion == "" or speechregion == "[Your Region]":
-                                st.error("Please enter the correct key and region, save failed!")
-                            else:
-                                modelconfig["speech_key"] = speechkey
-                                modelconfig["speech_region"] = speechregion
-                                r = api.save_speech_model_config(speechmodel, modelconfig)
-                                if msg := check_error_msg(r):
-                                    st.error(msg)
-                                elif msg := check_success_msg(r):
-                                    st.success(msg)
+                            modelconfig["speech_key"] = speechkey
+                            modelconfig["speech_region"] = speechregion
+                            r = api.save_speech_model_config(speechmodel, modelconfig)
+                            if msg := check_error_msg(r):
+                                st.error(msg)
+                            elif msg := check_success_msg(r):
+                                st.success(msg)
             elif speechmodel == "GoogleSpeechService":
                 with st.form("speech_cloud_model"):
                     keycol, regcol = st.columns(2)
@@ -596,16 +600,13 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                     )
                     if save_parameters:
                         with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
-                            if key_json_path == "" or key_json_path == "[Your Key]":
-                                st.error("Please enter the correct key and region, save failed!")
-                            else:
-                                modelconfig["speech_key"] = key_json_path
-                                modelconfig["speech_region"] = speechregion
-                                r = api.save_speech_model_config(speechmodel, modelconfig)
-                                if msg := check_error_msg(r):
-                                    st.error(msg)
-                                elif msg := check_success_msg(r):
-                                    st.success(msg)
+                            modelconfig["speech_key"] = key_json_path
+                            modelconfig["speech_region"] = speechregion
+                            r = api.save_speech_model_config(speechmodel, modelconfig)
+                            if msg := check_error_msg(r):
+                                st.error(msg)
+                            elif msg := check_success_msg(r):
+                                st.success(msg)
             else:
                 pass
 
@@ -659,6 +660,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                     vtotmodel_lists,
                     index=index,
                 )
+            modelconfig = vtotmodel[voicemodel]
             vole_button = st.button(
                 "Load & Eject",
                 key="vole_btn",
@@ -673,6 +675,8 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                         elif msg := check_success_msg(r):
                             st.success(msg)
                             current_voice_model = ""
+                            current_running_config["voice"]["name"] = ""
+                            current_running_config["voice"]["language"] = ""
                 else:
                     with st.spinner(f"Loading Model: `{voicemodel}`, Please do not perform any actions or refresh the page."):
                         provider = vtotmodel[voicemodel].get("provider", "")
@@ -685,9 +689,12 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                                 st.success(msg)
                                 st.toast(msg, icon="✔")
                                 current_voice_model = voicemodel
+                                current_running_config["voice"]["name"] = current_voice_model
+                                language = modelconfig.get("language", [])
+                                current_running_config["voice"]["language"] = language[0] if language else "en-US"
                         else:
                             st.error("Please download the model to your local machine first.")
-            modelconfig = vtotmodel[voicemodel]
+                api.save_current_running_config(current_running_config)
         with col2:
             if modelconfig["type"] == "local":
                 if voicemodel is not None:
@@ -825,6 +832,8 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                         key_json_path = st.text_input("Key Json Path", key_json_path, key="key_json_path-1")
                     with langcol:
                         language_code = modelconfig.get("language", "")
+                        if language_code:
+                            language_code = language_code[0]
                         language_code_list = modelconfig.get("language_code", [])
                         if language_code in language_code_list:
                             index = language_code_list.index(language_code)
@@ -841,16 +850,13 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                     )
                     if save_parameters:
                         with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
-                            if key_json_path == "" or key_json_path == "[Key Path]" or language_code == "":
-                                st.error("Please enter the key json path and language, save failed!")
-                            else:
-                                modelconfig["key_json_path"] = key_json_path
-                                modelconfig["language"] = [language_code]
-                                r = api.save_vtot_model_config(voicemodel, modelconfig)
-                                if msg := check_error_msg(r):
-                                    st.error(f"failed to save configuration for model {voicemodel}.")
-                                elif msg := check_success_msg(r):
-                                    st.success(f"success save configuration for model {voicemodel}.")
+                            modelconfig["key_json_path"] = key_json_path
+                            modelconfig["language"] = [language_code]
+                            r = api.save_vtot_model_config(voicemodel, modelconfig)
+                            if msg := check_error_msg(r):
+                                st.error(f"failed to save configuration for model {voicemodel}.")
+                            elif msg := check_success_msg(r):
+                                st.success(f"success save configuration for model {voicemodel}.")
 
             elif voicemodel == "AzureVoiceService":
                 with st.form("voice_cloud_model"):
@@ -859,6 +865,8 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                         voicekey = modelconfig.get("voice_key")
                         voicekey = st.text_input("Voice Key", voicekey, key="voice_key", type="password")
                         language_code = modelconfig.get("language", "")
+                        if language_code:
+                            language_code = language_code[0]
                         language_code_list = modelconfig.get("language_code", [])
                         if language_code in language_code_list:
                             index = language_code_list.index(language_code)
@@ -879,17 +887,14 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                     )
                     if save_parameters:
                         with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
-                            if voicekey == "" or voicekey == "[Your Key]" or voiceregion == "" or voiceregion == "[Your Region]":
-                                st.error("Please enter the correct key and region, save failed!")
-                            else:
-                                modelconfig["voice_key"] = voicekey
-                                modelconfig["voice_region"] = voiceregion
-                                modelconfig["language"] = [language_code]
-                                r = api.save_vtot_model_config(voicemodel, modelconfig)
-                                if msg := check_error_msg(r):
-                                    st.error(f"failed to save configuration for model {voicemodel}.")
-                                elif msg := check_success_msg(r):
-                                    st.success(f"success save configuration for model {voicemodel}.")
+                            modelconfig["voice_key"] = voicekey
+                            modelconfig["voice_region"] = voiceregion
+                            modelconfig["language"] = [language_code]
+                            r = api.save_vtot_model_config(voicemodel, modelconfig)
+                            if msg := check_error_msg(r):
+                                st.error(f"failed to save configuration for model {voicemodel}.")
+                            elif msg := check_success_msg(r):
+                                st.success(f"success save configuration for model {voicemodel}.")
             else:
                 pass
 
@@ -924,6 +929,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                 else:
                     with st.spinner(f"Loading Model: `{imageremodel}`, Please do not perform any actions or refresh the page."):
                         provider = imageremodels[imageremodel].get("provider", "")
+                        pathstr = imageremodels[imageremodel].get("path")
                         if provider != "" or LocalModelExist(pathstr):
                             r = api.change_image_recognition_model(current_imagere_model, imageremodel)
                             if msg := check_error_msg(r):
@@ -1394,17 +1400,14 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                     )
                     if save_parameters:
                         with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
-                            if not google_credential or google_credential == "[Your Key]":
-                                st.error("Please input google credential.")
-                            else:
-                                toolboxes["Google ToolBoxes"]["credential"] = google_credential
-                                r = api.save_google_toolboxes_config(google_toolboxes)
-                                if msg := check_error_msg(r):
-                                    st.error(msg)
-                                    st.toast(msg, icon="✖")
-                                elif msg := check_success_msg(r):
-                                    st.success("success save configuration for google toolboxes.")
-                                    st.toast("success save configuration for google toolboxes.", icon="✔")
+                            toolboxes["Google ToolBoxes"]["credential"] = google_credential
+                            r = api.save_google_toolboxes_config(google_toolboxes)
+                            if msg := check_error_msg(r):
+                                st.error(msg)
+                                st.toast(msg, icon="✖")
+                            elif msg := check_success_msg(r):
+                                st.success("success save configuration for google toolboxes.")
+                                st.toast("success save configuration for google toolboxes.", icon="✔")
 
             st.divider()
 

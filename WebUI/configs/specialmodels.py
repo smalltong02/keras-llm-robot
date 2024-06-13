@@ -7,15 +7,18 @@ import threading
 from pathlib import Path
 import google.generativeai as genai
 from fastapi.responses import StreamingResponse
-from WebUI.configs.basicconfig import (TMP_DIR, ModelType, ModelSize, ModelSubType, call_calling, CallFunctionCallingInString, GetModelInfoByName, GetProviderByName, GetModelConfig, GetGGUFModelPath, generate_new_query, GeneratePresetPrompt, GetToolsSystemPrompt, is_function_calling_enable)
+from WebUI.configs import USE_RERANKER, GetRerankerModelPath
+from WebUI.configs.basicconfig import (TMP_DIR, ToolsType, ModelType, ModelSize, ModelSubType, call_calling, GetModelInfoByName, GetProviderByName, GetModelConfig, GetGGUFModelPath, generate_new_query, GeneratePresetPrompt, 
+                                       GetSystemPromptForSupportTools, GetSystemPromptForCurrentRunningConfig, GetGoogleNativeTools, CallingExternalToolsForCurConfig, GetNewAnswerForCurConfig, GetUserAnswerForCurConfig, GetCurrentRunningCfg,
+                                       ExtractJsonStrings, use_new_search_engine, use_knowledge_base, use_new_function_calling, use_new_toolboxes_calling)
 from WebUI.configs.codemodels import code_model_chat
 from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
 from WebUI.Server.db.repository import add_chat_history_to_db, update_chat_history
 from WebUI.Server.chat.StreamHandler import StreamSpeakHandler
 from langchain.chains import LLMChain
-from WebUI.Server.utils import FastAPI
+from WebUI.Server.utils import FastAPI, detect_device
 from WebUI.Server.chat.chat import CreateChatHistoryFromCallCalling
-from typing import List, Dict, Any, Optional, AsyncIterable
+from typing import List, Dict, Any, Union, Optional, AsyncIterable
 
 def clean_special_text(text : str, prompttemplate: dict):
     anti_prompt = prompttemplate["anti_prompt"]
@@ -138,6 +141,172 @@ def init_special_models(app: FastAPI, args):
     elif load_type == "llamacpp":
         load_llamacpp_model(app=app, model_name=model_name, model_path=model_path)
 
+async def GetChatPromptFromFromSearchEngine(json_lists: list = [], se_name: str = "", query: str = "") ->Union[str, Any, Any]:
+    from WebUI.Server.chat.search_engine_chat import lookup_search_engine
+    if not json_lists or not se_name or not query:
+        return None, "", []
+    se_query = query
+    try:
+        for item in json_lists:
+            item_json = json.loads(item)
+            arguments = item_json.get("arguments", {})
+            if arguments:
+                first_key = next(iter(arguments))
+                first_value = arguments[first_key]
+                if isinstance(first_value, str):
+                    se_query = first_value
+                    break
+    except Exception as _:
+        pass
+    docs = await lookup_search_engine(se_query, se_name)
+    source_documents = [
+        f"""from [{inum + 1}] [{doc.metadata["source"]}]({doc.metadata["source"]}) \n\n{doc.page_content}\n\n"""
+        for inum, doc in enumerate(docs)
+    ]
+    context = "\n".join([doc.page_content for doc in docs])
+    if not context:
+        return None, "", []
+    new_query = f"""The user's question has been searched on the internet. Here is all the content retrieved from the search engine:
+    {context}\n
+"""
+    return new_query, se_name, source_documents
+
+async def GetChatPromptFromKnowledgeBase(json_lists: list = [], kb_name: str = "", query: str = "") ->Union[str, Any, Any]:
+    from urllib.parse import urlencode
+    from fastapi.concurrency import run_in_threadpool
+    from WebUI.Server.reranker.reranker import LangchainReranker
+    from WebUI.Server.knowledge_base.kb_doc_api import search_docs
+    from WebUI.Server.knowledge_base.kb_service.base import KBServiceFactory
+    from WebUI.Server.knowledge_base.utils import VECTOR_SEARCH_TOP_K, SCORE_THRESHOLD
+    if not json_lists or not kb_name or not query:
+        return None, "", []
+    kb_query = query
+    try:
+        for item in json_lists:
+            item_json = json.loads(item)
+            arguments = item_json.get("arguments", {})
+            if arguments:
+                first_key = next(iter(arguments))
+                first_value = arguments[first_key]
+                if isinstance(first_value, str):
+                    kb_query = first_value
+                    break
+    except Exception as _:
+        pass
+    kb = KBServiceFactory.get_service_by_name(kb_name)
+    if kb is None:
+        return None, "", []
+    docs = await run_in_threadpool(search_docs,
+            query=kb_query,
+            knowledge_base_name=kb_name,
+            top_k=VECTOR_SEARCH_TOP_K,
+            score_threshold=SCORE_THRESHOLD)
+    if USE_RERANKER:
+            reranker_model_path = GetRerankerModelPath()
+            print("-----------------model path------------------")
+            print(reranker_model_path)
+            reranker_model = LangchainReranker(top_n=VECTOR_SEARCH_TOP_K,
+                                            device=detect_device(),
+                                            max_length=1024,
+                                            model_name_or_path=reranker_model_path
+                                            )
+            print(docs)
+            docs = reranker_model.compress_documents(documents=docs,
+                                                     query=kb_query)
+            print("---------after rerank------------------")
+            print(docs)
+    source_documents = []
+    for inum, doc in enumerate(docs):
+        filename = doc.metadata.get("source")
+        parameters = urlencode({"knowledge_base_name": kb_name, "file_name": filename})
+        base_url = "/"
+        url = f"{base_url}knowledge_base/download_doc?" + parameters
+        text = f"""from [{inum + 1}] [{filename}]({url}) \n\n{doc.page_content}\n\n"""
+        source_documents.append(text)
+    context = "\n".join([doc.page_content for doc in docs])
+    if not context:
+        return None, "", []
+    new_query = f"""The user's issue has been searched through the knowledge base. Here is all the content retrieved:
+    {context}\n
+"""
+    return new_query, kb_name, source_documents
+
+async def GetChatPromptFromFunctionCalling(json_lists: list = []) ->Union[str, Any, Any]:
+    from WebUI.Server.funcall.funcall import RunNormalFunctionCalling
+    if not json_lists:
+        return None, "", []
+    result_list = []
+    func_name = []
+    for item in json_lists:
+        name, result = RunNormalFunctionCalling(item)
+        if result:
+            func_name.append(name)
+            result_list.append(result)
+    source_documents = []
+    for result in enumerate(result_list):
+        source_documents.append(f"function - {func_name[0]}()\n\n{result}")
+    context = "\n".join(result_list)
+    if not context:
+        return None, "", []
+    new_query = f"""The function ''{func_name[0]}'' has been executed, and the result is as follows:
+    {context}\n
+"""
+    await asyncio.sleep(0.1)
+    return new_query, func_name[0], source_documents
+
+async def GetChatPromptFromToolBoxes(json_lists: list = []) ->Union[str, Any, Any]:
+    from WebUI.Server.funcall.google_toolboxes.credential import RunFunctionCallingInToolBoxes
+    if not json_lists:
+        return None, "", []
+    result_list = []
+    func_name = []
+    for item in json_lists:
+        name, result = RunFunctionCallingInToolBoxes(item)
+        if result:
+            func_name.append(name)
+            result_list.append(result)
+    source_documents = []
+    for result in enumerate(result_list):
+        source_documents.append(f"function - {func_name[0]}()\n\n{result}")
+    context = "\n".join(result_list)
+    if not context:
+        return None, "", []
+    new_query = f"""The function '{func_name[0]}' has been executed, and the result is as follows:
+    {context}\n
+"""
+    await asyncio.sleep(0.1)
+    return new_query, func_name[0], source_documents
+
+async def GetQueryFromExternalToolsForCurConfig(answer: str, query: str) ->Union[str, Any, Any, Any]:
+    if not answer:
+        return None, "", [], ToolsType.Unknown
+    config = GetCurrentRunningCfg()
+    if not config:
+        return None
+    json_lists = ExtractJsonStrings(answer)
+    if not json_lists:
+        return None, "", [], ToolsType.Unknown
+    if config["search_engine"]["name"] and use_new_search_engine(json_lists):
+        new_query, tool_name, docs = await GetChatPromptFromFromSearchEngine(json_lists, config["search_engine"]["name"], query)
+        return new_query, tool_name, docs, ToolsType.ToolSearchEngine
+    if config["knowledge_base"]["name"] and use_knowledge_base(json_lists):
+        new_query, tool_name, docs = await GetChatPromptFromKnowledgeBase(json_lists, config["knowledge_base"]["name"], query)
+        return new_query, tool_name, docs, ToolsType.ToolKnowledgeBase
+    if config["normal_calling"]["enable"] and use_new_function_calling(json_lists):
+        new_query, tool_name, docs = await GetChatPromptFromFunctionCalling(json_lists)
+        return new_query, tool_name, docs, ToolsType.ToolFunctionCalling
+    if use_new_toolboxes_calling(json_lists):
+        new_query, tool_name, docs = await GetChatPromptFromToolBoxes(json_lists)
+        return new_query, tool_name, docs, ToolsType.ToolToolBoxes
+    return None, "", [], ToolsType.Unknown
+
+async def RunAllEnableToolsInString(func_name: str="", args: dict={}, query: str=""):
+    if not func_name or not query:
+        return None, "", [], ToolsType.Unknown
+    json_data = json.dumps({"name": func_name, "arguments": args})
+    new_query, tool_name, docs, tooltype = await GetQueryFromExternalToolsForCurConfig(json_data, query)
+    return new_query, tool_name, docs, tooltype
+
 async def special_chat_iterator(model: Any,
     tokenizer: Any,
     query: str,
@@ -158,18 +327,18 @@ async def special_chat_iterator(model: Any,
     configinst = InnerJsonConfigWebUIParse()
     webui_config = configinst.dump()
     support_tools = modelinfo.get("config", {}).get("support_tools", False)
-    calling_enable = is_function_calling_enable()
+    #calling_enable = is_function_calling_enable()
     model_name = modelinfo["mname"]
     speak_handler = None
     if len(speechmodel):
-            modeltype = speechmodel.get("type", "")
-            provider = speechmodel.get("provider", "")
-            #spmodel = speechmodel.get("model", "")
-            spspeaker = speechmodel.get("speaker", "")
-            speechkey = speechmodel.get("speech_key", "")
-            speechregion = speechmodel.get("speech_region", "")
-            if modeltype == "local" or modeltype == "cloud":
-                speak_handler = StreamSpeakHandler(run_place=modeltype, provider=provider, synthesis=spspeaker, subscription=speechkey, region=speechregion)
+        modeltype = speechmodel.get("type", "")
+        provider = speechmodel.get("provider", "")
+        #spmodel = speechmodel.get("model", "")
+        spspeaker = speechmodel.get("speaker", "")
+        speechkey = speechmodel.get("speech_key", "")
+        speechregion = speechmodel.get("speech_region", "")
+        if modeltype == "local" or modeltype == "cloud":
+            speak_handler = StreamSpeakHandler(run_place=modeltype, provider=provider, synthesis=spspeaker, subscription=speechkey, region=speechregion)
 
     btalk = True
     answer = ""
@@ -177,10 +346,14 @@ async def special_chat_iterator(model: Any,
     if imagesprompt:
         query = generate_new_query(query, imagesprompt)
     system_msg = {}
-    if calling_enable and not support_tools:
-        tools_system_prompt = GetToolsSystemPrompt()
+    tools_system_prompt = ""
+    if not support_tools:
+        tools_system_prompt = GetSystemPromptForCurrentRunningConfig()
+    else:
+        tools_system_prompt = GetSystemPromptForSupportTools()
+    if tools_system_prompt:
         if history and history[0].get("role", "") == "system":
-            history[0]["content"] = history[0]["content"] + "\n\n" + tools_system_prompt
+            history[0]["content"] = tools_system_prompt + "\n\n" + history[0]["content"] 
         else:
             system_msg = {
                 'role': "system",
@@ -192,11 +365,12 @@ async def special_chat_iterator(model: Any,
         modelconfig = GetModelConfig(webui_config, modelinfo)
         loadtype = modelconfig["load_type"]
 
+        docs = []
         btalk = True
         while btalk:
             answer = ""
             btalk = False
-            prompt = history
+            prompt = history.copy()
             prompt.append({'role': "user",
                             'content': "{{input}}"})
 
@@ -220,34 +394,39 @@ async def special_chat_iterator(model: Any,
                         if chunk is not None:
                             answer += chunk
                             print(chunk, end="")
-                            if not btalk and calling_enable:
-                                new_query, new_answer = call_calling(answer)
-                                if new_query:
-                                    btalk = True
-                                    pattern = r'\"(.*?)\"'
-                                    match = re.search(pattern, new_query)
-                                    if match:
-                                        function_call = match.group(1)
-                                    new_answer = new_answer + "\n" + f'It is necessary to call the function `{function_call}` to get more information.'
-                                    yield json.dumps(
-                                        {"clear": new_answer, "chat_history_id": chat_history_id},
-                                        ensure_ascii=False)
-                                    yield json.dumps(
-                                        {"user": f'The function `{function_call}` was called.', "chat_history_id": chat_history_id},
-                                        ensure_ascii=False)
-                                    new_history = await CreateChatHistoryFromCallCalling(query=query, new_answer=new_answer, history=history)
-                                    history = new_history
-                                    query = new_query
-                                    break
+                            if not btalk:
+                                btalk, new_answer = CallingExternalToolsForCurConfig(answer)
+                                if btalk:
+                                    new_query, tool_name, docs, tooltype = await GetQueryFromExternalToolsForCurConfig(answer=answer, query=query)
+                                    if not new_query:
+                                        btalk = False
+                                    else:
+                                        btalk = True
+                                        new_answer = GetNewAnswerForCurConfig(new_answer, tool_name, tooltype)
+                                        history.append({'role': "user",'content': query})
+                                        history.append({'role': "assistant", 'content': new_answer})
+                                        yield json.dumps(
+                                            {"clear": new_answer, "chat_history_id": chat_history_id},
+                                            ensure_ascii=False)
+                                        user_answer = GetUserAnswerForCurConfig(tool_name, tooltype)
+                                        yield json.dumps(
+                                            {"user": user_answer, "tooltype": tooltype.value},
+                                            ensure_ascii=False)
+                                        query = new_query
                             if speak_handler: 
                                 speak_handler.on_llm_new_token(chunk)
-                            yield json.dumps(
-                                {"text": chunk, "chat_history_id": chat_history_id},
-                                ensure_ascii=False)
+                            if not btalk:
+                                yield json.dumps(
+                                    {"text": chunk, "chat_history_id": chat_history_id},
+                                    ensure_ascii=False)
                             await asyncio.sleep(0.1)
                     print("async_callback exit!")
                 if speak_handler: 
                     speak_handler.on_llm_end(None)
+                if not btalk and docs:
+                    yield json.dumps({"tooltype": tooltype.value, "docs": docs}, ensure_ascii=False)
+                    docs = []
+                    tooltype = ToolsType.Unknown
             elif loadtype == "llamacpp":
                 presetname = modelconfig["preset"]
                 prompttemplate = GeneratePresetPrompt(presetname)
@@ -268,36 +447,40 @@ async def special_chat_iterator(model: Any,
                         if noret is False:
                             noret = clean_special_text(chunk, prompttemplate)
                             if noret is False:
-                                if not btalk and calling_enable:
-                                    new_query, new_answer = call_calling(answer)
-                                    if new_query:
-                                        btalk = True
-                                        pattern = r'\"(.*?)\"'
-                                        match = re.search(pattern, new_query)
-                                        if match:
-                                            function_call = match.group(1)
-                                        new_answer = new_answer + "\n" + f'It is necessary to call the function `{function_call}` to get more information.'
+                                if not btalk:
+                                    btalk, new_answer = CallingExternalToolsForCurConfig(answer)
+                                if btalk:
+                                    new_query, tool_name, docs, tooltype = await GetQueryFromExternalToolsForCurConfig(answer=answer, query=query)
+                                    if not new_query:
+                                        btalk = False
+                                    else:
+                                        new_answer = GetNewAnswerForCurConfig(new_answer, tool_name, tooltype)
+                                        history.append({'role': "user",'content': query})
+                                        history.append({'role': "assistant", 'content': new_answer})
                                         yield json.dumps(
                                             {"clear": new_answer, "chat_history_id": chat_history_id},
                                             ensure_ascii=False)
+                                        user_answer = GetUserAnswerForCurConfig(tool_name, tooltype)
                                         yield json.dumps(
-                                            {"user": f'The function `{function_call}` was called.', "chat_history_id": chat_history_id},
+                                            {"user": user_answer, "tooltype": tooltype.value},
                                             ensure_ascii=False)
-                                        new_history = await CreateChatHistoryFromCallCalling(query=query, new_answer=new_answer, history=history)
-                                        history = new_history
                                         query = new_query
-                                        break
                                 if speak_handler: 
                                     speak_handler.on_llm_new_token(chunk)
-                                yield json.dumps(
-                                    {"text": chunk, "chat_history_id": chat_history_id},
-                                    ensure_ascii=False)
+                                if not btalk:
+                                    yield json.dumps(
+                                        {"text": chunk, "chat_history_id": chat_history_id},
+                                        ensure_ascii=False)
                                 await asyncio.sleep(0.1)
                     if not thread.is_alive():
                         print("async_callback exit!")
                         break
                 if speak_handler: 
                     speak_handler.on_llm_end(None)
+                if not btalk and docs:
+                    yield json.dumps({"tooltype": tooltype.value, "docs": docs}, ensure_ascii=False)
+                    docs = []
+                    tooltype = ToolsType.Unknown
     elif modelinfo["mtype"] == ModelType.Online:
         provider = GetProviderByName(webui_config, model_name)
         if provider == "google-api":
@@ -309,11 +492,8 @@ async def special_chat_iterator(model: Any,
                 apikey = "EMPTY"
             genai.configure(api_key=apikey)
             calling_tools =[]
-            #enable_automatic_function_calling = False
-            if calling_enable:
-                from WebUI.Server.funcall.funcall import google_funcall_tools
-                calling_tools = google_funcall_tools
-                #stream = False
+            if support_tools:
+                calling_tools = GetGoogleNativeTools()
             model = genai.GenerativeModel(model_name=model_name, tools=calling_tools)
             generation_config = {'temperature': temperature}
 
@@ -334,6 +514,7 @@ async def special_chat_iterator(model: Any,
             else:
                 chat = model.start_chat(history=updated_history)
                 response = chat.send_message(query, generation_config=generation_config, stream=stream)
+            docs=[]
             repeat = True
             while repeat:
                 answer = ""
@@ -345,14 +526,13 @@ async def special_chat_iterator(model: Any,
                                 function_name = ""
                                 function_response = ""
                                 if fn := part.function_call:
-                                    #btalk = True
                                     args = ", ".join(f"{key}={val}" for key, val in fn.args.items())
                                     args_dict = {key: val for key, val in fn.args.items()}
                                     function_text = f"{fn.name}({args})"
                                     print(function_text)
                                     if function_text:
                                         function_name = fn.name
-                                        function_response = CallFunctionCallingInString(fn.name, args_dict)
+                                        function_response, tool_name, docs, tooltype = await RunAllEnableToolsInString(fn.name, args_dict, query)
                                         repeat = True
                                         break
                                 elif text_text := part.text:
@@ -363,6 +543,14 @@ async def special_chat_iterator(model: Any,
                                         {"text": text_text, "chat_history_id": chat_history_id},
                                         ensure_ascii=False)
                             if function_name and function_response:
+                                new_answer = GetNewAnswerForCurConfig("", tool_name, tooltype)
+                                yield json.dumps(
+                                    {"clear": new_answer, "chat_history_id": chat_history_id},
+                                    ensure_ascii=False)
+                                user_answer = GetUserAnswerForCurConfig(tool_name, tooltype)
+                                yield json.dumps(
+                                    {"user": user_answer, "tooltype": tooltype.value},
+                                    ensure_ascii=False)
                                 response = chat.send_message(
                                     genai.protos.Content(
                                     parts=[genai.protos.Part(
@@ -389,7 +577,7 @@ async def special_chat_iterator(model: Any,
                                 print(function_text)
                                 if function_text:
                                     function_name = fn.name
-                                    function_response = CallFunctionCallingInString(fn.name, args_dict)
+                                    function_response, tool_name, docs, tooltype = await RunAllEnableToolsInString(fn.name, args_dict)
                                     repeat = True
                                     break
                             elif text_text := part.text:
@@ -400,6 +588,14 @@ async def special_chat_iterator(model: Any,
                                     {"text": text_text, "chat_history_id": chat_history_id},
                                     ensure_ascii=False)
                         if function_name and function_response:
+                            new_answer = GetNewAnswerForCurConfig("", tool_name, tooltype)
+                            yield json.dumps(
+                                {"clear": new_answer, "chat_history_id": chat_history_id},
+                                ensure_ascii=False)
+                            user_answer = GetUserAnswerForCurConfig(tool_name, tooltype)
+                            yield json.dumps(
+                                {"user": user_answer, "tooltype": tooltype.value},
+                                ensure_ascii=False)
                             response = chat.send_message(
                                 genai.protos.Content(
                                 parts=[genai.protos.Part(
@@ -416,6 +612,10 @@ async def special_chat_iterator(model: Any,
             await asyncio.sleep(0.1)
             if speak_handler: 
                 speak_handler.on_llm_end(None)
+            if not repeat and docs:
+                yield json.dumps({"tooltype": tooltype.value, "docs": docs}, ensure_ascii=False)
+                docs = []
+                tooltype = ToolsType.Unknown
         elif provider == "ali-cloud-api":
             from http import HTTPStatus
             from dashscope import Generation
@@ -427,6 +627,7 @@ async def special_chat_iterator(model: Any,
             if apikey is None:
                 apikey = "EMPTY"
 
+            docs = []
             btalk = True
             while btalk:
                 answer = ""
@@ -448,28 +649,29 @@ async def special_chat_iterator(model: Any,
                         if response.status_code == HTTPStatus.OK:
                             print(response)
                             answer += response.output.choices[0]['message']['content']
-                            if not btalk and calling_enable:
-                                new_query, new_answer = call_calling(answer)
-                                if new_query:
-                                    btalk = True
-                                    pattern = r'\"(.*?)\"'
-                                    match = re.search(pattern, new_query)
-                                    if match:
-                                        function_call = match.group(1)
-                                    new_answer = new_answer + "\n" + f'It is necessary to call the function `{function_call}` to get more information.'
-                                    yield json.dumps(
-                                        {"clear": new_answer, "chat_history_id": chat_history_id},
-                                        ensure_ascii=False)
-                                    yield json.dumps(
-                                        {"user": f'The function `{function_call}` was called.', "chat_history_id": chat_history_id},
-                                        ensure_ascii=False)
-                                    new_history = await CreateChatHistoryFromCallCalling(query=query, new_answer=new_answer, history=history)
-                                    history = new_history
-                                    query = new_query
-                                    break
-                            yield json.dumps(
-                                {"text": response.output.choices[0]['message']['content'], "chat_history_id": chat_history_id},
-                                ensure_ascii=False)
+                            if not btalk:
+                                btalk, new_answer = CallingExternalToolsForCurConfig(answer)
+                                if btalk:
+                                    new_query, tool_name, docs, tooltype = await GetQueryFromExternalToolsForCurConfig(answer=answer, query=query)
+                                    if not new_query:
+                                        btalk = False
+                                    else:
+                                        btalk = True
+                                        new_answer = GetNewAnswerForCurConfig(new_answer, tool_name, tooltype)
+                                        history.append({'role': "user",'content': query})
+                                        history.append({'role': "assistant", 'content': new_answer})
+                                        yield json.dumps(
+                                            {"clear": new_answer, "chat_history_id": chat_history_id},
+                                            ensure_ascii=False)
+                                        user_answer = GetUserAnswerForCurConfig(tool_name, tooltype)
+                                        yield json.dumps(
+                                            {"user": user_answer, "tooltype": tooltype.value},
+                                            ensure_ascii=False)
+                                        query = new_query
+                            if not btalk:
+                                yield json.dumps(
+                                    {"text": response.output.choices[0]['message']['content'], "chat_history_id": chat_history_id},
+                                    ensure_ascii=False)
                             await asyncio.sleep(0.1)
                             if speak_handler: 
                                 speak_handler.on_llm_new_token(response.output.choices[0]['message']['content'])
@@ -494,28 +696,25 @@ async def special_chat_iterator(model: Any,
                     if response.status_code == HTTPStatus.OK:
                         print(response)
                         answer += response.output.choices[0]['message']['content']
-                        if not btalk and calling_enable:
-                            new_query, new_answer = call_calling(answer)
-                            if new_query:
-                                btalk = True
-                                pattern = r'\"(.*?)\"'
-                                match = re.search(pattern, new_query)
-                                if match:
-                                    function_call = match.group(1)
-                                new_answer = new_answer + "\n" + f'It is necessary to call the function `{function_call}` to get more information.'
-                                yield json.dumps(
-                                    {"clear": new_answer, "chat_history_id": chat_history_id},
-                                    ensure_ascii=False)
-                                yield json.dumps(
-                                    {"user": f'The function `{function_call}` was called.', "chat_history_id": chat_history_id},
-                                    ensure_ascii=False)
-                                new_history = await CreateChatHistoryFromCallCalling(query=query, new_answer=new_answer, history=history)
-                                history = new_history
-                                query = new_query
-                            else:
-                                yield json.dumps(
-                                    {"text": response.output.choices[0]['message']['content'], "chat_history_id": chat_history_id},
-                                    ensure_ascii=False)
+                        if not btalk:
+                            btalk, new_answer = CallingExternalToolsForCurConfig(answer)
+                            if btalk:
+                                new_query, tool_name, docs, tooltype = await GetQueryFromExternalToolsForCurConfig(answer=answer, query=query)
+                                if not new_query:
+                                    btalk = False
+                                else:
+                                    btalk = True
+                                    new_answer = GetNewAnswerForCurConfig(new_answer, tool_name, tooltype)
+                                    history.append({'role': "user",'content': query})
+                                    history.append({'role': "assistant", 'content': new_answer})
+                                    yield json.dumps(
+                                        {"clear": new_answer, "chat_history_id": chat_history_id},
+                                        ensure_ascii=False)
+                                    user_answer = GetUserAnswerForCurConfig(tool_name, tooltype)
+                                    yield json.dumps(
+                                        {"user": user_answer, "tooltype": tooltype.value},
+                                        ensure_ascii=False)
+                                    query = new_query
                                 await asyncio.sleep(0.1)
                         else:
                             yield json.dumps(
@@ -535,6 +734,10 @@ async def special_chat_iterator(model: Any,
                         await asyncio.sleep(0.1)
                 if speak_handler: 
                     speak_handler.on_llm_end(None)
+                if not btalk and docs:
+                    yield json.dumps({"tooltype": tooltype.value, "docs": docs}, ensure_ascii=False)
+                    docs = []
+                    tooltype = ToolsType.Unknown
 
         elif provider == "openai-api" or provider == "kimi-cloud-api" or provider == "yi-01ai-api":
             from langchain.callbacks import AsyncIteratorCallbackHandler
@@ -551,6 +754,7 @@ async def special_chat_iterator(model: Any,
                 max_tokens=max_tokens,
                 callbacks=[async_callback],
             )
+            docs=[]
             btalk = True
             while btalk:
                 btalk = False
@@ -572,7 +776,7 @@ async def special_chat_iterator(model: Any,
                     async for token in async_callback.aiter():
                         answer += token
                         new_sentence += token
-                        if not btalk and calling_enable:
+                        if not btalk:
                             new_query, new_answer = call_calling(answer)
                             if new_query:
                                 btalk = True
@@ -629,6 +833,7 @@ async def special_chat_iterator(model: Any,
 
             chat_comp = qianfan.ChatCompletion(ak=apikey, sk=secretkey)
 
+            docs=[]
             btalk = True
             while btalk:
                 btalk = False
@@ -646,33 +851,38 @@ async def special_chat_iterator(model: Any,
                 for response in responses:
                     print(response)
                     answer += response['result']
-                    if not btalk and calling_enable:
-                        new_query, new_answer = call_calling(answer)
-                        if new_query:
-                            btalk = True
-                            pattern = r'\"(.*?)\"'
-                            match = re.search(pattern, new_query)
-                            if match:
-                                function_call = match.group(1)
-                            new_answer = new_answer + "\n" + f'It is necessary to call the function `{function_call}` to get more information.'
-                            yield json.dumps(
-                                {"clear": new_answer, "chat_history_id": chat_history_id},
-                                ensure_ascii=False)
-                            yield json.dumps(
-                                {"user": f'The function `{function_call}` was called.', "chat_history_id": chat_history_id},
-                                ensure_ascii=False)
-                            new_history = await CreateChatHistoryFromCallCalling(query=query, new_answer=new_answer, history=history)
-                            history = new_history
-                            query = new_query
-                            break
-                    yield json.dumps(
-                        {"text": response['result'], "chat_history_id": chat_history_id},
-                        ensure_ascii=False)
+                    if not btalk:
+                        btalk, new_answer = CallingExternalToolsForCurConfig(answer)
+                        if btalk:
+                            new_query, tool_name, docs, tooltype = await GetQueryFromExternalToolsForCurConfig(answer=answer, query=query)
+                            if not new_query:
+                                btalk = False
+                            else:
+                                btalk = True
+                                new_answer = GetNewAnswerForCurConfig(new_answer, tool_name, tooltype)
+                                history.append({'role': "user",'content': query})
+                                history.append({'role': "assistant", 'content': new_answer})
+                                yield json.dumps(
+                                    {"clear": new_answer, "chat_history_id": chat_history_id},
+                                    ensure_ascii=False)
+                                user_answer = GetUserAnswerForCurConfig(tool_name, tooltype)
+                                yield json.dumps(
+                                    {"user": user_answer, "tooltype": tooltype.value},
+                                    ensure_ascii=False)
+                                query = new_query
+                    if not btalk:
+                        yield json.dumps(
+                            {"text": response['result'], "chat_history_id": chat_history_id},
+                            ensure_ascii=False)
                     await asyncio.sleep(0.1)
                     if speak_handler: 
                         speak_handler.on_llm_new_token(response.output.choices[0]['message']['content'])
                 if speak_handler: 
                     speak_handler.on_llm_end(None)
+                if not btalk and docs:
+                    yield json.dumps({"tooltype": tooltype.value, "docs": docs}, ensure_ascii=False)
+                    docs = []
+                    tooltype = ToolsType.Unknown
         
         elif provider == "groq-api":
             from groq import Groq
@@ -686,7 +896,7 @@ async def special_chat_iterator(model: Any,
             client = Groq(
                 api_key=apikey,
             )
-
+            docs=[]
             btalk = True
             while btalk:
                 btalk = False
@@ -698,36 +908,39 @@ async def special_chat_iterator(model: Any,
                     messages=messages,
                     model=model_name,
                 )
-                response = chat_completion.choices[0].message.content
-                if not btalk and calling_enable:
-                    yield json.dumps(
-                        {"text": response, "chat_history_id": chat_history_id},
-                        ensure_ascii=False)
-                    if speak_handler: 
-                        speak_handler.on_llm_new_token(response)
-                    new_query, new_answer = call_calling(response)
-                    if new_query:
-                        btalk = True
-                        pattern = r'\"(.*?)\"'
-                        match = re.search(pattern, new_query)
-                        if match:
-                            function_call = match.group(1)
-                        new_answer = new_answer + "\n" + f'It is necessary to call the function `{function_call}` to get more information.'
+                answer = chat_completion.choices[0].message.content
+                if not btalk:
+                    btalk, new_answer = CallingExternalToolsForCurConfig(answer)
+                    if btalk:
+                        new_query, tool_name, docs, tooltype = await GetQueryFromExternalToolsForCurConfig(answer=answer, query=query)
+                        if not new_query:
+                            btalk = False
+                        else:
+                            btalk = True
+                            new_answer = GetNewAnswerForCurConfig(new_answer, tool_name, tooltype)
+                            history.append({'role': "user",'content': query})
+                            history.append({'role': "assistant", 'content': new_answer})
+                            yield json.dumps(
+                                {"clear": new_answer, "chat_history_id": chat_history_id},
+                                ensure_ascii=False)
+                            user_answer = GetUserAnswerForCurConfig(tool_name, tooltype)
+                            yield json.dumps(
+                                {"user": user_answer, "tooltype": tooltype.value},
+                                ensure_ascii=False)
+                            query = new_query
+                    if not btalk:
                         yield json.dumps(
-                            {"clear": new_answer, "chat_history_id": chat_history_id},
+                            {"text": answer, "chat_history_id": chat_history_id},
                             ensure_ascii=False)
-                        yield json.dumps(
-                            {"user": f'The function `{function_call}` was called.', "chat_history_id": chat_history_id},
-                            ensure_ascii=False)
-                        new_history = await CreateChatHistoryFromCallCalling(query=query, new_answer=new_answer, history=history)
-                        history = new_history
-                        query = new_query
-                    if speak_handler: 
+                    if speak_handler:
                         speak_handler.on_llm_new_token(response)
                     await asyncio.sleep(0.1)
                 if speak_handler: 
                     speak_handler.on_llm_end(None)
-            
+                if not btalk and docs:
+                    yield json.dumps({"tooltype": tooltype.value, "docs": docs}, ensure_ascii=False)
+                    docs = []
+                    tooltype = ToolsType.Unknown
     update_chat_history(chat_history_id, response=answer)
 
 def special_model_chat(
@@ -1240,24 +1453,30 @@ def multimodal_model_chat(
                 model_id = model_config.get("Huggingface")
             processor = AutoProcessor.from_pretrained(model_id, trust_remote_code=True)
 
-            img_list = []
-            count = 1
-            image_prompt = f"<|image_{count}|>"
-            for image in imagesdata:
-                decoded_data = base64.b64decode(image)
-                imagedata = BytesIO(decoded_data)
-                image_rgb = Image.open(imagedata)#.convert('RGB')
-                img_list.append(image_rgb)
-                if image_prompt:
-                    image_prompt = f"<|image_{count}|>"
-                else:
-                    image_prompt += "\n" + f"<|image_{count}|>"
-                count += 1
+            if imagesdata:
+                img_list = []
+                count = 1
+                image_prompt = f"<|image_{count}|>"
+                for image in imagesdata:
+                    decoded_data = base64.b64decode(image)
+                    imagedata = BytesIO(decoded_data)
+                    image_rgb = Image.open(imagedata)#.convert('RGB')
+                    img_list.append(image_rgb)
+                    if image_prompt:
+                        image_prompt = f"<|image_{count}|>"
+                    else:
+                        image_prompt += "\n" + f"<|image_{count}|>"
+                    count += 1
 
-            chat_prompt = {"role": "user", "content": f"{image_prompt}\n{query}"}
-            message = history + [chat_prompt]
-            prompt = processor.tokenizer.apply_chat_template(message, tokenize=False, add_generation_prompt=True)
-            inputs = processor(prompt, img_list, return_tensors="pt").to(device)
+                chat_prompt = {"role": "user", "content": f"{image_prompt}\n{query}"}
+                message = history + [chat_prompt]
+                prompt = processor.tokenizer.apply_chat_template(message, tokenize=False, add_generation_prompt=True)
+                inputs = processor(prompt, img_list, return_tensors="pt").to(device)
+            else:
+                chat_prompt = {"role": "user", "content": f"{query}"}
+                message = history + [chat_prompt]
+                prompt = processor.tokenizer.apply_chat_template(message, tokenize=False, add_generation_prompt=True)
+                inputs = processor(prompt, return_tensors="pt").to(device)
             generation_args = { 
                 "max_new_tokens": 500, 
                 "temperature": temperature, 
@@ -1285,14 +1504,24 @@ def multimodal_model_chat(
                 img_list.append(image_rgb)
             chat_prompt = {'role': 'user', 'content': query}
             message = history + [chat_prompt]
-            response = model.chat(
-                image=img_list[0],
-                msgs=message,
-                tokenizer=tokenizer,
-                sampling=True,
-                temperature=temperature,
-                stream=True
-            )
+            if img_list:
+                response = model.chat(
+                    image=img_list[0],
+                    msgs=message,
+                    tokenizer=tokenizer,
+                    sampling=True,
+                    temperature=temperature,
+                    stream=True
+                )
+            else:
+                response = model.chat(
+                    image=None,
+                    msgs=message,
+                    tokenizer=tokenizer,
+                    sampling=True,
+                    temperature=temperature,
+                    stream=True
+                )
 
             generated_text = ""
             for new_text in response:
@@ -1313,9 +1542,14 @@ def multimodal_model_chat(
                 imagedata = BytesIO(decoded_data)
                 image_rgb = Image.open(imagedata).convert('RGB')
                 img_list.append(image_rgb)
-            inputs = tokenizer.apply_chat_template([{"role": "user", "image": img_list[0], "content": query}],
-                                       add_generation_prompt=True, tokenize=True, return_tensors="pt",
-                                       return_dict=True)
+            if img_list:
+                inputs = tokenizer.apply_chat_template([{"role": "user", "image": img_list[0], "content": query}],
+                    add_generation_prompt=True, tokenize=True, return_tensors="pt",
+                    return_dict=True)
+            else:
+                inputs = tokenizer.apply_chat_template([{"role": "user", "content": query}],
+                    add_generation_prompt=True, tokenize=True, return_tensors="pt",
+                    return_dict=True)
             model_config = webui_config.get("ModelConfig").get("LocalModel").get("Multimodal Model").get("Vision Chat Model").get(model_name)
             device = model_config.get("device", "auto")
             device = "cuda" if device == "gpu" else detect_device() if device == "auto" else device

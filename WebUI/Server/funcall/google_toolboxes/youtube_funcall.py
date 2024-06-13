@@ -1,6 +1,7 @@
 from googleapiclient.discovery import build
 from langchain_core.tools import tool
 from bs4 import BeautifulSoup
+import google.generativeai as genai
 
 YOUTUBE_READONLY_SCOPES = ["https://www.googleapis.com/auth/youtube.readonly"]
 YOUTUBE_FULL_SCOPES = ["https://www.googleapis.com/auth/youtube"]
@@ -92,6 +93,26 @@ youtube_toolboxes = [get_youtube_video_url]
 youtube_tool_names = {
     "get_youtube_video_url": get_youtube_video_url,
 }
+
+# for google gemini
+get_youtube_video_url_func = genai.protos.Tool(
+    function_declarations=[
+      genai.protos.FunctionDeclaration(
+        name='get_youtube_video_url',
+        description="Get URL about Youtube video from your own Youtube channel. ",
+        parameters=genai.protos.Schema(
+            type=genai.protos.Type.OBJECT,
+            properties={
+                'title':genai.protos.Schema(type=genai.protos.Type.STRING, description="Use the advanced search syntax like the Youtube API, Here's an example: 'Language Translation'"),
+            },
+            required=['title']
+        )
+      )
+    ])
+
+google_youtube_tools = [
+        get_youtube_video_url_func,
+    ]
 
 def GetYoutubeFuncallList() ->list:
     funcall_list = []

@@ -30,10 +30,11 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
     webui_config = api.get_webui_config()
     current_voice_model = api.get_vtot_model()
     current_speech_model = api.get_ttov_model()
-    current_imagere_model = api.get_image_recognition_model()
-    current_imagegen_model = api.get_image_generation_model()
-    current_musicgen_model = api.get_music_generation_model()
+    #current_imagere_model = api.get_image_recognition_model()
+    #current_imagegen_model = api.get_image_generation_model()
+    #current_musicgen_model = api.get_music_generation_model()
     aigenerator_config = api.get_aigenerator_config()
+    current_running_config = api.get_current_running_config()
 
     if running_model == "":
         running_model = "None"
@@ -146,7 +147,19 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                             elif msg := check_success_msg(r):
                                 st.success(msg)
                                 st.toast(msg, icon="✔")
+                    if not eject_error and running_chat_solution["config"]["function_calling"]:
+                        with st.spinner("Release Function Call, Please do not perform any actions or refresh the page."):
+                            functioncalling = webui_config.get("FunctionCalling")
+                            functioncalling["calling_enable"] = False
+                            r = api.save_function_calling_config(functioncalling)
+                            if msg := check_error_msg(r):
+                                st.error(msg)
+                                st.toast(msg, icon="✖")
+                            elif msg := check_success_msg(r):
+                                st.success("success release function calling.")
+                                st.toast("success release function calling.", icon="✔")
                     if not eject_error:
+                        api.save_current_running_config()
                         st.success("Release all configurations successfully!")
                         st.toast("Release all configurations successfully!", icon="✔")
                         st.session_state["current_chat_solution"] = {}
@@ -237,6 +250,8 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                     voice_enable = st.checkbox('Enable Voice', value=False)
                     running_chat_solution["config"]["voice"]["enable"] = False
                     running_chat_solution["config"]["voice"]["model"] = ""
+                    current_running_config["voice"]["name"] = ""
+                    current_running_config["voice"]["language"] = ""
                     if voice_enable:
                         vtotmodel = webui_config.get("ModelConfig").get("VtoTModel")
                         vtotmodel_lists = [f"{key}" for key in vtotmodel]
@@ -268,6 +283,8 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                         running_chat_solution["config"]["voice"]["enable"] = True
                         running_chat_solution["config"]["voice"]["model"] = voicemodel
                         running_chat_solution["config"]["voice"]["language"] = [language_code]
+                        current_running_config["voice"]["name"] = voicemodel
+                        current_running_config["voice"]["language"] = language_code
                         voice_modelconfig["language"] = [language_code]
                         api.save_vtot_model_config(voicemodel, voice_modelconfig)
                     
@@ -276,6 +293,8 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                     running_chat_solution["config"]["speech"]["enable"] = False
                     running_chat_solution["config"]["speech"]["model"] = ""
                     running_chat_solution["config"]["speech"]["speaker"] = ""
+                    current_running_config["speech"]["name"] = ""
+                    current_running_config["speech"]["speaker"] = ""
                     if speech_enable:
                         ttovmodel = webui_config.get("ModelConfig").get("TtoVModel")
                         ttovmodel_lists = [f"{key}" for key in ttovmodel]
@@ -337,6 +356,8 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                         running_chat_solution["config"]["speech"]["enable"] = True
                         running_chat_solution["config"]["speech"]["model"] = speechmodel
                         running_chat_solution["config"]["speech"]["speaker"] = speaker
+                        current_running_config["speech"]["name"] = speechmodel
+                        current_running_config["speech"]["speaker"] = speaker
 
                     st.divider()
                     roleplayer = running_chat_solution["config"]["roleplayer"]
@@ -446,6 +467,8 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                                     st.toast(msg, icon="✔")
                         if not load_error and running_chat_solution["config"]["voice"]["enable"]:
                             voice_model = running_chat_solution["config"]["voice"]["model"]
+                            language = running_chat_solution["config"]["voice"]["language"]
+                            language = language[0] if language else "en-US"
                             with st.spinner(f"Loading Voice Model: `{voice_model}`, Please do not perform any actions or refresh the page."):
                                 current_voice_model = api.get_vtot_model()
                                 r = api.change_voice_model(current_voice_model, voice_model)
@@ -454,6 +477,8 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                                     st.toast(msg, icon="✖")
                                     load_error = True
                                 elif msg := check_success_msg(r):
+                                    current_running_config["voice"]["name"] = voice_model
+                                    current_running_config["voice"]["language"] = language
                                     st.success(msg)
                                     st.toast(msg, icon="✔")
                         if not load_error and running_chat_solution["config"]["speech"]["enable"]:
@@ -468,23 +493,41 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                                     st.toast(msg, icon="✖")
                                     load_error = True
                                 elif msg := check_success_msg(r):
+                                    current_running_config["speech"]["name"] = speech_model
+                                    current_running_config["speech"]["speaker"] = speaker
                                     st.success(msg)
                                     st.toast(msg, icon="✔")
                         if not load_error and running_chat_solution["config"]["knowledge_base"]["enable"]:
                             knowledge_base = running_chat_solution["config"]["knowledge_base"]["name"]
+                            current_running_config["knowledge_base"]["name"] = knowledge_base
                             with st.spinner(f"Loading Knowledge Base: `{knowledge_base}`, Please do not perform any actions or refresh the page."):
                                 st.success(f"Load Knowledge Base `{knowledge_base}` successfully!")
                                 st.toast(f"Load Knowledge Base `{knowledge_base}` successfully!", icon="✔")
                         if not load_error and running_chat_solution["config"]["search_engine"]["enable"]:
                             search_engine = running_chat_solution["config"]["search_engine"]["name"]
+                            current_running_config["search_engine"]["name"] = search_engine
                             with st.spinner(f"Enabling Search Engine: `{search_engine}`, Please do not perform any actions or refresh the page."):
                                 st.success(f"Enable Search Engine `{search_engine}` successfully!")
                                 st.toast(f"Enable Search Engine `{search_engine}` successfully!", icon="✔")
                         if not load_error and running_chat_solution["config"]["function_calling"]:
                             with st.spinner("Enabling Function Calling, Please do not perform any actions or refresh the page."):
-                                st.success("Enable Function Calling successfully!")
-                                st.toast("Enable Function Calling successfully!", icon="✔")
+                                functioncalling = webui_config.get("FunctionCalling")
+                                functioncalling["calling_enable"] = running_chat_solution["config"]["function_calling"]
+                                current_running_config["normal_calling"]["enable"] = functioncalling["calling_enable"]
+                                r = api.save_function_calling_config(functioncalling)
+                                if msg := check_error_msg(r):
+                                    st.success("Enable Function Calling failed!")
+                                    st.toast(msg, icon="✖")
+                                elif msg := check_success_msg(r):
+                                    st.success("Enable Function Calling successfully!")
+                                    st.toast("success save configuration for function calling.", icon="✔")
                         if not load_error:
+                            name = running_chat_solution["name"]
+                            description = running_chat_solution["config"]["description"]
+                            roleplayer = running_chat_solution["config"]["roleplayer"]
+                            current_running_config["role_player"] = {"name": roleplayer, "language": "english"}
+                            current_running_config["chat_solution"] = {"name": name, "description": description}
+                            api.save_current_running_config(current_running_config)
                             st.success("Load all configurations successfully!")
                             st.toast("Load all configurations successfully!", icon="✔")
                             running_chat_solution["enable"] = True
@@ -533,7 +576,19 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                             elif msg := check_success_msg(r):
                                 st.success(msg)
                                 st.toast(msg, icon="✔")
+                    if not eject_error and running_chat_solution["config"]["function_calling"]:
+                        with st.spinner("Release Function Call, Please do not perform any actions or refresh the page."):
+                            functioncalling = webui_config.get("FunctionCalling")
+                            functioncalling["calling_enable"] = False
+                            r = api.save_function_calling_config(functioncalling)
+                            if msg := check_error_msg(r):
+                                st.error(msg)
+                                st.toast(msg, icon="✖")
+                            elif msg := check_success_msg(r):
+                                st.success("success release function calling.")
+                                st.toast("success release function calling.", icon="✔")
                     if not eject_error:
+                        api.save_current_running_config()
                         st.success("Release all configurations successfully!")
                         st.toast("Release all configurations successfully!", icon="✔")
                         st.session_state["current_chat_solution"] = {}
@@ -621,6 +676,8 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                     voice_enable = st.checkbox('Enable Voice', value=True)
                     running_chat_solution["config"]["voice"]["enable"] = False
                     running_chat_solution["config"]["voice"]["model"] = ""
+                    current_running_config["voice"]["name"] = ""
+                    current_running_config["voice"]["language"] = ""
                     if voice_enable:
                         vtotmodel = webui_config.get("ModelConfig").get("VtoTModel")
                         vtotmodel_lists = [f"{key}" for key in vtotmodel]
@@ -652,6 +709,8 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                         running_chat_solution["config"]["voice"]["enable"] = True
                         running_chat_solution["config"]["voice"]["model"] = voicemodel
                         running_chat_solution["config"]["voice"]["language"] = [language_code]
+                        current_running_config["voice"]["name"] = voicemodel
+                        current_running_config["voice"]["language"] = language_code
                         voice_modelconfig["language"] = [language_code]
                         api.save_vtot_model_config(voicemodel, voice_modelconfig)
                     
@@ -660,6 +719,8 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                     running_chat_solution["config"]["speech"]["enable"] = False
                     running_chat_solution["config"]["speech"]["model"] = ""
                     running_chat_solution["config"]["speech"]["speaker"] = ""
+                    current_running_config["speech"]["name"] = ""
+                    current_running_config["speech"]["speaker"] = ""
                     if speech_enable:
                         ttovmodel = webui_config.get("ModelConfig").get("TtoVModel")
                         ttovmodel_lists = [f"{key}" for key in ttovmodel]
@@ -721,6 +782,8 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                         running_chat_solution["config"]["speech"]["enable"] = True
                         running_chat_solution["config"]["speech"]["model"] = speechmodel
                         running_chat_solution["config"]["speech"]["speaker"] = speaker
+                        current_running_config["speech"]["name"] = speechmodel
+                        current_running_config["speech"]["speaker"] = speaker
                         if running_chat_solution["config"]["voice"]["enable"] and speaker:
                             if speechmodel == "OpenAISpeechService":
                                 language_code = "en-US"
@@ -777,6 +840,8 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                                     st.toast(msg, icon="✔")
                         if not load_error and running_chat_solution["config"]["voice"]["enable"]:
                             voice_model = running_chat_solution["config"]["voice"]["model"]
+                            language = running_chat_solution["config"]["voice"]["language"]
+                            language = language[0] if language else "en-US"
                             with st.spinner(f"Loading Voice Model: `{voice_model}`, Please do not perform any actions or refresh the page."):
                                 current_voice_model = api.get_vtot_model()
                                 r = api.change_voice_model(current_voice_model, voice_model)
@@ -785,6 +850,8 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                                     st.toast(msg, icon="✖")
                                     load_error = True
                                 elif msg := check_success_msg(r):
+                                    current_running_config["voice"]["name"] = voice_model
+                                    current_running_config["voice"]["language"] = language
                                     st.success(msg)
                                     st.toast(msg, icon="✔")
                         if not load_error and running_chat_solution["config"]["speech"]["enable"]:
@@ -799,9 +866,15 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                                     st.toast(msg, icon="✖")
                                     load_error = True
                                 elif msg := check_success_msg(r):
+                                    current_running_config["speech"]["name"] = speech_model
+                                    current_running_config["speech"]["speaker"] = speaker
                                     st.success(msg)
                                     st.toast(msg, icon="✔")
                         if not load_error:
+                            current_running_config["chat_solution"]["name"] = running_chat_solution["name"]
+                            roleplayer = running_chat_solution["config"]["roleplayer"]
+                            current_running_config["role_player"] = {"name": roleplayer, "language": "english"}
+                            api.save_current_running_config(current_running_config)
                             st.success("Load all configurations successfully!")
                             st.toast("Load all configurations successfully!", icon="✔")
                             running_chat_solution["enable"] = True
@@ -850,7 +923,38 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                             elif msg := check_success_msg(r):
                                 st.success(msg)
                                 st.toast(msg, icon="✔")
+                    if not eject_error and running_chat_solution["config"]["toolboxes"]:
+                        with st.spinner("Release ToolBoxes, Please do not perform any actions or refresh the page."):
+                            toolboxes = webui_config.get("ToolBoxes")
+                            google_toolboxes = toolboxes.get("Google ToolBoxes")
+                            google_toolboxes["Tools"]["Google Maps"]["enable"] = False
+                            google_toolboxes["Tools"]["Google Mail"]["enable"] = False
+                            google_toolboxes["Tools"]["Google Youtube"]["enable"] = False
+                            google_toolboxes["Tools"]["Google Calendar"]["enable"] = False
+                            google_toolboxes["Tools"]["Google Drive"]["enable"] = False
+                            google_toolboxes["Tools"]["Google Docs"]["enable"] = False
+                            google_toolboxes["Tools"]["Google Sheets"]["enable"] = False
+                            google_toolboxes["Tools"]["Google Forms"]["enable"] = False
+                            r = api.save_google_toolboxes_config(google_toolboxes)
+                            if msg := check_error_msg(r):
+                                st.error(msg)
+                                st.toast(msg, icon="✖")
+                            elif msg := check_success_msg(r):
+                                st.success("Release ToolBoxes successfully!")
+                                st.toast("Release ToolBoxes successfully!", icon="✔")
+                    if not eject_error and running_chat_solution["config"]["function_calling"]:
+                        with st.spinner("Release Function Call, Please do not perform any actions or refresh the page."):
+                            functioncalling = webui_config.get("FunctionCalling")
+                            functioncalling["calling_enable"] = False
+                            r = api.save_function_calling_config(functioncalling)
+                            if msg := check_error_msg(r):
+                                st.error(msg)
+                                st.toast(msg, icon="✖")
+                            elif msg := check_success_msg(r):
+                                st.success("success release function calling.")
+                                st.toast("success release function calling.", icon="✔")
                     if not eject_error:
+                        api.save_current_running_config()
                         st.success("Release all configurations successfully!")
                         st.toast("Release all configurations successfully!", icon="✔")
                         st.session_state["current_chat_solution"] = {}
@@ -977,6 +1081,8 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                         running_chat_solution["config"]["voice"]["enable"] = True
                         running_chat_solution["config"]["voice"]["model"] = voicemodel
                         running_chat_solution["config"]["voice"]["language"] = [language_code]
+                        current_running_config["voice"]["name"] = voicemodel
+                        current_running_config["voice"]["language"] = language_code
                         voice_modelconfig["language"] = [language_code]
                         api.save_vtot_model_config(voicemodel, voice_modelconfig)
                     
@@ -985,6 +1091,8 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                     running_chat_solution["config"]["speech"]["enable"] = False
                     running_chat_solution["config"]["speech"]["model"] = ""
                     running_chat_solution["config"]["speech"]["speaker"] = ""
+                    current_running_config["speech"]["name"] = ""
+                    current_running_config["speech"]["speaker"] = ""
                     if speech_enable:
                         ttovmodel = webui_config.get("ModelConfig").get("TtoVModel")
                         ttovmodel_lists = [f"{key}" for key in ttovmodel]
@@ -1108,6 +1216,20 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                         running_chat_solution["config"]["toolboxes"] = current_toolboxes
                     print("chat_solution-3: ", running_chat_solution)
                     st.session_state["current_chat_solution"] = running_chat_solution
+                    st.divider()
+                    function_calling_enable = st.checkbox('Function Calling', value=False)
+                    running_chat_solution["config"]["function_calling"] = False
+                    if function_calling_enable:
+                        function_name_list = GetFuncallList()
+                        current_function = st.selectbox(
+                            "Please Check Function",
+                            function_name_list,
+                            index=0,
+                        )
+                        description = GetFuncallDescription(current_function)
+                        st.text_input("Description", description, disabled=True)
+                        running_chat_solution["config"]["function_calling"] = True
+
                 if running_chat_solution["stage"] == 4:
                     st.markdown("**Step 4: Loading Model and Configuration**")
                     load_cfg_button = st.button(
@@ -1155,6 +1277,8 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                                     st.toast(msg, icon="✔")
                         if not load_error and running_chat_solution["config"]["voice"]["enable"]:
                             voice_model = running_chat_solution["config"]["voice"]["model"]
+                            language = running_chat_solution["config"]["voice"]["language"]
+                            language = language[0] if language else "en-US"
                             with st.spinner(f"Loading Voice Model: `{voice_model}`, Please do not perform any actions or refresh the page."):
                                 current_voice_model = api.get_vtot_model()
                                 r = api.change_voice_model(current_voice_model, voice_model)
@@ -1163,6 +1287,8 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                                     st.toast(msg, icon="✖")
                                     load_error = True
                                 elif msg := check_success_msg(r):
+                                    current_running_config["voice"]["name"] = voice_model
+                                    current_running_config["voice"]["language"] = language
                                     st.success(msg)
                                     st.toast(msg, icon="✔")
                         if not load_error and running_chat_solution["config"]["speech"]["enable"]:
@@ -1177,23 +1303,61 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                                     st.toast(msg, icon="✖")
                                     load_error = True
                                 elif msg := check_success_msg(r):
+                                    current_running_config["speech"]["name"] = speech_model
+                                    current_running_config["speech"]["speaker"] = speaker
                                     st.success(msg)
                                     st.toast(msg, icon="✔")
                         if not load_error and running_chat_solution["config"]["knowledge_base"]["enable"]:
                             knowledge_base = running_chat_solution["config"]["knowledge_base"]["name"]
+                            current_running_config["knowledge_base"]["name"] = knowledge_base
                             with st.spinner(f"Loading Knowledge Base: `{knowledge_base}`, Please do not perform any actions or refresh the page."):
                                 st.success(f"Load Knowledge Base `{knowledge_base}` successfully!")
                                 st.toast(f"Load Knowledge Base `{knowledge_base}` successfully!", icon="✔")
                         if not load_error and running_chat_solution["config"]["search_engine"]["enable"]:
                             search_engine = running_chat_solution["config"]["search_engine"]["name"]
+                            current_running_config["search_engine"]["name"] = search_engine
                             with st.spinner(f"Enabling Search Engine: `{search_engine}`, Please do not perform any actions or refresh the page."):
                                 st.success(f"Enable Search Engine `{search_engine}` successfully!")
                                 st.toast(f"Enable Search Engine `{search_engine}` successfully!", icon="✔")
                         if not load_error and running_chat_solution["config"]["toolboxes"]:
                             with st.spinner("Enabling ToolBoxes, Please do not perform any actions or refresh the page."):
-                                st.success("Enable ToolBoxes successfully!")
-                                st.toast("Enable ToolBoxes successfully!", icon="✔")
+                                toolboxes = webui_config.get("ToolBoxes")
+                                google_toolboxes = toolboxes.get("Google ToolBoxes")
+                                google_toolboxes["Tools"]["Google Maps"]["enable"] = True
+                                google_toolboxes["Tools"]["Google Mail"]["enable"] = True
+                                google_toolboxes["Tools"]["Google Youtube"]["enable"] = True
+                                google_toolboxes["Tools"]["Google Calendar"]["enable"] = True
+                                google_toolboxes["Tools"]["Google Drive"]["enable"] = True
+                                google_toolboxes["Tools"]["Google Docs"]["enable"] = True
+                                google_toolboxes["Tools"]["Google Sheets"]["enable"] = True
+                                google_toolboxes["Tools"]["Google Forms"]["enable"] = True
+                                current_running_config["ToolBoxes"]["Google ToolBoxes"] = google_toolboxes
+                                r = api.save_google_toolboxes_config(google_toolboxes)
+                                if msg := check_error_msg(r):
+                                    st.error(msg)
+                                    st.toast(msg, icon="✖")
+                                elif msg := check_success_msg(r):
+                                    st.success("Enable ToolBoxes successfully!")
+                                    st.toast("Enable ToolBoxes successfully!", icon="✔")
+                        if not load_error and running_chat_solution["config"]["function_calling"]:
+                            with st.spinner("Enabling Function Calling, Please do not perform any actions or refresh the page."):
+                                functioncalling = webui_config.get("FunctionCalling")
+                                functioncalling["calling_enable"] = running_chat_solution["config"]["function_calling"]
+                                current_running_config["normal_calling"]["enable"] = functioncalling["calling_enable"]
+                                r = api.save_function_calling_config(functioncalling)
+                                if msg := check_error_msg(r):
+                                    st.success("Enable Function Calling failed!")
+                                    st.toast(msg, icon="✖")
+                                elif msg := check_success_msg(r):
+                                    st.success("Enable Function Calling successfully!")
+                                    st.toast("success save configuration for function calling.", icon="✔")
                         if not load_error:
+                            name = running_chat_solution["name"]
+                            assistant_name = running_chat_solution["config"]["assistant_name"]
+                            roleplayer = running_chat_solution["config"]["roleplayer"]
+                            current_running_config["role_player"] = {"name": roleplayer, "language": "english"}
+                            current_running_config["chat_solution"] = {"name": name, "assistant_name": assistant_name}
+                            api.save_current_running_config(current_running_config)
                             st.success("Load all configurations successfully!")
                             st.toast("Load all configurations successfully!", icon="✔")
                             running_chat_solution["enable"] = True

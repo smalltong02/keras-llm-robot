@@ -14,16 +14,12 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
     running_model : Dict[str, any] = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str}
     current_model : Dict[str, any] = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "config": dict}
     webui_config = api.get_webui_config()
-    #localmodel = webui_config.get("ModelConfig").get("LocalModel")
-    #commonmodel = localmodel.get("LLM Model")
-    #multimodalmodel = localmodel.get("Multimodal Model")
-    #specialmodel = localmodel.get("Special Model")
     onlinemodel = webui_config.get("ModelConfig").get("OnlineModel")
     chatconfig = webui_config.get("ChatConfiguration")
-    #quantconfig = webui_config.get("QuantizationConfiguration")
     finetuning = webui_config.get("Fine-Tuning")
     searchengine = webui_config.get("SearchEngine")
     functioncalling = webui_config.get("FunctionCalling")
+    current_running_config = api.get_current_running_config()
     calling_enable = False
 
     running_model["mname"] = ""
@@ -522,14 +518,11 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                 for key, value in searchengine.items():
                     if isinstance(value, dict):
                         search_engine_list.append(key)
-                current_search_engine = st.session_state.get("current_search_engine", {})
-                if current_search_engine:
+                if current_running_config["search_engine"]["name"]:
                     search_enable = True
-                    smart_search = current_search_engine["smart"]
-                    index = search_engine_list.index(current_search_engine["engine"])
+                    index = search_engine_list.index(current_running_config["search_engine"]["name"])
                 else:
                     index = 0
-                    smart_search = False
 
                 current_search_engine = st.selectbox(
                     "Please select Search Engine",
@@ -545,7 +538,6 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                     with col1:
                         api_key = st.text_input("API Key", api_key, type="password", disabled=disabled)
                         search_enable = st.checkbox('Enable', value=search_enable, help="After enabling, parameters need to be saved for the configuration to take effect.", disabled=disabled)
-                        smart_search = st.checkbox('Smart Search', value=smart_search, help="Let the model handle the question first, and let the model decide whether to invoke the search engine.", disabled=disabled)
                     with col2:
                         if cse_id is not None:
                             cse_id = st.text_input("Google CSE ID", cse_id, type="password", disabled=disabled)
@@ -567,16 +559,16 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                             elif msg := check_success_msg(r):
                                 st.toast("success save configuration for search engine.", icon="✔")
                 if search_enable:
-                    st.session_state["current_search_engine"] = {"engine": current_search_engine, "smart": smart_search}
+                    current_running_config["search_engine"]["name"] = current_search_engine
                 else:
-                    st.session_state["current_search_engine"] = {}
+                    current_running_config["search_engine"]["name"] = ""
+                api.save_current_running_config(current_running_config)
             with tabroleplay:
                 roleplay_list = list(ROLEPLAY_TEMPLATES.keys())
-                current_roleplay_state = st.session_state.get("current_roleplayer", {})
-                if current_roleplay_state:
+                if current_running_config["role_player"]["name"] and current_running_config["role_player"]["language"]:
                     role_enable = True
-                    role_index = roleplay_list.index(current_roleplay_state["roleplayer"])
-                    lang_index = player_language_list.index(current_roleplay_state["language"])
+                    role_index = roleplay_list.index(current_running_config["role_player"]["name"])
+                    lang_index = player_language_list.index(current_running_config["role_player"]["language"])
                 else:
                     role_index = 0
                     lang_index = 0
@@ -603,14 +595,16 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                     if save_parameters:
                         with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
                             if role_enable:
-                                st.session_state["current_roleplayer"] = {"roleplayer": current_roleplayer, "language": roleplayer_language}
+                                current_running_config["role_player"]["name"] = current_roleplayer
+                                current_running_config["role_player"]["language"] = roleplayer_language
                             else:
-                                st.session_state["current_roleplayer"] = {}
+                                current_running_config["role_player"]["name"] = ""
+                                current_running_config["role_player"]["language"] = ""
+                            api.save_current_running_config(current_running_config)
                             st.toast("success save configuration for Code Interpreter.", icon="✔")
             with tabfuncall:
                 from WebUI.Server.funcall.funcall import GetFuncallList, GetFuncallDescription
                 calling_enable = functioncalling.get("calling_enable", False)
-                #calling_max = functioncalling.get("max_calling", 5)
                 current_function = ""
                 function_name_list = GetFuncallList()
                 current_function = st.selectbox(
@@ -704,14 +698,11 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                 for key, value in searchengine.items():
                     if isinstance(value, dict):
                         search_engine_list.append(key)
-                current_search_engine = st.session_state.get("current_search_engine", {})
-                if current_search_engine:
+                if current_running_config["search_engine"]["name"]:
                     search_enable = True
-                    smart_search = current_search_engine["smart"]
-                    index = search_engine_list.index(current_search_engine["engine"])
+                    index = search_engine_list.index(current_running_config["search_engine"]["name"])
                 else:
                     index = 0
-                    smart_search = False
 
                 current_search_engine = st.selectbox(
                     "Please select Search Engine",
@@ -722,13 +713,14 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                 with st.form("SearchEngine"):
                     col1, col2 = st.columns(2)
                     top_k = searchengine.get("top_k", 3)
-                    #search_url = searchengine.get(current_search_engine).get("search_url", "")
+                    cse_id = searchengine.get(current_search_engine).get("cse_id", None)
                     api_key = searchengine.get(current_search_engine).get("api_key", "")
                     with col1:
-                        api_key = st.text_input("API KEY", api_key, type="password", disabled=disabled)
+                        api_key = st.text_input("API Key", api_key, type="password", disabled=disabled)
                         search_enable = st.checkbox('Enable', value=search_enable, help="After enabling, parameters need to be saved for the configuration to take effect.", disabled=disabled)
-                        smart_search = st.checkbox('Smart Search', value=smart_search, help="Let the model handle the question first, and let the model decide whether to invoke the search engine.", disabled=disabled)
                     with col2:
+                        if cse_id is not None:
+                            cse_id = st.text_input("Google CSE ID", cse_id, type="password", disabled=disabled)
                         top_k = st.slider("Top_k", 1, 10, top_k, 1, disabled=disabled)
                     save_parameters = st.form_submit_button(
                         "Save Parameters",
@@ -737,6 +729,8 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                     )
                     if save_parameters:
                         searchengine.get(current_search_engine)["api_key"] = api_key
+                        if cse_id is not None:
+                            searchengine.get(current_search_engine)["cse_id"] = cse_id
                         searchengine["top_k"] = top_k
                         with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
                             r = api.save_search_engine_config(searchengine)
@@ -745,17 +739,21 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                             elif msg := check_success_msg(r):
                                 st.toast("success save configuration for search engine.", icon="✔")
                 if search_enable:
-                    st.session_state["current_search_engine"] = {"engine": current_search_engine, "smart": smart_search}
+                    current_running_config["search_engine"]["name"] = current_search_engine
                 else:
-                    st.session_state["current_search_engine"] = {}
-                    
+                    current_running_config["search_engine"]["name"] = ""
+                api.save_current_running_config(current_running_config)
             with tabroleplay:
                 roleplay_list = list(ROLEPLAY_TEMPLATES.keys())
-                current_roleplay_state = st.session_state.get("current_roleplayer", {})
-                if current_roleplay_state:
-                    role_enable = True
-                    role_index = roleplay_list.index(current_roleplay_state["roleplayer"])
-                    lang_index = player_language_list.index(current_roleplay_state["language"])
+                if current_running_config["role_player"]["name"] and current_running_config["role_player"]["language"]:
+                    if current_running_config["role_player"]["name"] in roleplay_list:
+                        role_enable = True
+                        role_index = roleplay_list.index(current_running_config["role_player"]["name"])
+                        lang_index = player_language_list.index(current_running_config["role_player"]["language"])
+                    else:
+                        role_index = 0
+                        lang_index = 0
+                        role_enable = False
                 else:
                     role_index = 0
                     lang_index = 0
@@ -782,14 +780,16 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                     if save_parameters:
                         with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
                             if role_enable:
-                                st.session_state["current_roleplayer"] = {"roleplayer": current_roleplayer, "language": roleplayer_language}
+                                current_running_config["role_player"]["name"] = current_roleplayer
+                                current_running_config["role_player"]["language"] = roleplayer_language
                             else:
-                                st.session_state["current_roleplayer"] = {}
+                                current_running_config["role_player"]["name"] = ""
+                                current_running_config["role_player"]["language"] = ""
+                            api.save_current_running_config(current_running_config)
                             st.toast("success save configuration for Code Interpreter.", icon="✔")
             with tabfuncall:
                 from WebUI.Server.funcall.funcall import GetFuncallList, GetFuncallDescription
                 calling_enable = functioncalling.get("calling_enable", False)
-                #calling_max = functioncalling.get("max_calling", 5)
                 current_function = ""
                 function_name_list = GetFuncallList()
                 current_function = st.selectbox(

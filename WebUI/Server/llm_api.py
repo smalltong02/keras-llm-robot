@@ -252,6 +252,38 @@ def get_webui_configs(
             code=500,
             msg=f"failed to get webui configration, error: {e}")
     
+def get_current_running_config(
+        controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])
+) -> BaseResponse:
+    try:
+        from WebUI.configs.basicconfig import GetCurrentRunningCfg
+        config = GetCurrentRunningCfg()
+        return BaseResponse(data = config)
+    except Exception as e:
+        print(f'{e.__class__.__name__}: {e}')
+        return BaseResponse(
+            code=500,
+            msg=f"failed to get webui configration, error: {e}")
+    
+def save_current_running_config(
+        config: dict = Body(..., description="Model configration information"),
+        controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])
+) -> BaseResponse:
+    try:
+        from WebUI.configs.basicconfig import SaveCurrentRunningCfg
+        if config:
+            SaveCurrentRunningCfg(config)
+        else:
+            SaveCurrentRunningCfg()
+        return BaseResponse(
+            code=200,
+            msg="success save current running configration!")
+    except Exception as e:
+        print(f'{e.__class__.__name__}: {e}')
+        return BaseResponse(
+            code=500,
+            msg=f"failed to save current running configration, error: {e}")
+    
 def get_aigenerator_configs(
         controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])
 ) -> BaseResponse:

@@ -459,6 +459,35 @@ class ApiRequest:
         )
         return self._get_response_value(response, as_json=True, value_func=lambda r:r.get("data", {}))
     
+    def get_current_running_config(
+            self,
+        ) -> dict:
+
+        response = self.post(
+            "/server/get_current_running_config",
+        )
+        return self._get_response_value(response, as_json=True, value_func=lambda r:r.get("data", {}))
+    
+    def save_current_running_config(
+            self,
+            config: dict={},
+            controller_address: str=None,
+        ):
+        data = {
+            "config": config,
+            "controller_address": controller_address,
+        }
+        response = self.post(
+            "/server/save_current_running_config",
+            json=data,
+        )
+        
+        if self._use_async:
+            return self.ret_async(response)
+        else:
+            return self.ret_sync(response)
+
+
     def get_aigenerator_config(
             self,
         ) -> Dict:
@@ -1601,55 +1630,6 @@ class ApiRequest:
         )
         
         return self._get_response_value(response, as_json=True, value_func=lambda r:r.get("data", False))
-        
-    def chat_solution_chat(
-        self,
-        query: str,
-        prompt_language: str = "",
-        imagesdata: List[bytes] = [],
-        audiosdata: List[bytes] = [],
-        videosdata: List[bytes] = [],
-        history: List[dict] = [],
-        stream: bool = True,
-        chat_solution: dict = {},
-        temperature: float = 0.7,
-        max_tokens: int = None,
-        **kwargs,
-    ):
-        imageslist = []
-        audioslist = []
-        videoslist = []
-        if len(imagesdata):
-            for imagedata in imagesdata:
-                imageslist.append(base64.b64encode(imagedata).decode('utf-8'))
-        if len(audiosdata):
-            for audiodata in audiosdata:
-                audioslist.append(base64.b64encode(audiodata).decode('utf-8'))
-        if len(videosdata):
-            for videodata in videosdata:
-                videoslist.append(base64.b64encode(videodata).decode('utf-8'))
-        data = {
-            "query": query,
-            "prompt_language": prompt_language,
-            "imagesdata": imageslist,
-            "audiosdata": audioslist,
-            "videosdata": videoslist,
-            "history": history,
-            "stream": stream,
-            "chat_solution": chat_solution,
-            "temperature": temperature,
-            "max_tokens": max_tokens,
-        }
-
-        print("received input message:")
-        pprint(data)
-
-        response = self.post(
-            "/chat_solution/chat",
-            json=data,
-            stream=True,
-        )
-        return self._httpx_stream2generator(response, as_json=True)
     
     def _get_response_value(self, response: httpx.Response, as_json: bool = False, value_func: Callable = None,):
         

@@ -38,15 +38,12 @@ def init_credential() -> bool:
                 credentials_path, scopes
             )
             creds = flow.run_local_server(port=GOOGLE_OAUTH_PORT)
-            # Save the credentials for the next run
-        with open(GOOGLE_TOKEN_FILE, "w") as token:
-            token.write(creds.to_json())
+        if creds:
             glob_credentials = creds
             return True
-    else:
-        glob_credentials = creds
-        return True
-    return False
+        return False
+    glob_credentials = creds
+    return True
 
 def GetFuncallInToolBoxesList() ->list:
     funcall_list = []
