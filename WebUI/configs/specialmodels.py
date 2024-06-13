@@ -7,18 +7,16 @@ import threading
 from pathlib import Path
 import google.generativeai as genai
 from fastapi.responses import StreamingResponse
-from WebUI.configs import USE_RERANKER, GetRerankerModelPath
 from WebUI.configs.basicconfig import (TMP_DIR, ToolsType, ModelType, ModelSize, ModelSubType, call_calling, GetModelInfoByName, GetProviderByName, GetModelConfig, GetGGUFModelPath, generate_new_query, GeneratePresetPrompt, 
-                                       GetSystemPromptForSupportTools, GetSystemPromptForCurrentRunningConfig, GetGoogleNativeTools, CallingExternalToolsForCurConfig, GetNewAnswerForCurConfig, GetUserAnswerForCurConfig, GetCurrentRunningCfg,
-                                       ExtractJsonStrings, use_new_search_engine, use_knowledge_base, use_new_function_calling, use_new_toolboxes_calling)
+                                       GetSystemPromptForSupportTools, GetSystemPromptForCurrentRunningConfig, GetGoogleNativeTools, CallingExternalToolsForCurConfig, GetNewAnswerForCurConfig, GetUserAnswerForCurConfig)
 from WebUI.configs.codemodels import code_model_chat
 from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
 from WebUI.Server.db.repository import add_chat_history_to_db, update_chat_history
 from WebUI.Server.chat.StreamHandler import StreamSpeakHandler
 from langchain.chains import LLMChain
-from WebUI.Server.utils import FastAPI, detect_device
-from WebUI.Server.chat.chat import CreateChatHistoryFromCallCalling
-from typing import List, Dict, Any, Union, Optional, AsyncIterable
+from WebUI.Server.utils import FastAPI
+from WebUI.Server.chat.chat import CreateChatHistoryFromCallCalling, GetQueryFromExternalToolsForCurConfig, RunAllEnableToolsInString
+from typing import List, Dict, Any, Optional, AsyncIterable
 
 def clean_special_text(text : str, prompttemplate: dict):
     anti_prompt = prompttemplate["anti_prompt"]
@@ -140,172 +138,6 @@ def init_special_models(app: FastAPI, args):
         load_pipeline_model(app=app, model_name=model_name, model_path=model_path, device=args.device)
     elif load_type == "llamacpp":
         load_llamacpp_model(app=app, model_name=model_name, model_path=model_path)
-
-async def GetChatPromptFromFromSearchEngine(json_lists: list = [], se_name: str = "", query: str = "") ->Union[str, Any, Any]:
-    from WebUI.Server.chat.search_engine_chat import lookup_search_engine
-    if not json_lists or not se_name or not query:
-        return None, "", []
-    se_query = query
-    try:
-        for item in json_lists:
-            item_json = json.loads(item)
-            arguments = item_json.get("arguments", {})
-            if arguments:
-                first_key = next(iter(arguments))
-                first_value = arguments[first_key]
-                if isinstance(first_value, str):
-                    se_query = first_value
-                    break
-    except Exception as _:
-        pass
-    docs = await lookup_search_engine(se_query, se_name)
-    source_documents = [
-        f"""from [{inum + 1}] [{doc.metadata["source"]}]({doc.metadata["source"]}) \n\n{doc.page_content}\n\n"""
-        for inum, doc in enumerate(docs)
-    ]
-    context = "\n".join([doc.page_content for doc in docs])
-    if not context:
-        return None, "", []
-    new_query = f"""The user's question has been searched on the internet. Here is all the content retrieved from the search engine:
-    {context}\n
-"""
-    return new_query, se_name, source_documents
-
-async def GetChatPromptFromKnowledgeBase(json_lists: list = [], kb_name: str = "", query: str = "") ->Union[str, Any, Any]:
-    from urllib.parse import urlencode
-    from fastapi.concurrency import run_in_threadpool
-    from WebUI.Server.reranker.reranker import LangchainReranker
-    from WebUI.Server.knowledge_base.kb_doc_api import search_docs
-    from WebUI.Server.knowledge_base.kb_service.base import KBServiceFactory
-    from WebUI.Server.knowledge_base.utils import VECTOR_SEARCH_TOP_K, SCORE_THRESHOLD
-    if not json_lists or not kb_name or not query:
-        return None, "", []
-    kb_query = query
-    try:
-        for item in json_lists:
-            item_json = json.loads(item)
-            arguments = item_json.get("arguments", {})
-            if arguments:
-                first_key = next(iter(arguments))
-                first_value = arguments[first_key]
-                if isinstance(first_value, str):
-                    kb_query = first_value
-                    break
-    except Exception as _:
-        pass
-    kb = KBServiceFactory.get_service_by_name(kb_name)
-    if kb is None:
-        return None, "", []
-    docs = await run_in_threadpool(search_docs,
-            query=kb_query,
-            knowledge_base_name=kb_name,
-            top_k=VECTOR_SEARCH_TOP_K,
-            score_threshold=SCORE_THRESHOLD)
-    if USE_RERANKER:
-            reranker_model_path = GetRerankerModelPath()
-            print("-----------------model path------------------")
-            print(reranker_model_path)
-            reranker_model = LangchainReranker(top_n=VECTOR_SEARCH_TOP_K,
-                                            device=detect_device(),
-                                            max_length=1024,
-                                            model_name_or_path=reranker_model_path
-                                            )
-            print(docs)
-            docs = reranker_model.compress_documents(documents=docs,
-                                                     query=kb_query)
-            print("---------after rerank------------------")
-            print(docs)
-    source_documents = []
-    for inum, doc in enumerate(docs):
-        filename = doc.metadata.get("source")
-        parameters = urlencode({"knowledge_base_name": kb_name, "file_name": filename})
-        base_url = "/"
-        url = f"{base_url}knowledge_base/download_doc?" + parameters
-        text = f"""from [{inum + 1}] [{filename}]({url}) \n\n{doc.page_content}\n\n"""
-        source_documents.append(text)
-    context = "\n".join([doc.page_content for doc in docs])
-    if not context:
-        return None, "", []
-    new_query = f"""The user's issue has been searched through the knowledge base. Here is all the content retrieved:
-    {context}\n
-"""
-    return new_query, kb_name, source_documents
-
-async def GetChatPromptFromFunctionCalling(json_lists: list = []) ->Union[str, Any, Any]:
-    from WebUI.Server.funcall.funcall import RunNormalFunctionCalling
-    if not json_lists:
-        return None, "", []
-    result_list = []
-    func_name = []
-    for item in json_lists:
-        name, result = RunNormalFunctionCalling(item)
-        if result:
-            func_name.append(name)
-            result_list.append(result)
-    source_documents = []
-    for result in enumerate(result_list):
-        source_documents.append(f"function - {func_name[0]}()\n\n{result}")
-    context = "\n".join(result_list)
-    if not context:
-        return None, "", []
-    new_query = f"""The function ''{func_name[0]}'' has been executed, and the result is as follows:
-    {context}\n
-"""
-    await asyncio.sleep(0.1)
-    return new_query, func_name[0], source_documents
-
-async def GetChatPromptFromToolBoxes(json_lists: list = []) ->Union[str, Any, Any]:
-    from WebUI.Server.funcall.google_toolboxes.credential import RunFunctionCallingInToolBoxes
-    if not json_lists:
-        return None, "", []
-    result_list = []
-    func_name = []
-    for item in json_lists:
-        name, result = RunFunctionCallingInToolBoxes(item)
-        if result:
-            func_name.append(name)
-            result_list.append(result)
-    source_documents = []
-    for result in enumerate(result_list):
-        source_documents.append(f"function - {func_name[0]}()\n\n{result}")
-    context = "\n".join(result_list)
-    if not context:
-        return None, "", []
-    new_query = f"""The function '{func_name[0]}' has been executed, and the result is as follows:
-    {context}\n
-"""
-    await asyncio.sleep(0.1)
-    return new_query, func_name[0], source_documents
-
-async def GetQueryFromExternalToolsForCurConfig(answer: str, query: str) ->Union[str, Any, Any, Any]:
-    if not answer:
-        return None, "", [], ToolsType.Unknown
-    config = GetCurrentRunningCfg()
-    if not config:
-        return None
-    json_lists = ExtractJsonStrings(answer)
-    if not json_lists:
-        return None, "", [], ToolsType.Unknown
-    if config["search_engine"]["name"] and use_new_search_engine(json_lists):
-        new_query, tool_name, docs = await GetChatPromptFromFromSearchEngine(json_lists, config["search_engine"]["name"], query)
-        return new_query, tool_name, docs, ToolsType.ToolSearchEngine
-    if config["knowledge_base"]["name"] and use_knowledge_base(json_lists):
-        new_query, tool_name, docs = await GetChatPromptFromKnowledgeBase(json_lists, config["knowledge_base"]["name"], query)
-        return new_query, tool_name, docs, ToolsType.ToolKnowledgeBase
-    if config["normal_calling"]["enable"] and use_new_function_calling(json_lists):
-        new_query, tool_name, docs = await GetChatPromptFromFunctionCalling(json_lists)
-        return new_query, tool_name, docs, ToolsType.ToolFunctionCalling
-    if use_new_toolboxes_calling(json_lists):
-        new_query, tool_name, docs = await GetChatPromptFromToolBoxes(json_lists)
-        return new_query, tool_name, docs, ToolsType.ToolToolBoxes
-    return None, "", [], ToolsType.Unknown
-
-async def RunAllEnableToolsInString(func_name: str="", args: dict={}, query: str=""):
-    if not func_name or not query:
-        return None, "", [], ToolsType.Unknown
-    json_data = json.dumps({"name": func_name, "arguments": args})
-    new_query, tool_name, docs, tooltype = await GetQueryFromExternalToolsForCurConfig(json_data, query)
-    return new_query, tool_name, docs, tooltype
 
 async def special_chat_iterator(model: Any,
     tokenizer: Any,
