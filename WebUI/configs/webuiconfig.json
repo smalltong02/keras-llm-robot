@@ -2906,24 +2906,23 @@
     },
     "CurrentRunningConfig": {
         "chat_solution": {
-            "name": "Virtual Personal Assistant",
-            "assistant_name": "Jessica"
+            "name": ""
         },
         "search_engine": {
-            "name": "duckduckgo"
+            "name": ""
         },
         "knowledge_base": {
-            "name": "PS5"
+            "name": ""
         },
         "normal_calling": {
-            "enable": true
+            "enable": false
         },
         "code_interpreter": {
             "name": ""
         },
         "role_player": {
-            "name": "Personal Secretary",
-            "language": "english"
+            "name": "",
+            "language": ""
         },
         "voice": {
             "name": "",
@@ -2935,31 +2934,31 @@
         },
         "ToolBoxes": {
             "Google ToolBoxes": {
-                "credential": "google_credentials.json",
+                "credential": "",
                 "Tools": {
                     "Google Maps": {
-                        "enable": true
+                        "enable": false
                     },
                     "Google Mail": {
-                        "enable": true
+                        "enable": false
                     },
                     "Google Youtube": {
-                        "enable": true
+                        "enable": false
                     },
                     "Google Calendar": {
-                        "enable": true
+                        "enable": false
                     },
                     "Google Drive": {
-                        "enable": true
+                        "enable": false
                     },
                     "Google Docs": {
-                        "enable": true
+                        "enable": false
                     },
                     "Google Sheets": {
-                        "enable": true
+                        "enable": false
                     },
                     "Google Forms": {
-                        "enable": true
+                        "enable": false
                     }
                 }
             }

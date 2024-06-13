@@ -243,35 +243,8 @@ async def chat(query: str = Body(..., description="User input: ", examples=["cha
         model_info["mname"] = model_name
         model_config = GetModelConfig(webui_config, model_info)
         support_tools = model_config.get("support_tools", False)
-        async_callback = AsyncIteratorCallbackHandler()
-        callbackslist = [async_callback]
-        if len(speechmodel):
-            modeltype = speechmodel.get("type", "")
-            provider = speechmodel.get("provider", "")
-            #spmodel = speechmodel.get("model", "")
-            spspeaker = speechmodel.get("speaker", "")
-            speechkey = speechmodel.get("speech_key", "")
-            speechregion = speechmodel.get("speech_region", "")
-            if modeltype == "local" or modeltype == "cloud":
-                speak_handler = StreamSpeakHandler(run_place=modeltype, provider=provider, synthesis=spspeaker, subscription=speechkey, region=speechregion)
-                callbackslist.append(speak_handler)
-        if len(imagesdata):
-            if max_tokens is None:
-                max_tokens = DEF_TOKENS
-        provider = GetProviderByName(webui_config, model_name)
-        model = get_ChatOpenAI(
-            provider=provider,
-            model_name=model_name,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            callbacks=callbackslist,
-        )
-        # def tool_chain(model_output):
-        #     tool_map = {tool.name: tool for tool in funcall_tools}
-        #     chosen_tool = tool_map[model_output["name"]]
-        #     return itemgetter("arguments") | chosen_tool
         system_msg = []
-        if support_tools:
+        if not support_tools:
             tools_system_prompt = GetSystemPromptForCurrentRunningConfig()
         else:
             tools_system_prompt = GetSystemPromptForSupportTools()
@@ -281,11 +254,38 @@ async def chat(query: str = Body(..., description="User input: ", examples=["cha
                 history[0].content = history[0].content + "\n\n" + tools_system_prompt
             else:
                 history = [system_msg] + history
-
         docs = []
         btalk = True
         while btalk:
             btalk = False
+            async_callback = AsyncIteratorCallbackHandler()
+            callbackslist = [async_callback]
+            if len(speechmodel):
+                modeltype = speechmodel.get("type", "")
+                provider = speechmodel.get("provider", "")
+                #spmodel = speechmodel.get("model", "")
+                spspeaker = speechmodel.get("speaker", "")
+                speechkey = speechmodel.get("speech_key", "")
+                speechregion = speechmodel.get("speech_region", "")
+                if modeltype == "local" or modeltype == "cloud":
+                    speak_handler = StreamSpeakHandler(run_place=modeltype, provider=provider, synthesis=spspeaker, subscription=speechkey, region=speechregion)
+                    callbackslist.append(speak_handler)
+            if len(imagesdata):
+                if max_tokens is None:
+                    max_tokens = DEF_TOKENS
+            provider = GetProviderByName(webui_config, model_name)
+            model = get_ChatOpenAI(
+                provider=provider,
+                model_name=model_name,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                callbacks=callbackslist,
+            )
+            # def tool_chain(model_output):
+            #     tool_map = {tool.name: tool for tool in funcall_tools}
+            #     chosen_tool = tool_map[model_output["name"]]
+            #     return itemgetter("arguments") | chosen_tool
+
             if len(imagesdata):
                 from langchain.schema import HumanMessage
                 content=[{
@@ -331,8 +331,8 @@ async def chat(query: str = Body(..., description="User input: ", examples=["cha
                             else:
                                 btalk = True
                                 new_answer = GetNewAnswerForCurConfig(new_answer, tool_name, tooltype)
-                                history.append({'role': "user",'content': query})
-                                history.append({'role': "assistant", 'content': new_answer})
+                                history.append(History(role="user", content=query))
+                                history.append(History(role="assistant", content=new_answer))
                                 yield json.dumps(
                                     {"clear": new_answer, "chat_history_id": chat_history_id},
                                     ensure_ascii=False)
