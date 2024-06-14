@@ -189,7 +189,7 @@ kb_tool_names = {
 }
 
 # for google gemini
-get_current_location_func = genai.protos.Tool(
+get_current_location_gemini = genai.protos.Tool(
     function_declarations=[
       genai.protos.FunctionDeclaration(
         name='get_current_location',
@@ -198,7 +198,7 @@ get_current_location_func = genai.protos.Tool(
       )
     ])
 
-get_current_time_func = genai.protos.Tool(
+get_current_time_gemini = genai.protos.Tool(
     function_declarations=[
       genai.protos.FunctionDeclaration(
         name='get_current_time',
@@ -207,7 +207,7 @@ get_current_time_func = genai.protos.Tool(
       )
     ])
 
-submit_warranty_claim_func = genai.protos.Tool(
+submit_warranty_claim_gemini = genai.protos.Tool(
     function_declarations=[
       genai.protos.FunctionDeclaration(
         name='submit_warranty_claim',
@@ -223,7 +223,7 @@ submit_warranty_claim_func = genai.protos.Tool(
       )
     ])
 
-search_from_search_engine_func = genai.protos.Tool(
+search_from_search_engine_gemini = genai.protos.Tool(
     function_declarations=[
       genai.protos.FunctionDeclaration(
         name='search_from_search_engine',
@@ -238,7 +238,7 @@ search_from_search_engine_func = genai.protos.Tool(
       )
     ])
 
-search_from_knowledge_base_func = genai.protos.Tool(
+search_from_knowledge_base_gemini = genai.protos.Tool(
     function_declarations=[
       genai.protos.FunctionDeclaration(
         name='search_from_knowledge_base',
@@ -254,17 +254,17 @@ search_from_knowledge_base_func = genai.protos.Tool(
     ])
 
 google_funcall_tools = [
-        get_current_location_func,
-        get_current_time_func,
-        submit_warranty_claim_func,
-    ]
+    get_current_location_gemini,
+    get_current_time_gemini,
+    submit_warranty_claim_gemini,
+]
 
 google_search_tools = [
-    search_from_search_engine_func,
+    search_from_search_engine_gemini,
 ]
 
 google_knowledge_base_tools = [
-    search_from_knowledge_base_func,
+    search_from_knowledge_base_gemini,
 ]
 
 # for openai
@@ -310,11 +310,48 @@ submit_warranty_claim_openai = {
     }
 }
 
-openai_tools = [
-    #get_current_location_openai,
-    #get_current_time_openai,
-    submit_warranty_claim_openai,
+search_from_search_engine_openai = {
+    "type": "function",
+    "function": {
+        "name": "search_from_search_engine",
+        "description": "search any information from network when a question exceeds your knowledge scope or when it's beyond the timeframe of your training data.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "The questions to look up on the internet."},
+            },
+            "required": ["query"],
+        },
+    }
+}
 
+search_from_knowledge_base_openai = {
+    "type": "function",
+    "function": {
+        "name": "search_from_knowledge_base",
+        "description": "search any information from knowledge base.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "The questions to look up on the knowledge base."},
+            },
+            "required": ["query"],
+        },
+    }
+}
+
+openai_normal_tools = [
+    get_current_location_openai,
+    get_current_time_openai,
+    submit_warranty_claim_openai,
+]
+
+openai_search_tools = [
+    search_from_search_engine_openai,
+]
+
+openai_knowledge_base_tools = [
+    search_from_knowledge_base_openai,
 ]
 
 def GetFuncallList() ->list:

@@ -58,7 +58,7 @@ map_tool_names = {
 }
 
 # for google gemini
-get_map_url_func = genai.protos.Tool(
+get_map_url_gemini = genai.protos.Tool(
     function_declarations=[
       genai.protos.FunctionDeclaration(
         name='get_map_url',
@@ -74,8 +74,27 @@ get_map_url_func = genai.protos.Tool(
     ])
 
 google_maps_tools = [
-        get_map_url_func,
-    ]
+    get_map_url_gemini,
+]
+
+get_map_url_openai = {
+    "type": "function",
+    "function": {
+        "name": "get_map_url",
+        "description": "Get the URL of a Google Map for the given address.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "address": {"type": "string", "description": "This is an address that Maps can recognize."},
+            },
+            "required": ["address"],
+        },
+    }
+}
+
+openai_maps_tools = [
+    get_map_url_openai,
+]
 
 def GetMapFuncallList() ->list:
     funcall_list = []

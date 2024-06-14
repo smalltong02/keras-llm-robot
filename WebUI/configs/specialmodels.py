@@ -7,15 +7,16 @@ import threading
 from pathlib import Path
 import google.generativeai as genai
 from fastapi.responses import StreamingResponse
-from WebUI.configs.basicconfig import (TMP_DIR, ToolsType, ModelType, ModelSize, ModelSubType, call_calling, GetModelInfoByName, GetProviderByName, GetModelConfig, GetGGUFModelPath, generate_new_query, GeneratePresetPrompt, 
-                                       GetSystemPromptForSupportTools, GetSystemPromptForCurrentRunningConfig, GetGoogleNativeTools, CallingExternalToolsForCurConfig, GetNewAnswerForCurConfig, GetUserAnswerForCurConfig)
+from WebUI.configs.basicconfig import (TMP_DIR, ToolsType, ModelType, ModelSize, ModelSubType, GetModelInfoByName, GetProviderByName, GetModelConfig, GetGGUFModelPath, generate_new_query, GeneratePresetPrompt, 
+                                       GetSystemPromptForSupportTools, GetSystemPromptForCurrentRunningConfig, GetGoogleNativeTools, GetOpenaiNativeTools, CallingExternalToolsForCurConfig, GetNewAnswerForCurConfig,
+                                       GetUserAnswerForCurConfig)
 from WebUI.configs.codemodels import code_model_chat
 from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
 from WebUI.Server.db.repository import add_chat_history_to_db, update_chat_history
 from WebUI.Server.chat.StreamHandler import StreamSpeakHandler
 from langchain.chains import LLMChain
 from WebUI.Server.utils import FastAPI
-from WebUI.Server.chat.chat import CreateChatHistoryFromCallCalling, GetQueryFromExternalToolsForCurConfig, RunAllEnableToolsInString
+from WebUI.Server.chat.chat import GetQueryFromExternalToolsForCurConfig, RunAllEnableToolsInString
 from typing import List, Dict, Any, Optional, AsyncIterable
 
 def clean_special_text(text : str, prompttemplate: dict):
@@ -365,7 +366,6 @@ async def special_chat_iterator(model: Any,
                                     if function_text:
                                         function_name = fn.name
                                         function_response, tool_name, docs, tooltype = await RunAllEnableToolsInString(fn.name, args_dict, query)
-                                        repeat = True
                                         break
                                 elif text_text := part.text:
                                     if speak_handler: 
@@ -375,6 +375,7 @@ async def special_chat_iterator(model: Any,
                                         {"text": text_text, "chat_history_id": chat_history_id},
                                         ensure_ascii=False)
                             if function_name and function_response:
+                                repeat = True
                                 new_answer = GetNewAnswerForCurConfig("", tool_name, tooltype)
                                 yield json.dumps(
                                     {"clear": new_answer, "chat_history_id": chat_history_id},
@@ -571,12 +572,19 @@ async def special_chat_iterator(model: Any,
                     docs = []
                     tooltype = ToolsType.Unknown
 
-        elif provider == "openai-api" or provider == "kimi-cloud-api" or provider == "yi-01ai-api":
+        elif provider == "openai-api" or provider == "kimi-cloud-api":
             from openai import OpenAI
-            from WebUI.Server.funcall.funcall import openai_tools
+            calling_tools =[]
+            tool_choice = None
+            if support_tools:
+                calling_tools = GetOpenaiNativeTools()
+                if calling_tools:
+                    tool_choice = "auto"
+                    stream = False
+                else:
+                    calling_tools = None
             def chat_completion_request(client,model="", messages="", tools=None, tool_choice=None, stream=False):
                 try:
-                    
                     response = client.chat.completions.create(
                         model=model,
                         messages=messages,
@@ -598,17 +606,15 @@ async def special_chat_iterator(model: Any,
                 apikey = model_config.get("api_key", "[Your Key]")
                 if apikey == "[Your Key]":
                     apikey = os.environ.get('KIMI_API_KEY')
-            elif provider == "yi-01ai-api":
-                apikey = model_config.get("api_key", "[Your Key]")
-                if apikey == "[Your Key]":
-                    apikey = os.environ.get('YI_API_KEY')
             if not apikey:
                 apikey = "EMPTY"
-            client = OpenAI(api_key=apikey)
-
+            if provider == "openai-api":
+                client = OpenAI(api_key=apikey)
+            else:
+                proxy = model_config.get("baseurl", "")
+                client = OpenAI(api_key=apikey, base_url=proxy)
             docs = []
             btalk = True
-            stream = False
             message = history.copy()
             message.append({"role": "user", "content": query})
             while btalk:
@@ -618,109 +624,74 @@ async def special_chat_iterator(model: Any,
                     client=client,
                     model=model_name,
                     messages=message,
-                    tools=openai_tools,
-                    tool_choice="auto",
+                    tools=calling_tools,
+                    tool_choice=tool_choice,
                     stream=stream
                 )
-                if not stream:
-                        response = chat_response
-                    #for response in chat_response:
-                        response_delta = response.choices[0].delta
-                        tool_calls = response_delta.tool_calls
-                        for tool_call in tool_calls:
-                            function_name = tool_call.function.name
-                            function_response = ""
-                            args = tool_call.function.arguments
-                            args_dict = args
-                            function_text = f"{function_name}({args})"
-                            print(function_text)
-                            if function_text:
-                                #function_response, tool_name, docs, tooltype = await RunAllEnableToolsInString(function_name, {}, query)                                    repeat = True
-                                btalk = True
-                                #message.append({"tool_call_id": tool_call.id, "role": "tool", "name": function_name,"content": function_response})
-                        answer = response_delta.content
+                if hasattr(chat_response, 'status_code') and chat_response.status_code != 200:
+                    yield json.dumps(
+                        {"text": chat_response.message, "chat_history_id": chat_history_id},
+                        ensure_ascii=False)
+                    await asyncio.sleep(0.1)
+                else:
+                    if stream:
+                        for response in chat_response:
+                            response_delta = response.choices[0].delta
+                            token = response_delta.content
+                            if token:
+                                answer += token
+                                yield json.dumps(
+                                    {"text": token, "chat_history_id": chat_history_id},
+                                    ensure_ascii=False)
+                                if speak_handler: 
+                                    speak_handler.on_llm_new_token(token)
+                                await asyncio.sleep(0.1)
+                    else:
+                        response_message = chat_response.choices[0].message
+                        tool_calls = response_message.tool_calls
+                        answer = response_message.content
                         if answer:
                             yield json.dumps(
                                 {"text": answer, "chat_history_id": chat_history_id},
                                 ensure_ascii=False)
+                            if speak_handler: 
+                                speak_handler.on_llm_new_token(token)
+                        if tool_calls:
+                            for tool_call in tool_calls:
+                                function_name = tool_call.function.name
+                                function_response = ""
+                                args = tool_call.function.arguments
+                                try:
+                                    args_dict = json.loads(args)
+                                except Exception as _:
+                                    args_dict = {}
+                                function_text = f"{function_name}({args})"
+                                print(function_text)
+                                if function_text:
+                                    function_response, tool_name, docs, tooltype = await RunAllEnableToolsInString(function_name, args_dict, query)
+                                    if function_name and function_response:
+                                        btalk = True
+                                        new_answer = GetNewAnswerForCurConfig("", tool_name, tooltype)
+                                        yield json.dumps(
+                                            {"clear": new_answer, "chat_history_id": chat_history_id},
+                                            ensure_ascii=False)
+                                        user_answer = GetUserAnswerForCurConfig(tool_name, tooltype)
+                                        yield json.dumps(
+                                            {"user": user_answer, "tooltype": tooltype.value},
+                                            ensure_ascii=False)
+                                        if provider == "openai-api":
+                                            message.append({"tool_call_id": tool_call.id, "role": "function", "name": function_name,"content": function_response})
+                                        else:
+                                            message.append({"role": "assistant", "content": new_answer})
+                                            message.append({"role": "user", "content": function_response})
             await asyncio.sleep(0.1)
-            # from langchain.callbacks import AsyncIteratorCallbackHandler
-            # from WebUI.Server.utils import wrap_done, get_ChatOpenAI
-            # from WebUI.Server.utils import get_prompt_template
-            # from WebUI.Server.chat.utils import History
-            # from langchain.prompts.chat import ChatPromptTemplate
+            if speak_handler: 
+                speak_handler.on_llm_end(None)
+            if docs:
+                yield json.dumps({"tooltype": tooltype.value, "docs": docs}, ensure_ascii=False)
+                docs = []
+                tooltype = ToolsType.Unknown
 
-            # async_callback = AsyncIteratorCallbackHandler()
-            # model = get_ChatOpenAI(
-            #     provider=provider,
-            #     model_name=model_name,
-            #     temperature=temperature,
-            #     max_tokens=max_tokens,
-            #     callbacks=[async_callback],
-            # )
-            # docs=[]
-            # btalk = True
-            # while btalk:
-            #     btalk = False
-            #     answer = ""
-            #     history = [History.from_data(h) for h in history]
-            #     prompt_template = get_prompt_template("llm_chat", prompt_name)
-            #     input_msg = History(role="user", content=prompt_template).to_msg_template(False)
-            #     chat_prompt = ChatPromptTemplate.from_messages(
-            #         [i.to_msg_template() for i in history] + [input_msg])
-            #     chain = LLMChain(prompt=chat_prompt, llm=model)
-
-            #     # Begin a task that runs in the background.
-            #     task = asyncio.create_task(wrap_done(
-            #         chain.acall({"input": query}),
-            #         async_callback.done),
-            #     )
-            #     if stream:
-            #         new_sentence = ""
-            #         async for token in async_callback.aiter():
-            #             answer += token
-            #             new_sentence += token
-            #             if not btalk:
-            #                 new_query, new_answer = call_calling(answer)
-            #                 if new_query:
-            #                     btalk = True
-            #                     pattern = r'\"(.*?)\"'
-            #                     match = re.search(pattern, new_query)
-            #                     if match:
-            #                         function_call = match.group(1)
-            #                     new_answer = new_answer + "\n" + f'It is necessary to call the function `{function_call}` to get more information.'
-            #                     yield json.dumps(
-            #                         {"clear": new_answer, "chat_history_id": chat_history_id},
-            #                         ensure_ascii=False)
-            #                     yield json.dumps(
-            #                         {"user": f'The function `{function_call}` was called.', "chat_history_id": chat_history_id},
-            #                         ensure_ascii=False)
-            #                     new_history = await CreateChatHistoryFromCallCalling(query=query, new_answer=new_answer, history=history)
-            #                     history = new_history
-            #                     query = new_query
-            #                     new_sentence = ""
-            #                     break
-            #             # Use server-sent-events to stream the response
-            #             if '\n' in new_sentence:
-            #                 #print("new_sentence: ", new_sentence)
-            #                 yield json.dumps(
-            #                     {"text": new_sentence, "chat_history_id": chat_history_id},
-            #                     ensure_ascii=False)
-            #                 new_sentence = ""
-            #         if new_sentence:
-            #             #print("new_sentence: ", new_sentence)
-            #             yield json.dumps(
-            #                 {"text": new_sentence, "chat_history_id": chat_history_id},
-            #                 ensure_ascii=False)
-            #         new_sentence = ""
-            #     else:
-            #         async for token in async_callback.aiter():
-            #             answer += token
-            #         yield json.dumps(
-            #             {"text": answer, "chat_history_id": chat_history_id},
-            #             ensure_ascii=False)
-            #     await task
-        
         elif provider == "baidu-cloud-api":
             import qianfan
             model_config = GetModelConfig(webui_config, modelinfo)

@@ -271,7 +271,7 @@ drive_tool_names = {
 }
 
 # for google gemini
-search_in_cloud_storage_func = genai.protos.Tool(
+search_in_cloud_storage_gemini = genai.protos.Tool(
     function_declarations=[
       genai.protos.FunctionDeclaration(
         name='search_in_cloud_storage',
@@ -286,7 +286,7 @@ search_in_cloud_storage_func = genai.protos.Tool(
       )
     ])
 
-download_from_cloud_storage_func = genai.protos.Tool(
+download_from_cloud_storage_gemini = genai.protos.Tool(
     function_declarations=[
       genai.protos.FunctionDeclaration(
         name='download_from_cloud_storage',
@@ -302,11 +302,11 @@ download_from_cloud_storage_func = genai.protos.Tool(
       )
     ])
 
-upload_to_cloud_storage_func = genai.protos.Tool(
+upload_to_cloud_storage_gemini = genai.protos.Tool(
     function_declarations=[
       genai.protos.FunctionDeclaration(
         name='upload_to_cloud_storage',
-        description="send mail in email.",
+        description="upload document to cloud storage.",
         parameters=genai.protos.Schema(
             type=genai.protos.Type.OBJECT,
             properties={
@@ -318,10 +318,63 @@ upload_to_cloud_storage_func = genai.protos.Tool(
     ])
 
 google_cloud_tools = [
-        search_in_cloud_storage_func,
-        download_from_cloud_storage_func,
-        upload_to_cloud_storage_func,
-    ]
+    search_in_cloud_storage_gemini,
+    download_from_cloud_storage_gemini,
+    upload_to_cloud_storage_gemini,
+]
+
+# for opennai
+search_in_cloud_storage_openai = {
+    "type": "function",
+    "function": {
+        "name": "search_in_cloud_storage",
+        "description": "Search document in cloud storage.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "search_criteria": {"type": "string", "description": "Search document in cloud storage."},
+            },
+            "required": ["search_criteria"],
+        },
+    }
+}
+
+download_from_cloud_storage_openai = {
+    "type": "function",
+    "function": {
+        "name": "download_from_cloud_storage",
+        "description": "Download document from cloud storage.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "search_criteria": {"type": "string", "description": """Use the advanced search syntax like the Google Drive API, Here's an example: name contains "HipsHook Project" and "me" in owners"""},
+                "download_path": {"type": "string", "description": "This is folder path."},
+            },
+            "required": ["search_criteria", "download_path"],
+        },
+    }
+}
+
+upload_to_cloud_storage_openai = {
+    "type": "function",
+    "function": {
+        "name": "upload_to_cloud_storage",
+        "description": "upload document to cloud storage.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "upload_file": {"type": "string", "description": "This is file path."},
+            },
+            "required": ["upload_file"],
+        },
+    }
+}
+
+openai_cloud_tools = [
+    search_in_cloud_storage_openai,
+    download_from_cloud_storage_openai,
+    upload_to_cloud_storage_openai,
+]
 
 def GetStorageFuncallList() ->list:
     funcall_list = []

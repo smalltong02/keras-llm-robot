@@ -201,7 +201,7 @@ calendar_tool_names = {
 }
 
 # for google gemini
-get_event_from_calendar_func = genai.protos.Tool(
+get_event_from_calendar_gemini = genai.protos.Tool(
     function_declarations=[
       genai.protos.FunctionDeclaration(
         name='get_event_from_calendar',
@@ -217,7 +217,7 @@ get_event_from_calendar_func = genai.protos.Tool(
       )
     ])
 
-create_event_to_calendar_func = genai.protos.Tool(
+create_event_to_calendar_gemini = genai.protos.Tool(
     function_declarations=[
       genai.protos.FunctionDeclaration(
         name='create_event_to_calendar',
@@ -236,9 +236,49 @@ create_event_to_calendar_func = genai.protos.Tool(
     ])
 
 google_calendar_tools = [
-        get_event_from_calendar_func,
-        create_event_to_calendar_func,
-    ]
+    get_event_from_calendar_gemini,
+    create_event_to_calendar_gemini,
+]
+
+# for openai
+get_event_from_calendar_openai = {
+    "type": "function",
+    "function": {
+        "name": "get_event_from_calendar",
+        "description": "get event from calendar.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "start_time": {"type": "string", "description": "This is start time. If the user provides a date and time, then the format “2024-06-01T08:00:00” can be used. If only the time is provided, but the date is today, then the format “08:00:00” can be used. If the date or time are not available, you need to ask the user to provide them."},
+                "end_time": {"type": "string", "description": "This is end time. If the user provides a date and time, then the format “2024-06-01T08:00:00” can be used. If only the time is provided, but the date is today, then the format “08:00:00” can be used. If the date or time are not available, you need to ask the user to provide them."},
+            },
+            "required": ["start_time", "end_time"],
+        },
+    }
+}
+
+create_event_to_calendar_openai = {
+    "type": "function",
+    "function": {
+        "name": "create_event_to_calendar",
+        "description": "create a new event reminder to calendar.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "summary": {"type": "string", "description": "Title of the event reminder."},
+                "description": {"type": "string", "description": "Brief description of the event reminder."},
+                "start_time": {"type": "string", "description": "This is start time. If the user provides a date and time, then the format “2024-06-01T08:00:00” can be used. If only the time is provided, but the date is today, then the format “08:00:00” can be used. If the date or time are not available, you need to ask the user to provide them."},
+                "end_time": {"type": "string", "description": "This is end time. If the user provides a date and time, then the format “2024-06-01T08:00:00” can be used. If only the time is provided, but the date is today, then the format “08:00:00” can be used. If the date or time are not available, you need to ask the user to provide them."},
+            },
+            "required": ["summary", "description", "start_time", "end_time"],
+        },
+    }
+}
+
+openai_calendar_tools = [
+    get_event_from_calendar_openai,
+    create_event_to_calendar_openai,
+]
 
 def GetCalendarFuncallList() ->list:
     funcall_list = []

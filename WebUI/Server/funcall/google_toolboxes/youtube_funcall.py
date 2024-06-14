@@ -99,7 +99,7 @@ get_youtube_video_url_func = genai.protos.Tool(
     function_declarations=[
       genai.protos.FunctionDeclaration(
         name='get_youtube_video_url',
-        description="Get URL about Youtube video from your own Youtube channel. ",
+        description="Get URL about Youtube video from your own Youtube channel.",
         parameters=genai.protos.Schema(
             type=genai.protos.Type.OBJECT,
             properties={
@@ -111,8 +111,27 @@ get_youtube_video_url_func = genai.protos.Tool(
     ])
 
 google_youtube_tools = [
-        get_youtube_video_url_func,
-    ]
+    get_youtube_video_url_func,
+]
+
+get_youtube_video_url_openai = {
+    "type": "function",
+    "function": {
+        "name": "get_youtube_video_url",
+        "description": "Get URL about Youtube video from your own Youtube channel.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "title": {"type": "string", "description": "Use the advanced search syntax like the Youtube API, Here's an example: 'Language Translation'"},
+            },
+            "required": ["title"],
+        },
+    }
+}
+
+openai_youtube_tools = [
+    get_youtube_video_url_openai,
+]
 
 def GetYoutubeFuncallList() ->list:
     funcall_list = []

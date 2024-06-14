@@ -1171,7 +1171,6 @@ def GetNormalCallingToolsForGoogle() ->list:
     return calling_tools
 
 def GetToolBoxesToolsForGoogle(toolboxes) ->list:
-    from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
     from WebUI.Server.funcall.google_toolboxes.gmap_funcall import google_maps_tools
     from WebUI.Server.funcall.google_toolboxes.gmail_funcall import google_email_tools
     from WebUI.Server.funcall.google_toolboxes.calendar_funcall import google_calendar_tools
@@ -1196,7 +1195,7 @@ def GetToolBoxesToolsForGoogle(toolboxes) ->list:
                 calling_tools += google_youtube_tools.copy()
     return calling_tools
 
-def GetGoogleNativeTools() ->list:
+def GetGoogleNativeTools()->list:
     config = GetCurrentRunningCfg()
     if not config:
         return None
@@ -1204,7 +1203,7 @@ def GetGoogleNativeTools() ->list:
 
     search_engine = config["search_engine"]["name"]
     knowledge_base = config["knowledge_base"]["name"]
-    code_interpreter = config["code_interpreter"]["name"]
+    #code_interpreter = config["code_interpreter"]["name"]
     google_toolboxes = config["ToolBoxes"]["Google ToolBoxes"]
     normal_calling_enable = config["normal_calling"]["enable"]
 
@@ -1216,6 +1215,68 @@ def GetGoogleNativeTools() ->list:
         calling_tools += GetNormalCallingToolsForGoogle()
     if google_toolboxes:
         calling_tools += GetToolBoxesToolsForGoogle(config["ToolBoxes"])
+    return calling_tools
+
+def GetSearchEngineToolsForOpenai() ->list:
+    from WebUI.Server.funcall.funcall import openai_search_tools
+    calling_tools = openai_search_tools.copy()
+    return calling_tools
+
+def GetKnowledgeBaseToolsForOpenai() ->list:
+    from WebUI.Server.funcall.funcall import openai_knowledge_base_tools
+    calling_tools = openai_knowledge_base_tools.copy()
+    return calling_tools
+
+def GetNormalCallingToolsForOpenai() ->list:
+    from WebUI.Server.funcall.funcall import openai_normal_tools
+    calling_tools = openai_normal_tools.copy()
+    return calling_tools
+
+def GetToolBoxesToolsForOpenai(toolboxes) ->list:
+    from WebUI.Server.funcall.google_toolboxes.gmap_funcall import openai_maps_tools
+    from WebUI.Server.funcall.google_toolboxes.gmail_funcall import openai_email_tools
+    from WebUI.Server.funcall.google_toolboxes.calendar_funcall import openai_calendar_tools
+    from WebUI.Server.funcall.google_toolboxes.gcloud_funcall import openai_cloud_tools
+    from WebUI.Server.funcall.google_toolboxes.youtube_funcall import openai_youtube_tools
+    if not toolboxes:
+        return []
+    calling_tools = []
+    for key_boxes, value_boxes in toolboxes.items():
+        for key_tools, value_tools in value_boxes.get("Tools", {}).items():
+            if not value_tools.get("enable", False):
+                continue
+            if key_tools == "Google Maps":
+                calling_tools += openai_maps_tools.copy()
+            elif key_tools == "Google Mail":
+                calling_tools += openai_email_tools.copy()
+            elif key_tools == "Google Calendar":
+                calling_tools += openai_calendar_tools.copy()
+            elif key_tools == "Google Drive":
+                calling_tools += openai_cloud_tools.copy()
+            elif key_tools == "Google Youtube":
+                calling_tools += openai_youtube_tools.copy()
+    return calling_tools
+
+def GetOpenaiNativeTools()->list:
+    config = GetCurrentRunningCfg()
+    if not config:
+        return None
+    calling_tools = []
+
+    search_engine = config["search_engine"]["name"]
+    knowledge_base = config["knowledge_base"]["name"]
+    #code_interpreter = config["code_interpreter"]["name"]
+    google_toolboxes = config["ToolBoxes"]["Google ToolBoxes"]
+    normal_calling_enable = config["normal_calling"]["enable"]
+
+    if knowledge_base:
+        calling_tools += GetKnowledgeBaseToolsForOpenai()
+    if search_engine:
+        calling_tools += GetSearchEngineToolsForOpenai()
+    if normal_calling_enable:
+        calling_tools += GetNormalCallingToolsForOpenai()
+    if google_toolboxes:
+        calling_tools += GetToolBoxesToolsForOpenai(config["ToolBoxes"])
     return calling_tools
 
 def CallingExternalTools(text: str) -> bool:

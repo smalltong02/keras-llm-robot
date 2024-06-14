@@ -11,9 +11,8 @@ from streamlit_chatbox import ChatBox, Image, Audio, Video, Markdown
 from streamlit_webrtc import webrtc_streamer, WebRtcMode, ClientSettings
 from aiortc.contrib.media import MediaRecorder
 from WebUI.configs.basicconfig import (TMP_DIR, ModelType, ModelSize, ModelSubType, ToolsType, GetModelInfoByName, GetTypeName, generate_prompt_for_imagegen, 
-                                       use_search_engine, is_function_calling_enable, is_toolboxes_enable, glob_multimodal_vision_list, glob_multimodal_voice_list, glob_multimodal_video_list)
+                                       is_function_calling_enable, is_toolboxes_enable, glob_multimodal_vision_list, glob_multimodal_voice_list, glob_multimodal_video_list)
 from WebUI.configs.prompttemplates import PROMPT_TEMPLATES
-from WebUI.configs.roleplaytemplates import ROLEPLAY_TEMPLATES
 from io import BytesIO
 from typing import List, Dict, Any
 
