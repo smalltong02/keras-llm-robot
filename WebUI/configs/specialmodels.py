@@ -572,82 +572,154 @@ async def special_chat_iterator(model: Any,
                     tooltype = ToolsType.Unknown
 
         elif provider == "openai-api" or provider == "kimi-cloud-api" or provider == "yi-01ai-api":
-            from langchain.callbacks import AsyncIteratorCallbackHandler
-            from WebUI.Server.utils import wrap_done, get_ChatOpenAI
-            from WebUI.Server.utils import get_prompt_template
-            from WebUI.Server.chat.utils import History
-            from langchain.prompts.chat import ChatPromptTemplate
+            from openai import OpenAI
+            from WebUI.Server.funcall.funcall import openai_tools
+            def chat_completion_request(client,model="", messages="", tools=None, tool_choice=None, stream=False):
+                try:
+                    
+                    response = client.chat.completions.create(
+                        model=model,
+                        messages=messages,
+                        tools=tools,
+                        tool_choice=tool_choice,
+                        stream=stream
+                    )
+                    return response
+                except Exception as e:
+                    print("Unable to generate ChatCompletion response")
+                    print(f"Exception: {e}")
+                    return e
+            model_config = GetModelConfig(webui_config, modelinfo)
+            if provider == "openai-api":
+                apikey = model_config.get("api_key", "[Your Key]")
+                if apikey == "[Your Key]":
+                    apikey = os.environ.get('OPENAI_API_KEY')
+            elif provider == "kimi-cloud-api":
+                apikey = model_config.get("api_key", "[Your Key]")
+                if apikey == "[Your Key]":
+                    apikey = os.environ.get('KIMI_API_KEY')
+            elif provider == "yi-01ai-api":
+                apikey = model_config.get("api_key", "[Your Key]")
+                if apikey == "[Your Key]":
+                    apikey = os.environ.get('YI_API_KEY')
+            if not apikey:
+                apikey = "EMPTY"
+            client = OpenAI(api_key=apikey)
 
-            async_callback = AsyncIteratorCallbackHandler()
-            model = get_ChatOpenAI(
-                provider=provider,
-                model_name=model_name,
-                temperature=temperature,
-                max_tokens=max_tokens,
-                callbacks=[async_callback],
-            )
-            docs=[]
+            docs = []
             btalk = True
+            stream = False
+            message = history.copy()
+            message.append({"role": "user", "content": query})
             while btalk:
-                btalk = False
                 answer = ""
-                history = [History.from_data(h) for h in history]
-                prompt_template = get_prompt_template("llm_chat", prompt_name)
-                input_msg = History(role="user", content=prompt_template).to_msg_template(False)
-                chat_prompt = ChatPromptTemplate.from_messages(
-                    [i.to_msg_template() for i in history] + [input_msg])
-                chain = LLMChain(prompt=chat_prompt, llm=model)
-
-                # Begin a task that runs in the background.
-                task = asyncio.create_task(wrap_done(
-                    chain.acall({"input": query}),
-                    async_callback.done),
+                btalk = False
+                chat_response = chat_completion_request(
+                    client=client,
+                    model=model_name,
+                    messages=message,
+                    tools=openai_tools,
+                    tool_choice="auto",
+                    stream=stream
                 )
-                if stream:
-                    new_sentence = ""
-                    async for token in async_callback.aiter():
-                        answer += token
-                        new_sentence += token
-                        if not btalk:
-                            new_query, new_answer = call_calling(answer)
-                            if new_query:
+                if not stream:
+                        response = chat_response
+                    #for response in chat_response:
+                        response_delta = response.choices[0].delta
+                        tool_calls = response_delta.tool_calls
+                        for tool_call in tool_calls:
+                            function_name = tool_call.function.name
+                            function_response = ""
+                            args = tool_call.function.arguments
+                            args_dict = args
+                            function_text = f"{function_name}({args})"
+                            print(function_text)
+                            if function_text:
+                                #function_response, tool_name, docs, tooltype = await RunAllEnableToolsInString(function_name, {}, query)                                    repeat = True
                                 btalk = True
-                                pattern = r'\"(.*?)\"'
-                                match = re.search(pattern, new_query)
-                                if match:
-                                    function_call = match.group(1)
-                                new_answer = new_answer + "\n" + f'It is necessary to call the function `{function_call}` to get more information.'
-                                yield json.dumps(
-                                    {"clear": new_answer, "chat_history_id": chat_history_id},
-                                    ensure_ascii=False)
-                                yield json.dumps(
-                                    {"user": f'The function `{function_call}` was called.', "chat_history_id": chat_history_id},
-                                    ensure_ascii=False)
-                                new_history = await CreateChatHistoryFromCallCalling(query=query, new_answer=new_answer, history=history)
-                                history = new_history
-                                query = new_query
-                                new_sentence = ""
-                                break
-                        # Use server-sent-events to stream the response
-                        if '\n' in new_sentence:
-                            #print("new_sentence: ", new_sentence)
+                                #message.append({"tool_call_id": tool_call.id, "role": "tool", "name": function_name,"content": function_response})
+                        answer = response_delta.content
+                        if answer:
                             yield json.dumps(
-                                {"text": new_sentence, "chat_history_id": chat_history_id},
+                                {"text": answer, "chat_history_id": chat_history_id},
                                 ensure_ascii=False)
-                            new_sentence = ""
-                    if new_sentence:
-                        #print("new_sentence: ", new_sentence)
-                        yield json.dumps(
-                            {"text": new_sentence, "chat_history_id": chat_history_id},
-                            ensure_ascii=False)
-                    new_sentence = ""
-                else:
-                    async for token in async_callback.aiter():
-                        answer += token
-                    yield json.dumps(
-                        {"text": answer, "chat_history_id": chat_history_id},
-                        ensure_ascii=False)
-                await task
+            await asyncio.sleep(0.1)
+            # from langchain.callbacks import AsyncIteratorCallbackHandler
+            # from WebUI.Server.utils import wrap_done, get_ChatOpenAI
+            # from WebUI.Server.utils import get_prompt_template
+            # from WebUI.Server.chat.utils import History
+            # from langchain.prompts.chat import ChatPromptTemplate
+
+            # async_callback = AsyncIteratorCallbackHandler()
+            # model = get_ChatOpenAI(
+            #     provider=provider,
+            #     model_name=model_name,
+            #     temperature=temperature,
+            #     max_tokens=max_tokens,
+            #     callbacks=[async_callback],
+            # )
+            # docs=[]
+            # btalk = True
+            # while btalk:
+            #     btalk = False
+            #     answer = ""
+            #     history = [History.from_data(h) for h in history]
+            #     prompt_template = get_prompt_template("llm_chat", prompt_name)
+            #     input_msg = History(role="user", content=prompt_template).to_msg_template(False)
+            #     chat_prompt = ChatPromptTemplate.from_messages(
+            #         [i.to_msg_template() for i in history] + [input_msg])
+            #     chain = LLMChain(prompt=chat_prompt, llm=model)
+
+            #     # Begin a task that runs in the background.
+            #     task = asyncio.create_task(wrap_done(
+            #         chain.acall({"input": query}),
+            #         async_callback.done),
+            #     )
+            #     if stream:
+            #         new_sentence = ""
+            #         async for token in async_callback.aiter():
+            #             answer += token
+            #             new_sentence += token
+            #             if not btalk:
+            #                 new_query, new_answer = call_calling(answer)
+            #                 if new_query:
+            #                     btalk = True
+            #                     pattern = r'\"(.*?)\"'
+            #                     match = re.search(pattern, new_query)
+            #                     if match:
+            #                         function_call = match.group(1)
+            #                     new_answer = new_answer + "\n" + f'It is necessary to call the function `{function_call}` to get more information.'
+            #                     yield json.dumps(
+            #                         {"clear": new_answer, "chat_history_id": chat_history_id},
+            #                         ensure_ascii=False)
+            #                     yield json.dumps(
+            #                         {"user": f'The function `{function_call}` was called.', "chat_history_id": chat_history_id},
+            #                         ensure_ascii=False)
+            #                     new_history = await CreateChatHistoryFromCallCalling(query=query, new_answer=new_answer, history=history)
+            #                     history = new_history
+            #                     query = new_query
+            #                     new_sentence = ""
+            #                     break
+            #             # Use server-sent-events to stream the response
+            #             if '\n' in new_sentence:
+            #                 #print("new_sentence: ", new_sentence)
+            #                 yield json.dumps(
+            #                     {"text": new_sentence, "chat_history_id": chat_history_id},
+            #                     ensure_ascii=False)
+            #                 new_sentence = ""
+            #         if new_sentence:
+            #             #print("new_sentence: ", new_sentence)
+            #             yield json.dumps(
+            #                 {"text": new_sentence, "chat_history_id": chat_history_id},
+            #                 ensure_ascii=False)
+            #         new_sentence = ""
+            #     else:
+            #         async for token in async_callback.aiter():
+            #             answer += token
+            #         yield json.dumps(
+            #             {"text": answer, "chat_history_id": chat_history_id},
+            #             ensure_ascii=False)
+            #     await task
         
         elif provider == "baidu-cloud-api":
             import qianfan

@@ -198,18 +198,12 @@ class ApiRequest:
             )
             return self._httpx_stream2generator(response, as_json=True)
         elif modelinfo["mtype"] == ModelType.Online:
-            provider = GetProviderByName(webui_config, model)
-            if provider is not None:
-                if provider == "openai-api" or provider == "kimi-cloud-api" or provider == "yi-01ai-api":
-                    response = self.post("/chat/chat", json=data, stream=True, **kwargs)
-                    return self._httpx_stream2generator(response, as_json=True)
-                else:
-                    response = self.post(
-                        "/llm_model/chat",
-                        json=data,
-                        stream=True
-                    )
-                    return self._httpx_stream2generator(response, as_json=True)
+            response = self.post(
+                "/llm_model/chat",
+                json=data,
+                stream=True
+            )
+            return self._httpx_stream2generator(response, as_json=True)
         return [{
             "chat_history_id": "123",
             "text": "internal error!"

@@ -189,7 +189,7 @@ kb_tool_names = {
 }
 
 # for google gemini
-get_current_weather_func = genai.protos.Tool(
+get_current_location_func = genai.protos.Tool(
     function_declarations=[
       genai.protos.FunctionDeclaration(
         name='get_current_location',
@@ -254,7 +254,7 @@ search_from_knowledge_base_func = genai.protos.Tool(
     ])
 
 google_funcall_tools = [
-        get_current_weather_func,
+        get_current_location_func,
         get_current_time_func,
         submit_warranty_claim_func,
     ]
@@ -265,6 +265,56 @@ google_search_tools = [
 
 google_knowledge_base_tools = [
     search_from_knowledge_base_func,
+]
+
+# for openai
+get_current_location_openai = {
+    "type": "function",
+    "function": {
+        "name": "get_current_location",
+        "description": "Get current location information.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+            },
+        },
+    }
+}
+
+get_current_time_openai = {
+    "type": "function",
+    "function": {
+        "name": "get_current_time",
+        "description": "Get the current local time.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+            },
+        },
+    }
+}
+
+submit_warranty_claim_openai = {
+    "type": "function",
+    "function": {
+        "name": "submit_warranty_claim",
+        "description": "Submit a repair order for a customer.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "caption": {"type": "string", "description": "Title of repair order"},
+                "description": {"type": "string", "description": "A detailed description of the damaged goods, including customer information"},
+            },
+            "required": ["caption", "description"],
+        },
+    }
+}
+
+openai_tools = [
+    #get_current_location_openai,
+    #get_current_time_openai,
+    submit_warranty_claim_openai,
+
 ]
 
 def GetFuncallList() ->list:
