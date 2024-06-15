@@ -167,6 +167,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
 
         dialogue_modes = ["LLM Chat",
                         "KnowledgeBase Chat",
+                        "Agent Chat"
                         ]
         mode_index = 0
         if chat_solution_enable:
@@ -184,6 +185,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
         index_prompt = {
             "LLM Chat": "llm_chat",
             "KnowledgeBase Chat": "knowledge_base_chat",
+            "Agent Chat": "agent_chat"
         }
         prompt_templates_kb_list = list(PROMPT_TEMPLATES[index_prompt[dialogue_mode]].keys())
         prompt_template_name = prompt_templates_kb_list[0]
@@ -563,155 +565,113 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                             on_submit=on_feedback,
                             kwargs={"chat_history_id": chat_history_id, "history_index": len(chat_box.history) - 1})
             else:
-                if current_running_config["code_interpreter"]["name"]:
-                    import uuid
-                    chat_history_id = uuid.uuid4().hex
-                    metadata = {
-                        "chat_history_id": chat_history_id,
-                        }
-                    with st.spinner("Code Interpreter in progress...."):
-                        r = api.code_interpreter_chat(
-                                    prompt,
-                                    interpreter_id=current_running_config["code_interpreter"]["name"],
+                text = ""
+                if running_model == "stable-video-diffusion-img2vid" or running_model == "stable-video-diffusion-img2vid-xt":
+                    with st.spinner("Video generation in progress...."):
+                        r = api.chat_chat(prompt,
+                                    imagesdata=imagesdata,
+                                    audiosdata=audiosdata,
+                                    videosdata=videosdata,
+                                    imagesprompt=imagesprompt,
+                                    history=history,
                                     model=running_model,
+                                    speechmodel=speechmodel,
+                                    prompt_name=prompt_template_name,
                                     temperature=temperature)
-                        text = ""
                         chat_box.ai_say(["Thinking..."])
                         for t in r:
                             if error_msg := check_error_msg(t):  # check whether error occured
                                 st.error(error_msg)
                                 break
-                            content = t.get("text", "")
-                            if content.startswith("image-data:"):
-                                chat_box.ai_say([""])
-                                decoded_data = base64.b64decode(content[len("image-data:"):])
-                                gen_image=Image(BytesIO(decoded_data))
-                                chat_box.update_msg(gen_image, element_index=0, metadata=metadata)
-                                chat_box.ai_say(["Think..."])
-                                text = ""
-                            elif content.startswith("image-file:"):
-                                with open(content[len("image-file:"):], "rb") as f:
-                                    image_bytes = f.read()
-                                    gen_image=Image(BytesIO(image_bytes))
-                                    chat_box.ai_say([""])
-                                    chat_box.update_msg(gen_image, element_index=0, metadata=metadata)
-                                    chat_box.ai_say(["Think..."])
-                                    text = ""
-                            else:
-                                text += content
-                                chat_box.update_msg(text, element_index=0)
-
-                        chat_box.update_msg(text, element_index=0, streaming=False, metadata=metadata)
-                        chat_box.show_feedback(**feedback_kwargs,
-                            key=chat_history_id,
-                            on_submit=on_feedback,
-                            kwargs={"chat_history_id": chat_history_id, "history_index": len(chat_box.history) - 1})
+                            text += t.get("text", "")
+                            chat_history_id = t.get("chat_history_id", "")
+                        print("video_path: ", text)
+                        with open(text, "rb") as f:
+                            video_bytes = f.read()
+                            gen_video=Video(BytesIO(video_bytes))
+                            chat_box.update_msg(gen_video, streaming=False)
                 else:
-                    if running_model == "stable-video-diffusion-img2vid" or running_model == "stable-video-diffusion-img2vid-xt":
-                        with st.spinner("Video generation in progress...."):
-                            r = api.chat_chat(prompt,
-                                        imagesdata=imagesdata,
-                                        audiosdata=audiosdata,
-                                        videosdata=videosdata,
-                                        imagesprompt=imagesprompt,
-                                        history=history,
-                                        model=running_model,
-                                        speechmodel=speechmodel,
-                                        prompt_name=prompt_template_name,
-                                        temperature=temperature)
-                            chat_box.ai_say(["Thinking..."])
-                            for t in r:
-                                if error_msg := check_error_msg(t):  # check whether error occured
-                                    st.error(error_msg)
-                                    break
-                                text += t.get("text", "")
-                                chat_history_id = t.get("chat_history_id", "")
-                            print("video_path: ", text)
-                            with open(text, "rb") as f:
-                                video_bytes = f.read()
-                                gen_video=Video(BytesIO(video_bytes))
-                                chat_box.update_msg(gen_video, streaming=False)
-                    else:
-                        chat_box.ai_say(["Thinking..."])
-                        text = ""
-                        chat_history_id = ""
-                        metadata = {
-                            "chat_history_id": chat_history_id,
-                        }
-                        if imagegeneration_model and modelinfo["mtype"] != ModelType.Code:
-                            imageprompt = ""
-                            if imagesprompt:
-                                imageprompt = imagesprompt[0]
-                            prompt = generate_prompt_for_imagegen(imagegeneration_model, prompt, imageprompt)
-                            imagesprompt = []
-                        r = api.chat_chat(prompt,
-                                        imagesdata=imagesdata,
-                                        audiosdata=audiosdata,
-                                        videosdata=videosdata,
-                                        imagesprompt=imagesprompt,
-                                        history=history,
-                                        model=running_model,
-                                        speechmodel=speechmodel,
-                                        prompt_name=prompt_template_name,
-                                        temperature=temperature)
-                        for d in r:
-                            if error_msg := check_error_msg(d):  # check whether error occured
-                                st.error(error_msg)
-                                break
-                            else:
-                                chunk = d.get("text", "")
-                                if chunk:
-                                    chat_history_id = d.get("chat_history_id", "")
-                                    text += chunk
-                                    metadata["chat_history_id"] = chat_history_id
-                                    chat_box.update_msg(text, element_index=0)
-                                elif d.get("clear", ""):
-                                    chat_history_id = d.get("chat_history_id", "")
-                                    text = d.get("clear", "")
-                                    metadata["chat_history_id"] = chat_history_id
-                                    chat_box.update_msg(text, element_index=0, streaming=False, metadata=metadata)
-                                    text = ""
-                                elif d.get("user", ""):
-                                    tooltype = d.get("tooltype", ToolsType.Unknown.value)
-                                    tooltype = ToolsType(tooltype)
-                                    if tooltype == ToolsType.ToolSearchEngine:
-                                        title = "Additional information by Search Engine"
-                                    elif tooltype == ToolsType.ToolKnowledgeBase:
-                                        title = "Additional information by Knowledge Base"
-                                    elif tooltype == ToolsType.ToolFunctionCalling:
-                                        title = "Additional information by Function Calling"
-                                    elif tooltype == ToolsType.ToolToolBoxes:
-                                        title = "Additional information by ToolBoxes"
-                                    else:
-                                        title = "Additional information by Unknown Tool"
-                                    text += d.get("user", "")
-                                    chat_box.user_say(text)
-                                    text = ""
-                                    chat_box.ai_say(["Thinking...", Markdown("...", in_expander=True, title=title, state="complete")])
-                                elif d.get("docs", []):
-                                    message = "\n\n".join(d.get("docs", []))
-                                    chat_box.update_msg(Markdown(message, in_expander=True, title=title, state="complete"), element_index=1, streaming=False)
-                        chat_box.update_msg(text, element_index=0, streaming=False, metadata=metadata)
-                        chat_box.show_feedback(**feedback_kwargs,
-                            key=chat_history_id,
-                            on_submit=on_feedback,
-                            kwargs={"chat_history_id": chat_history_id, "history_index": len(chat_box.history) - 1})
-                        
-                        if imagegeneration_model and modelinfo["mtype"] != ModelType.Code:
-                            with st.spinner("Image generation in progress...."):
-                                import uuid
-                                chat_history_id = uuid.uuid4().hex
+                    chat_box.ai_say(["Thinking..."])
+                    chat_history_id = ""
+                    metadata = {
+                        "chat_history_id": chat_history_id,
+                    }
+                    if imagegeneration_model and modelinfo["mtype"] != ModelType.Code:
+                        imageprompt = ""
+                        if imagesprompt:
+                            imageprompt = imagesprompt[0]
+                        prompt = generate_prompt_for_imagegen(imagegeneration_model, prompt, imageprompt)
+                        imagesprompt = []
+                    r = api.chat_chat(prompt,
+                                    imagesdata=imagesdata,
+                                    audiosdata=audiosdata,
+                                    videosdata=videosdata,
+                                    imagesprompt=imagesprompt,
+                                    history=history,
+                                    model=running_model,
+                                    speechmodel=speechmodel,
+                                    prompt_name=prompt_template_name,
+                                    temperature=temperature)
+                    for d in r:
+                        if error_msg := check_error_msg(d):  # check whether error occured
+                            st.error(error_msg)
+                            break
+                        else:
+                            chunk = d.get("text", "")
+                            if chunk:
+                                chat_history_id = d.get("chat_history_id", "")
+                                text += chunk
                                 metadata["chat_history_id"] = chat_history_id
-                                gen_image = api.get_image_generation_data(text, negative_prompt, True)
-                                if gen_image:
-                                    chat_box.ai_say([""])
-                                    decoded_data = base64.b64decode(gen_image)
-                                    gen_image=Image(BytesIO(decoded_data))
-                                    chat_box.update_msg(gen_image, element_index=0, streaming=False, metadata=metadata)
-                                    chat_box.show_feedback(**feedback_kwargs,
-                                            key=chat_history_id,
-                                            on_submit=on_feedback,
-                                            kwargs={"chat_history_id": chat_history_id, "history_index": len(chat_box.history) - 1})
+                                chat_box.update_msg(text, element_index=0)
+                            elif d.get("clear", ""):
+                                chat_history_id = d.get("chat_history_id", "")
+                                text = d.get("clear", "")
+                                metadata["chat_history_id"] = chat_history_id
+                                chat_box.update_msg(text, element_index=0, streaming=False, metadata=metadata)
+                                text = ""
+                            elif d.get("user", ""):
+                                tooltype = d.get("tooltype", ToolsType.Unknown.value)
+                                tooltype = ToolsType(tooltype)
+                                if tooltype == ToolsType.ToolSearchEngine:
+                                    title = "Additional information by Search Engine"
+                                elif tooltype == ToolsType.ToolKnowledgeBase:
+                                    title = "Additional information by Knowledge Base"
+                                elif tooltype == ToolsType.ToolFunctionCalling:
+                                    title = "Additional information by Function Calling"
+                                elif tooltype == ToolsType.ToolCodeInterpreter:
+                                    title = "Additional information by Code Interpreter"
+                                elif tooltype == ToolsType.ToolToolBoxes:
+                                    title = "Additional information by ToolBoxes"
+                                else:
+                                    title = "Additional information by Unknown Tool"
+                                text += d.get("user", "")
+                                chat_box.user_say(text)
+                                text = ""
+                                chat_box.ai_say(["Thinking...", Markdown("...", in_expander=True, title=title, state="complete")])
+                            elif d.get("docs", []):
+                                message = "\n\n".join(d.get("docs", []))
+                                chat_box.update_msg(Markdown(message, in_expander=True, title=title, state="complete"), element_index=1, streaming=False)
+                    chat_box.update_msg(text, element_index=0, streaming=False, metadata=metadata)
+                    chat_box.show_feedback(**feedback_kwargs,
+                        key=chat_history_id,
+                        on_submit=on_feedback,
+                        kwargs={"chat_history_id": chat_history_id, "history_index": len(chat_box.history) - 1})
+                    
+                    if imagegeneration_model and modelinfo["mtype"] != ModelType.Code:
+                        with st.spinner("Image generation in progress...."):
+                            import uuid
+                            chat_history_id = uuid.uuid4().hex
+                            metadata["chat_history_id"] = chat_history_id
+                            gen_image = api.get_image_generation_data(text, negative_prompt, True)
+                            if gen_image:
+                                chat_box.ai_say([""])
+                                decoded_data = base64.b64decode(gen_image)
+                                gen_image=Image(BytesIO(decoded_data))
+                                chat_box.update_msg(gen_image, element_index=0, streaming=False, metadata=metadata)
+                                chat_box.show_feedback(**feedback_kwargs,
+                                        key=chat_history_id,
+                                        on_submit=on_feedback,
+                                        kwargs={"chat_history_id": chat_history_id, "history_index": len(chat_box.history) - 1})
 
         elif dialogue_mode == "KnowledgeBase Chat":
             if len(selected_kb) and not disabled:
@@ -737,6 +697,54 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                         chat_box.update_msg(text, element_index=0)
                 chat_box.update_msg(text, element_index=0, streaming=False)
                 chat_box.update_msg("\n\n".join(d.get("docs", [])), element_index=1, streaming=False)
+        
+        elif dialogue_mode == "Agent Chat":
+            if current_running_config["code_interpreter"]["name"]:
+                import uuid
+                chat_history_id = uuid.uuid4().hex
+                metadata = {
+                    "chat_history_id": chat_history_id,
+                    }
+                with st.spinner("agent chat in progress...."):
+                    r = api.agent_chat(
+                                prompt,
+                                interpreter_id=current_running_config["code_interpreter"]["name"],
+                                model=running_model,
+                                temperature=temperature)
+                    text = ""
+                    chat_box.ai_say(["Thinking..."])
+                    for t in r:
+                        if error_msg := check_error_msg(t):  # check whether error occured
+                            st.error(error_msg)
+                            break
+                        content = t.get("text", "")
+                        if content.startswith("image-data:"):
+                            chat_box.ai_say([""])
+                            decoded_data = base64.b64decode(content[len("image-data:"):])
+                            gen_image=Image(BytesIO(decoded_data))
+                            chat_box.update_msg(gen_image, element_index=0, metadata=metadata)
+                            chat_box.ai_say(["Think..."])
+                            text = ""
+                        elif content.startswith("image-file:"):
+                            with open(content[len("image-file:"):], "rb") as f:
+                                image_bytes = f.read()
+                                gen_image=Image(BytesIO(image_bytes))
+                                chat_box.ai_say([""])
+                                chat_box.update_msg(gen_image, element_index=0, metadata=metadata)
+                                chat_box.ai_say(["Think..."])
+                                text = ""
+                        else:
+                            text += content
+                            chat_box.update_msg(text, element_index=0)
+
+                    chat_box.update_msg(text, element_index=0, streaming=False, metadata=metadata)
+                    chat_box.show_feedback(**feedback_kwargs,
+                        key=chat_history_id,
+                        on_submit=on_feedback,
+                        kwargs={"chat_history_id": chat_history_id, "history_index": len(chat_box.history) - 1})
+            else:
+                st.error("No code interpreter selected.")
+                st.toast("No code interpreter selected.")
             
         if bshowstatus:
             while True:

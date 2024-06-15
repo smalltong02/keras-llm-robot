@@ -3,6 +3,8 @@ import datetime
 import geocoder
 from langchain_core.tools import tool
 import google.generativeai as genai
+from WebUI.Server.utils import GetKerasInterpreterConfig
+from WebUI.Server.interpreter_wrapper.terminal.terminal import Terminal
 
 @tool
 def get_current_location():
@@ -173,6 +175,50 @@ async def search_from_knowledge_base(kb_name: str, query: str):
 """
     return new_query, kb_name, source_documents
 
+@tool
+def execute_code(code: str, language: str):
+    """Executes given code in the specified language and returns the result.
+    Here is an example of calling the function 'execute_code':
+        User: Please run the code to get the current system time.
+        Bot: Sure, I will use 'execute_code()' function to get system time:
+            {
+                "name": execute_code,
+                "arguments": {
+                    "code": '''
+                        import datetime
+
+                        current_time = datetime.datetime.now()
+                        formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
+                        print(formatted_time)
+                    ''',
+                    "language": "python"
+                }
+            }
+    """
+    import uuid
+    import base64
+    from WebUI.configs.basicconfig import TMP_DIR
+    from pathlib import Path
+    config = GetKerasInterpreterConfig()
+    if not config:
+        return "unknow error."
+    interpreter_host = config["host"]
+    interpreter_port = config["port"]
+    terminal = Terminal(host=interpreter_host, port=interpreter_port, docker_mode=False)
+    code_answer = ""
+    code = code.replace("\\n", "\n") # for gemini!!
+    for trunk in terminal.run(language, code):
+        if trunk:
+            if trunk.startswith("image-data:"):
+                imgpath = str(TMP_DIR / Path(str(uuid.uuid4()) + ".jpg"))
+                decoded_data = base64.b64decode(trunk[len("image-data:"):])
+                with open(imgpath, 'wb') as f:
+                    f.write(decoded_data)
+                code_answer += f"\nSuccessfully drew a picture for the user, The path of the image is '{imgpath}'"
+            else:
+                code_answer += trunk
+    return code_answer
+
 funcall_tools = [get_current_location, get_current_time, submit_warranty_claim]
 tool_names = {
     "get_current_location": get_current_location,
@@ -186,6 +232,10 @@ search_tool_names = {
 knowledge_base_tools = [search_from_knowledge_base]
 kb_tool_names = {
     "search_from_knowledge_base": search_from_knowledge_base,
+}
+code_interpreter_tools = [execute_code]
+code_tool_names = {
+    "execute_code": execute_code,
 }
 
 # for google gemini
@@ -253,6 +303,22 @@ search_from_knowledge_base_gemini = genai.protos.Tool(
       )
     ])
 
+execute_code_gemini = genai.protos.Tool(
+    function_declarations=[
+        genai.protos.FunctionDeclaration(
+        name='execute_code',
+        description="Executes given code in the specified language and returns the result.",
+        parameters=genai.protos.Schema(
+            type=genai.protos.Type.OBJECT,
+            properties={
+                'code':genai.protos.Schema(type=genai.protos.Type.STRING, description="The code to be executed."),
+                'language':genai.protos.Schema(type=genai.protos.Type.STRING, enum=["python","shell","powershell","applescript"], description="The language of the code."),
+            },
+            required=['code','language']
+        )
+      )
+    ])
+
 google_funcall_tools = [
     get_current_location_gemini,
     get_current_time_gemini,
@@ -265,6 +331,10 @@ google_search_tools = [
 
 google_knowledge_base_tools = [
     search_from_knowledge_base_gemini,
+]
+
+google_code_interpreter_tools = [
+    execute_code_gemini,    
 ]
 
 # for openai
@@ -340,6 +410,22 @@ search_from_knowledge_base_openai = {
     }
 }
 
+execute_code_openai = {
+    "type": "function",
+    "function": {
+        "name": "execute_code",
+        "description": "Executes given code in the specified language and returns the result.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "code": {"type": "string", "description": "The code to be executed."},
+                "language": {"type": "string", "enum": ["python", "shell", "powershell", "applescript"], "description": "The language of the code."},
+            },
+            "required": ["code", "language"],
+        },
+    }
+}
+
 openai_normal_tools = [
     get_current_location_openai,
     get_current_time_openai,
@@ -352,6 +438,10 @@ openai_search_tools = [
 
 openai_knowledge_base_tools = [
     search_from_knowledge_base_openai,
+]
+
+openai_code_interpreter_tools = [
+    execute_code_openai,
 ]
 
 def GetFuncallList() ->list:
@@ -385,6 +475,20 @@ def RunNormalFunctionCalling(json_data: str) ->str:
         func_arg = func.get("arguments", {})
         if func_name in tool_names:
             result = tool_names[func_name].run(func_arg)
+            return func_name, result
+        else:
+            return "", ""
+    except json.JSONDecodeError:
+        return "", ""
+    
+def RunCodeInterpreter(json_data: str) ->str:
+    try:
+        func = json.loads(json_data)
+        print("func: ", func)
+        func_name = func.get("name", "")
+        func_arg = func.get("arguments", {})
+        if func_name in code_tool_names:
+            result = code_tool_names[func_name].run(func_arg)
             return func_name, result
         else:
             return "", ""

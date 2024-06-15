@@ -8,8 +8,8 @@ from langchain.chains import LLMChain
 from langchain.callbacks import AsyncIteratorCallbackHandler
 from typing import AsyncIterable
 from WebUI.configs import (GetProviderByName, generate_new_query, ModelType, ModelSize, ModelSubType, ToolsType,
-                            use_new_search_engine, use_knowledge_base, use_new_function_calling, use_new_toolboxes_calling, GetUserAnswerForCurConfig,
-                            GetCurrentRunningCfg, ExtractJsonStrings, GetModelInfoByName, GetModelConfig, GetSystemPromptForCurrentRunningConfig,
+                            use_new_search_engine, use_knowledge_base, use_new_function_calling, use_new_toolboxes_calling, use_code_interpreter,
+                            GetUserAnswerForCurConfig, GetCurrentRunningCfg, ExtractJsonStrings, GetModelInfoByName, GetModelConfig, GetSystemPromptForCurrentRunningConfig,
                             GetSystemPromptForSupportTools, CallingExternalToolsForCurConfig, GetNewAnswerForCurConfig,)
 from langchain.prompts.chat import ChatPromptTemplate
 from typing import List, Optional, Union, Any, Dict
@@ -147,6 +147,29 @@ async def GetChatPromptFromFunctionCalling(json_lists: list = []) ->Union[str, A
     await asyncio.sleep(0.1)
     return new_query, func_name[0], source_documents
 
+async def GetChatPromptFromCodeInterpreter(json_lists: list = []) ->Union[str, Any, Any]:
+    from WebUI.Server.funcall.funcall import RunCodeInterpreter
+    if not json_lists:
+        return None, "", []
+    result_list = []
+    func_name = []
+    for item in json_lists:
+        name, result = RunCodeInterpreter(item)
+        if result:
+            func_name.append(name)
+            result_list.append(result)
+    source_documents = []
+    for result in enumerate(result_list):
+        source_documents.append(f"The code running result - {func_name[0]}()\n\n{result}")
+    context = "\n".join(result_list)
+    if not context:
+        return None, "", []
+    new_query = f"""The python code has been executed, and the result is as follows:
+    {context}\n
+"""
+    await asyncio.sleep(0.1)
+    return new_query, func_name[0], source_documents
+
 async def GetChatPromptFromToolBoxes(json_lists: list = []) ->Union[str, Any, Any]:
     from WebUI.Server.funcall.google_toolboxes.credential import RunFunctionCallingInToolBoxes
     if not json_lists:
@@ -188,6 +211,9 @@ async def GetQueryFromExternalToolsForCurConfig(answer: str, query: str) ->Union
     if config["normal_calling"]["enable"] and use_new_function_calling(json_lists):
         new_query, tool_name, docs = await GetChatPromptFromFunctionCalling(json_lists)
         return new_query, tool_name, docs, ToolsType.ToolFunctionCalling
+    if config["code_interpreter"]["name"] and use_code_interpreter(json_lists):
+        new_query, tool_name, docs = await GetChatPromptFromCodeInterpreter(json_lists)
+        return new_query, tool_name, docs, ToolsType.ToolCodeInterpreter
     if use_new_toolboxes_calling(json_lists):
         new_query, tool_name, docs = await GetChatPromptFromToolBoxes(json_lists)
         return new_query, tool_name, docs, ToolsType.ToolToolBoxes

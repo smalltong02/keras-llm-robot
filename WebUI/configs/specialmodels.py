@@ -677,6 +677,8 @@ async def special_chat_iterator(model: Any,
                                             {"user": user_answer, "tooltype": tooltype.value},
                                             ensure_ascii=False)
                                         if provider == "openai-api":
+                                            if tooltype == ToolsType.ToolCodeInterpreter:
+                                                tool_choice = "none"
                                             message.append({"tool_call_id": tool_call.id, "role": "function", "name": function_name,"content": function_response})
                                         else:
                                             message.append({"role": "assistant", "content": new_answer})

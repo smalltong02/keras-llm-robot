@@ -68,7 +68,8 @@ class ToolsType(Enum):
     ToolSearchEngine = 1
     ToolKnowledgeBase = 2
     ToolFunctionCalling = 3
-    ToolToolBoxes = 4
+    ToolCodeInterpreter = 4
+    ToolToolBoxes = 5
 
 def GetTypeName(type: ModelType) -> str:
     if type == ModelType.Local:
@@ -640,6 +641,17 @@ def use_new_function_calling(json_lists : list = []) ->bool:
         print(e)
     return False
 
+def use_code_interpreter(json_lists : list = []) ->bool:
+    from WebUI.Server.funcall.funcall import code_tool_names
+    try:
+        for item in json_lists:
+            it = json.loads(item)
+            if it.get("name", "") in code_tool_names:
+                return True
+    except Exception as e:
+        print(e)
+    return False
+
 def use_new_toolboxes_calling(json_lists : list = []) ->bool:
     from WebUI.Server.funcall.google_toolboxes.calendar_funcall import calendar_tool_names
     from WebUI.Server.funcall.google_toolboxes.gmail_funcall import email_tool_names
@@ -694,7 +706,7 @@ def GetSystemPromptForChatSolution(config: dict) ->str:
                 knowledge_base_info = kb_list[knowledge_base]['kb_info']
         except Exception as _:
             return ""
-    #code_interpreter = config["code_interpreter"]["name"]
+    code_interpreter = config["code_interpreter"]["name"]
     google_toolboxes = config["ToolBoxes"]["Google ToolBoxes"]
     normal_calling_enable = config["normal_calling"]["enable"]
     description = config["chat_solution"].get("description", "")
@@ -717,6 +729,11 @@ def GetSystemPromptForChatSolution(config: dict) ->str:
             After a successful search, the results will be appended to the end of the question and sent back to you, allowing you to better address the query. Here are the function names and descriptions for search engine:
             search_engine() - Get search result from network
             If you'd like to use a web search engine, Return your response as a JSON blob with 'name' and 'arguments' keys.\n\n"""
+        code_tools_prompt = ""
+        if code_interpreter:
+            from langchain.tools.render import render_text_description
+            from WebUI.Server.funcall.funcall import code_interpreter_tools
+            code_tools_prompt = render_text_description(code_interpreter_tools) + '\n\n'
         funcall_tools_prompt = ""
         if normal_calling_enable:
             from langchain.tools.render import render_text_description
@@ -739,8 +756,8 @@ def GetSystemPromptForChatSolution(config: dict) ->str:
                 toolboxes_tools_prompt += render_text_description(drive_toolboxes) + '\n\n'
             if google_toolboxes["Tools"]["Google Youtube"]["enable"]:
                 toolboxes_tools_prompt += render_text_description(youtube_toolboxes) + '\n\n'
-        if funcall_tools_prompt or toolboxes_tools_prompt:
-            tools_prompt = GenerateToolsPrompt(funcall_tools_prompt + toolboxes_tools_prompt)
+        if funcall_tools_prompt or toolboxes_tools_prompt or code_tools_prompt:
+            tools_prompt = GenerateToolsPrompt(funcall_tools_prompt + toolboxes_tools_prompt + code_tools_prompt)
             system_prompt += tools_prompt
         return system_prompt
     elif chat_solution_name == "Language Translation and Localization":
@@ -772,6 +789,11 @@ def GetSystemPromptForChatSolution(config: dict) ->str:
             After a successful search, the results will be appended to the end of the question and sent back to you, allowing you to better address the query. Here are the function name and descriptions for search engine:
             search_engine() - Get search result from network
             If you'd like to use a web search engine, Return your response as a JSON blob with 'name' and 'arguments' keys.\n"""
+        code_tools_prompt = ""
+        if code_interpreter:
+            from langchain.tools.render import render_text_description
+            from WebUI.Server.funcall.funcall import code_interpreter_tools
+            code_tools_prompt = render_text_description(code_interpreter_tools) + '\n\n'
         funcall_tools_prompt = ""
         if normal_calling_enable:
             from langchain.tools.render import render_text_description
@@ -794,8 +816,8 @@ def GetSystemPromptForChatSolution(config: dict) ->str:
                 toolboxes_tools_prompt += render_text_description(drive_toolboxes) + '\n\n'
             if google_toolboxes["Tools"]["Google Youtube"]["enable"]:
                 toolboxes_tools_prompt += render_text_description(youtube_toolboxes) + '\n\n'
-        if funcall_tools_prompt or toolboxes_tools_prompt:
-            tools_prompt = GenerateToolsPrompt(funcall_tools_prompt + toolboxes_tools_prompt)
+        if funcall_tools_prompt or toolboxes_tools_prompt or code_tools_prompt:
+            tools_prompt = GenerateToolsPrompt(funcall_tools_prompt + toolboxes_tools_prompt + code_tools_prompt)
             system_prompt += tools_prompt
         return system_prompt
     else:
@@ -823,7 +845,7 @@ def GetSystemPromptForNormalChat(config)->str:
                 knowledge_base_info = kb_list[knowledge_base]['kb_info']
         except Exception as _:
             return ""
-    #code_interpreter = config["code_interpreter"]["name"]
+    code_interpreter = config["code_interpreter"]["name"]
     google_toolboxes = config["ToolBoxes"]["Google ToolBoxes"]
     normal_calling_enable = config["normal_calling"]["enable"]
 
@@ -852,6 +874,11 @@ def GetSystemPromptForNormalChat(config)->str:
                       }
                  }
         If you'd like to use a web search engine, Return your response as a JSON blob with 'name' and 'arguments' keys.\n\n"""
+    code_tools_prompt = ""
+    if code_interpreter:
+        from langchain.tools.render import render_text_description
+        from WebUI.Server.funcall.funcall import code_interpreter_tools
+        code_tools_prompt = render_text_description(code_interpreter_tools) + '\n\n'
     funcall_tools_prompt = ""
     if normal_calling_enable:
         from langchain.tools.render import render_text_description
@@ -874,11 +901,11 @@ def GetSystemPromptForNormalChat(config)->str:
             toolboxes_tools_prompt += render_text_description(drive_toolboxes) + '\n\n'
         if google_toolboxes["Tools"]["Google Youtube"]["enable"]:
             toolboxes_tools_prompt += render_text_description(youtube_toolboxes) + '\n\n'
-    if funcall_tools_prompt or toolboxes_tools_prompt:
-        tools_prompt = GenerateToolsPrompt(funcall_tools_prompt + toolboxes_tools_prompt)
+    if funcall_tools_prompt or toolboxes_tools_prompt or code_tools_prompt:
+        tools_prompt = GenerateToolsPrompt(funcall_tools_prompt + toolboxes_tools_prompt + code_tools_prompt)
         system_prompt += tools_prompt
     return system_prompt
-    
+
 def GetSystemPromptForCurrentRunningConfig()->str:
     config = GetCurrentRunningCfg()
     if not config:
@@ -898,6 +925,7 @@ def GetSystemPromptForChatSolutionSupportTools(config)->str:
     voice_language = config["voice"]["language"]
     speech_name = config["speech"]["name"]
     speaker = config["speech"]["speaker"]
+    code_interpreter = config["code_interpreter"]["name"]
     role_template = CATEGORICAL_ROLEPLAY_TEMPLATES[roleplayer_name][roleplayer_language]
     description = config["chat_solution"].get("description", "")
     assistant_name = config["chat_solution"].get("assistant_name", "")
@@ -906,6 +934,9 @@ def GetSystemPromptForChatSolutionSupportTools(config)->str:
         system_prompt = role_template + '\n\n'
         if description:
             system_prompt += f'Here is a brief description of the product: "{description}"\n\n'
+        if code_interpreter:
+            system_prompt += """When you need to use Python programming and print the output, you can prioritize running it using the code execution tool to obtain the actual running results.
+                            Please do not guess; the results obtained from actual execution are the most accurate.\n\n"""
         return system_prompt
     elif chat_solution_name == "Language Translation and Localization":
         if not voice_name or not voice_language:
@@ -923,6 +954,9 @@ def GetSystemPromptForChatSolutionSupportTools(config)->str:
         system_prompt = role_template + '\n\n'
         if assistant_name:
             system_prompt = system_prompt.format(assistant_name=assistant_name) + '\n\n'
+        if code_interpreter:
+            system_prompt += """When you need to use Python programming and print the output, you can prioritize running it using the code execution tool to obtain the actual running results.
+                            Please do not guess; the results obtained from actual execution are the most accurate.\n\n"""
         return system_prompt
     else:
         return ""
@@ -931,11 +965,15 @@ def GetSystemPromptForNormalChatSupportTools(config)->str:
     if not config:
         return None
     system_prompt = ""
+    code_interpreter = config["code_interpreter"]["name"]
     roleplayer_name = config["role_player"]["name"]
     roleplayer_language = config["role_player"]["language"]
     if roleplayer_name and roleplayer_language:
         role_template = ROLEPLAY_TEMPLATES[roleplayer_name][roleplayer_language]
         system_prompt = role_template + '\n\n'
+    if code_interpreter:
+        system_prompt += """When you need to use Python programming and print the output, you can prioritize running it using the code execution tool to obtain the actual running results.
+                            Please do not guess; the results obtained from actual execution are the most accurate.\n\n"""
     return system_prompt
 
 def GetSystemPromptForSupportTools()->str:
@@ -970,6 +1008,8 @@ def CallingExternalToolsForCurConfig(text: str) -> bool:
         return True, new_answer
     if use_new_function_calling(json_lists):
         return True, new_answer
+    if use_code_interpreter(json_lists):
+        return True, new_answer
     if use_new_toolboxes_calling(json_lists):
         return True, new_answer
     return False, new_answer  
@@ -980,6 +1020,8 @@ def GetNewAnswerForCurConfig(answer: str, tool_name: str, tool_type: ToolsType) 
         new_answer = answer + "\n\n" + f'It is necessary to access knowledge base `{tool_name}` to get more information.'
     elif tool_type == ToolsType.ToolSearchEngine:
         new_answer = answer + "\n\n" + f'It is necessary to call search engine `{tool_name}` to get more information.'
+    elif tool_type == ToolsType.ToolCodeInterpreter:
+        new_answer = answer + "\n\n" + f'It is necessary to call the function `{tool_name}` to get more information.'
     elif tool_type == ToolsType.ToolFunctionCalling:
         new_answer = answer + "\n\n" + f'It is necessary to call the function `{tool_name}` to get more information.'
     elif tool_type == ToolsType.ToolToolBoxes:
@@ -994,6 +1036,8 @@ def GetUserAnswerForCurConfig(tool_name: str, tool_type: ToolsType) ->str:
         user_answer = f'The knowledge base `{tool_name}` was called.'
     elif tool_type == ToolsType.ToolSearchEngine:
         user_answer = f'The search engine `{tool_name}` was called.'
+    elif tool_type == ToolsType.ToolCodeInterpreter:
+        user_answer = f'The function `{tool_name}` was called.'
     elif tool_type == ToolsType.ToolFunctionCalling:
         user_answer = f'The function `{tool_name}` was called.'
     elif tool_type == ToolsType.ToolToolBoxes:
@@ -1048,6 +1092,11 @@ def GetKnowledgeBaseToolsForGoogle() ->list:
     calling_tools = google_knowledge_base_tools.copy()
     return calling_tools
 
+def GetCodeInterpreterToolsForGoogle() ->list:
+    from WebUI.Server.funcall.funcall import google_code_interpreter_tools
+    calling_tools = google_code_interpreter_tools.copy()
+    return calling_tools
+
 def GetNormalCallingToolsForGoogle() ->list:
     from WebUI.Server.funcall.funcall import google_funcall_tools
     calling_tools = google_funcall_tools.copy()
@@ -1086,7 +1135,7 @@ def GetGoogleNativeTools()->list:
 
     search_engine = config["search_engine"]["name"]
     knowledge_base = config["knowledge_base"]["name"]
-    #code_interpreter = config["code_interpreter"]["name"]
+    code_interpreter = config["code_interpreter"]["name"]
     google_toolboxes = config["ToolBoxes"]["Google ToolBoxes"]
     normal_calling_enable = config["normal_calling"]["enable"]
 
@@ -1096,6 +1145,8 @@ def GetGoogleNativeTools()->list:
         calling_tools += GetSearchEngineToolsForGoogle()
     if normal_calling_enable:
         calling_tools += GetNormalCallingToolsForGoogle()
+    if code_interpreter:
+        calling_tools += GetCodeInterpreterToolsForGoogle()
     if google_toolboxes:
         calling_tools += GetToolBoxesToolsForGoogle(config["ToolBoxes"])
     return calling_tools
@@ -1108,6 +1159,11 @@ def GetSearchEngineToolsForOpenai() ->list:
 def GetKnowledgeBaseToolsForOpenai() ->list:
     from WebUI.Server.funcall.funcall import openai_knowledge_base_tools
     calling_tools = openai_knowledge_base_tools.copy()
+    return calling_tools
+
+def GetCodeInterpreterToolsForOpenai() ->list:
+    from WebUI.Server.funcall.funcall import openai_code_interpreter_tools
+    calling_tools = openai_code_interpreter_tools.copy()
     return calling_tools
 
 def GetNormalCallingToolsForOpenai() ->list:
@@ -1148,7 +1204,7 @@ def GetOpenaiNativeTools()->list:
 
     search_engine = config["search_engine"]["name"]
     knowledge_base = config["knowledge_base"]["name"]
-    #code_interpreter = config["code_interpreter"]["name"]
+    code_interpreter = config["code_interpreter"]["name"]
     google_toolboxes = config["ToolBoxes"]["Google ToolBoxes"]
     normal_calling_enable = config["normal_calling"]["enable"]
 
@@ -1156,6 +1212,8 @@ def GetOpenaiNativeTools()->list:
         calling_tools += GetKnowledgeBaseToolsForOpenai()
     if search_engine:
         calling_tools += GetSearchEngineToolsForOpenai()
+    if code_interpreter:
+        calling_tools += GetCodeInterpreterToolsForOpenai()
     if normal_calling_enable:
         calling_tools += GetNormalCallingToolsForOpenai()
     if google_toolboxes:

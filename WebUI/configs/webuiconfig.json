@@ -2895,7 +2895,7 @@
             "enable": false
         },
         "code_interpreter": {
-            "name": ""
+            "name": "Keras Interpreter"
         },
         "role_player": {
             "name": "",

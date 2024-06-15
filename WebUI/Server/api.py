@@ -14,7 +14,6 @@ from WebUI.Server.chat.feedback import chat_feedback
 from WebUI.Server.embeddings_api import embed_texts_endpoint
 from WebUI.Server.chat.openai_chat import openai_chat
 from WebUI.Server.chat.search_engine_chat import search_engine_chat
-from WebUI.Server.chat.code_interpreter_chat import code_interpreter_chat
 from WebUI.Server.llm_api import (get_running_models, change_llm_model, stop_llm_model, chat_llm_model, download_llm_model,
                             get_model_config, save_chat_config, save_model_config, get_webui_configs, get_current_running_config, save_current_running_config, get_aigenerator_configs,
                             get_vtot_model, get_vtot_data, stop_vtot_model, change_vtot_model, save_voice_model_config,
@@ -134,11 +133,6 @@ def mount_app_routes(app: FastAPI, run_mode: str = None):
              tags=["Code Interpreter Management"],
              summary="Save config for code interpreter",
              )(save_code_interpreter_config)
-    
-    app.post("/code_interpreter/code_interpreter_chat",
-            tags=["Code Interpreter Management"],
-            summary="Chat with code interpreter.",
-            )(code_interpreter_chat)
     
     # google toolboxes interface
     app.post("/google_toolboxes/save_google_toolboxes_config",

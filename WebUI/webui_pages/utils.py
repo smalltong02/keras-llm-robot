@@ -1536,7 +1536,7 @@ class ApiRequest:
         else:
             return self.ret_sync(response)
         
-    def code_interpreter_chat(
+    def agent_chat(
             self,
             query: str,
             interpreter_id: str = "",
@@ -1556,7 +1556,7 @@ class ApiRequest:
         pprint(data)
 
         response = self.post(
-            "/code_interpreter/code_interpreter_chat",
+            "/chat/agent_chat",
             json=data,
             stream=True,
         )
