@@ -781,6 +781,15 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
 ## New Feature Updates
 
+- 🚀 Update Log for 2024-06-15
+  1. Refactor the code to support the modes **`"LLM Chat"`**, **`"Knowledge Base Chat"`**, **`"File Chat"`** and **`"Agent Chat"`** on the main interface.
+      In **`"LLM Chat"`** the model will use all activated tools to assist in the conversation.
+      In **`"Knowledge Base Chat"`** the model will only use the selected knowledge base for the conversation, with all other activated tools being disabled.
+      In **`"File Chat"`** the model will only use the selected file for the conversation, with all other activated tools being disabled.
+      In **`"Agent Chat"`** the model will only use the selected code interpreter to complete tasks, with all other activated tools being disabled.
+  2. Support the **`native Function Call`** feature for the **`Gemini model`**, **`GPT model`**, and **`Kimi model`**.
+  3. Add the **`Keras code interpreter`** to the toolbox. When the code interpreter is activated, the model in "LLM Chat" will autonomously decide whether to invoke this tool.
+
 - 🚀 Update Log for 2024-06-05
   1. Support for glm-4v-9b, glm-4-9b-chat, glm-4-9b-chat-1m
 

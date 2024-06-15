@@ -196,7 +196,7 @@ async def GetChatPromptFromToolBoxes(json_lists: list = []) ->Union[str, Any, An
 async def GetQueryFromExternalToolsForCurConfig(answer: str, query: str) ->Union[str, Any, Any, Any]:
     if not answer:
         return None, "", [], ToolsType.Unknown
-    config = GetCurrentRunningCfg()
+    config = GetCurrentRunningCfg(True)
     if not config:
         return None
     json_lists = ExtractJsonStrings(answer)

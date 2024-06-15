@@ -1,0 +1,2 @@
+PDF_OCR_THRESHOLD = (0.6, 0.6)
+DEFAULT_EMBEDDING_MODEL = "bge-large-en-v1.5"

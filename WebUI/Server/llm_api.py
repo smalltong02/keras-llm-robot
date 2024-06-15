@@ -375,7 +375,7 @@ def get_vtot_model(
         print(f'{e.__class__.__name__}: {e}')
         return BaseResponse(
             code=500,
-            data={},
+            data="",
             msg=f"failed to get current model, error: {e}")
     
 def get_vtot_data(
@@ -613,7 +613,7 @@ def get_image_recognition_model(
         print(f'{e.__class__.__name__}: {e}')
         return BaseResponse(
             code=500,
-            data={},
+            data="",
             msg=f"failed to get current model, error: {e}")
     
 def get_image_recognition_data(
@@ -735,7 +735,7 @@ def get_image_generation_model(
         print(f'{e.__class__.__name__}: {e}')
         return BaseResponse(
             code=500,
-            data={},
+            data="",
             msg=f"failed to get current model, error: {e}")
     
 def get_image_generation_data(
@@ -854,7 +854,7 @@ def get_music_generation_model(
         print(f'{e.__class__.__name__}: {e}')
         return BaseResponse(
             code=500,
-            data={},
+            data="",
             msg=f"failed to get current model, error: {e}")
     
 def get_music_generation_data(

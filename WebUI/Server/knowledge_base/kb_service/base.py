@@ -357,7 +357,8 @@ def get_kb_file_details(kb_name: str) -> List[Dict]:
     return data
 
 class EmbeddingsFunAdapter(Embeddings):
-    def __init__(self, embed_model: str = ""):
+    from WebUI.configs.kbconfig import DEFAULT_EMBEDDING_MODEL
+    def __init__(self, embed_model: str = DEFAULT_EMBEDDING_MODEL):
         self.embed_model = embed_model
 
     def embed_documents(self, texts: List[str]) -> List[List[float]]:

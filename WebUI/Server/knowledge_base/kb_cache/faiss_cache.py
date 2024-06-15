@@ -2,6 +2,7 @@ from WebUI.Server.knowledge_base.kb_cache.base import ThreadSafeObject, CachePoo
 from WebUI.Server.knowledge_base.kb_service.base import EmbeddingsFunAdapter
 from WebUI.Server.utils import detect_device, load_embeddings
 from WebUI.Server.knowledge_base.utils import get_vs_path
+from WebUI.configs.kbconfig import DEFAULT_EMBEDDING_MODEL
 from langchain.vectorstores.faiss import FAISS
 from langchain.docstore.in_memory import InMemoryDocstore
 from langchain.schema import Document
@@ -117,7 +118,7 @@ class MemoFaissPool(_FaissPool):
     def load_vector_store(
         self,
         kb_name: str,
-        embed_model: str = "",
+        embed_model: str = DEFAULT_EMBEDDING_MODEL,
         embed_device: str = detect_device(),
     ) -> ThreadSafeFaiss:
         self.atomic.acquire()

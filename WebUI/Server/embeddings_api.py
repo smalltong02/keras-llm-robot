@@ -48,7 +48,14 @@ async def aembed_texts(
     embed_model: str = "",
     to_query: bool = False,
 ) -> BaseResponse:
-    pass
+    try:
+        from WebUI.Server.utils import load_embeddings
+
+        embeddings = load_embeddings(model=embed_model)
+        return BaseResponse(data=await embeddings.aembed_documents(texts))
+    except Exception as e:
+        print(e)
+        return BaseResponse(code=500, msg=f"errors during text vectorization: {e}")
 
 def embed_documents(
     docs: List[Document],

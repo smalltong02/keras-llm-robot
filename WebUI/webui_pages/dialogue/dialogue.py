@@ -134,7 +134,6 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
     modelinfo : Dict[str, any] = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str}
     print("voicemodel: ", voicemodel)
     print("speechmodel: ", speechmodel)
-    print("current_running_config: ", current_running_config)
     print("imagerecognition_model: ", imagerecognition_model)
     print("imagegeneration_model: ", imagegeneration_model)
     print("musicgeneration_model: ", musicgeneration_model)
@@ -167,6 +166,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
 
         dialogue_modes = ["LLM Chat",
                         "KnowledgeBase Chat",
+                        "File Chat",
                         "Agent Chat"
                         ]
         mode_index = 0
@@ -185,6 +185,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
         index_prompt = {
             "LLM Chat": "llm_chat",
             "KnowledgeBase Chat": "knowledge_base_chat",
+            "File Chat": "knowledge_base_chat",
             "Agent Chat": "agent_chat"
         }
         prompt_templates_kb_list = list(PROMPT_TEMPLATES[index_prompt[dialogue_mode]].keys())
@@ -211,7 +212,9 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
         kb_top_k = 0
         selected_kb = ""
         score_threshold = 0
-        if dialogue_mode == "KnowledgeBase Chat":
+        if dialogue_mode == "LLM Chat":
+            current_running_config["enable"] = True
+        elif dialogue_mode == "KnowledgeBase Chat":
             from WebUI.Server.knowledge_base.utils import VECTOR_SEARCH_TOP_K, SCORE_THRESHOLD
             def on_kb_change():
                 st.toast(f"Current Knowledge Base: `{st.session_state.selected_kb}`")
@@ -232,7 +235,33 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                 )
                 kb_top_k = st.number_input("Knowledge Counts:", 1, 20, VECTOR_SEARCH_TOP_K, disabled=disabled)
                 score_threshold = st.slider("Score Threshold:", 0.0, 2.0, SCORE_THRESHOLD, 0.01, disabled=disabled)
-
+            current_running_config["enable"] = False
+        elif dialogue_mode == "File Chat":
+            from WebUI.Server.knowledge_base.utils import VECTOR_SEARCH_TOP_K, SCORE_THRESHOLD, LOADER_DICT
+            with st.expander("File Chat Configuration", True):
+                files = st.file_uploader("Upload Files:",
+                                         [i for ls in LOADER_DICT.values() for i in ls],
+                                         accept_multiple_files=True,
+                                         disabled=disabled
+                                         )
+                kb_top_k = st.number_input("Knowledge Counts:", 1, 20, VECTOR_SEARCH_TOP_K, disabled=disabled)
+                score_threshold = st.slider("Score Threshold:", 0.0, 2.0, float(SCORE_THRESHOLD), 0.01, disabled=disabled)
+                if st.button("Upload Files", disabled=len(files) == 0):
+                    with st.spinner("Upload files in progress...."):
+                        temp_docs = api.upload_temp_docs(files)
+                        if temp_docs:
+                            st.session_state["file_chat_id"] = temp_docs.get("data", {}).get("id")
+                            st.success("file upload success!")
+                            st.toast("file upload success!")
+                        else:
+                            st.session_state["file_chat_id"] = ""
+                            st.error("file upload failed!")
+                            st.toast("file upload failed!")
+            current_running_config["enable"] = False
+        elif dialogue_mode == "Agent Chat":
+            current_running_config["enable"] = False
+        api.save_current_running_config(current_running_config)
+        print("current_running_config: ", current_running_config)
         now = datetime.now()
         cols = st.columns(2)
         export_btn = cols[0]
@@ -697,6 +726,33 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                         chat_box.update_msg(text, element_index=0)
                 chat_box.update_msg(text, element_index=0, streaming=False)
                 chat_box.update_msg("\n\n".join(d.get("docs", [])), element_index=1, streaming=False)
+
+        elif dialogue_mode == "File Chat":
+            if not st.session_state.get("file_chat_id", ""):
+                st.error("Please upload the file first before Chat.")
+                st.stop()
+            chat_box.ai_say([
+                f"Querying from files `{st.session_state['file_chat_id']}` ...",
+                Markdown("...", in_expander=True, title="Files content match results", state="complete"),
+            ])
+            text = ""
+            for d in api.files_chat(prompt,
+                                    knowledge_id=st.session_state["file_chat_id"],
+                                    top_k=kb_top_k,
+                                    score_threshold=score_threshold,
+                                    history=history,
+                                    model=running_model,
+                                    imagesdata=imagesdata,
+                                    speechmodel=speechmodel,
+                                    prompt_name=prompt_template_name,
+                                    temperature=temperature):
+                if error_msg := check_error_msg(d):  # check whether error occured
+                    st.error(error_msg)
+                elif chunk := d.get("answer"):
+                    text += chunk
+                    chat_box.update_msg(text, element_index=0)
+            chat_box.update_msg(text, element_index=0, streaming=False)
+            chat_box.update_msg("\n\n".join(d.get("docs", [])), element_index=1, streaming=False)
         
         elif dialogue_mode == "Agent Chat":
             if current_running_config["code_interpreter"]["name"]:

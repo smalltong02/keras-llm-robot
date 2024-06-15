@@ -2882,24 +2882,26 @@
         }
     },
     "CurrentRunningConfig": {
+        "enable": true,
         "chat_solution": {
-            "name": ""
+            "name": "Virtual Personal Assistant",
+            "assistant_name": "James"
         },
         "search_engine": {
-            "name": ""
+            "name": "duckduckgo"
         },
         "knowledge_base": {
-            "name": ""
+            "name": "PS5"
         },
         "normal_calling": {
-            "enable": false
+            "enable": true
         },
         "code_interpreter": {
-            "name": "Keras Interpreter"
+            "name": ""
         },
         "role_player": {
-            "name": "",
-            "language": ""
+            "name": "Personal Secretary",
+            "language": "english"
         },
         "voice": {
             "name": "",
@@ -2914,28 +2916,28 @@
                 "credential": "",
                 "Tools": {
                     "Google Maps": {
-                        "enable": false
+                        "enable": true
                     },
                     "Google Mail": {
-                        "enable": false
+                        "enable": true
                     },
                     "Google Youtube": {
-                        "enable": false
+                        "enable": true
                     },
                     "Google Calendar": {
-                        "enable": false
+                        "enable": true
                     },
                     "Google Drive": {
-                        "enable": false
+                        "enable": true
                     },
                     "Google Docs": {
-                        "enable": false
+                        "enable": true
                     },
                     "Google Sheets": {
-                        "enable": false
+                        "enable": true
                     },
                     "Google Forms": {
-                        "enable": false
+                        "enable": true
                     }
                 }
             }
