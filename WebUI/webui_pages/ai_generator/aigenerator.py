@@ -149,15 +149,8 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                                 st.toast(msg, icon="✔")
                     if not eject_error and running_chat_solution["config"]["function_calling"]:
                         with st.spinner("Release Function Call, Please do not perform any actions or refresh the page."):
-                            functioncalling = webui_config.get("FunctionCalling")
-                            functioncalling["calling_enable"] = False
-                            r = api.save_function_calling_config(functioncalling)
-                            if msg := check_error_msg(r):
-                                st.error(msg)
-                                st.toast(msg, icon="✖")
-                            elif msg := check_success_msg(r):
-                                st.success("success release function calling.")
-                                st.toast("success release function calling.", icon="✔")
+                            st.success("success release function calling.")
+                            st.toast("success release function calling.", icon="✔")
                     if not eject_error:
                         api.save_current_running_config()
                         st.success("Release all configurations successfully!")
@@ -429,6 +422,7 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                     load_error = False
                     if load_cfg_button:
                         with st.spinner("Checking all configurations...."):
+                            api.save_current_running_config()
                             # first check configuration
                             if not running_chat_solution["config"]["llm_model"]:
                                 st.error("LLM Model is not configured!")
@@ -511,16 +505,10 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                                 st.toast(f"Enable Search Engine `{search_engine}` successfully!", icon="✔")
                         if not load_error and running_chat_solution["config"]["function_calling"]:
                             with st.spinner("Enabling Function Calling, Please do not perform any actions or refresh the page."):
-                                functioncalling = webui_config.get("FunctionCalling")
-                                functioncalling["calling_enable"] = running_chat_solution["config"]["function_calling"]
-                                current_running_config["normal_calling"]["enable"] = functioncalling["calling_enable"]
-                                r = api.save_function_calling_config(functioncalling)
-                                if msg := check_error_msg(r):
-                                    st.success("Enable Function Calling failed!")
-                                    st.toast(msg, icon="✖")
-                                elif msg := check_success_msg(r):
-                                    st.success("Enable Function Calling successfully!")
-                                    st.toast("success save configuration for function calling.", icon="✔")
+                                current_running_config["normal_calling"]["enable"] = running_chat_solution["config"]["function_calling"]
+                                api.save_current_running_config(current_running_config)
+                                st.success("Enable Function Calling successfully!")
+                                st.toast("success save configuration for function calling.", icon="✔")
                         if not load_error:
                             name = running_chat_solution["name"]
                             description = running_chat_solution["config"]["description"]
@@ -578,15 +566,8 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                                 st.toast(msg, icon="✔")
                     if not eject_error and running_chat_solution["config"]["function_calling"]:
                         with st.spinner("Release Function Call, Please do not perform any actions or refresh the page."):
-                            functioncalling = webui_config.get("FunctionCalling")
-                            functioncalling["calling_enable"] = False
-                            r = api.save_function_calling_config(functioncalling)
-                            if msg := check_error_msg(r):
-                                st.error(msg)
-                                st.toast(msg, icon="✖")
-                            elif msg := check_success_msg(r):
-                                st.success("success release function calling.")
-                                st.toast("success release function calling.", icon="✔")
+                            st.success("success release function calling.")
+                            st.toast("success release function calling.", icon="✔")
                     if not eject_error:
                         api.save_current_running_config()
                         st.success("Release all configurations successfully!")
@@ -810,6 +791,7 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                     load_error = False
                     if load_cfg_button:
                         with st.spinner("Checking all configurations...."):
+                            api.save_current_running_config()
                             # first check configuration
                             if not running_chat_solution["config"]["llm_model"]:
                                 st.error("LLM Model is not configured!")
@@ -925,34 +907,12 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                                 st.toast(msg, icon="✔")
                     if not eject_error and running_chat_solution["config"]["toolboxes"]:
                         with st.spinner("Release ToolBoxes, Please do not perform any actions or refresh the page."):
-                            toolboxes = webui_config.get("ToolBoxes")
-                            google_toolboxes = toolboxes.get("Google ToolBoxes")
-                            google_toolboxes["Tools"]["Google Maps"]["enable"] = False
-                            google_toolboxes["Tools"]["Google Mail"]["enable"] = False
-                            google_toolboxes["Tools"]["Google Youtube"]["enable"] = False
-                            google_toolboxes["Tools"]["Google Calendar"]["enable"] = False
-                            google_toolboxes["Tools"]["Google Drive"]["enable"] = False
-                            google_toolboxes["Tools"]["Google Docs"]["enable"] = False
-                            google_toolboxes["Tools"]["Google Sheets"]["enable"] = False
-                            google_toolboxes["Tools"]["Google Forms"]["enable"] = False
-                            r = api.save_google_toolboxes_config(google_toolboxes)
-                            if msg := check_error_msg(r):
-                                st.error(msg)
-                                st.toast(msg, icon="✖")
-                            elif msg := check_success_msg(r):
-                                st.success("Release ToolBoxes successfully!")
-                                st.toast("Release ToolBoxes successfully!", icon="✔")
+                            st.success("Release ToolBoxes successfully!")
+                            st.toast("Release ToolBoxes successfully!", icon="✔")
                     if not eject_error and running_chat_solution["config"]["function_calling"]:
                         with st.spinner("Release Function Call, Please do not perform any actions or refresh the page."):
-                            functioncalling = webui_config.get("FunctionCalling")
-                            functioncalling["calling_enable"] = False
-                            r = api.save_function_calling_config(functioncalling)
-                            if msg := check_error_msg(r):
-                                st.error(msg)
-                                st.toast(msg, icon="✖")
-                            elif msg := check_success_msg(r):
-                                st.success("success release function calling.")
-                                st.toast("success release function calling.", icon="✔")
+                            st.success("success release function calling.")
+                            st.toast("success release function calling.", icon="✔")
                     if not eject_error:
                         api.save_current_running_config()
                         st.success("Release all configurations successfully!")
@@ -1239,6 +1199,7 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                     load_error = False
                     if load_cfg_button:
                         with st.spinner("Checking all configurations...."):
+                            api.save_current_running_config()
                             # first check configuration
                             if not running_chat_solution["config"]["llm_model"]:
                                 st.error("LLM Model is not configured!")
@@ -1321,8 +1282,7 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                                 st.toast(f"Enable Search Engine `{search_engine}` successfully!", icon="✔")
                         if not load_error and running_chat_solution["config"]["toolboxes"]:
                             with st.spinner("Enabling ToolBoxes, Please do not perform any actions or refresh the page."):
-                                toolboxes = webui_config.get("ToolBoxes")
-                                google_toolboxes = toolboxes.get("Google ToolBoxes")
+                                google_toolboxes = current_running_config["ToolBoxes"]["Google ToolBoxes"]
                                 google_toolboxes["Tools"]["Google Maps"]["enable"] = True
                                 google_toolboxes["Tools"]["Google Mail"]["enable"] = True
                                 google_toolboxes["Tools"]["Google Youtube"]["enable"] = True
@@ -1332,25 +1292,15 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                                 google_toolboxes["Tools"]["Google Sheets"]["enable"] = True
                                 google_toolboxes["Tools"]["Google Forms"]["enable"] = True
                                 current_running_config["ToolBoxes"]["Google ToolBoxes"] = google_toolboxes
-                                r = api.save_google_toolboxes_config(google_toolboxes)
-                                if msg := check_error_msg(r):
-                                    st.error(msg)
-                                    st.toast(msg, icon="✖")
-                                elif msg := check_success_msg(r):
-                                    st.success("Enable ToolBoxes successfully!")
-                                    st.toast("Enable ToolBoxes successfully!", icon="✔")
+                                api.save_current_running_config(current_running_config)
+                                st.success("Enable ToolBoxes successfully!")
+                                st.toast("Enable ToolBoxes successfully!", icon="✔")
                         if not load_error and running_chat_solution["config"]["function_calling"]:
                             with st.spinner("Enabling Function Calling, Please do not perform any actions or refresh the page."):
-                                functioncalling = webui_config.get("FunctionCalling")
-                                functioncalling["calling_enable"] = running_chat_solution["config"]["function_calling"]
-                                current_running_config["normal_calling"]["enable"] = functioncalling["calling_enable"]
-                                r = api.save_function_calling_config(functioncalling)
-                                if msg := check_error_msg(r):
-                                    st.success("Enable Function Calling failed!")
-                                    st.toast(msg, icon="✖")
-                                elif msg := check_success_msg(r):
-                                    st.success("Enable Function Calling successfully!")
-                                    st.toast("success save configuration for function calling.", icon="✔")
+                                current_running_config["normal_calling"]["enable"] = running_chat_solution["config"]["function_calling"]
+                                api.save_current_running_config(current_running_config)
+                                st.success("Enable Function Calling successfully!")
+                                st.toast("success save configuration for function calling.", icon="✔")
                         if not load_error:
                             name = running_chat_solution["name"]
                             assistant_name = running_chat_solution["config"]["assistant_name"]

@@ -419,23 +419,6 @@ class ApiRequest:
         )
         return self._get_response_value(response, as_json=True, value_func=lambda r:r.get("data", []))
     
-    def list_running_models(self, controller_address: str = None,):
-        data = {
-            "controller_address": controller_address,
-        }
-
-        response = self.post(
-            "/llm_model/list_running_models",
-            json=data,
-        )
-        return self._get_response_value(response, as_json=True, value_func=lambda r:r.get("data", []))
-    
-    def list_config_models(self) -> Dict[str, List[str]]:
-        response = self.post(
-            "/llm_model/list_config_models",
-        )
-        return self._get_response_value(response, as_json=True, value_func=lambda r:r.get("data", {}))
-    
     def get_model_config(
             self,
             model_name: str = None,
@@ -1578,26 +1561,7 @@ class ApiRequest:
             stream=True,
         )
         return self._httpx_stream2generator(response, as_json=True)
-    
-    def save_function_calling_config(self,
-        function_calling: dict = {},
-        controller_address: str = None,
-    ):
-        data = {
-            "function_calling": function_calling,
-            "controller_address": controller_address,
-        }
-
-        response = self.post(
-            "/function_calling/save_function_calling_config",
-            json=data,
-        )
-        
-        if self._use_async:
-            return self.ret_async(response)
-        else:
-            return self.ret_sync(response)
-        
+           
     def save_google_toolboxes_config(self,
         google_toolboxes: dict = {},
         controller_address: str = None,
@@ -1616,20 +1580,6 @@ class ApiRequest:
             return self.ret_async(response)
         else:
             return self.ret_sync(response)
-        
-    def is_calling_enable(self,
-        controller_address: str = None,
-    ):
-        data = {
-            "controller_address": controller_address,
-        }
-
-        response = self.post(
-            "/function_calling/is_calling_enable",
-            json=data,
-        )
-        
-        return self._get_response_value(response, as_json=True, value_func=lambda r:r.get("data", False))
     
     def _get_response_value(self, response: httpx.Response, as_json: bool = False, value_func: Callable = None,):
         

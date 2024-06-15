@@ -416,11 +416,11 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                         st.toast(msg, icon="✖")
                     elif msg := check_success_msg(r):
                         st.toast("success save configuration for Code Interpreter.", icon="✔")
-        if interpreter_enable:
-            current_running_config["code_interpreter"]["name"] = current_interpreter
-        else:
-            current_running_config["code_interpreter"]["name"] = ""
-        api.save_current_running_config(current_running_config)
+                    if interpreter_enable:
+                        current_running_config["code_interpreter"]["name"] = current_interpreter
+                    else:
+                        current_running_config["code_interpreter"]["name"] = ""
+                    api.save_current_running_config(current_running_config)
 
     pathstr = ""
     with tabspeech:
@@ -1342,10 +1342,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
             from WebUI.Server.funcall.google_toolboxes.calendar_funcall import GetCalendarFuncallList, GetCalendarFuncallDescription
             from WebUI.Server.funcall.google_toolboxes.gcloud_funcall import GetStorageFuncallList, GetStorageFuncallDescription
             from WebUI.Server.funcall.google_toolboxes.youtube_funcall import GetYoutubeFuncallList, GetYoutubeFuncallDescription
-            toolboxes_lists = []
-            for key, value in google_toolboxes.get("Tools").items():
-                if isinstance(value, dict):
-                    toolboxes_lists.append(key)
+            toolboxes_lists = google_toolboxes.get("Tools")
             google_credential = google_toolboxes.get("credential")
             print("credential: ", google_credential)
             current_function = ""
@@ -1367,12 +1364,9 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                     function_name_list = GetStorageFuncallList()
                 elif google_tool == "Google Youtube":
                     function_name_list = GetYoutubeFuncallList()
-                calling_enable = google_toolboxes.get("Tools").get(google_tool).get("enable", False)
+                calling_enable = current_running_config["ToolBoxes"]["Google ToolBoxes"]["Tools"][google_tool]["enable"]
                 calling_enable = st.checkbox("Enable", key="funcall_box", value=calling_enable, help="After enabling, The function will be called automatically.")
-                print("google_tool", google_tool)
-                print("calling_enable", calling_enable)
-                google_toolboxes.get("Tools")[google_tool]["enable"] = calling_enable
-                print(google_toolboxes)
+                current_running_config["ToolBoxes"]["Google ToolBoxes"]["Tools"][google_tool]["enable"] = calling_enable
             with col2:
                 current_function = st.selectbox(
                     "Please Check Function",
@@ -1380,7 +1374,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                     index=0,
                 )
             if current_function:
-                with st.form("Funcall"):
+                with st.form("ToolBoxes"):
                     google_credential = st.text_input("Google Credential", google_credential, key="google_credential")
                     function_description = ""
                     if google_tool == "Google Mail":
@@ -1406,9 +1400,9 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                                 st.error(msg)
                                 st.toast(msg, icon="✖")
                             elif msg := check_success_msg(r):
+                                api.save_current_running_config(current_running_config)
                                 st.success("success save configuration for google toolboxes.")
                                 st.toast("success save configuration for google toolboxes.", icon="✔")
-
             st.divider()
 
     st.session_state["current_page"] = "retrieval_agent_page"

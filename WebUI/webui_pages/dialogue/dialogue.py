@@ -11,7 +11,7 @@ from streamlit_chatbox import ChatBox, Image, Audio, Video, Markdown
 from streamlit_webrtc import webrtc_streamer, WebRtcMode, ClientSettings
 from aiortc.contrib.media import MediaRecorder
 from WebUI.configs.basicconfig import (TMP_DIR, ModelType, ModelSize, ModelSubType, ToolsType, GetModelInfoByName, GetTypeName, generate_prompt_for_imagegen, 
-                                       is_function_calling_enable, is_toolboxes_enable, glob_multimodal_vision_list, glob_multimodal_voice_list, glob_multimodal_video_list)
+                                       is_toolboxes_enable, glob_multimodal_vision_list, glob_multimodal_voice_list, glob_multimodal_video_list)
 from WebUI.configs.prompttemplates import PROMPT_TEMPLATES
 from io import BytesIO
 from typing import List, Dict, Any
@@ -131,8 +131,6 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
     imagegeneration_model = api.get_image_generation_model()
     musicgeneration_model = api.get_music_generation_model()
     current_running_config = api.get_current_running_config()
-    current_running_config["normal_calling"]["enable"] = is_function_calling_enable(webui_config)
-    current_running_config["ToolBoxes"] = webui_config.get("ToolBoxes")
     modelinfo : Dict[str, any] = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str}
     print("voicemodel: ", voicemodel)
     print("speechmodel: ", speechmodel)
@@ -431,7 +429,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                     f"""<p style="font-size: 1.5em; text-align: left; color: #9932CC;"><b>▪️ Function Calling: {calling_enable}</b></p>""",
                     unsafe_allow_html=True,
                 )
-            toolboxes_enable = is_toolboxes_enable(webui_config)
+            toolboxes_enable = is_toolboxes_enable(current_running_config)
             if toolboxes_enable:
                 st.caption(
                     f"""<p style="font-size: 1.5em; text-align: left; color: #9932CC;"><b>▪️ ToolBoxes: {toolboxes_enable}</b></p>""",

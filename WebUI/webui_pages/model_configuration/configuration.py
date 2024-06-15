@@ -18,7 +18,6 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
     chatconfig = webui_config.get("ChatConfiguration")
     finetuning = webui_config.get("Fine-Tuning")
     searchengine = webui_config.get("SearchEngine")
-    functioncalling = webui_config.get("FunctionCalling")
     current_running_config = api.get_current_running_config()
     calling_enable = False
 
@@ -558,17 +557,22 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                                 st.toast(msg, icon="✖")
                             elif msg := check_success_msg(r):
                                 st.toast("success save configuration for search engine.", icon="✔")
-                if search_enable:
-                    current_running_config["search_engine"]["name"] = current_search_engine
-                else:
-                    current_running_config["search_engine"]["name"] = ""
-                api.save_current_running_config(current_running_config)
+                            if search_enable:
+                                current_running_config["search_engine"]["name"] = current_search_engine
+                            else:
+                                current_running_config["search_engine"]["name"] = ""
+                            api.save_current_running_config(current_running_config)
             with tabroleplay:
                 roleplay_list = list(ROLEPLAY_TEMPLATES.keys())
                 if current_running_config["role_player"]["name"] and current_running_config["role_player"]["language"]:
-                    role_enable = True
-                    role_index = roleplay_list.index(current_running_config["role_player"]["name"])
-                    lang_index = player_language_list.index(current_running_config["role_player"]["language"])
+                    if current_running_config["role_player"]["name"] in roleplay_list:
+                        role_enable = True
+                        role_index = roleplay_list.index(current_running_config["role_player"]["name"])
+                        lang_index = player_language_list.index(current_running_config["role_player"]["language"])
+                    else:
+                        role_index = 0
+                        lang_index = 0
+                        role_enable = False
                 else:
                     role_index = 0
                     lang_index = 0
@@ -604,7 +608,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                             st.toast("success save configuration for Code Interpreter.", icon="✔")
             with tabfuncall:
                 from WebUI.Server.funcall.funcall import GetFuncallList, GetFuncallDescription
-                calling_enable = functioncalling.get("calling_enable", False)
+                calling_enable = current_running_config["normal_calling"]["enable"]
                 current_function = ""
                 function_name_list = GetFuncallList()
                 current_function = st.selectbox(
@@ -623,13 +627,12 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                     )
                     if save_parameters:
                         with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
-                            functioncalling["calling_enable"] = calling_enable
-                            r = api.save_function_calling_config(functioncalling)
+                            current_running_config["normal_calling"]["enable"] = calling_enable
+                            r = api.save_current_running_config(current_running_config)
                             if msg := check_error_msg(r):
                                 st.toast(msg, icon="✖")
                             elif msg := check_success_msg(r):
                                 st.toast("success save configuration for function calling.", icon="✔")
-        
         elif current_model["mtype"] == ModelType.Online:
             tabparams, tabapiconfig, tabsearch, tabfuncall, tabroleplay = st.tabs(["Parameters", "API Config", "Search Engine", "Function Calling", "Role Player"])
             with tabparams:
@@ -738,11 +741,11 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                                 st.toast(msg, icon="✖")
                             elif msg := check_success_msg(r):
                                 st.toast("success save configuration for search engine.", icon="✔")
-                if search_enable:
-                    current_running_config["search_engine"]["name"] = current_search_engine
-                else:
-                    current_running_config["search_engine"]["name"] = ""
-                api.save_current_running_config(current_running_config)
+                            if search_enable:
+                                current_running_config["search_engine"]["name"] = current_search_engine
+                            else:
+                                current_running_config["search_engine"]["name"] = ""
+                            api.save_current_running_config(current_running_config)
             with tabroleplay:
                 roleplay_list = list(ROLEPLAY_TEMPLATES.keys())
                 if current_running_config["role_player"]["name"] and current_running_config["role_player"]["language"]:
@@ -789,7 +792,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                             st.toast("success save configuration for Code Interpreter.", icon="✔")
             with tabfuncall:
                 from WebUI.Server.funcall.funcall import GetFuncallList, GetFuncallDescription
-                calling_enable = functioncalling.get("calling_enable", False)
+                calling_enable = current_running_config["normal_calling"]["enable"]
                 current_function = ""
                 function_name_list = GetFuncallList()
                 current_function = st.selectbox(
@@ -808,8 +811,8 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                     )
                     if save_parameters:
                         with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
-                            functioncalling["calling_enable"] = calling_enable
-                            r = api.save_function_calling_config(functioncalling)
+                            current_running_config["normal_calling"]["enable"] = calling_enable
+                            r = api.save_current_running_config(current_running_config)
                             if msg := check_error_msg(r):
                                 st.toast(msg, icon="✖")
                             elif msg := check_success_msg(r):

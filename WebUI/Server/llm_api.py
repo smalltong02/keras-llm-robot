@@ -11,24 +11,6 @@ from WebUI.configs.basicconfig import (ModelType, ModelSize, ModelSubType, GetSi
 from fastapi.responses import StreamingResponse
 from typing import List, Optional, AsyncIterable
 
-def list_running_models(
-    controller_address: str = Body(None, description="Fastchat controller adress", examples=[fschat_controller_address()]),
-    placeholder: str = Body(None, description="Not use"), 
-) -> BaseResponse:
-    try:
-        controller_address = controller_address or fschat_controller_address()
-        with get_httpx_client() as client:
-            r = client.post(controller_address + "/list_models")
-            models = r.json()["models"]
-            data = {m: get_model_config(m).data for m in models}
-            return BaseResponse(data=data)
-    except Exception as e:
-        print(f'{e.__class__.__name__}: {e}')
-        return BaseResponse(
-            code=500,
-            data={},
-            msg=f"failed to get current model, error: {e}")
-
 def get_running_models(
     controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()]),
     placeholder: str = Body(None, description="Not use"),
@@ -60,28 +42,6 @@ def get_running_models(
             code=500,
             data={},
             msg=f"failed to get all running models from controller: {controller_address} error: {e}")
-
-
-def list_config_models() -> BaseResponse:
-    '''
-    read mode all list
-    '''
-    configs = {}
-    online_list = []
-    list_models = list_config_llm_models()
-    for name, config in list_models["online"].items():
-        for k, v in config.items():
-            if k == "modellist":
-                online_list += v
-                break
-    configs['online'] = online_list
-
-    local_list = []
-    for name, path in list_models["local"].items():
-        local_list += [name]
-    configs['local'] = local_list
-    return BaseResponse(data=configs)
-
 
 def get_model_config(
     model_name: str = Body(description="LLM Model name"),
@@ -1073,43 +1033,6 @@ def save_code_interpreter_config(
         return BaseResponse(
             code=500,
             msg=f"failed to save chat configration, error: {e}")
-    
-def save_function_calling_config(
-    function_calling: dict = Body(..., description="Function Calling configration information"),
-    controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()])
-) -> BaseResponse:
-    try:
-        with open("WebUI/configs/webuiconfig.json", 'r+') as file:
-            jsondata = json.load(file)
-            jsondata["FunctionCalling"]=function_calling
-            file.seek(0)
-            json.dump(jsondata, file, indent=4)
-            file.truncate()
-        return BaseResponse(
-            code=200,
-            msg="success save function calling configration!")
-            
-    except Exception as e:
-        print(f'{e.__class__.__name__}: {e}')
-        return BaseResponse(
-            code=500,
-            msg=f"failed to save function calling configration, error: {e}")
-    
-def is_calling_enable(
-    controller_address: str = Body(None, description="Fastchat controller address", examples=[fschat_controller_address()]),
-    placeholder: str = Body(None, description="Not use"),
-) -> BaseResponse:
-    try:
-        from WebUI.configs.basicconfig import is_function_calling_enable
-        enable = is_function_calling_enable()
-        return BaseResponse(data=enable)
-        
-    except Exception as e:
-        print(f'{e.__class__.__name__}: {e}')
-        return BaseResponse(
-            code=500,
-            data=False,
-            msg=f"failed to get calling enable from controller: {controller_address} error: {e}")
     
 def save_google_toolboxes_config(
     google_toolboxes: dict = Body(..., description="Google Toolboxes configration information"),

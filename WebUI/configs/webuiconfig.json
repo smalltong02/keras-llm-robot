@@ -51,7 +51,7 @@
                 "preset": "default",
                 "apikey": "[Your Key]",
                 "apiproxy": "[Private Proxy]",
-                "support_tools": false,
+                "support_tools": true,
                 "provider": "GroqCloud"
             },
             "ali-cloud-api": {
@@ -114,12 +114,8 @@
             },
             "baidu-cloud-api": {
                 "modellist": [
-                    "ERNIE-4.0-8K-0329",
-                    "ERNIE-4.0-8K-0104",
                     "ERNIE-4.0-8K",
                     "ERNIE-3.5-8K",
-                    "ERNIE-3.5-8K-0205",
-                    "ERNIE-3.5-8K-1222",
                     "ERNIE-Bot-8K",
                     "ERNIE-3.5-4K-0205",
                     "ERNIE-Lite-8K-0922",
@@ -531,7 +527,7 @@
                 "voice_key": "[Your Key]",
                 "voice_region": "[Your Region]",
                 "language": [
-                    "en-US"
+                    "zh-CN"
                 ],
                 "provider": "AzureCloud",
                 "CloudTemplates": "AzureVoiceTemplate",
@@ -2870,60 +2866,40 @@
         "auto_run": true,
         "safe_mode": false
     },
-    "FunctionCalling": {
-        "calling_enable": true
-    },
     "ToolBoxes": {
         "Google ToolBoxes": {
             "credential": "google_credentials.json",
-            "Tools": {
-                "Google Maps": {
-                    "enable": true
-                },
-                "Google Mail": {
-                    "enable": true
-                },
-                "Google Youtube": {
-                    "enable": true
-                },
-                "Google Calendar": {
-                    "enable": true
-                },
-                "Google Drive": {
-                    "enable": true
-                },
-                "Google Docs": {
-                    "enable": true
-                },
-                "Google Sheets": {
-                    "enable": true
-                },
-                "Google Forms": {
-                    "enable": true
-                }
-            }
+            "Tools": [
+                "Google Maps",
+                "Google Mail",
+                "Google Youtube",
+                "Google Calendar",
+                "Google Drive",
+                "Google Docs",
+                "Google Sheets",
+                "Google Forms"
+            ]
         }
     },
     "CurrentRunningConfig": {
         "chat_solution": {
-            "name": "Virtual Personal Assistant",
-            "assistant_name": "Emily"
+            "name": ""
         },
         "search_engine": {
-            "name": "duckduckgo"
+            "name": ""
         },
         "knowledge_base": {
-            "name": "PS5"
+            "name": ""
         },
         "normal_calling": {
-            "enable": true
+            "enable": false
         },
         "code_interpreter": {
             "name": ""
         },
         "role_player": {
-            "name": "Personal Secretary",
-            "language": "english"
+            "name": "",
+            "language": ""
         },
         "voice": {
             "name": "",
@@ -2935,31 +2911,31 @@
         },
         "ToolBoxes": {
             "Google ToolBoxes": {
-                "credential": "google_credentials.json",
+                "credential": "",
                 "Tools": {
                     "Google Maps": {
-                        "enable": true
+                        "enable": false
                     },
                     "Google Mail": {
-                        "enable": true
+                        "enable": false
                     },
                     "Google Youtube": {
-                        "enable": true
+                        "enable": false
                     },
                     "Google Calendar": {
-                        "enable": true
+                        "enable": false
                     },
                     "Google Drive": {
-                        "enable": true
+                        "enable": false
                     },
                     "Google Docs": {
-                        "enable": true
+                        "enable": false
                     },
                     "Google Sheets": {
-                        "enable": true
+                        "enable": false
                     },
                     "Google Forms": {
-                        "enable": true
+                        "enable": false
                     }
                 }
             }

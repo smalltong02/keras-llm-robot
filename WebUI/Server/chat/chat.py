@@ -1,4 +1,3 @@
-import re
 import asyncio
 import json
 from fastapi import Body
@@ -8,11 +7,10 @@ from WebUI.Server.utils import wrap_done, get_ChatOpenAI
 from langchain.chains import LLMChain
 from langchain.callbacks import AsyncIteratorCallbackHandler
 from typing import AsyncIterable
-from WebUI.configs import (GetProviderByName, generate_new_query, call_calling, ModelType, ModelSize, ModelSubType,
-                            ToolsType, use_new_search_engine, use_knowledge_base, use_new_function_calling, use_new_toolboxes_calling,
+from WebUI.configs import (GetProviderByName, generate_new_query, ModelType, ModelSize, ModelSubType, ToolsType,
+                            use_new_search_engine, use_knowledge_base, use_new_function_calling, use_new_toolboxes_calling, GetUserAnswerForCurConfig,
                             GetCurrentRunningCfg, ExtractJsonStrings, GetModelInfoByName, GetModelConfig, GetSystemPromptForCurrentRunningConfig,
-                            GetSystemPromptForSupportTools, CallingExternalToolsForCurConfig, GetNewAnswerForCurConfig, GetUserAnswerForCurConfig)
-#from langchain.prompts import PromptTemplate, HumanMessagePromptTemplate, MessagesPlaceholder
+                            GetSystemPromptForSupportTools, CallingExternalToolsForCurConfig, GetNewAnswerForCurConfig,)
 from langchain.prompts.chat import ChatPromptTemplate
 from typing import List, Optional, Union, Any, Dict
 from WebUI.configs import USE_RERANKER, GetRerankerModelPath
@@ -21,7 +19,6 @@ from WebUI.Server.chat.StreamHandler import StreamSpeakHandler
 from WebUI.Server.utils import get_prompt_template, detect_device
 from WebUI.Server.db.repository import add_chat_history_to_db, update_chat_history
 from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
-#from WebUI.Server.funcall.funcall import funcall_tools
 
 async def CreateChatHistoryFromCallCalling(query: str = "", new_answer: str = "", history: list[dict] = []) ->list[dict]:
     user_msg = {'role': "user", 'content': f"{query}"}

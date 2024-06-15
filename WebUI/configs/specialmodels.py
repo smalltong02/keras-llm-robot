@@ -20,7 +20,7 @@ from WebUI.Server.chat.chat import GetQueryFromExternalToolsForCurConfig, RunAll
 from typing import List, Dict, Any, Optional, AsyncIterable
 
 def clean_special_text(text : str, prompttemplate: dict):
-    anti_prompt = prompttemplate["anti_prompt"]
+    anti_prompt = prompttemplate.get("anti_prompt", "")
     if len(anti_prompt):
         def is_substring(strs_list, search_string):
             search_string_lower = search_string.lower()
@@ -30,6 +30,21 @@ def clean_special_text(text : str, prompttemplate: dict):
             return False
         return is_substring(anti_prompt, text)
     return False
+
+def chat_completion_request(client,model="", messages="", tools=None, tool_choice=None, stream=False):
+    try:
+        response = client.chat.completions.create(
+            model=model,
+            messages=messages,
+            tools=tools,
+            tool_choice=tool_choice,
+            stream=stream
+        )
+        return response
+    except Exception as e:
+        print("Unable to generate ChatCompletion response")
+        print(f"Exception: {e}")
+        return e
 
 def init_cloud_models(model_name):
     if model_name is None:
@@ -159,8 +174,8 @@ async def special_chat_iterator(model: Any,
 
     configinst = InnerJsonConfigWebUIParse()
     webui_config = configinst.dump()
-    support_tools = modelinfo.get("config", {}).get("support_tools", False)
-    #calling_enable = is_function_calling_enable()
+    model_config = GetModelConfig(webui_config, modelinfo)
+    support_tools = model_config.get("support_tools", False)
     model_name = modelinfo["mname"]
     speak_handler = None
     if len(speechmodel):
@@ -246,13 +261,13 @@ async def special_chat_iterator(model: Any,
                                             {"user": user_answer, "tooltype": tooltype.value},
                                             ensure_ascii=False)
                                         query = new_query
-                            if speak_handler: 
-                                speak_handler.on_llm_new_token(chunk)
                             if not btalk:
                                 yield json.dumps(
                                     {"text": chunk, "chat_history_id": chat_history_id},
                                     ensure_ascii=False)
-                            await asyncio.sleep(0.1)
+                                if speak_handler: 
+                                    speak_handler.on_llm_new_token(chunk)
+                        await asyncio.sleep(0.1)
                     print("async_callback exit!")
                 if speak_handler: 
                     speak_handler.on_llm_end(None)
@@ -263,8 +278,7 @@ async def special_chat_iterator(model: Any,
             elif loadtype == "llamacpp":
                 presetname = modelconfig["preset"]
                 prompttemplate = GeneratePresetPrompt(presetname)
-                if len(prompttemplate):
-                    chain = LLMChain(prompt=prompt, llm=model)
+                chain = LLMChain(prompt=prompt, llm=model)
                 def running_chain(chain, query):
                     chain.run(query)
                     print("running_chain exit!")
@@ -298,13 +312,13 @@ async def special_chat_iterator(model: Any,
                                             {"user": user_answer, "tooltype": tooltype.value},
                                             ensure_ascii=False)
                                         query = new_query
-                                if speak_handler: 
-                                    speak_handler.on_llm_new_token(chunk)
                                 if not btalk:
                                     yield json.dumps(
                                         {"text": chunk, "chat_history_id": chat_history_id},
                                         ensure_ascii=False)
-                                await asyncio.sleep(0.1)
+                                    if speak_handler: 
+                                        speak_handler.on_llm_new_token(chunk)
+                    await asyncio.sleep(0.1)
                     if not thread.is_alive():
                         print("async_callback exit!")
                         break
@@ -317,7 +331,6 @@ async def special_chat_iterator(model: Any,
     elif modelinfo["mtype"] == ModelType.Online:
         provider = GetProviderByName(webui_config, model_name)
         if provider == "google-api":
-            model_config = GetModelConfig(webui_config, modelinfo)
             apikey = model_config.get("apikey", "[Your Key]")
             if apikey == "[Your Key]" or apikey == "":
                 apikey = os.environ.get('GOOGLE_API_KEY')
@@ -352,7 +365,7 @@ async def special_chat_iterator(model: Any,
             while repeat:
                 answer = ""
                 repeat = False    
-                if stream is True:
+                if stream:
                     for chunk in response:
                         if hasattr(chunk, 'parts'):
                             for part in chunk.parts:
@@ -368,12 +381,12 @@ async def special_chat_iterator(model: Any,
                                         function_response, tool_name, docs, tooltype = await RunAllEnableToolsInString(fn.name, args_dict, query)
                                         break
                                 elif text_text := part.text:
-                                    if speak_handler: 
-                                        speak_handler.on_llm_new_token(text_text)
                                     answer += text_text
                                     yield json.dumps(
                                         {"text": text_text, "chat_history_id": chat_history_id},
                                         ensure_ascii=False)
+                                    if speak_handler: 
+                                        speak_handler.on_llm_new_token(text_text)
                             if function_name and function_response:
                                 repeat = True
                                 new_answer = GetNewAnswerForCurConfig("", tool_name, tooltype)
@@ -391,12 +404,13 @@ async def special_chat_iterator(model: Any,
                                         name=function_name,
                                         response={'result': function_response}))]))
                         elif hasattr(chunk, 'text'):
-                            if speak_handler: 
-                                speak_handler.on_llm_new_token(chunk.text)
                             answer = chunk.text
                             yield json.dumps(
                                 {"text": answer, "chat_history_id": chat_history_id},
                                 ensure_ascii=False)
+                            if speak_handler: 
+                                speak_handler.on_llm_new_token(chunk.text)
+                        await asyncio.sleep(0.1)
                 else:
                     if hasattr(response, 'parts'):
                         for part in response.parts:
@@ -414,12 +428,12 @@ async def special_chat_iterator(model: Any,
                                     repeat = True
                                     break
                             elif text_text := part.text:
-                                if speak_handler: 
-                                    speak_handler.on_llm_new_token(text_text)
                                 answer += text_text
                                 yield json.dumps(
                                     {"text": text_text, "chat_history_id": chat_history_id},
                                     ensure_ascii=False)
+                                if speak_handler: 
+                                    speak_handler.on_llm_new_token(text_text)
                         if function_name and function_response:
                             new_answer = GetNewAnswerForCurConfig("", tool_name, tooltype)
                             yield json.dumps(
@@ -436,13 +450,13 @@ async def special_chat_iterator(model: Any,
                                     name=function_name,
                                     response={'result': function_response}))]))
                     elif hasattr(response, 'text'):
-                        if speak_handler: 
-                            speak_handler.on_llm_new_token(response.text)
                         answer = response.text
                         yield json.dumps(
                             {"text": answer, "chat_history_id": chat_history_id},
                             ensure_ascii=False)
-            await asyncio.sleep(0.1)
+                        if speak_handler: 
+                            speak_handler.on_llm_new_token(response.text)
+                await asyncio.sleep(0.1)
             if speak_handler: 
                 speak_handler.on_llm_end(None)
             if not repeat and docs:
@@ -453,13 +467,11 @@ async def special_chat_iterator(model: Any,
             from http import HTTPStatus
             from dashscope import Generation
             from dashscope.api_entities.dashscope_response import Role
-            model_config = GetModelConfig(webui_config, modelinfo)
             apikey = model_config.get("apikey", "[Your Key]")
             if apikey == "[Your Key]" or apikey == "":
                 apikey = os.environ.get('ALI_API_KEY')
             if apikey is None:
                 apikey = "EMPTY"
-
             docs = []
             btalk = True
             while btalk:
@@ -564,7 +576,7 @@ async def special_chat_iterator(model: Any,
                         yield json.dumps(
                             {"text": error_message, "chat_history_id": chat_history_id},
                             ensure_ascii=False)
-                        await asyncio.sleep(0.1)
+                    await asyncio.sleep(0.1)
                 if speak_handler: 
                     speak_handler.on_llm_end(None)
                 if not btalk and docs:
@@ -583,21 +595,6 @@ async def special_chat_iterator(model: Any,
                     stream = False
                 else:
                     calling_tools = None
-            def chat_completion_request(client,model="", messages="", tools=None, tool_choice=None, stream=False):
-                try:
-                    response = client.chat.completions.create(
-                        model=model,
-                        messages=messages,
-                        tools=tools,
-                        tool_choice=tool_choice,
-                        stream=stream
-                    )
-                    return response
-                except Exception as e:
-                    print("Unable to generate ChatCompletion response")
-                    print(f"Exception: {e}")
-                    return e
-            model_config = GetModelConfig(webui_config, modelinfo)
             if provider == "openai-api":
                 apikey = model_config.get("api_key", "[Your Key]")
                 if apikey == "[Your Key]":
@@ -684,7 +681,7 @@ async def special_chat_iterator(model: Any,
                                         else:
                                             message.append({"role": "assistant", "content": new_answer})
                                             message.append({"role": "user", "content": function_response})
-            await asyncio.sleep(0.1)
+                await asyncio.sleep(0.1)
             if speak_handler: 
                 speak_handler.on_llm_end(None)
             if docs:
@@ -694,7 +691,6 @@ async def special_chat_iterator(model: Any,
 
         elif provider == "baidu-cloud-api":
             import qianfan
-            model_config = GetModelConfig(webui_config, modelinfo)
             apikey = model_config.get("apikey", "[Your Key]")
             if apikey == "[Your Key]" or apikey == "":
                 apikey = os.environ.get('QIANFAN_ACCESS_KEY')
@@ -761,61 +757,85 @@ async def special_chat_iterator(model: Any,
         
         elif provider == "groq-api":
             from groq import Groq
-            model_config = GetModelConfig(webui_config, modelinfo)
             apikey = model_config.get("apikey", "[Your Key]")
             if apikey == "[Your Key]" or apikey == "":
                 apikey = os.environ.get('GROQ_API_KEY')
             if apikey is None:
                 apikey = "EMPTY"
-
+            calling_tools =[]
+            tool_choice = None
+            if support_tools:
+                calling_tools = GetOpenaiNativeTools()
+                if calling_tools:
+                    tool_choice = "auto"
+                else:
+                    calling_tools = None
             client = Groq(
                 api_key=apikey,
             )
-            docs=[]
+            docs = []
             btalk = True
+            message = history.copy()
+            message.append({"role": "user", "content": query})
             while btalk:
-                btalk = False
                 answer = ""
-                messages = history.copy()
-                messages.append({'role': "user",
-                            'content': query})
-                chat_completion = client.chat.completions.create(
-                    messages=messages,
+                btalk = False
+                chat_response = chat_completion_request(
+                    client=client,
                     model=model_name,
+                    messages=message,
+                    tools=calling_tools,
+                    tool_choice=tool_choice,
                 )
-                answer = chat_completion.choices[0].message.content
-                if not btalk:
-                    btalk, new_answer = CallingExternalToolsForCurConfig(answer)
-                    if btalk:
-                        new_query, tool_name, docs, tooltype = await GetQueryFromExternalToolsForCurConfig(answer=answer, query=query)
-                        if not new_query:
-                            btalk = False
-                        else:
-                            btalk = True
-                            new_answer = GetNewAnswerForCurConfig(new_answer, tool_name, tooltype)
-                            history.append({'role': "user",'content': query})
-                            history.append({'role': "assistant", 'content': new_answer})
-                            yield json.dumps(
-                                {"clear": new_answer, "chat_history_id": chat_history_id},
-                                ensure_ascii=False)
-                            user_answer = GetUserAnswerForCurConfig(tool_name, tooltype)
-                            yield json.dumps(
-                                {"user": user_answer, "tooltype": tooltype.value},
-                                ensure_ascii=False)
-                            query = new_query
-                    if not btalk:
+                if hasattr(chat_response, 'status_code') and chat_response.status_code != 200:
+                    yield json.dumps(
+                        {"text": chat_response.message, "chat_history_id": chat_history_id},
+                        ensure_ascii=False)
+                    await asyncio.sleep(0.1)
+                else:
+                    response_message = chat_response.choices[0].message
+                    tool_calls = response_message.tool_calls
+                    answer = response_message.content
+                    if answer:
                         yield json.dumps(
                             {"text": answer, "chat_history_id": chat_history_id},
                             ensure_ascii=False)
-                    if speak_handler:
-                        speak_handler.on_llm_new_token(response)
-                    await asyncio.sleep(0.1)
-                if speak_handler: 
-                    speak_handler.on_llm_end(None)
-                if not btalk and docs:
-                    yield json.dumps({"tooltype": tooltype.value, "docs": docs}, ensure_ascii=False)
-                    docs = []
-                    tooltype = ToolsType.Unknown
+                        if speak_handler: 
+                            speak_handler.on_llm_new_token(token)
+                    if tool_calls:
+                        for tool_call in tool_calls:
+                            function_name = tool_call.function.name
+                            function_response = ""
+                            args = tool_call.function.arguments
+                            try:
+                                args_dict = json.loads(args)
+                            except Exception as _:
+                                args_dict = {}
+                            function_text = f"{function_name}({args})"
+                            print(function_text)
+                            if function_text:
+                                function_response, tool_name, docs, tooltype = await RunAllEnableToolsInString(function_name, args_dict, query)
+                                if function_name and function_response:
+                                    btalk = True
+                                    new_answer = GetNewAnswerForCurConfig("", tool_name, tooltype)
+                                    yield json.dumps(
+                                        {"clear": new_answer, "chat_history_id": chat_history_id},
+                                        ensure_ascii=False)
+                                    user_answer = GetUserAnswerForCurConfig(tool_name, tooltype)
+                                    yield json.dumps(
+                                        {"user": user_answer, "tooltype": tooltype.value},
+                                        ensure_ascii=False)
+                                    message.append({"role": "assistant", "content": new_answer})
+                                    message.append({"role": "user", "content": function_response})
+                                    tool_choice = "none"
+                await asyncio.sleep(0.1)
+            if speak_handler: 
+                speak_handler.on_llm_end(None)
+            if docs:
+                yield json.dumps({"tooltype": tooltype.value, "docs": docs}, ensure_ascii=False)
+                docs = []
+                tooltype = ToolsType.Unknown
+
     update_chat_history(chat_history_id, response=answer)
 
 def special_model_chat(
@@ -1171,6 +1191,8 @@ def multimodal_model_chat(
         from WebUI.Server.utils import detect_device
         configinst = InnerJsonConfigWebUIParse()
         webui_config = configinst.dump()
+        model_config = GetModelConfig(webui_config, modelinfo)
+        support_tools = model_config.get("support_tools", False)
         model_name = modelinfo["mname"]
         speak_handler = None
         if len(speechmodel):
@@ -1219,12 +1241,12 @@ def multimodal_model_chat(
                 outputs = outputs[:, inputs['input_ids'].shape[1]:]
                 answer =tokenizer.decode(outputs[0])
 
-            if speak_handler: 
-                speak_handler.on_llm_new_token(answer)
             yield json.dumps(
                 {"text": answer, "chat_history_id": chat_history_id},
                 ensure_ascii=False)
             await asyncio.sleep(0.1)
+            if speak_handler: 
+                speak_handler.on_llm_new_token(answer)
             if speak_handler: 
                 speak_handler.on_llm_end(None)
         elif model_name == "Qwen-VL-Chat" or model_name == "Qwen-VL-Chat-Int4":
@@ -1247,12 +1269,12 @@ def multimodal_model_chat(
             if len(history):
                 formatted_history = [(history[i]['content'], history[i+1]['content']) for i in range(0, len(history), 2) if i < len(history)-1 and history[i]['role'] == 'user']
             answer, history = model.chat(tokenizer, query=query_tkz, history=formatted_history)
-            if speak_handler: 
-                speak_handler.on_llm_new_token(answer)
             yield json.dumps(
                 {"text": answer, "chat_history_id": chat_history_id},
                 ensure_ascii=False)
             await asyncio.sleep(0.1)
+            if speak_handler: 
+                speak_handler.on_llm_new_token(answer)
             if speak_handler: 
                 speak_handler.on_llm_end(None)
         elif model_name == "stable-video-diffusion-img2vid" or model_name == "stable-video-diffusion-img2vid-xt":
@@ -1307,20 +1329,18 @@ def multimodal_model_chat(
             if len(history):
                 formatted_history = [(history[i]['content'], history[i+1]['content']) for i in range(0, len(history), 2) if i < len(history)-1 and history[i]['role'] == 'user']
             answer, history = model.chat(tokenizer, query=query_tkz, history=formatted_history)
-            if speak_handler: 
-                speak_handler.on_llm_new_token(answer)
             yield json.dumps(
                 {"text": answer, "chat_history_id": chat_history_id},
                 ensure_ascii=False)
             await asyncio.sleep(0.1)
+            if speak_handler: 
+                speak_handler.on_llm_new_token(answer)
             if speak_handler: 
                 speak_handler.on_llm_end(None)
 
         elif model_name == "Phi-3-vision-128k-instruct":
             from transformers import AutoProcessor
             configinst = InnerJsonConfigWebUIParse()
-            webui_config = configinst.dump()
-            model_config = webui_config.get("ModelConfig").get("LocalModel").get("Multimodal Model").get("Vision Chat Model").get(model_name)
             model_id = model_config.get("path")
             device = model_config.get("device", "auto")
             device = "cuda" if device == "gpu" else detect_device() if device == "auto" else device
@@ -1361,12 +1381,12 @@ def multimodal_model_chat(
             # remove input tokens 
             generate_ids = generate_ids[:, inputs['input_ids'].shape[1]:]
             response = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0] 
-            if speak_handler: 
-                speak_handler.on_llm_new_token(answer)
             yield json.dumps(
                 {"text": response, "chat_history_id": chat_history_id},
                 ensure_ascii=False)
             await asyncio.sleep(0.1)
+            if speak_handler: 
+                speak_handler.on_llm_new_token(answer)
             if speak_handler: 
                 speak_handler.on_llm_end(None)
 
@@ -1401,12 +1421,12 @@ def multimodal_model_chat(
             generated_text = ""
             for new_text in response:
                 generated_text += new_text
-                if speak_handler: 
-                    speak_handler.on_llm_new_token(new_text)
                 yield json.dumps(
                     {"text": new_text, "chat_history_id": chat_history_id},
                     ensure_ascii=False)
                 await asyncio.sleep(0.1)
+                if speak_handler: 
+                    speak_handler.on_llm_new_token(new_text)
             if speak_handler: 
                 speak_handler.on_llm_end(None)
         
@@ -1425,7 +1445,6 @@ def multimodal_model_chat(
                 inputs = tokenizer.apply_chat_template([{"role": "user", "content": query}],
                     add_generation_prompt=True, tokenize=True, return_tensors="pt",
                     return_dict=True)
-            model_config = webui_config.get("ModelConfig").get("LocalModel").get("Multimodal Model").get("Vision Chat Model").get(model_name)
             device = model_config.get("device", "auto")
             device = "cuda" if device == "gpu" else detect_device() if device == "auto" else device
             inputs = inputs.to(device)
@@ -1435,12 +1454,12 @@ def multimodal_model_chat(
                 outputs = model.generate(**inputs, **gen_kwargs)
                 outputs = outputs[:, inputs['input_ids'].shape[1]:]
                 answer = tokenizer.decode(outputs[0])
-            if speak_handler: 
-                speak_handler.on_llm_new_token(answer)
             yield json.dumps(
                 {"text": answer, "chat_history_id": chat_history_id},
                 ensure_ascii=False)
             await asyncio.sleep(0.1)
+            if speak_handler: 
+                speak_handler.on_llm_new_token(answer)
             if speak_handler: 
                 speak_handler.on_llm_end(None)
 
