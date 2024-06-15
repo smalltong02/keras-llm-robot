@@ -3,6 +3,7 @@ import base64
 import mimetypes
 from langchain_core.tools import tool
 from googleapiclient.discovery import build
+import google.generativeai as genai
 
 GMAIL_READONLY_SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
 GMAIL_MODIFY_SCOPES = ["https://www.googleapis.com/auth/gmail.modify"]
@@ -213,7 +214,7 @@ def gmail_send_mail(subject: str, body: str, to_address: str, from_address: str,
 @tool
 def search_in_emails(search_criteria: str) ->str:
     """search mail in email. The parameter 'search_criteria' conforms to email's advanced search syntax format.
-        Here is an example of calling the function 'search_in_emails':
+        Here is an example of calling the function 'search_in_emails', Please use JSON blob:
             User: Please check my email for messages with the subject containing "HipsHook Project" sent on May 30th, 2024.
             Bot: Okay, I will call the function 'search_in_emails' to help you find the email.
             {
@@ -232,7 +233,7 @@ def search_in_emails(search_criteria: str) ->str:
 @tool
 def create_draft_in_emails(subject: str, body: str, to_address: str, from_address: str, attachment_file: str) ->bool:
     """create draft mail in email.
-        Here is an example of calling the function 'create_draft_in_emails':
+        Here is an example of calling the function 'create_draft_in_emails', Please use JSON blob:
             User: Please help me create an email draft with the following details:
                 Subject: Happy Birthday
                 Body: Hi Lyn, happy birthday to you!
@@ -258,7 +259,7 @@ def create_draft_in_emails(subject: str, body: str, to_address: str, from_addres
 @tool
 def send_mail_in_emails(subject: str, body: str, to_address: str, from_address: str, attachment_file: str) ->bool:
     """send mail in email.
-        Here is an example of calling the function 'send_mail_in_emails':
+        Here is an example of calling the function 'send_mail_in_emails', Please use JSON blob:
             User: Please help me send an email to dave:
                 Subject: The issue regarding property fees.
                 Body: Hi Dave, Congratulations! I have helped you apply for a reduction in property fees, and the property management has approved it. Your property fees will be reduced by 10% each month!
@@ -287,6 +288,126 @@ email_tool_names = {
     "send_mail_in_emails": send_mail_in_emails
 }
 
+# for google gemini
+search_in_emails_gemini = genai.protos.Tool(
+    function_declarations=[
+      genai.protos.FunctionDeclaration(
+        name='search_in_emails',
+        description="Search in email.",
+        parameters=genai.protos.Schema(
+            type=genai.protos.Type.OBJECT,
+            properties={
+                'search_criteria':genai.protos.Schema(type=genai.protos.Type.STRING, description="conforms to email's advanced search syntax format."),
+            },
+            required=['search_criteria']
+        )
+      )
+    ])
+
+create_draft_in_emails_gemini = genai.protos.Tool(
+    function_declarations=[
+      genai.protos.FunctionDeclaration(
+        name='create_draft_in_emails',
+        description="Create draft in email.",
+        parameters=genai.protos.Schema(
+            type=genai.protos.Type.OBJECT,
+            properties={
+                'subject':genai.protos.Schema(type=genai.protos.Type.STRING, description="Title of the email."),
+                'body':genai.protos.Schema(type=genai.protos.Type.STRING, description="Body of the email."),
+                'to_address':genai.protos.Schema(type=genai.protos.Type.STRING, description="The address to receive the email, if not provided, needs to be confirmed by the user."),
+                'from_address':genai.protos.Schema(type=genai.protos.Type.STRING, description='The sending address of the email, if using the default address, can be replaced with "me".'),
+                'attachment_file':genai.protos.Schema(type=genai.protos.Type.STRING, description='The attachment parameter can be a file path. If there are no attachments, please pass "".'),
+            },
+            required=['subject', 'body', 'to_address', 'from_address', 'attachment_file']
+        )
+      )
+    ])
+
+send_mail_in_emails_gemini = genai.protos.Tool(
+    function_declarations=[
+      genai.protos.FunctionDeclaration(
+        name='send_mail_in_emails',
+        description="send mail in email.",
+        parameters=genai.protos.Schema(
+            type=genai.protos.Type.OBJECT,
+            properties={
+                'subject':genai.protos.Schema(type=genai.protos.Type.STRING, description="Title of the email."),
+                'body':genai.protos.Schema(type=genai.protos.Type.STRING, description="Body of the email."),
+                'to_address':genai.protos.Schema(type=genai.protos.Type.STRING, description="The address to receive the email, if not provided, needs to be confirmed by the user."),
+                'from_address':genai.protos.Schema(type=genai.protos.Type.STRING, description='The sending address of the email, if using the default address, can be replaced with "me".'),
+                'attachment_file':genai.protos.Schema(type=genai.protos.Type.STRING, description='The attachment parameter can be a file path. If there are no attachments, please pass "".'),
+            },
+            required=['subject', 'body', 'to_address', 'from_address', 'attachment_file']
+        )
+      )
+    ])
+
+google_email_tools = [
+    search_in_emails_gemini,
+    create_draft_in_emails_gemini,
+    send_mail_in_emails_gemini,
+]
+
+# for openai
+search_in_emails_openai = {
+    "type": "function",
+    "function": {
+        "name": "search_in_emails",
+        "description": "Search in email.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "search_criteria": {"type": "string", "description": "conforms to email's advanced search syntax format."},
+            },
+            "required": ["search_criteria"],
+        },
+    }
+}
+
+create_draft_in_emails_openai = {
+    "type": "function",
+    "function": {
+        "name": "create_draft_in_emails",
+        "description": "Create draft in email.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "subject": {"type": "string", "description": "Title of the email."},
+                "body": {"type": "string", "description": "Body of the email."},
+                "to_address": {"type": "string", "description": "The address to receive the email, if not provided, needs to be confirmed by the user."},
+                "from_address": {"type": "string", "description": 'The sending address of the email, if using the default address, can be replaced with "me".'},
+                "attachment_file": {"type": "string", "description": 'The attachment parameter can be a file path. If there are no attachments, please pass "".'},
+            },
+            "required": ["subject", "body", "to_address", "from_address", "attachment_file"],
+        },
+    }
+}
+
+send_mail_in_emails_openai = {
+    "type": "function",
+    "function": {
+        "name": "send_mail_in_emails",
+        "description": "send mail in email.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "subject": {"type": "string", "description": "Title of the email."},
+                "body": {"type": "string", "description": "Body of the email."},
+                "to_address": {"type": "string", "description": "The address to receive the email, if not provided, needs to be confirmed by the user."},
+                "from_address": {"type": "string", "description": 'The sending address of the email, if using the default address, can be replaced with "me".'},
+                "attachment_file": {"type": "string", "description": 'The attachment parameter can be a file path. If there are no attachments, please pass "".'},
+            },
+            "required": ["subject", "body", "to_address", "from_address", "attachment_file"],
+        },
+    }
+}
+
+openai_email_tools = [
+    search_in_emails_openai,
+    create_draft_in_emails_openai,
+    send_mail_in_emails_openai,
+]
+
 def GetMailFuncallList() ->list:
     funcall_list = []
     for call_tool in email_toolboxes:
@@ -301,9 +422,11 @@ def GetMailFuncallDescription(func_name: str = "") ->str:
     return description
 
 def is_email_enable() ->bool:
-    from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
-    configinst = InnerJsonConfigWebUIParse()
-    tool_boxes = configinst.get("ToolBoxes")
+    from WebUI.configs.basicconfig import GetCurrentRunningCfg
+    config = GetCurrentRunningCfg()
+    if not config:
+        return None
+    tool_boxes = config.get("ToolBoxes")
     if not tool_boxes:
         return False
     google_toolboxes = tool_boxes.get("Google ToolBoxes")

@@ -114,7 +114,7 @@ def completion_stream_generator(app: FastAPI, request: ChatCompletionRequest):
         import json
         import shortuuid
         from typing import Dict
-        from WebUI.configs.basicconfig import ModelType, ModelSize, ModelSubType, GetModelInfoByName, ConvertCompletionRequestToHistory
+        from WebUI.configs.basicconfig import ModelType, ModelSize, ModelSubType, GetModelConfig, GetModelInfoByName, ConvertCompletionRequestToHistory
         from WebUI.configs.specialmodels import special_chat_iterator
         from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
         from fastchat.protocol.openai_api_protocol import ChatCompletionResponseStreamChoice, DeltaMessage, ChatCompletionStreamResponse
@@ -130,6 +130,7 @@ def completion_stream_generator(app: FastAPI, request: ChatCompletionRequest):
         modelinfo : Dict[str, any] = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "config": dict}
         modelinfo["mtype"], modelinfo["msize"], modelinfo["msubtype"] = GetModelInfoByName(webui_config, model_name)
         modelinfo["mname"] = model_name
+        modelinfo["config"] = GetModelConfig(webui_config, modelinfo)
 
         response = special_chat_iterator(
             model=app._model,

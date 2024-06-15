@@ -11,8 +11,7 @@
         "OnlineModel": {
             "google-api": {
                 "modellist": [
-                    "gemini-pro",
-                    "gemini-pro-vision",
+                    "gemini-1.5-flash",
                     "gemini-1.5-pro-latest"
                 ],
                 "baseurl": "",
@@ -21,17 +20,12 @@
                 "preset": "default",
                 "apikey": "[Your Key]",
                 "apiproxy": "[Private Proxy]",
+                "support_tools": true,
                 "provider": "GoogleCloud"
             },
             "openai-api": {
                 "modellist": [
                     "gpt-3.5-turbo",
-                    "gpt-3.5-turbo-0125",
-                    "gpt-3.5-turbo-instruct",
-                    "gpt-4",
-                    "gpt-4-32k",
-                    "gpt-4-0125-preview",
-                    "gpt-4-vision-preview",
                     "gpt-4-turbo",
                     "gpt-4o"
                 ],
@@ -41,6 +35,7 @@
                 "preset": "default",
                 "apikey": "[Your Key]",
                 "apiproxy": "[Private Proxy]",
+                "support_tools": true,
                 "provider": "OpenAI"
             },
             "groq-api": {
@@ -56,6 +51,7 @@
                 "preset": "default",
                 "apikey": "[Your Key]",
                 "apiproxy": "[Private Proxy]",
+                "support_tools": true,
                 "provider": "GroqCloud"
             },
             "ali-cloud-api": {
@@ -113,16 +109,13 @@
                 "preset": "default",
                 "apikey": "[Your Key]",
                 "apiproxy": "[Private Proxy]",
+                "support_tools": false,
                 "provider": "AliCloud"
             },
             "baidu-cloud-api": {
                 "modellist": [
-                    "ERNIE-4.0-8K-0329",
-                    "ERNIE-4.0-8K-0104",
                     "ERNIE-4.0-8K",
                     "ERNIE-3.5-8K",
-                    "ERNIE-3.5-8K-0205",
-                    "ERNIE-3.5-8K-1222",
                     "ERNIE-Bot-8K",
                     "ERNIE-3.5-4K-0205",
                     "ERNIE-Lite-8K-0922",
@@ -151,6 +144,7 @@
                 "apikey": "[Your Key]",
                 "secretkey": "[Your Key]",
                 "apiproxy": "[Private Proxy]",
+                "support_tools": false,
                 "provider": "BaiduCloud"
             },
             "kimi-cloud-api": {
@@ -165,6 +159,7 @@
                 "preset": "default",
                 "apikey": "[Your Key]",
                 "apiproxy": "[Private Proxy]",
+                "support_tools": true,
                 "provider": "KimiCloud"
             },
             "yi-01ai-api": {
@@ -185,6 +180,7 @@
                 "preset": "default",
                 "apikey": "[Your Key]",
                 "apiproxy": "[Private Proxy]",
+                "support_tools": false,
                 "provider": "YiCloud"
             }
         },
@@ -531,7 +527,7 @@
                 "voice_key": "[Your Key]",
                 "voice_region": "[Your Region]",
                 "language": [
-                    "ja-JP"
+                    "zh-CN"
                 ],
                 "provider": "AzureCloud",
                 "CloudTemplates": "AzureVoiceTemplate",
@@ -1898,6 +1894,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "fastchat",
+                        "support_tools": false,
                         "Huggingface": "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
                     },
                     "fastchat-t5-3b-v1.0": {
@@ -1908,6 +1905,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "fastchat",
+                        "support_tools": false,
                         "Huggingface": "lmsys/fastchat-t5-3b-v1.0"
                     },
                     "Qwen1.5-4B-Chat": {
@@ -1918,6 +1916,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "fastchat",
+                        "support_tools": false,
                         "Huggingface": "Qwen/Qwen1.5-4B-Chat"
                     }
                 },
@@ -1930,6 +1929,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "fastchat",
+                        "support_tools": false,
                         "Huggingface": "meta-llama/llama-2-7b-hf"
                     },
                     "llama-2-7b-chat-hf": {
@@ -1940,6 +1940,7 @@
                         "loadbits": 8,
                         "preset": "default",
                         "load_type": "fastchat",
+                        "support_tools": false,
                         "Huggingface": "meta-llama/Llama-2-7b-chat-hf"
                     },
                     "chatglm2-6b": {
@@ -1950,6 +1951,7 @@
                         "loadbits": 8,
                         "preset": "default",
                         "load_type": "fastchat",
+                        "support_tools": false,
                         "Huggingface": "THUDM/chatglm2-6b"
                     },
                     "chatglm2-6b-32k": {
@@ -1960,6 +1962,7 @@
                         "loadbits": 8,
                         "preset": "default",
                         "load_type": "fastchat",
+                        "support_tools": false,
                         "Huggingface": "THUDM/chatglm2-6b-32k"
                     },
                     "chatglm3-6b": {
@@ -1970,6 +1973,7 @@
                         "loadbits": 8,
                         "preset": "default",
                         "load_type": "fastchat",
+                        "support_tools": false,
                         "Huggingface": "THUDM/chatglm3-6b"
                     },
                     "tigerbot-7b-chat": {
@@ -1980,6 +1984,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "fastchat",
+                        "support_tools": false,
                         "Huggingface": "TigerResearch/tigerbot-7b-chat"
                     },
                     "openchat_3.5": {
@@ -1990,6 +1995,7 @@
                         "loadbits": 8,
                         "preset": "default",
                         "load_type": "fastchat",
+                        "support_tools": false,
                         "Huggingface": "openchat/openchat_3.5"
                     },
                     "openchat-3.5-1210": {
@@ -2000,6 +2006,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "fastchat",
+                        "support_tools": false,
                         "Huggingface": "openchat/openchat-3.5-1210"
                     },
                     "openchat-3.5-0106": {
@@ -2010,6 +2017,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "fastchat",
+                        "support_tools": false,
                         "Huggingface": "openchat/openchat-3.5-0106"
                     },
                     "Qwen-7B-Chat-Int4": {
@@ -2020,6 +2028,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "fastchat",
+                        "support_tools": false,
                         "Huggingface": "Qwen/Qwen-7B-Chat-Int4"
                     },
                     "Qwen1.5-7B-Chat": {
@@ -2030,6 +2039,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "fastchat",
+                        "support_tools": false,
                         "Huggingface": "Qwen/Qwen1.5-7B-Chat"
                     },
                     "fuyu-8b": {
@@ -2040,6 +2050,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "fastchat",
+                        "support_tools": false,
                         "Huggingface": "adept/fuyu-8b"
                     },
                     "Yi-6B-Chat-4bits": {
@@ -2050,6 +2061,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "fastchat",
+                        "support_tools": false,
                         "Huggingface": "01-ai/Yi-6B-Chat-4bits"
                     },
                     "neural-chat-7b-v3-1": {
@@ -2060,6 +2072,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "fastchat",
+                        "support_tools": false,
                         "Huggingface": "Intel/neural-chat-7b-v3-1"
                     },
                     "Mistral-7B-Instruct-v0.2": {
@@ -2070,6 +2083,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "fastchat",
+                        "support_tools": false,
                         "Huggingface": "mistralai/Mistral-7B-Instruct-v0.2"
                     },
                     "Baichuan2-7B-Chat": {
@@ -2080,6 +2094,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "fastchat",
+                        "support_tools": false,
                         "Huggingface": "baichuan-inc/Baichuan2-7B-Chat"
                     },
                     "Meta-Llama-3-8B": {
@@ -2090,6 +2105,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "fastchat",
+                        "support_tools": false,
                         "Huggingface": "meta-llama/Meta-Llama-3-8B"
                     },
                     "Llama3-8B-Chinese-Chat": {
@@ -2100,6 +2116,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "fastchat",
+                        "support_tools": false,
                         "Huggingface": "shenzhi-wang/Llama3-8B-Chinese-Chat"
                     },
                     "Yi-1.5-6B-Chat": {
@@ -2110,6 +2127,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "fastchat",
+                        "support_tools": false,
                         "Huggingface": "01-ai/Yi-1.5-9B-Chat"
                     },
                     "Yi-1.5-9B-Chat": {
@@ -2120,6 +2138,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "fastchat",
+                        "support_tools": false,
                         "Huggingface": "01-ai/Yi-1.5-9B-Chat"
                     },
                     "Yi-1.5-9B-Chat-16K": {
@@ -2130,7 +2149,19 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "fastchat",
+                        "support_tools": false,
                         "Huggingface": "01-ai/Yi-1.5-9B-Chat-16K"
+                    },
+                    "Qwen2-7B-Instruct": {
+                        "path": "models/llm/Qwen2-7B-Instruct",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "fastchat",
+                        "support_tools": false,
+                        "Huggingface": "Qwen/Qwen2-7B-Instruct"
                     }
                 },
                 "13B Model": {
@@ -2152,6 +2183,7 @@
                         "loadbits": 8,
                         "preset": "default",
                         "load_type": "fastchat",
+                        "support_tools": false,
                         "Huggingface": "meta-llama/Llama-2-13b-chat-hf"
                     },
                     "tigerbot-13b-chat": {
@@ -2162,6 +2194,7 @@
                         "loadbits": 8,
                         "preset": "default",
                         "load_type": "fastchat",
+                        "support_tools": false,
                         "Huggingface": "TigerResearch/tigerbot-13b-chat"
                     },
                     "Qwen-14B-Chat": {
@@ -2172,6 +2205,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "fastchat",
+                        "support_tools": false,
                         "Huggingface": "Qwen/Qwen-14B-Chat"
                     },
                     "Qwen-14B-Chat-Int4": {
@@ -2182,37 +2216,8 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "fastchat",
+                        "support_tools": false,
                         "Huggingface": "Qwen/Qwen-14B-Chat-Int4"
-                    },
-                    "Orion-14B-Chat": {
-                        "path": "models/llm/Orion-14B-Chat",
-                        "device": "auto",
-                        "maxmemory": 20,
-                        "cputhreads": 4,
-                        "loadbits": 16,
-                        "preset": "default",
-                        "load_type": "fastchat",
-                        "Huggingface": "OrionStarAI/Orion-14B-Chat"
-                    },
-                    "Orion-14B-LongChat": {
-                        "path": "models/llm/Orion-14B-LongChat",
-                        "device": "auto",
-                        "maxmemory": 20,
-                        "cputhreads": 4,
-                        "loadbits": 16,
-                        "preset": "default",
-                        "load_type": "fastchat",
-                        "Huggingface": "OrionStarAI/Orion-14B-LongChat"
-                    },
-                    "Orion-14B-Chat-Int4": {
-                        "path": "models/llm/Orion-14B-Chat-Int4",
-                        "device": "auto",
-                        "maxmemory": 20,
-                        "cputhreads": 4,
-                        "loadbits": 16,
-                        "preset": "default",
-                        "load_type": "fastchat",
-                        "Huggingface": "OrionStarAI/Orion-14B-Chat-Int4"
                     },
                     "Baichuan2-13B-Chat": {
                         "path": "models/llm/Baichuan2-13B-Chat",
@@ -2222,6 +2227,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "fastchat",
+                        "support_tools": false,
                         "Huggingface": "baichuan-inc/Baichuan2-13B-Chat"
                     }
                 },
@@ -2234,6 +2240,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "fastchat",
+                        "support_tools": false,
                         "Huggingface": "01-ai/Yi-34B-Chat-4bits"
                     },
                     "Qwen1.5-32B-Chat-GPTQ-Int4": {
@@ -2244,6 +2251,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "fastchat",
+                        "support_tools": false,
                         "Huggingface": "Qwen/Qwen1.5-32B-Chat-GPTQ-Int4"
                     },
                     "Yi-1.5-34B-Chat-GPTQ-Int4": {
@@ -2254,6 +2262,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "fastchat",
+                        "support_tools": false,
                         "Huggingface": "modelscope/Yi-1.5-34B-Chat-GPTQ"
                     }
                 },
@@ -2266,6 +2275,7 @@
                         "loadbits": 8,
                         "preset": "default",
                         "load_type": "fastchat",
+                        "support_tools": false,
                         "Huggingface": "meta-llama/llama-2-70b-hf"
                     },
                     "llama-2-70b-chat-hf": {
@@ -2276,6 +2286,7 @@
                         "loadbits": 8,
                         "preset": "default",
                         "load_type": "fastchat",
+                        "support_tools": false,
                         "Huggingface": "meta-llama/Llama-2-70b-chat-hf"
                     },
                     "Meta-Llama-3-70B": {
@@ -2286,12 +2297,24 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "fastchat",
+                        "support_tools": false,
                         "Huggingface": "meta-llama/Meta-Llama-3-70B"
                     }
                 }
             },
             "Multimodal Model": {
                 "Vision Chat Model": {
+                    "glm-4v-9b": {
+                        "path": "models/multimodal/image-chat/glm-4v-9b",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "causallm",
+                        "support_tools": false,
+                        "Huggingface": "THUDM/glm-4v-9b"
+                    },
                     "MiniCPM-Llama3-V-2_5": {
                         "path": "models/multimodal/image-chat/MiniCPM-Llama3-V-2_5",
                         "device": "auto",
@@ -2300,6 +2323,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "automodel",
+                        "support_tools": false,
                         "Huggingface": "openbmb/MiniCPM-Llama3-V-2_5"
                     },
                     "Phi-3-vision-128k-instruct": {
@@ -2310,6 +2334,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "causallm",
+                        "support_tools": false,
                         "Huggingface": "microsoft/Phi-3-vision-128k-instruct"
                     },
                     "cogvlm-chat-hf": {
@@ -2320,6 +2345,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "causallm",
+                        "support_tools": false,
                         "Huggingface": "THUDM/cogvlm-chat-hf"
                     },
                     "Qwen-VL-Chat": {
@@ -2330,6 +2356,7 @@
                         "loadbits": 4,
                         "preset": "default",
                         "load_type": "causallm",
+                        "support_tools": false,
                         "Huggingface": "Qwen/Qwen-VL-Chat"
                     },
                     "Qwen-VL-Chat-Int4": {
@@ -2340,6 +2367,7 @@
                         "loadbits": 4,
                         "preset": "default",
                         "load_type": "causallm",
+                        "support_tools": false,
                         "Huggingface": "Qwen/Qwen-VL-Chat-Int4"
                     },
                     "stable-video-diffusion-img2vid": {
@@ -2350,6 +2378,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "vdiffusion",
+                        "support_tools": false,
                         "Huggingface": "stabilityai/stable-video-diffusion-img2vid"
                     },
                     "stable-video-diffusion-img2vid-xt": {
@@ -2360,6 +2389,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "vdiffusion",
+                        "support_tools": false,
                         "Huggingface": "stabilityai/stable-video-diffusion-img2vid-xt"
                     }
                 },
@@ -2372,6 +2402,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "causallm",
+                        "support_tools": false,
                         "Huggingface": "Qwen/Qwen-Audio-Chat"
                     }
                 },
@@ -2387,6 +2418,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "causallm",
+                        "support_tools": false,
                         "Huggingface": "stabilityai/stable-code-3b"
                     }
                 },
@@ -2399,6 +2431,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "llama",
+                        "support_tools": false,
                         "Huggingface": "codellama/CodeLlama-7b-Python-hf"
                     },
                     "CodeLlama-7b-Instruct-hf": {
@@ -2409,6 +2442,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "llama",
+                        "support_tools": false,
                         "Huggingface": "codellama/CodeLlama-7b-Instruct-hf"
                     }
                 },
@@ -2421,6 +2455,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "llama",
+                        "support_tools": false,
                         "Huggingface": "codellama/CodeLlama-13b-Python-hf"
                     },
                     "CodeLlama-13b-Instruct-hf": {
@@ -2431,6 +2466,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "llama",
+                        "support_tools": false,
                         "Huggingface": "codellama/CodeLlama-13b-Instruct-hf"
                     }
                 },
@@ -2447,6 +2483,7 @@
                         "loadbits": 16,
                         "preset": "Phi 2",
                         "load_type": "llamacpp",
+                        "support_tools": false,
                         "Huggingface": "TheBloke/phi-2-GGUF"
                     },
                     "phi-2": {
@@ -2457,6 +2494,7 @@
                         "loadbits": 16,
                         "preset": "Phi 2",
                         "load_type": "pipeline",
+                        "support_tools": false,
                         "Huggingface": "microsoft/phi-2"
                     },
                     "gemma-2b-it": {
@@ -2467,6 +2505,7 @@
                         "loadbits": 16,
                         "preset": "ChatML",
                         "load_type": "pipeline",
+                        "support_tools": false,
                         "Huggingface": "google/gemma-2b-it"
                     },
                     "Phi-3-mini-128k-instruct": {
@@ -2477,6 +2516,7 @@
                         "loadbits": 16,
                         "preset": "ChatML",
                         "load_type": "pipeline",
+                        "support_tools": false,
                         "Huggingface": "microsoft/Phi-3-mini-128k-instruct"
                     }
                 },
@@ -2489,6 +2529,7 @@
                         "loadbits": 16,
                         "preset": "ChatML",
                         "load_type": "llamacpp",
+                        "support_tools": false,
                         "Huggingface": "TheBloke/Yi-6B-Chat-GGUF"
                     },
                     "OpenHermes-2.5-Mistral-7B": {
@@ -2499,6 +2540,7 @@
                         "loadbits": 16,
                         "preset": "ChatML",
                         "load_type": "pipeline",
+                        "support_tools": false,
                         "Huggingface": "teknium/OpenHermes-2.5-Mistral-7B"
                     },
                     "gemma-7b-it": {
@@ -2509,6 +2551,7 @@
                         "loadbits": 16,
                         "preset": "ChatML",
                         "load_type": "pipeline",
+                        "support_tools": false,
                         "Huggingface": "google/gemma-7b-it"
                     },
                     "Meta-Llama-3-8B-Instruct": {
@@ -2519,6 +2562,7 @@
                         "loadbits": 16,
                         "preset": "ChatML",
                         "load_type": "pipeline",
+                        "support_tools": false,
                         "Huggingface": "meta-llama/Meta-Llama-3-8B-Instruct"
                     },
                     "Llama3-8B-Chinese-Chat-GGUF-8bit": {
@@ -2529,7 +2573,30 @@
                         "loadbits": 16,
                         "preset": "ChatML",
                         "load_type": "llamacpp",
+                        "support_tools": false,
                         "Huggingface": "shenzhi-wang/Llama3-8B-Chinese-Chat-GGUF-8bit"
+                    },
+                    "glm-4-9b-chat": {
+                        "path": "models/llm/glm-4-9b-chat",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "pipeline",
+                        "support_tools": false,
+                        "Huggingface": "THUDM/glm-4-9b-chat"
+                    },
+                    "glm-4-9b-chat-1m": {
+                        "path": "models/llm/glm-4-9b-chat-1m",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "pipeline",
+                        "support_tools": false,
+                        "Huggingface": "01-ai/glm-4-9b-chat-1m"
                     }
                 },
                 "13B Model": {},
@@ -2542,6 +2609,7 @@
                         "loadbits": 16,
                         "preset": "default",
                         "load_type": "llamacpp",
+                        "support_tools": false,
                         "Huggingface": "TheBloke/Yi-34B-Chat-GGUF"
                     },
                     "Mixtral-8x7B-v0.1-gguf": {
@@ -2552,6 +2620,7 @@
                         "loadbits": 16,
                         "preset": "Mistral Instruct",
                         "load_type": "llamacpp",
+                        "support_tools": false,
                         "Huggingface": "TheBloke/Mixtral-8x7B-v0.1-GGUF"
                     },
                     "Mixtral-8x7B-Instruct-v0.1-GGUF": {
@@ -2562,6 +2631,7 @@
                         "loadbits": 16,
                         "preset": "Mistral Instruct",
                         "load_type": "llamacpp",
+                        "support_tools": false,
                         "Huggingface": "TheBloke/Mixtral-8x7B-Instruct-v0.1-GGUF"
                     }
                 },
@@ -2574,6 +2644,7 @@
                         "loadbits": 16,
                         "preset": "ChatML",
                         "load_type": "llamacpp",
+                        "support_tools": false,
                         "Huggingface": "NousResearch/Meta-Llama-3-70B-Instruct-GGUF"
                     },
                     "Meta-Llama-3-70B-Instruct": {
@@ -2584,6 +2655,7 @@
                         "loadbits": 16,
                         "preset": "ChatML",
                         "load_type": "pipeline",
+                        "support_tools": false,
                         "Huggingface": "meta-llama/Meta-Llama-3-70B-Instruct"
                     }
                 }
@@ -2713,7 +2785,58 @@
         }
     },
     "QuantizationConfiguration": {},
-    "Fine-Tunning": {},
+    "Fine-Tuning": {
+        "unsloth": {
+            "basic_config": {
+                "compute_type": "fp16",
+                "load_in_4bit": false,
+                "seq_length": 2048
+            },
+            "train_config": {
+                "lr": 5e-05,
+                "epochs": 50,
+                "batch_size": 2,
+                "num_proc": 2,
+                "gradient_steps": 4,
+                "warmup_steps": 5,
+                "logging_steps": 10,
+                "save_strategy": "steps",
+                "save_steps": 100,
+                "optim": "adamw_8bit",
+                "weight_decay": 0.01,
+                "lr_scheduler": "linear",
+                "seed": 3407,
+                "packing": false
+            },
+            "lora_config": {
+                "lora_rank": 16,
+                "target_modules": [
+                    "q_proj",
+                    "k_proj",
+                    "v_proj",
+                    "o_proj",
+                    "gate_proj",
+                    "up_proj",
+                    "down_proj"
+                ],
+                "lora_alpha": 16,
+                "lora_dropout": 0.0,
+                "use_gradient_checkpointing": "unsloth",
+                "random_state": 3407,
+                "use_rslora": false
+            },
+            "dataset_config": {
+                "dataset_path": "",
+                "checkpoint_path": ""
+            },
+            "output_config": {
+                "output_path": "",
+                "output_format": "gguf",
+                "save_method": "merged_4bit",
+                "quantization_method": "f16"
+            }
+        }
+    },
     "SearchEngine": {
         "google_search": {
             "search_url": "",
@@ -2743,37 +2866,77 @@
         "auto_run": true,
         "safe_mode": false
     },
-    "FunctionCalling": {
-        "calling_enable": false,
-        "max_calling": 5
-    },
     "ToolBoxes": {
         "Google ToolBoxes": {
             "credential": "google_credentials.json",
-            "Tools": {
-                "Google Maps": {
-                    "enable": false
-                },
-                "Google Mail": {
-                    "enable": false
-                },
-                "Google Youtube": {
-                    "enable": false
-                },
-                "Google Calendar": {
-                    "enable": false
-                },
-                "Google Drive": {
-                    "enable": false
-                },
-                "Google Docs": {
-                    "enable": false
-                },
-                "Google Sheets": {
-                    "enable": false
-                },
-                "Google Forms": {
-                    "enable": false
+            "Tools": [
+                "Google Maps",
+                "Google Mail",
+                "Google Youtube",
+                "Google Calendar",
+                "Google Drive",
+                "Google Docs",
+                "Google Sheets",
+                "Google Forms"
+            ]
+        }
+    },
+    "CurrentRunningConfig": {
+        "chat_solution": {
+            "name": ""
+        },
+        "search_engine": {
+            "name": ""
+        },
+        "knowledge_base": {
+            "name": ""
+        },
+        "normal_calling": {
+            "enable": false
+        },
+        "code_interpreter": {
+            "name": "Keras Interpreter"
+        },
+        "role_player": {
+            "name": "",
+            "language": ""
+        },
+        "voice": {
+            "name": "",
+            "language": ""
+        },
+        "speech": {
+            "name": "",
+            "speaker": ""
+        },
+        "ToolBoxes": {
+            "Google ToolBoxes": {
+                "credential": "",
+                "Tools": {
+                    "Google Maps": {
+                        "enable": false
+                    },
+                    "Google Mail": {
+                        "enable": false
+                    },
+                    "Google Youtube": {
+                        "enable": false
+                    },
+                    "Google Calendar": {
+                        "enable": false
+                    },
+                    "Google Drive": {
+                        "enable": false
+                    },
+                    "Google Docs": {
+                        "enable": false
+                    },
+                    "Google Sheets": {
+                        "enable": false
+                    },
+                    "Google Forms": {
+                        "enable": false
+                    }
                 }
             }
         }

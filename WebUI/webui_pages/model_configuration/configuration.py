@@ -14,16 +14,11 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
     running_model : Dict[str, any] = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str}
     current_model : Dict[str, any] = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "config": dict}
     webui_config = api.get_webui_config()
-    #localmodel = webui_config.get("ModelConfig").get("LocalModel")
-    #commonmodel = localmodel.get("LLM Model")
-    #multimodalmodel = localmodel.get("Multimodal Model")
-    #specialmodel = localmodel.get("Special Model")
     onlinemodel = webui_config.get("ModelConfig").get("OnlineModel")
     chatconfig = webui_config.get("ChatConfiguration")
-    #quantconfig = webui_config.get("QuantizationConfiguration")
-    #finetunning = webui_config.get("Fine-Tunning")
+    finetuning = webui_config.get("Fine-Tuning")
     searchengine = webui_config.get("SearchEngine")
-    functioncalling = webui_config.get("FunctionCalling")
+    current_running_config = api.get_current_running_config()
     calling_enable = False
 
     running_model["mname"] = ""
@@ -188,7 +183,7 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
     if current_model["config"]:
         preset_list = GetPresetPromptList()
         if current_model["mtype"] == ModelType.Local or current_model["mtype"] == ModelType.Multimodal or current_model["mtype"] == ModelType.Special or current_model["mtype"] == ModelType.Code:
-            tabparams, tabsearch, tabfuncall, tabroleplay, tabquant, tabtunning = st.tabs(["Parameters", "Search Engine", "Function Calling", "Role Player", "Quantization", "Fine-Tunning"])
+            tabparams, tabsearch, tabfuncall, tabroleplay, tabquant, tabtuning = st.tabs(["Parameters", "Search Engine", "Function Calling", "Role Player", "Quantization", "Fine-Tuning"])
             with tabparams:
                 with st.form("Parameter"):
                     col1, col2 = st.columns(2)
@@ -360,13 +355,161 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                     if submit_quantization:
                         st.toast("The model quantization has been successful, and the quantized file path is model/llama-2-7b-hf-16bit.bin.", icon="✔")
 
-            with tabtunning:
-                st.selectbox(
-                    "Please select Device",
-                    training_devices_list,
+            with tabtuning:
+                from WebUI.configs.basicconfig import glob_compute_type_list, glob_save_strategy_list, glob_optimizer_list, glob_lr_scheduler_list, glob_Lora_rank_list, glob_save_model_list, glob_save_method_list, glob_quantization_method_list
+                finetuning_list = []
+                for key, value in finetuning.items():
+                    if isinstance(value, dict):
+                        finetuning_list.append(key)
+                current_finetuning_library = st.selectbox(
+                    "Please select Fine-Tuning Library",
+                    finetuning_list,
                     index=0,
-                    disabled=True
+                    disabled=disabled
                 )
+                tun_basic_config = finetuning[current_finetuning_library].get("basic_config", {})
+                tun_train_config = finetuning[current_finetuning_library].get("train_config", {})
+                tun_lora_config = finetuning[current_finetuning_library].get("lora_config", {})
+                tun_dataset_config = finetuning[current_finetuning_library].get("dataset_config", {})
+                tun_output_config = finetuning[current_finetuning_library].get("output_config", {})
+
+                with st.form("Fine-Tuning"):
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        compute_type = tun_basic_config.get("compute_type", "fp16")
+                        compute_index = glob_compute_type_list.index(compute_type)
+                        compute_type = st.selectbox(
+                            "Compute type",
+                            glob_compute_type_list,
+                            index=compute_index,
+                            disabled=disabled
+                        )
+                        load_in_4bit = tun_basic_config.get("load_in_4bit", False)
+                        load_in_4bit = st.checkbox('load_in_4bit', value=load_in_4bit, disabled=disabled)
+                    with col2:
+                        seq_length = tun_basic_config.get("seq_length", 512)
+                        seq_length = st.slider("Sentence length", 16, 32000, seq_length, 1, disabled=disabled)
+                    st.divider()
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        learning_rate = tun_train_config.get("lr", 5e-5)
+                        learning_rate = st.text_input("Learning rate", learning_rate, disabled=disabled)
+                        batch_size = tun_train_config.get("batch_size", 5)
+                        batch_size = st.number_input("Batch size", value = batch_size, min_value=1, max_value=512, disabled=disabled)
+                        gradient_steps = tun_train_config.get("gradient_steps", 2)
+                        gradient_steps = st.number_input("Gradient steps", value = gradient_steps, min_value=1, max_value=64, disabled=disabled)
+                        logging_steps = tun_train_config.get("logging_steps", 10)
+                        logging_steps = st.number_input("Logging steps", value = logging_steps, min_value=1, max_value=64, disabled=disabled)
+                        save_steps = tun_train_config.get("save_steps", 10)
+                        save_steps = st.number_input("Save steps", value = save_steps, min_value=1, max_value=10000, disabled=disabled)
+                        weight_decay = tun_train_config.get("weight_decay", 0.0)
+                        weight_decay = st.slider("Weight decay", 0.0, 1.0, weight_decay, 0.1, disabled=disabled)
+                        seed = tun_train_config.get("seed", -1)
+                        seed = st.number_input("Seed (-1 for random)", value = seed, min_value=-1, max_value=10000, disabled=disabled)
+                        packing = tun_train_config.get("packing", False)
+                        packing = st.checkbox("Packing", value = packing, disabled=disabled)
+                    with col2:
+                        epochs = tun_train_config.get("epochs", 10)
+                        epochs = st.number_input("Epochs", value = epochs, min_value=1, max_value=10000, disabled=disabled)
+                        num_proc = tun_train_config.get("num_proc", 2)
+                        num_proc = st.number_input("Process Nums", value = num_proc, min_value=1, max_value=32, disabled=disabled)
+                        warmup_steps = tun_train_config.get("warmup_steps", 2)
+                        warmup_steps = st.number_input("Warmup steps", value = warmup_steps, min_value=1, max_value=64, disabled=disabled)
+                        save_strategy = tun_basic_config.get("save_strategy", "steps")
+                        save_strategy_index = glob_save_strategy_list.index(save_strategy)
+                        save_strategy = st.selectbox(
+                            "Save strategy",
+                            glob_save_strategy_list,
+                            index=save_strategy_index,
+                            disabled=disabled
+                        )
+                        optim = tun_train_config.get("optim", "adamw_torch")
+                        optim_index = glob_optimizer_list.index(optim)
+                        optim = st.selectbox(
+                            "Optimizer",
+                            glob_optimizer_list,
+                            index=optim_index,
+                            disabled=disabled
+                        )
+                        lr_scheduler = tun_train_config.get("lr_scheduler", "linear")
+                        lr_scheduler_index = glob_lr_scheduler_list.index(lr_scheduler)
+                        lr_scheduler = st.selectbox(
+                            "LR Scheduler",
+                            glob_lr_scheduler_list,
+                            index=lr_scheduler_index,
+                            disabled=disabled
+                        )
+                    st.divider()
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        lora_rank = tun_lora_config.get("lora_rank", 8)
+                        lora_rank_index = glob_Lora_rank_list.index(lora_rank)
+                        lora_rank = st.selectbox(
+                            "Lora Rank",
+                            glob_Lora_rank_list,
+                            index=lora_rank_index,
+                            disabled=disabled
+                        )
+                        lora_alpha = tun_lora_config.get("lora_alpha", 32)
+                        lora_alpha = st.number_input("Lora Alpha", value = lora_alpha, min_value=1, max_value=512, disabled=disabled)
+                        use_gradient_checkpointing = tun_lora_config.get("use_gradient_checkpointing", "unsloth")
+                        use_gradient_checkpointing = st.text_input("Gradient Checkpointing", use_gradient_checkpointing, disabled=True)
+                        use_rslora = tun_lora_config.get("use_rslora", False)
+                        use_rslora = st.checkbox("Use rslora", use_rslora, disabled=disabled)
+                    with col2:
+                        target_modules_list = tun_lora_config.get("target_modules", "q_proj")
+                        target_modules = ','.join(target_modules_list)
+                        target_modules = st.text_input("Target Modules", target_modules, disabled=disabled)
+                        lora_dropout = tun_lora_config.get("lora_dropout", 0)
+                        lora_dropout = st.number_input("Lora Alpha", value = lora_dropout, min_value=0.0, max_value=1.0, disabled=disabled)
+                        random_state = tun_lora_config.get("random_state", 128)
+                        random_state = st.number_input("Random State", value = random_state, min_value=0, max_value=10000, disabled=disabled)
+                    st.divider()
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        dataset_path = tun_dataset_config.get("dataset_path", "")
+                        dataset_path = st.text_input("Dataset Path", dataset_path, disabled=disabled)
+                    with col2:
+                        checkpoint_path = tun_dataset_config.get("checkpoint_path", "")
+                        checkpoint_path = st.text_input("Checkpoint Path", checkpoint_path, disabled=disabled)
+                    st.divider()
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        output_path = tun_output_config.get("output_path", "")
+                        output_path = st.text_input("Output Path", output_path, disabled=disabled)
+                        save_method = tun_output_config.get("save_method", "lora")
+                        save_method_index = glob_save_method_list.index(save_method)
+                        save_method = st.selectbox(
+                            "Save Method",
+                            glob_save_method_list,
+                            index=save_method_index,
+                            disabled=disabled
+                        )
+                    with col2:
+                        output_format = tun_output_config.get("output_format", "full")
+                        output_format_index = glob_save_model_list.index(output_format)
+                        output_format = st.selectbox(
+                            "Output Format",
+                            glob_save_model_list,
+                            index=output_format_index,
+                            disabled=disabled
+                        )
+                        quantization_method = tun_output_config.get("quantization_method", "f16")
+                        quantization_method_index = glob_quantization_method_list.index(quantization_method)
+                        quantization_method = st.selectbox(
+                            "Quantization Method",
+                            glob_quantization_method_list,
+                            index=quantization_method_index,
+                            disabled=disabled
+                        )
+
+                    fine_tuning_btn = st.form_submit_button(
+                        "Fine-Tuning",
+                        use_container_width=True,
+                        disabled=disabled
+                    )
+                    if fine_tuning_btn:
+                        pass
 
             with tabsearch:
                 search_enable = False
@@ -374,14 +517,11 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                 for key, value in searchengine.items():
                     if isinstance(value, dict):
                         search_engine_list.append(key)
-                current_search_engine = st.session_state.get("current_search_engine", {})
-                if current_search_engine:
+                if current_running_config["search_engine"]["name"]:
                     search_enable = True
-                    smart_search = current_search_engine["smart"]
-                    index = search_engine_list.index(current_search_engine["engine"])
+                    index = search_engine_list.index(current_running_config["search_engine"]["name"])
                 else:
                     index = 0
-                    smart_search = False
 
                 current_search_engine = st.selectbox(
                     "Please select Search Engine",
@@ -397,7 +537,6 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                     with col1:
                         api_key = st.text_input("API Key", api_key, type="password", disabled=disabled)
                         search_enable = st.checkbox('Enable', value=search_enable, help="After enabling, parameters need to be saved for the configuration to take effect.", disabled=disabled)
-                        smart_search = st.checkbox('Smart Search', value=smart_search, help="Let the model handle the question first, and let the model decide whether to invoke the search engine.", disabled=disabled)
                     with col2:
                         if cse_id is not None:
                             cse_id = st.text_input("Google CSE ID", cse_id, type="password", disabled=disabled)
@@ -418,17 +557,22 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                                 st.toast(msg, icon="✖")
                             elif msg := check_success_msg(r):
                                 st.toast("success save configuration for search engine.", icon="✔")
-                if search_enable:
-                    st.session_state["current_search_engine"] = {"engine": current_search_engine, "smart": smart_search}
-                else:
-                    st.session_state["current_search_engine"] = {}
+                            if search_enable:
+                                current_running_config["search_engine"]["name"] = current_search_engine
+                            else:
+                                current_running_config["search_engine"]["name"] = ""
+                            api.save_current_running_config(current_running_config)
             with tabroleplay:
                 roleplay_list = list(ROLEPLAY_TEMPLATES.keys())
-                current_roleplay_state = st.session_state.get("current_roleplayer", {})
-                if current_roleplay_state:
-                    role_enable = True
-                    role_index = roleplay_list.index(current_roleplay_state["roleplayer"])
-                    lang_index = player_language_list.index(current_roleplay_state["language"])
+                if current_running_config["role_player"]["name"] and current_running_config["role_player"]["language"]:
+                    if current_running_config["role_player"]["name"] in roleplay_list:
+                        role_enable = True
+                        role_index = roleplay_list.index(current_running_config["role_player"]["name"])
+                        lang_index = player_language_list.index(current_running_config["role_player"]["language"])
+                    else:
+                        role_index = 0
+                        lang_index = 0
+                        role_enable = False
                 else:
                     role_index = 0
                     lang_index = 0
@@ -455,14 +599,16 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                     if save_parameters:
                         with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
                             if role_enable:
-                                st.session_state["current_roleplayer"] = {"roleplayer": current_roleplayer, "language": roleplayer_language}
+                                current_running_config["role_player"]["name"] = current_roleplayer
+                                current_running_config["role_player"]["language"] = roleplayer_language
                             else:
-                                st.session_state["current_roleplayer"] = {}
+                                current_running_config["role_player"]["name"] = ""
+                                current_running_config["role_player"]["language"] = ""
+                            api.save_current_running_config(current_running_config)
                             st.toast("success save configuration for Code Interpreter.", icon="✔")
             with tabfuncall:
                 from WebUI.Server.funcall.funcall import GetFuncallList, GetFuncallDescription
-                calling_enable = functioncalling.get("calling_enable", False)
-                #calling_max = functioncalling.get("max_calling", 5)
+                calling_enable = current_running_config["normal_calling"]["enable"]
                 current_function = ""
                 function_name_list = GetFuncallList()
                 current_function = st.selectbox(
@@ -481,13 +627,12 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                     )
                     if save_parameters:
                         with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
-                            functioncalling["calling_enable"] = calling_enable
-                            r = api.save_function_calling_config(functioncalling)
+                            current_running_config["normal_calling"]["enable"] = calling_enable
+                            r = api.save_current_running_config(current_running_config)
                             if msg := check_error_msg(r):
                                 st.toast(msg, icon="✖")
                             elif msg := check_success_msg(r):
                                 st.toast("success save configuration for function calling.", icon="✔")
-        
         elif current_model["mtype"] == ModelType.Online:
             tabparams, tabapiconfig, tabsearch, tabfuncall, tabroleplay = st.tabs(["Parameters", "API Config", "Search Engine", "Function Calling", "Role Player"])
             with tabparams:
@@ -556,14 +701,11 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                 for key, value in searchengine.items():
                     if isinstance(value, dict):
                         search_engine_list.append(key)
-                current_search_engine = st.session_state.get("current_search_engine", {})
-                if current_search_engine:
+                if current_running_config["search_engine"]["name"]:
                     search_enable = True
-                    smart_search = current_search_engine["smart"]
-                    index = search_engine_list.index(current_search_engine["engine"])
+                    index = search_engine_list.index(current_running_config["search_engine"]["name"])
                 else:
                     index = 0
-                    smart_search = False
 
                 current_search_engine = st.selectbox(
                     "Please select Search Engine",
@@ -574,13 +716,14 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                 with st.form("SearchEngine"):
                     col1, col2 = st.columns(2)
                     top_k = searchengine.get("top_k", 3)
-                    #search_url = searchengine.get(current_search_engine).get("search_url", "")
+                    cse_id = searchengine.get(current_search_engine).get("cse_id", None)
                     api_key = searchengine.get(current_search_engine).get("api_key", "")
                     with col1:
-                        api_key = st.text_input("API KEY", api_key, type="password", disabled=disabled)
+                        api_key = st.text_input("API Key", api_key, type="password", disabled=disabled)
                         search_enable = st.checkbox('Enable', value=search_enable, help="After enabling, parameters need to be saved for the configuration to take effect.", disabled=disabled)
-                        smart_search = st.checkbox('Smart Search', value=smart_search, help="Let the model handle the question first, and let the model decide whether to invoke the search engine.", disabled=disabled)
                     with col2:
+                        if cse_id is not None:
+                            cse_id = st.text_input("Google CSE ID", cse_id, type="password", disabled=disabled)
                         top_k = st.slider("Top_k", 1, 10, top_k, 1, disabled=disabled)
                     save_parameters = st.form_submit_button(
                         "Save Parameters",
@@ -589,6 +732,8 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                     )
                     if save_parameters:
                         searchengine.get(current_search_engine)["api_key"] = api_key
+                        if cse_id is not None:
+                            searchengine.get(current_search_engine)["cse_id"] = cse_id
                         searchengine["top_k"] = top_k
                         with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
                             r = api.save_search_engine_config(searchengine)
@@ -596,18 +741,22 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                                 st.toast(msg, icon="✖")
                             elif msg := check_success_msg(r):
                                 st.toast("success save configuration for search engine.", icon="✔")
-                if search_enable:
-                    st.session_state["current_search_engine"] = {"engine": current_search_engine, "smart": smart_search}
-                else:
-                    st.session_state["current_search_engine"] = {}
-                    
+                            if search_enable:
+                                current_running_config["search_engine"]["name"] = current_search_engine
+                            else:
+                                current_running_config["search_engine"]["name"] = ""
+                            api.save_current_running_config(current_running_config)
             with tabroleplay:
                 roleplay_list = list(ROLEPLAY_TEMPLATES.keys())
-                current_roleplay_state = st.session_state.get("current_roleplayer", {})
-                if current_roleplay_state:
-                    role_enable = True
-                    role_index = roleplay_list.index(current_roleplay_state["roleplayer"])
-                    lang_index = player_language_list.index(current_roleplay_state["language"])
+                if current_running_config["role_player"]["name"] and current_running_config["role_player"]["language"]:
+                    if current_running_config["role_player"]["name"] in roleplay_list:
+                        role_enable = True
+                        role_index = roleplay_list.index(current_running_config["role_player"]["name"])
+                        lang_index = player_language_list.index(current_running_config["role_player"]["language"])
+                    else:
+                        role_index = 0
+                        lang_index = 0
+                        role_enable = False
                 else:
                     role_index = 0
                     lang_index = 0
@@ -634,14 +783,16 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                     if save_parameters:
                         with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
                             if role_enable:
-                                st.session_state["current_roleplayer"] = {"roleplayer": current_roleplayer, "language": roleplayer_language}
+                                current_running_config["role_player"]["name"] = current_roleplayer
+                                current_running_config["role_player"]["language"] = roleplayer_language
                             else:
-                                st.session_state["current_roleplayer"] = {}
+                                current_running_config["role_player"]["name"] = ""
+                                current_running_config["role_player"]["language"] = ""
+                            api.save_current_running_config(current_running_config)
                             st.toast("success save configuration for Code Interpreter.", icon="✔")
             with tabfuncall:
                 from WebUI.Server.funcall.funcall import GetFuncallList, GetFuncallDescription
-                calling_enable = functioncalling.get("calling_enable", False)
-                #calling_max = functioncalling.get("max_calling", 5)
+                calling_enable = current_running_config["normal_calling"]["enable"]
                 current_function = ""
                 function_name_list = GetFuncallList()
                 current_function = st.selectbox(
@@ -660,8 +811,8 @@ def configuration_page(api: ApiRequest, is_lite: bool = False):
                     )
                     if save_parameters:
                         with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
-                            functioncalling["calling_enable"] = calling_enable
-                            r = api.save_function_calling_config(functioncalling)
+                            current_running_config["normal_calling"]["enable"] = calling_enable
+                            r = api.save_current_running_config(current_running_config)
                             if msg := check_error_msg(r):
                                 st.toast(msg, icon="✖")
                             elif msg := check_success_msg(r):

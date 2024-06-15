@@ -1,7 +1,19 @@
 import os
 import googlemaps
 from langchain_core.tools import tool
+import google.generativeai as genai
 
+    # import googlemaps
+    # import folium
+    # from streamlit_folium import st_folium
+    # gmaps = googlemaps.Client(key="***")
+    # geocode_result = gmaps.geocode("***")
+    # location = geocode_result[0]['geometry']['location']
+    # print("location: ", location)
+    # coordinates = [location['lat'], location['lng']]
+    # m = folium.Map(location=coordinates, zoom_start=16)
+    # folium.Marker(coordinates, popup="My Home").add_to(m)
+    # st_data = st_folium(m, width=725)
 
 def get_gmap_url(address) ->str:
 
@@ -24,7 +36,7 @@ def get_gmap_url(address) ->str:
     return map_url
 
 @tool
-def get_map_url(address) ->str:
+def get_map_url(address: str) ->str:
     """Get the URL of a Google Map for the given address.
         Here is an example of calling the function 'get_map_url':
         User: Please help me mark the McDonald's address '20394 88 Ave, Langley Twp, BC V1M 2Y4' on the map and generate its map URL.
@@ -45,6 +57,45 @@ map_tool_names = {
     "get_map_url": get_map_url,
 }
 
+# for google gemini
+get_map_url_gemini = genai.protos.Tool(
+    function_declarations=[
+      genai.protos.FunctionDeclaration(
+        name='get_map_url',
+        description="Get the URL of a Google Map for the given address.",
+        parameters=genai.protos.Schema(
+            type=genai.protos.Type.OBJECT,
+            properties={
+                'address':genai.protos.Schema(type=genai.protos.Type.STRING, description="This is an address that Maps can recognize."),
+            },
+            required=['address']
+        )
+      )
+    ])
+
+google_maps_tools = [
+    get_map_url_gemini,
+]
+
+get_map_url_openai = {
+    "type": "function",
+    "function": {
+        "name": "get_map_url",
+        "description": "Get the URL of a Google Map for the given address.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "address": {"type": "string", "description": "This is an address that Maps can recognize."},
+            },
+            "required": ["address"],
+        },
+    }
+}
+
+openai_maps_tools = [
+    get_map_url_openai,
+]
+
 def GetMapFuncallList() ->list:
     funcall_list = []
     for call_tool in map_toolboxes:
@@ -59,9 +110,11 @@ def GetMapFuncallDescription(func_name: str = "") ->str:
     return description
 
 def is_map_enable() ->bool:
-    from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
-    configinst = InnerJsonConfigWebUIParse()
-    tool_boxes = configinst.get("ToolBoxes")
+    from WebUI.configs.basicconfig import GetCurrentRunningCfg
+    config = GetCurrentRunningCfg()
+    if not config:
+        return None
+    tool_boxes = config.get("ToolBoxes")
     if not tool_boxes:
         return False
     google_toolboxes = tool_boxes.get("Google ToolBoxes")

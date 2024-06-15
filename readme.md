@@ -367,7 +367,15 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
   3. **`Fine-tuning`**
 
-      You can fine-tune the language model using a private dataset. `Not implemented`
+      You can fine-tune the language model using a private dataset. The current integration includes the open-source project `unsloth` and allows model fine-tuning on Linux systems.
+
+      ```bash
+      # Preparations for fine-tuning: after installing requirements-ubuntu.txt, follow these steps to install the necessary packages for model fine-tuning.
+        1. pip install "unsloth[colab-new] @ git+https://github.com/unslothai/unsloth.git"
+        2. pip install --no-deps trl peft accelerate bitsandbytes
+      ```
+
+      Currently, `unsloth` supports the following models: Qwen 1.5 (7B, 14B, 32B, 72B), Llama3-8B, Mistral (v0.3)-7B, Gemma, CodeGemma, ORPO, DPO Zephyr, Phi-3 mini & medium, TinyLlama
 
   4. **`Role Play`**
 
@@ -629,6 +637,7 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
   
   By integrating these tools, the model can efficiently perform tasks such as sending emails, managing reminders, handling cloud storage, navigating maps, and searching for YouTube videos.
 
+  **`To use the Google ToolBox feature, you need to sign up for an account on Google Cloud Platform, generate OAuth 2.0 credentials, download the token in JSON format, and then import it through the WebUI.`**
 
 - ### AI Generator
 
@@ -771,6 +780,9 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
 
 ## New Feature Updates
+
+- 🚀 Update Log for 2024-06-05
+  1. Support for glm-4v-9b, glm-4-9b-chat, glm-4-9b-chat-1m
 
 - 🚀 Update Log for 2024-06-03
   1. Support for MiniCPM-Llama3-V-2_5

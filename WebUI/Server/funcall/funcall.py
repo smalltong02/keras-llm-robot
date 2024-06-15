@@ -2,7 +2,9 @@ import json
 import datetime
 import geocoder
 from langchain_core.tools import tool
-#from WebUI.configs.basicconfig import ExtractJsonStrings
+import google.generativeai as genai
+from WebUI.Server.utils import GetKerasInterpreterConfig
+from WebUI.Server.interpreter_wrapper.terminal.terminal import Terminal
 
 @tool
 def get_current_location():
@@ -26,7 +28,7 @@ def get_current_location():
 
 @tool
 def get_current_time():
-    """Get current time.
+    """Get the current local time.
     Here is an example of calling the function 'get_current_time':
         User: Do you know the current time?
         Bot: Okay, I will call the function 'get_current_time' to help you get current time.
@@ -43,7 +45,12 @@ def get_current_time():
 
 @tool
 def submit_warranty_claim(caption: str, description: str):
-    """Submit warranty claim.
+    """Submit a repair order for a customer.
+
+    Parameters:
+        caption (string): Title of repair order.
+        description (string): A detailed description of the damaged goods, including customer information.
+
     Here is an example of calling the function 'submit_warranty_claim':
         User: My network adapter is broken. Please help me submit a repair request.
         Bot: Sure, please provide the following information:
@@ -78,12 +85,364 @@ def submit_warranty_claim(caption: str, description: str):
     {warranty_context}
     """
 
+@tool
+async def search_from_search_engine(se_name: str, query: str):
+    """Search for information using a search engine.
+    Here is an example of calling the function 'search_from_search_engine':
+        User: Can you search for me on Google?
+        Bot: Sure, please provide the search query.
+        User: Sony TV
+        Bot: Here are the top search results for 'Sony TV':
+            {
+                "name": search_from_search_engine,
+                "arguments": {
+                    "query": "Sony TV"
+                }
+            }
+    """
+    from WebUI.Server.chat.search_engine_chat import lookup_search_engine
+    docs = await lookup_search_engine(query, se_name)
+    source_documents = [
+        f"""from [{inum + 1}] [{doc.metadata["source"]}]({doc.metadata["source"]}) \n\n{doc.page_content}\n\n"""
+        for inum, doc in enumerate(docs)
+    ]
+    context = "\n".join([doc.page_content for doc in docs])
+    if not context:
+        return None, "", []
+    new_query = f"""The user's question has been searched on the internet. Here is all the content retrieved from the search engine:
+    {context}\n
+"""
+    return new_query, se_name, source_documents
+
+@tool
+async def search_from_knowledge_base(kb_name: str, query: str):
+    """Search for information using a knowledge base.
+    Here is an example of calling the function 'search_from_knowledge_base':
+        User: Can you search for me on Knowledge Base?
+        Bot: Sure, please provide the search query.
+        User: Sony TV
+        Bot: Here are the top search results for 'Sony TV':
+            {
+                "name": search_from_knowledge_base,
+                "arguments": {
+                    "query": "Sony TV"
+                }
+            }
+    """
+    from urllib.parse import urlencode
+    from WebUI.Server.utils import detect_device
+    from fastapi.concurrency import run_in_threadpool
+    from WebUI.configs import USE_RERANKER, GetRerankerModelPath
+    from WebUI.Server.reranker.reranker import LangchainReranker
+    from WebUI.Server.knowledge_base.kb_doc_api import search_docs
+    from WebUI.Server.knowledge_base.kb_service.base import KBServiceFactory
+    from WebUI.Server.knowledge_base.utils import VECTOR_SEARCH_TOP_K, SCORE_THRESHOLD
+    kb = KBServiceFactory.get_service_by_name(kb_name)
+    if kb is None:
+        return None, "", []
+    docs = await run_in_threadpool(search_docs,
+            query=query,
+            knowledge_base_name=kb_name,
+            top_k=VECTOR_SEARCH_TOP_K,
+            score_threshold=SCORE_THRESHOLD)
+    if USE_RERANKER:
+            reranker_model_path = GetRerankerModelPath()
+            print("-----------------model path------------------")
+            print(reranker_model_path)
+            reranker_model = LangchainReranker(top_n=VECTOR_SEARCH_TOP_K,
+                                            device=detect_device(),
+                                            max_length=1024,
+                                            model_name_or_path=reranker_model_path
+                                            )
+            print(docs)
+            docs = reranker_model.compress_documents(documents=docs,
+                                                     query=query)
+            print("---------after rerank------------------")
+            print(docs)
+    source_documents = []
+    for inum, doc in enumerate(docs):
+        filename = doc.metadata.get("source")
+        parameters = urlencode({"knowledge_base_name": kb_name, "file_name": filename})
+        base_url = "/"
+        url = f"{base_url}knowledge_base/download_doc?" + parameters
+        text = f"""from [{inum + 1}] [{filename}]({url}) \n\n{doc.page_content}\n\n"""
+        source_documents.append(text)
+    context = "\n".join([doc.page_content for doc in docs])
+    if not context:
+        return None, "", []
+    new_query = f"""The user's issue has been searched through the knowledge base. Here is all the content retrieved:
+    {context}\n
+"""
+    return new_query, kb_name, source_documents
+
+@tool
+def execute_code(code: str, language: str):
+    """Executes given code in the specified language and returns the result.
+    Here is an example of calling the function 'execute_code':
+        User: Please run the code to get the current system time.
+        Bot: Sure, I will use 'execute_code()' function to get system time:
+            {
+                "name": execute_code,
+                "arguments": {
+                    "code": '''
+                        import datetime
+
+                        current_time = datetime.datetime.now()
+                        formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
+                        print(formatted_time)
+                    ''',
+                    "language": "python"
+                }
+            }
+    """
+    import uuid
+    import base64
+    from WebUI.configs.basicconfig import TMP_DIR
+    from pathlib import Path
+    config = GetKerasInterpreterConfig()
+    if not config:
+        return "unknow error."
+    interpreter_host = config["host"]
+    interpreter_port = config["port"]
+    terminal = Terminal(host=interpreter_host, port=interpreter_port, docker_mode=False)
+    code_answer = ""
+    code = code.replace("\\n", "\n") # for gemini!!
+    for trunk in terminal.run(language, code):
+        if trunk:
+            if trunk.startswith("image-data:"):
+                imgpath = str(TMP_DIR / Path(str(uuid.uuid4()) + ".jpg"))
+                decoded_data = base64.b64decode(trunk[len("image-data:"):])
+                with open(imgpath, 'wb') as f:
+                    f.write(decoded_data)
+                code_answer += f"\nSuccessfully drew a picture for the user, The path of the image is '{imgpath}'"
+            else:
+                code_answer += trunk
+    return code_answer
+
 funcall_tools = [get_current_location, get_current_time, submit_warranty_claim]
 tool_names = {
     "get_current_location": get_current_location,
     "get_current_time": get_current_time,
     "submit_warranty_claim": submit_warranty_claim,
 }
+search_tools = [search_from_search_engine]
+search_tool_names = {
+    "search_from_search_engine": search_from_search_engine,
+}
+knowledge_base_tools = [search_from_knowledge_base]
+kb_tool_names = {
+    "search_from_knowledge_base": search_from_knowledge_base,
+}
+code_interpreter_tools = [execute_code]
+code_tool_names = {
+    "execute_code": execute_code,
+}
+
+# for google gemini
+get_current_location_gemini = genai.protos.Tool(
+    function_declarations=[
+      genai.protos.FunctionDeclaration(
+        name='get_current_location',
+        description="Get current location information.",
+        parameters=None
+      )
+    ])
+
+get_current_time_gemini = genai.protos.Tool(
+    function_declarations=[
+      genai.protos.FunctionDeclaration(
+        name='get_current_time',
+        description="Get the current local time.",
+        parameters=None
+      )
+    ])
+
+submit_warranty_claim_gemini = genai.protos.Tool(
+    function_declarations=[
+      genai.protos.FunctionDeclaration(
+        name='submit_warranty_claim',
+        description="Submit a repair order for a customer.",
+        parameters=genai.protos.Schema(
+            type=genai.protos.Type.OBJECT,
+            properties={
+                'caption':genai.protos.Schema(type=genai.protos.Type.STRING, description="Title of repair order"),
+                'description':genai.protos.Schema(type=genai.protos.Type.STRING, description="A detailed description of the damaged goods, including customer information")
+            },
+            required=['caption','description']
+        )
+      )
+    ])
+
+search_from_search_engine_gemini = genai.protos.Tool(
+    function_declarations=[
+      genai.protos.FunctionDeclaration(
+        name='search_from_search_engine',
+        description="search any information from network when a question exceeds your knowledge scope or when it's beyond the timeframe of your training data.",
+        parameters=genai.protos.Schema(
+            type=genai.protos.Type.OBJECT,
+            properties={
+                'query':genai.protos.Schema(type=genai.protos.Type.STRING, description="The questions to look up on the internet."),
+            },
+            required=['query']
+        )
+      )
+    ])
+
+search_from_knowledge_base_gemini = genai.protos.Tool(
+    function_declarations=[
+      genai.protos.FunctionDeclaration(
+        name='search_from_knowledge_base',
+        description="search any information from knowledge base.",
+        parameters=genai.protos.Schema(
+            type=genai.protos.Type.OBJECT,
+            properties={
+                'query':genai.protos.Schema(type=genai.protos.Type.STRING, description="The questions to look up on the knowledge base."),
+            },
+            required=['query']
+        )
+      )
+    ])
+
+execute_code_gemini = genai.protos.Tool(
+    function_declarations=[
+        genai.protos.FunctionDeclaration(
+        name='execute_code',
+        description="Executes given code in the specified language and returns the result.",
+        parameters=genai.protos.Schema(
+            type=genai.protos.Type.OBJECT,
+            properties={
+                'code':genai.protos.Schema(type=genai.protos.Type.STRING, description="The code to be executed."),
+                'language':genai.protos.Schema(type=genai.protos.Type.STRING, enum=["python","shell","powershell","applescript"], description="The language of the code."),
+            },
+            required=['code','language']
+        )
+      )
+    ])
+
+google_funcall_tools = [
+    get_current_location_gemini,
+    get_current_time_gemini,
+    submit_warranty_claim_gemini,
+]
+
+google_search_tools = [
+    search_from_search_engine_gemini,
+]
+
+google_knowledge_base_tools = [
+    search_from_knowledge_base_gemini,
+]
+
+google_code_interpreter_tools = [
+    execute_code_gemini,    
+]
+
+# for openai
+get_current_location_openai = {
+    "type": "function",
+    "function": {
+        "name": "get_current_location",
+        "description": "Get current location information.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+            },
+        },
+    }
+}
+
+get_current_time_openai = {
+    "type": "function",
+    "function": {
+        "name": "get_current_time",
+        "description": "Get the current local time.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+            },
+        },
+    }
+}
+
+submit_warranty_claim_openai = {
+    "type": "function",
+    "function": {
+        "name": "submit_warranty_claim",
+        "description": "Submit a repair order for a customer.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "caption": {"type": "string", "description": "Title of repair order"},
+                "description": {"type": "string", "description": "A detailed description of the damaged goods, including customer information"},
+            },
+            "required": ["caption", "description"],
+        },
+    }
+}
+
+search_from_search_engine_openai = {
+    "type": "function",
+    "function": {
+        "name": "search_from_search_engine",
+        "description": "search any information from network when a question exceeds your knowledge scope or when it's beyond the timeframe of your training data.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "The questions to look up on the internet."},
+            },
+            "required": ["query"],
+        },
+    }
+}
+
+search_from_knowledge_base_openai = {
+    "type": "function",
+    "function": {
+        "name": "search_from_knowledge_base",
+        "description": "search any information from knowledge base.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "The questions to look up on the knowledge base."},
+            },
+            "required": ["query"],
+        },
+    }
+}
+
+execute_code_openai = {
+    "type": "function",
+    "function": {
+        "name": "execute_code",
+        "description": "Executes given code in the specified language and returns the result.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "code": {"type": "string", "description": "The code to be executed."},
+                "language": {"type": "string", "enum": ["python", "shell", "powershell", "applescript"], "description": "The language of the code."},
+            },
+            "required": ["code", "language"],
+        },
+    }
+}
+
+openai_normal_tools = [
+    get_current_location_openai,
+    get_current_time_openai,
+    submit_warranty_claim_openai,
+]
+
+openai_search_tools = [
+    search_from_search_engine_openai,
+]
+
+openai_knowledge_base_tools = [
+    search_from_knowledge_base_openai,
+]
+
+openai_code_interpreter_tools = [
+    execute_code_openai,
+]
 
 def GetFuncallList() ->list:
     funcall_list = []
@@ -115,6 +474,52 @@ def RunNormalFunctionCalling(json_data: str) ->str:
         func_name = func.get("name", "")
         func_arg = func.get("arguments", {})
         if func_name in tool_names:
+            result = tool_names[func_name].run(func_arg)
+            return func_name, result
+        else:
+            return "", ""
+    except json.JSONDecodeError:
+        return "", ""
+    
+def RunCodeInterpreter(json_data: str) ->str:
+    try:
+        func = json.loads(json_data)
+        print("func: ", func)
+        func_name = func.get("name", "")
+        func_arg = func.get("arguments", {})
+        if func_name in code_tool_names:
+            result = code_tool_names[func_name].run(func_arg)
+            return func_name, result
+        else:
+            return "", ""
+    except json.JSONDecodeError:
+        return "", ""
+
+async def RunFunctionCallingForKnowledgeBase(json_data: str) -> str:
+    try:
+        func = json.loads(json_data)
+        print("func: ", func)
+        func_name = func.get("name", "")
+        func_arg = func.get("arguments", {})
+        if func_name == "search_from_knowledge_base":
+            #from WebUI.configs.basicconfig import GetCurrentRunningCfg
+            #running_cfg = GetCurrentRunningCfg()
+            result = tool_names[func_name].run(func_arg)
+            return func_name, result
+        else:
+            return "", ""
+    except json.JSONDecodeError:
+        return "", ""
+
+async def RunFunctionCallingForSearchEngine(json_data: str) -> str:
+    try:
+        func = json.loads(json_data)
+        print("func: ", func)
+        func_name = func.get("name", "")
+        func_arg = func.get("arguments", {})
+        if func_name == "search_from_search_engine":
+            #from WebUI.configs.basicconfig import GetCurrentRunningCfg
+            #running_cfg = GetCurrentRunningCfg()
             result = tool_names[func_name].run(func_arg)
             return func_name, result
         else:

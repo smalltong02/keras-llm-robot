@@ -200,7 +200,7 @@ class ApiRequest:
         elif modelinfo["mtype"] == ModelType.Online:
             provider = GetProviderByName(webui_config, model)
             if provider is not None:
-                if provider == "openai-api" or provider == "kimi-cloud-api" or provider == "yi-01ai-api":
+                if provider == "yi-01ai-api":
                     response = self.post("/chat/chat", json=data, stream=True, **kwargs)
                     return self._httpx_stream2generator(response, as_json=True)
                 else:
@@ -419,23 +419,6 @@ class ApiRequest:
         )
         return self._get_response_value(response, as_json=True, value_func=lambda r:r.get("data", []))
     
-    def list_running_models(self, controller_address: str = None,):
-        data = {
-            "controller_address": controller_address,
-        }
-
-        response = self.post(
-            "/llm_model/list_running_models",
-            json=data,
-        )
-        return self._get_response_value(response, as_json=True, value_func=lambda r:r.get("data", []))
-    
-    def list_config_models(self) -> Dict[str, List[str]]:
-        response = self.post(
-            "/llm_model/list_config_models",
-        )
-        return self._get_response_value(response, as_json=True, value_func=lambda r:r.get("data", {}))
-    
     def get_model_config(
             self,
             model_name: str = None,
@@ -459,6 +442,35 @@ class ApiRequest:
         )
         return self._get_response_value(response, as_json=True, value_func=lambda r:r.get("data", {}))
     
+    def get_current_running_config(
+            self,
+        ) -> dict:
+
+        response = self.post(
+            "/server/get_current_running_config",
+        )
+        return self._get_response_value(response, as_json=True, value_func=lambda r:r.get("data", {}))
+    
+    def save_current_running_config(
+            self,
+            config: dict={},
+            controller_address: str=None,
+        ):
+        data = {
+            "config": config,
+            "controller_address": controller_address,
+        }
+        response = self.post(
+            "/server/save_current_running_config",
+            json=data,
+        )
+        
+        if self._use_async:
+            return self.ret_async(response)
+        else:
+            return self.ret_sync(response)
+
+
     def get_aigenerator_config(
             self,
         ) -> Dict:
@@ -1524,7 +1536,7 @@ class ApiRequest:
         else:
             return self.ret_sync(response)
         
-    def code_interpreter_chat(
+    def agent_chat(
             self,
             query: str,
             interpreter_id: str = "",
@@ -1544,31 +1556,12 @@ class ApiRequest:
         pprint(data)
 
         response = self.post(
-            "/code_interpreter/code_interpreter_chat",
+            "/chat/agent_chat",
             json=data,
             stream=True,
         )
         return self._httpx_stream2generator(response, as_json=True)
-    
-    def save_function_calling_config(self,
-        function_calling: dict = {},
-        controller_address: str = None,
-    ):
-        data = {
-            "function_calling": function_calling,
-            "controller_address": controller_address,
-        }
-
-        response = self.post(
-            "/function_calling/save_function_calling_config",
-            json=data,
-        )
-        
-        if self._use_async:
-            return self.ret_async(response)
-        else:
-            return self.ret_sync(response)
-        
+           
     def save_google_toolboxes_config(self,
         google_toolboxes: dict = {},
         controller_address: str = None,
@@ -1587,69 +1580,6 @@ class ApiRequest:
             return self.ret_async(response)
         else:
             return self.ret_sync(response)
-        
-    def is_calling_enable(self,
-        controller_address: str = None,
-    ):
-        data = {
-            "controller_address": controller_address,
-        }
-
-        response = self.post(
-            "/function_calling/is_calling_enable",
-            json=data,
-        )
-        
-        return self._get_response_value(response, as_json=True, value_func=lambda r:r.get("data", False))
-        
-    def chat_solution_chat(
-        self,
-        query: str,
-        prompt_language: str = "",
-        imagesdata: List[bytes] = [],
-        audiosdata: List[bytes] = [],
-        videosdata: List[bytes] = [],
-        history: List[dict] = [],
-        stream: bool = True,
-        chat_solution: dict = {},
-        temperature: float = 0.7,
-        max_tokens: int = None,
-        **kwargs,
-    ):
-        imageslist = []
-        audioslist = []
-        videoslist = []
-        if len(imagesdata):
-            for imagedata in imagesdata:
-                imageslist.append(base64.b64encode(imagedata).decode('utf-8'))
-        if len(audiosdata):
-            for audiodata in audiosdata:
-                audioslist.append(base64.b64encode(audiodata).decode('utf-8'))
-        if len(videosdata):
-            for videodata in videosdata:
-                videoslist.append(base64.b64encode(videodata).decode('utf-8'))
-        data = {
-            "query": query,
-            "prompt_language": prompt_language,
-            "imagesdata": imageslist,
-            "audiosdata": audioslist,
-            "videosdata": videoslist,
-            "history": history,
-            "stream": stream,
-            "chat_solution": chat_solution,
-            "temperature": temperature,
-            "max_tokens": max_tokens,
-        }
-
-        print("received input message:")
-        pprint(data)
-
-        response = self.post(
-            "/chat_solution/chat",
-            json=data,
-            stream=True,
-        )
-        return self._httpx_stream2generator(response, as_json=True)
     
     def _get_response_value(self, response: httpx.Response, as_json: bool = False, value_func: Callable = None,):
         

@@ -14,18 +14,14 @@ from WebUI.Server.chat.feedback import chat_feedback
 from WebUI.Server.embeddings_api import embed_texts_endpoint
 from WebUI.Server.chat.openai_chat import openai_chat
 from WebUI.Server.chat.search_engine_chat import search_engine_chat
-from WebUI.Server.chat.code_interpreter_chat import code_interpreter_chat
-from WebUI.Server.chat.chat_solution_chat import chat_solution_chat
-from WebUI.Server.llm_api import (list_running_models, get_running_models, list_config_models,
-                            change_llm_model, stop_llm_model, chat_llm_model, download_llm_model,
-                            get_model_config, save_chat_config, save_model_config, get_webui_configs, get_aigenerator_configs,
+from WebUI.Server.llm_api import (get_running_models, change_llm_model, stop_llm_model, chat_llm_model, download_llm_model,
+                            get_model_config, save_chat_config, save_model_config, get_webui_configs, get_current_running_config, save_current_running_config, get_aigenerator_configs,
                             get_vtot_model, get_vtot_data, stop_vtot_model, change_vtot_model, save_voice_model_config,
                             get_speech_model, get_speech_data, save_speech_model_config, stop_speech_model, change_speech_model,
                             get_image_recognition_model, save_image_recognition_model_config, eject_image_recognition_model, change_image_recognition_model, get_image_recognition_data,
                             get_image_generation_model, save_image_generation_model_config, eject_image_generation_model, change_image_generation_model, get_image_generation_data,
                             get_music_generation_model, save_music_generation_model_config, eject_music_generation_model, change_music_generation_model, get_music_generation_data,
-                            save_search_engine_config, llm_knowledge_base_chat, llm_search_engine_chat, save_code_interpreter_config, save_function_calling_config, save_google_toolboxes_config,
-                            is_calling_enable)
+                            save_search_engine_config, llm_knowledge_base_chat, llm_search_engine_chat, save_code_interpreter_config, save_google_toolboxes_config,)
 from WebUI.Server.utils import(BaseResponse, ListResponse, FastAPI, MakeFastAPIOffline,
                           get_prompt_template)
 from typing import List, Literal
@@ -81,20 +77,10 @@ def mount_app_routes(app: FastAPI, run_mode: str = None):
     mount_knowledge_routes(app)
 
     # LLM Model interface
-    app.post("/llm_model/list_running_models",
-             tags=["LLM Model Management"],
-             summary="List current running Model",
-             )(list_running_models)
-    
     app.post("/llm_model/get_running_models",
              tags=["LLM Model Management"],
              summary="Get current running Model",
              )(get_running_models)
-
-    app.post("/llm_model/list_config_models",
-             tags=["LLM Model Management"],
-             summary="List Model configuration information",
-             )(list_config_models)
 
     app.post("/llm_model/get_model_config",
              tags=["LLM Model Management"],
@@ -147,22 +133,6 @@ def mount_app_routes(app: FastAPI, run_mode: str = None):
              tags=["Code Interpreter Management"],
              summary="Save config for code interpreter",
              )(save_code_interpreter_config)
-    
-    app.post("/code_interpreter/code_interpreter_chat",
-            tags=["Code Interpreter Management"],
-            summary="Chat with code interpreter.",
-            )(code_interpreter_chat)
-    
-    # function calling interface
-    app.post("/function_calling/save_function_calling_config",
-             tags=["Function Calling Management"],
-             summary="Save config for function calling",
-             )(save_function_calling_config)
-    
-    app.post("/function_calling/is_calling_enable",
-             tags=["Function Calling Management"],
-             summary="check function calling enable flag.",
-             )(is_calling_enable)
     
     # google toolboxes interface
     app.post("/google_toolboxes/save_google_toolboxes_config",
@@ -306,6 +276,16 @@ def mount_app_routes(app: FastAPI, run_mode: str = None):
              summary="get webui config",
              )(get_webui_configs)
     
+    app.post("/server/get_current_running_config",
+             tags=["Current running config"],
+             summary="get current running config",
+             )(get_current_running_config)
+    
+    app.post("/server/save_current_running_config",
+             tags=["Current running config"],
+             summary="save current running config",
+             )(save_current_running_config)
+    
     app.post("/server/get_aigenerator_config",
              tags=["Server State"],
              summary="get AI generator config",
@@ -320,12 +300,6 @@ def mount_app_routes(app: FastAPI, run_mode: str = None):
     ) -> str:
         return get_prompt_template(type=type, name=name)
     
-    # chat solution interface
-    app.post("/chat_solution/chat",
-            tags=["Chat Solution Management"],
-            summary="Chat with Chat Solution.",
-            )(chat_solution_chat)
-
     # other interface
     app.post("/other/completion",
              tags=["Other"],

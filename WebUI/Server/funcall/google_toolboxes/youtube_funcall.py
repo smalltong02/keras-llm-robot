@@ -1,6 +1,7 @@
 from googleapiclient.discovery import build
 from langchain_core.tools import tool
 from bs4 import BeautifulSoup
+import google.generativeai as genai
 
 YOUTUBE_READONLY_SCOPES = ["https://www.googleapis.com/auth/youtube.readonly"]
 YOUTUBE_FULL_SCOPES = ["https://www.googleapis.com/auth/youtube"]
@@ -93,6 +94,45 @@ youtube_tool_names = {
     "get_youtube_video_url": get_youtube_video_url,
 }
 
+# for google gemini
+get_youtube_video_url_func = genai.protos.Tool(
+    function_declarations=[
+      genai.protos.FunctionDeclaration(
+        name='get_youtube_video_url',
+        description="Get URL about Youtube video from your own Youtube channel.",
+        parameters=genai.protos.Schema(
+            type=genai.protos.Type.OBJECT,
+            properties={
+                'title':genai.protos.Schema(type=genai.protos.Type.STRING, description="Use the advanced search syntax like the Youtube API, Here's an example: 'Language Translation'"),
+            },
+            required=['title']
+        )
+      )
+    ])
+
+google_youtube_tools = [
+    get_youtube_video_url_func,
+]
+
+get_youtube_video_url_openai = {
+    "type": "function",
+    "function": {
+        "name": "get_youtube_video_url",
+        "description": "Get URL about Youtube video from your own Youtube channel.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "title": {"type": "string", "description": "Use the advanced search syntax like the Youtube API, Here's an example: 'Language Translation'"},
+            },
+            "required": ["title"],
+        },
+    }
+}
+
+openai_youtube_tools = [
+    get_youtube_video_url_openai,
+]
+
 def GetYoutubeFuncallList() ->list:
     funcall_list = []
     for call_tool in youtube_toolboxes:
@@ -107,9 +147,11 @@ def GetYoutubeFuncallDescription(func_name: str = "") ->str:
     return description
 
 def is_youtube_enable() ->bool:
-    from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
-    configinst = InnerJsonConfigWebUIParse()
-    tool_boxes = configinst.get("ToolBoxes")
+    from WebUI.configs.basicconfig import GetCurrentRunningCfg
+    config = GetCurrentRunningCfg()
+    if not config:
+        return None
+    tool_boxes = config.get("ToolBoxes")
     if not tool_boxes:
         return False
     google_toolboxes = tool_boxes.get("Google ToolBoxes")

@@ -27,7 +27,7 @@ from WebUI.configs.voicemodels import (init_voice_models, translate_voice_data, 
 from WebUI.configs.imagemodels import (init_image_recognition_models, translate_image_recognition_data, init_image_generation_models, translate_image_generation_data)
 from WebUI.configs.musicmodels import (init_music_generation_models, translate_music_generation_data)
 from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
-from WebUI.configs.basicconfig import (ModelType, ModelSize, ModelSubType, GetModelInfoByName, )
+from WebUI.configs.basicconfig import (ModelType, ModelSize, ModelSubType, GetModelInfoByName, SaveCurrentRunningCfg)
 from WebUI.configs.specialmodels import (init_cloud_models, init_multimodal_models, init_special_models, model_chat, model_search_engine_chat, model_knowledge_base_chat)
 from WebUI.configs.codemodels import init_code_models
 from typing import (Union, Optional, AsyncIterable, List, Dict)
@@ -1515,6 +1515,7 @@ def main_server():
         )
         processes["api"] = process
 
+    SaveCurrentRunningCfg()
     if process_count() == 0:
         parser.print_help()
     else:
