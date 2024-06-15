@@ -148,7 +148,7 @@ def GetYoutubeFuncallDescription(func_name: str = "") ->str:
 
 def is_youtube_enable() ->bool:
     from WebUI.configs.basicconfig import GetCurrentRunningCfg
-    config = GetCurrentRunningCfg()
+    config = GetCurrentRunningCfg(True)
     if not config:
         return None
     tool_boxes = config.get("ToolBoxes")

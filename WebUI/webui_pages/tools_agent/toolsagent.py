@@ -651,7 +651,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
         vtotmodel_lists = [f"{key}" for key in vtotmodel]
         col1, col2 = st.columns(2)
         with col1:
-            if current_voice_model == "":
+            if not current_voice_model:
                 index = 0
             else:
                 index = vtotmodel_lists.index(current_voice_model)

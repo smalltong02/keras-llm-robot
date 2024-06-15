@@ -4,21 +4,23 @@ from WebUI.configs import (DEF_TOKENS, USE_RERANKER, GetProviderByName, GetReran
 from WebUI.Server.knowledge_base.utils import SCORE_THRESHOLD
 from WebUI.Server.utils import wrap_done, get_ChatOpenAI
 from langchain.chains import LLMChain
+from langchain.chat_models import ChatOpenAI
 import asyncio
 import json
 from urllib.parse import urlencode
 #from sse_starlette.sse import EventSourceResponse
 from fastapi.concurrency import run_in_threadpool
-from WebUI.Server.utils import BaseResponse, get_prompt_template, detect_device
+from WebUI.Server.utils import BaseResponse, GetModelApiBaseAddress, get_prompt_template, detect_device
 from WebUI.Server.chat.utils import History
 from WebUI.Server.chat.StreamHandler import StreamSpeakHandler
 from langchain.callbacks import AsyncIteratorCallbackHandler
 from WebUI.Server.knowledge_base.kb_doc_api import search_docs
 from WebUI.Server.knowledge_base.kb_service.base import KBServiceFactory
+from WebUI.configs.basicconfig import ModelType, ModelSize, ModelSubType, GetModelInfoByName
 from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
 from WebUI.Server.reranker.reranker import LangchainReranker
 from langchain.prompts.chat import ChatPromptTemplate
-from typing import AsyncIterable, List, Optional
+from typing import AsyncIterable, List, Optional, Dict
 
 async def knowledge_base_chat(
         query: str = Body(..., description="User input: ", examples=["chat"]),
@@ -26,7 +28,7 @@ async def knowledge_base_chat(
         top_k: int = Body(3, description="matching vector count"),
         score_threshold: float = Body(
             SCORE_THRESHOLD,
-            description="Knowledge base matching relevance threshold, with a range between 0 and 1. A smaller SCORE indicates higher relevance, and setting it to 1 is equivalent to no filtering. It is recommended to set it around 0.5"),
+            description="Knowledge base matching relevance threshold, with a range between 0 and 2. A smaller SCORE indicates higher relevance, and setting it to 2 is equivalent to no filtering. It is recommended to set it around 1.5"),
         history: List[History] = Body(
             [],
             description="History chat",
@@ -54,8 +56,6 @@ async def knowledge_base_chat(
     kb = KBServiceFactory.get_service_by_name(knowledge_base_name)
     if kb is None:
         return BaseResponse(code=404, msg=f"Not found Knowledge Base '{knowledge_base_name}'")
-    if len(imagesdata):
-        return BaseResponse(code=404, msg=f"Not support Multimodal Model '{model_name}' now!")
 
     history = [History.from_data(h) for h in history]
 
@@ -77,6 +77,9 @@ async def knowledge_base_chat(
         
         configinst = InnerJsonConfigWebUIParse()
         webui_config = configinst.dump()
+        modelinfo : Dict[str, any] = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str}
+        modelinfo["mtype"], modelinfo["msize"], modelinfo["msubtype"] = GetModelInfoByName(webui_config, model_name)
+        modelinfo["mname"] = model_name
         async_callback = AsyncIteratorCallbackHandler()
         callbackslist = [async_callback]
         if len(speechmodel):
@@ -92,14 +95,27 @@ async def knowledge_base_chat(
         if len(imagesdata):
             if max_tokens is None:
                 max_tokens = DEF_TOKENS
-        provider = GetProviderByName(webui_config, model_name)
-        model = get_ChatOpenAI(
-            provider=provider,
-            model_name=model_name,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            callbacks=callbackslist,
-        )
+        if modelinfo["mtype"] == ModelType.Local:
+            provider = GetProviderByName(webui_config, model_name)
+            model = get_ChatOpenAI(
+                provider=provider,
+                model_name=model_name,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                callbacks=callbackslist,
+            )
+        else:
+            api_base = GetModelApiBaseAddress(modelinfo)
+            model = ChatOpenAI(
+                streaming=True,
+                verbose=False,
+                openai_api_key="EMPTY",
+                openai_api_base=api_base,
+                model_name=model_name,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                callbacks=callbackslist,
+            )
         docs = await run_in_threadpool(search_docs,
                                        query=query,
                                        knowledge_base_name=knowledge_base_name,

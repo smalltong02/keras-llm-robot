@@ -328,8 +328,8 @@ def mount_knowledge_routes(app: FastAPI):
             tags=["Chat"],
             summary="chat with Knowledge base")(llm_knowledge_base_chat)
 
-    app.post("/chat/file_chat",
-            tags=["Knowledge Base Management"],
+    app.post("/chat/files_chat",
+            tags=["Chat"],
             summary="chat with file"
             )(file_chat)
 

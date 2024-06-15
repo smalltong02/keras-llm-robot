@@ -273,50 +273,77 @@ class ApiRequest:
         print("received input message:")
         pprint(data)
 
-        if modelinfo["mtype"] == ModelType.Local:
-            response = self.post(
-                "/chat/knowledge_base_chat",
-                json=data,
-                stream=True,
-            )
-            return self._httpx_stream2generator(response, as_json=True)
-        elif modelinfo["mtype"] == ModelType.Special:
-            return [{
-                "code": 500,
-                "msg": "Unsupport RAG feature for Special Model!"
-            }]
-            # response = self.post(
-            #    "/llm_model/knowledge_base_chat",
-            #    json=data,
-            #    stream=True,
-            # )
-            # return self._httpx_stream2generator(response, as_json=True)
-        elif modelinfo["mtype"] == ModelType.Online:
-            provider = GetProviderByName(webui_config, model)
-            if provider is not None:
-                if provider == "google-api":
-                    return [{
-                        "code": 500,
-                        "msg": f"Unsupport RAG feature for {provider}",
-                    }]
-                    # response = self.post(
-                    #     "/llm_model/knowledge_base_chat",
-                    #     json=data,
-                    #     stream=True
-                    # )
-                    # return self._httpx_stream2generator(response, as_json=True)
-                else:
-                    response = self.post("/chat/knowledge_base_chat", json=data, stream=True,)
-                    return self._httpx_stream2generator(response, as_json=True)
-        elif modelinfo["mtype"] == ModelType.Multimodal:
-            return [{
-                "code": 500,
-                "msg": "Unsupport RAG feature for Multimodal Model!"
-            }]
-        return [{
-                "code": 500,
-                "msg": "internal error!",
-            }]
+        response = self.post(
+            "/chat/knowledge_base_chat",
+            json=data,
+            stream=True,
+        )
+        return self._httpx_stream2generator(response, as_json=True)
+    
+    def files_chat(
+        self,
+        query: str,
+        knowledge_id: str,
+        top_k: int,
+        score_threshold: float,
+        history: List[Dict] = [],
+        stream: bool = True,
+        model: str = "",
+        imagesdata: List[bytes] = [],
+        speechmodel: dict = {"model": "", "speaker": ""},
+        temperature: float = 0.7,
+        max_tokens: int = None,
+        prompt_name: str = "default",
+    ):
+        configinst = InnerJsonConfigWebUIParse()
+        webui_config = configinst.dump()
+        modelinfo : Dict[str, any] = {"mtype": ModelType.Unknown, "msize": ModelSize.Unknown, "msubtype": ModelSubType.Unknown, "mname": str, "config": dict}
+        modelinfo["mtype"], modelinfo["msize"], modelinfo["msubtype"] = GetModelInfoByName(webui_config, model)
+        config = GetSpeechModelInfo(webui_config, speechmodel.get("model", ""))
+        if len(config):
+            speechmodel["type"] = config["type"]
+            speechmodel["speech_key"] = config.get("speech_key", "")
+            if speechmodel["speech_key"] == "[Your Key]":
+                speechmodel["speech_key"] = ""
+            speechmodel["speech_region"] = config.get("speech_region", "")
+            if speechmodel["speech_region"] == "[Your Region]":
+                speechmodel["speech_region"] = ""
+            speechmodel["provider"] = config.get("provider", "")
+        else:
+            speechmodel["type"] = ""
+            speechmodel["speech_key"] = ""
+            speechmodel["speech_region"] = ""
+            speechmodel["provider"] = config.get("provider", "")
+
+        dataslist = []
+        if len(imagesdata):
+            for imagedata in imagesdata:
+                dataslist.append(base64.b64encode(imagedata).decode('utf-8'))
+
+        data = {
+            "query": query,
+            "knowledge_id": knowledge_id,
+            "top_k": top_k,
+            "score_threshold": score_threshold,
+            "history": history,
+            "stream": stream,
+            "model_name": model,
+            "imagesdata": dataslist,
+            "speechmodel": speechmodel,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "prompt_name": prompt_name,
+        }
+
+        print("received input message:")
+        pprint(data)
+
+        response = self.post(
+            "/chat/files_chat",
+            json=data,
+            stream=True,
+        )
+        return self._httpx_stream2generator(response, as_json=True)
 
     def _httpx_stream2generator(
         self,
@@ -645,7 +672,7 @@ class ApiRequest:
             "/voice_model/get_vtot_model",
             json=data,
         )
-        return self._get_response_value(response, as_json=True, value_func=lambda r:r.get("data", []))
+        return self._get_response_value(response, as_json=True, value_func=lambda r:r.get("data", ""))
     
     def eject_voice_model(self,
         model_name: str,
@@ -1434,6 +1461,41 @@ class ApiRequest:
             retry=1,
             timeout=0,
             json=data,
+        )
+        return self._get_response_value(response, as_json=True)
+    
+    def upload_temp_docs(
+        self,
+        files: List[Union[str, Path, bytes]],
+        knowledge_id: str = None,
+        chunk_size=CHUNK_SIZE,
+        chunk_overlap=OVERLAP_SIZE,
+        zh_title_enhance=ZH_TITLE_ENHANCE,
+    ):
+        def convert_file(file, filename=None):
+            from io import BytesIO
+            if isinstance(file, bytes):  # raw bytes
+                file = BytesIO(file)
+            elif hasattr(file, "read"):  # a file io like object
+                filename = filename or file.name
+            else:  # a local path
+                file = Path(file).absolute().open("rb")
+                filename = filename or os.path.split(file.name)[-1]
+            return filename, file
+
+        files = [convert_file(file) for file in files]
+        data = {
+            "knowledge_id": knowledge_id,
+            "chunk_size": chunk_size,
+            "chunk_overlap": chunk_overlap,
+            "zh_title_enhance": zh_title_enhance,
+        }
+        response = self.post(
+            "/knowledge_base/upload_temp_docs",
+            data=data,
+            retry=1,
+            timeout=0,
+            files=[("files", (filename, file)) for filename, file in files],
         )
         return self._get_response_value(response, as_json=True)
     

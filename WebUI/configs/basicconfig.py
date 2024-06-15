@@ -1,9 +1,9 @@
 from enum import Enum
-from typing import Dict, List, Union
 from pathlib import Path
 import os
 import copy
 import json
+from typing import Dict, List, Union, Tuple
 from WebUI.configs.roleplaytemplates import ROLEPLAY_TEMPLATES, CATEGORICAL_ROLEPLAY_TEMPLATES
 from fastchat.protocol.openai_api_protocol import ChatCompletionRequest
 
@@ -374,6 +374,23 @@ def EmbeddingModelExist(embed_model: str):
                     return True
     return False
 
+def GetKbTempFolder(id: str = None) -> Tuple[str, str]:
+    '''
+    Create a temporary folder and return (path, folder name).
+    '''
+    import tempfile
+
+    kb_tmp_path = TMP_DIR / "file_chat"
+    if not kb_tmp_path.exists():
+        kb_tmp_path.mkdir(exist_ok=True, parents=True)
+    if id is not None:
+        path = os.path.join(kb_tmp_path, id)
+        if os.path.isdir(path):
+            return path, id
+
+    path = tempfile.mkdtemp(dir=kb_tmp_path)
+    return path, os.path.basename(path)
+
 def GetKbConfig():
     from WebUI.configs.webuiconfig import InnerJsonConfigKnowledgeBaseParse
     knowledgeinst = InnerJsonConfigKnowledgeBaseParse()
@@ -422,6 +439,7 @@ def GetKbsConfig(kbs_name: str) -> dict:
 
 def InitCurrentRunningCfg() -> dict:
     config = {
+        "enable": False,
         "chat_solution": {
             "name": ""
         },
@@ -483,11 +501,13 @@ def InitCurrentRunningCfg() -> dict:
     }
     return config
 
-def GetCurrentRunningCfg() ->dict:
+def GetCurrentRunningCfg(activate: bool=False) ->dict:
     from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
     configinst = InnerJsonConfigWebUIParse()
     webui_config = configinst.dump()
     config = webui_config.get("CurrentRunningConfig", InitCurrentRunningCfg())
+    if activate and not config.get("enable", False):
+        return InitCurrentRunningCfg()
     return config
 
 def SaveCurrentRunningCfg(running_cfg: dict = InitCurrentRunningCfg()) ->bool:
@@ -907,7 +927,7 @@ def GetSystemPromptForNormalChat(config)->str:
     return system_prompt
 
 def GetSystemPromptForCurrentRunningConfig()->str:
-    config = GetCurrentRunningCfg()
+    config = GetCurrentRunningCfg(True)
     if not config:
         return None
     chat_solution_enable = bool(config["chat_solution"]["name"])
@@ -977,7 +997,7 @@ def GetSystemPromptForNormalChatSupportTools(config)->str:
     return system_prompt
 
 def GetSystemPromptForSupportTools()->str:
-    config = GetCurrentRunningCfg()
+    config = GetCurrentRunningCfg(True)
     if not config:
         return None
     chat_solution_enable = bool(config["chat_solution"]["name"])
@@ -988,9 +1008,6 @@ def GetSystemPromptForSupportTools()->str:
 def CallingExternalToolsForCurConfig(text: str) -> bool:
     if not text:
         return False, ""
-    config = GetCurrentRunningCfg()
-    if not config:
-        return None
     new_answer = text
     json_lists = ExtractJsonStrings(text)
     if not json_lists:
@@ -1048,14 +1065,14 @@ def GetUserAnswerForCurConfig(tool_name: str, tool_type: ToolsType) ->str:
 
 def is_normal_calling_enable(config: dict={}) ->bool:
     if not config:
-       config = GetCurrentRunningCfg()
+       config = GetCurrentRunningCfg(True)
     function_calling = config.get["normal_calling"]
     enable = function_calling.get("enable", False)
     return enable
 
 def is_toolboxes_enable(config: dict={}) ->bool:
     if not config:
-        config = GetCurrentRunningCfg()
+        config = GetCurrentRunningCfg(True)
     tool_boxes = config.get("ToolBoxes")
     for key_boxes, value_boxes in tool_boxes.items():
         for key_tools, value_tools in value_boxes.get("Tools", {}).items():
@@ -1128,7 +1145,7 @@ def GetToolBoxesToolsForGoogle(toolboxes) ->list:
     return calling_tools
 
 def GetGoogleNativeTools()->list:
-    config = GetCurrentRunningCfg()
+    config = GetCurrentRunningCfg(True)
     if not config:
         return None
     calling_tools = []
@@ -1197,7 +1214,7 @@ def GetToolBoxesToolsForOpenai(toolboxes) ->list:
     return calling_tools
 
 def GetOpenaiNativeTools()->list:
-    config = GetCurrentRunningCfg()
+    config = GetCurrentRunningCfg(True)
     if not config:
         return None
     calling_tools = []
