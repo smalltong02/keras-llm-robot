@@ -115,7 +115,7 @@ def GetFuncallInToolBoxesName(json_data: str) ->str:
     except json.JSONDecodeError:
         return ""
     
-def RunFunctionCallingInToolBoxes(json_data: str) ->str:
+def RunFunctionCallingInToolBoxes(json_data: str):
     try:
         func = json.loads(json_data)
         func_name = func.get("name", "")
@@ -123,19 +123,19 @@ def RunFunctionCallingInToolBoxes(json_data: str) ->str:
 
         if func_name in calendar_tool_names:
             result = calendar_tool_names[func_name].run(func_arg)
-            return func_name, result
+            return func_name, result, {}
         if func_name in email_tool_names:
             result = email_tool_names[func_name].run(func_arg)
-            return func_name, result
+            return func_name, result, {}
         if func_name in map_tool_names:
-            result = map_tool_names[func_name].run(func_arg)
-            return func_name, result
+            result, map_dict = map_tool_names[func_name].run(func_arg)
+            return func_name, result, map_dict
         if func_name in drive_tool_names:
             result = drive_tool_names[func_name].run(func_arg)
-            return func_name, result
+            return func_name, result, {}
         if func_name in youtube_tool_names:
             result = youtube_tool_names[func_name].run(func_arg)
-            return func_name, result
-        return "", ""
+            return func_name, result, {}
+        return "", "", {}
     except json.JSONDecodeError:
-        return "", ""
+        return "", "", {}

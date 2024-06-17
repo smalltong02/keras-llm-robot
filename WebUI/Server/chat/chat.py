@@ -176,11 +176,13 @@ async def GetChatPromptFromToolBoxes(json_lists: list = []) ->Union[str, Any, An
         return None, "", []
     result_list = []
     func_name = []
+    result_dict = []
     for item in json_lists:
-        name, result = RunFunctionCallingInToolBoxes(item)
+        name, result, r_dict = RunFunctionCallingInToolBoxes(item)
         if result:
             func_name.append(name)
             result_list.append(result)
+            result_dict.append(r_dict)
     source_documents = []
     for result in enumerate(result_list):
         source_documents.append(f"function - {func_name[0]}()\n\n{result}")
@@ -191,40 +193,40 @@ async def GetChatPromptFromToolBoxes(json_lists: list = []) ->Union[str, Any, An
     {context}\n
 """
     await asyncio.sleep(0.1)
-    return new_query, func_name[0], source_documents
+    return new_query, func_name[0], source_documents, result_dict[0]
 
 async def GetQueryFromExternalToolsForCurConfig(answer: str, query: str) ->Union[str, Any, Any, Any]:
     if not answer:
-        return None, "", [], ToolsType.Unknown
+        return None, "", [], {}, ToolsType.Unknown
     config = GetCurrentRunningCfg(True)
     if not config:
-        return None
+        return None, "", [], {}, ToolsType.Unknown
     json_lists = ExtractJsonStrings(answer)
     if not json_lists:
-        return None, "", [], ToolsType.Unknown
+        return None, "", [], {}, ToolsType.Unknown
     if config["search_engine"]["name"] and use_new_search_engine(json_lists):
         new_query, tool_name, docs = await GetChatPromptFromFromSearchEngine(json_lists, config["search_engine"]["name"], query)
-        return new_query, tool_name, docs, ToolsType.ToolSearchEngine
+        return new_query, tool_name, docs, {}, ToolsType.ToolSearchEngine
     if config["knowledge_base"]["name"] and use_knowledge_base(json_lists):
         new_query, tool_name, docs = await GetChatPromptFromKnowledgeBase(json_lists, config["knowledge_base"]["name"], query)
-        return new_query, tool_name, docs, ToolsType.ToolKnowledgeBase
+        return new_query, tool_name, docs, {}, ToolsType.ToolKnowledgeBase
     if config["normal_calling"]["enable"] and use_new_function_calling(json_lists):
         new_query, tool_name, docs = await GetChatPromptFromFunctionCalling(json_lists)
-        return new_query, tool_name, docs, ToolsType.ToolFunctionCalling
+        return new_query, tool_name, docs, {}, ToolsType.ToolFunctionCalling
     if config["code_interpreter"]["name"] and use_code_interpreter(json_lists):
         new_query, tool_name, docs = await GetChatPromptFromCodeInterpreter(json_lists)
-        return new_query, tool_name, docs, ToolsType.ToolCodeInterpreter
+        return new_query, tool_name, docs, {}, ToolsType.ToolCodeInterpreter
     if use_new_toolboxes_calling(json_lists):
-        new_query, tool_name, docs = await GetChatPromptFromToolBoxes(json_lists)
-        return new_query, tool_name, docs, ToolsType.ToolToolBoxes
-    return None, "", [], ToolsType.Unknown
+        new_query, tool_name, docs, result_dict = await GetChatPromptFromToolBoxes(json_lists)
+        return new_query, tool_name, docs, result_dict, ToolsType.ToolToolBoxes
+    return None, "", [], {}, ToolsType.Unknown
 
 async def RunAllEnableToolsInString(func_name: str="", args: dict={}, query: str=""):
     if not func_name or not query:
-        return None, "", [], ToolsType.Unknown
+        return None, "", [], {}, ToolsType.Unknown
     json_data = json.dumps({"name": func_name, "arguments": args})
-    new_query, tool_name, docs, tooltype = await GetQueryFromExternalToolsForCurConfig(json_data, query)
-    return new_query, tool_name, docs, tooltype
+    new_query, tool_name, docs, result_dict, tooltype = await GetQueryFromExternalToolsForCurConfig(json_data, query)
+    return new_query, tool_name, docs, result_dict, tooltype
 
 async def chat(query: str = Body(..., description="User input: ", examples=["chat"]),
     imagesdata: List[str] = Body([], description="image data", examples=["image"]),
@@ -348,7 +350,7 @@ async def chat(query: str = Body(..., description="User input: ", examples=["cha
                     if not btalk:
                         btalk, new_answer = CallingExternalToolsForCurConfig(answer)
                         if btalk:
-                            new_query, tool_name, docs, tooltype = await GetQueryFromExternalToolsForCurConfig(answer=answer, query=query)
+                            new_query, tool_name, docs, tool_dict, tooltype = await GetQueryFromExternalToolsForCurConfig(answer=answer, query=query)
                             if not new_query:
                                 btalk = False
                             else:
@@ -357,7 +359,7 @@ async def chat(query: str = Body(..., description="User input: ", examples=["cha
                                 history.append(History(role="user", content=query))
                                 history.append(History(role="assistant", content=new_answer))
                                 yield json.dumps(
-                                    {"clear": new_answer, "chat_history_id": chat_history_id},
+                                    {"clear": new_answer, "tool_dict": tool_dict},
                                     ensure_ascii=False)
                                 user_answer = GetUserAnswerForCurConfig(tool_name, tooltype)
                                 yield json.dumps(
@@ -375,7 +377,7 @@ async def chat(query: str = Body(..., description="User input: ", examples=["cha
                 if not btalk:
                     btalk, new_answer = CallingExternalToolsForCurConfig(answer)
                     if btalk:
-                        new_query, tool_name, docs, tooltype = await GetQueryFromExternalToolsForCurConfig(answer=answer, query=query)
+                        new_query, tool_name, docs, tool_dict, tooltype = await GetQueryFromExternalToolsForCurConfig(answer=answer, query=query)
                         if not new_query:
                             btalk = False
                         else:
@@ -384,7 +386,7 @@ async def chat(query: str = Body(..., description="User input: ", examples=["cha
                             history.append({'role': "user",'content': query})
                             history.append({'role': "assistant", 'content': new_answer})
                             yield json.dumps(
-                                {"clear": new_answer, "chat_history_id": chat_history_id},
+                                {"clear": new_answer, "tool_dict": tool_dict},
                                 ensure_ascii=False)
                             user_answer = GetUserAnswerForCurConfig(tool_name, tooltype)
                             yield json.dumps(
