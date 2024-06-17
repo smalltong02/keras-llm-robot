@@ -761,6 +761,7 @@ def GetSystemPromptForChatSolution(config: dict) ->str:
             funcall_tools_prompt = render_text_description(funcall_tools) + '\n\n'
         toolboxes_tools_prompt = ""
         if google_toolboxes:
+            from langchain.tools.render import render_text_description
             from WebUI.Server.funcall.google_toolboxes.gmap_funcall import map_toolboxes
             from WebUI.Server.funcall.google_toolboxes.gmail_funcall import email_toolboxes
             from WebUI.Server.funcall.google_toolboxes.calendar_funcall import calendar_toolboxes
@@ -821,6 +822,7 @@ def GetSystemPromptForChatSolution(config: dict) ->str:
             funcall_tools_prompt = render_text_description(funcall_tools) + '\n\n'
         toolboxes_tools_prompt = ""
         if google_toolboxes:
+            from langchain.tools.render import render_text_description
             from WebUI.Server.funcall.google_toolboxes.gmap_funcall import map_toolboxes
             from WebUI.Server.funcall.google_toolboxes.gmail_funcall import email_toolboxes
             from WebUI.Server.funcall.google_toolboxes.calendar_funcall import calendar_toolboxes
@@ -906,6 +908,7 @@ def GetSystemPromptForNormalChat(config)->str:
         funcall_tools_prompt = render_text_description(funcall_tools) + '\n\n'
     toolboxes_tools_prompt = ""
     if google_toolboxes:
+        from langchain.tools.render import render_text_description
         from WebUI.Server.funcall.google_toolboxes.gmap_funcall import map_toolboxes
         from WebUI.Server.funcall.google_toolboxes.gmail_funcall import email_toolboxes
         from WebUI.Server.funcall.google_toolboxes.calendar_funcall import calendar_toolboxes

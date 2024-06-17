@@ -92,6 +92,8 @@ def split_with_code_blocks(initial_string, delimiters):
 def is_task_completion(message):
     if re.search("all tasks done", message, re.IGNORECASE):
         return TaskResult.task_success
+    if re.search("what you'd like to do next", message, re.IGNORECASE):
+        return TaskResult.task_success
     if re.search("task is impossible", message, re.IGNORECASE):
         return TaskResult.task_impossible
     return TaskResult.task_processing

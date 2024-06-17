@@ -93,11 +93,12 @@ jsonpointer==2.4
 jsonschema==4.19.2
 jsonschema-specifications==2023.7.1
 kiwisolver==1.4.5
-langchain==0.0.335
-langchain-core==0.1.2
-langchain-experimental==0.0.39
+langchain==0.0.354
+langchain-community==0.0.19
+langchain-core==0.1.23
+langchain-experimental==0.0.47
+langsmith==0.0.87
 langcodes==3.3.0
-langsmith==0.0.63
 lazy_loader==0.3
 librosa==0.10.1
 llvmlite==0.41.1
@@ -128,6 +129,7 @@ packaging==23.2
 pandas==1.5.3
 Pillow==9.3.0
 platformdirs==4.1.0
+polyline==2.0.2
 pooch==1.8.0
 preshed==3.0.9
 prompt-toolkit==3.0.40

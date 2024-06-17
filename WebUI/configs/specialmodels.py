@@ -245,7 +245,7 @@ async def special_chat_iterator(model: Any,
                             if not btalk:
                                 btalk, new_answer = CallingExternalToolsForCurConfig(answer)
                                 if btalk:
-                                    new_query, tool_name, docs, tooltype = await GetQueryFromExternalToolsForCurConfig(answer=answer, query=query)
+                                    new_query, tool_name, docs, tool_dict, tooltype = await GetQueryFromExternalToolsForCurConfig(answer=answer, query=query)
                                     if not new_query:
                                         btalk = False
                                     else:
@@ -254,7 +254,7 @@ async def special_chat_iterator(model: Any,
                                         history.append({'role': "user",'content': query})
                                         history.append({'role': "assistant", 'content': new_answer})
                                         yield json.dumps(
-                                            {"clear": new_answer, "chat_history_id": chat_history_id},
+                                            {"clear": new_answer, "tool_dict": tool_dict},
                                             ensure_ascii=False)
                                         user_answer = GetUserAnswerForCurConfig(tool_name, tooltype)
                                         yield json.dumps(
@@ -297,7 +297,7 @@ async def special_chat_iterator(model: Any,
                                 if not btalk:
                                     btalk, new_answer = CallingExternalToolsForCurConfig(answer)
                                 if btalk:
-                                    new_query, tool_name, docs, tooltype = await GetQueryFromExternalToolsForCurConfig(answer=answer, query=query)
+                                    new_query, tool_name, docs, tool_dict, tooltype = await GetQueryFromExternalToolsForCurConfig(answer=answer, query=query)
                                     if not new_query:
                                         btalk = False
                                     else:
@@ -305,7 +305,7 @@ async def special_chat_iterator(model: Any,
                                         history.append({'role': "user",'content': query})
                                         history.append({'role': "assistant", 'content': new_answer})
                                         yield json.dumps(
-                                            {"clear": new_answer, "chat_history_id": chat_history_id},
+                                            {"clear": new_answer, "tool_dict": tool_dict},
                                             ensure_ascii=False)
                                         user_answer = GetUserAnswerForCurConfig(tool_name, tooltype)
                                         yield json.dumps(
@@ -364,6 +364,7 @@ async def special_chat_iterator(model: Any,
             repeat = True
             while repeat:
                 answer = ""
+                tool_dict={}
                 repeat = False    
                 if stream:
                     for chunk in response:
@@ -378,7 +379,7 @@ async def special_chat_iterator(model: Any,
                                     print(function_text)
                                     if function_text:
                                         function_name = fn.name
-                                        function_response, tool_name, docs, tooltype = await RunAllEnableToolsInString(fn.name, args_dict, query)
+                                        function_response, tool_name, docs, tool_dict, tooltype = await RunAllEnableToolsInString(fn.name, args_dict, query)
                                         break
                                 elif text_text := part.text:
                                     answer += text_text
@@ -391,7 +392,7 @@ async def special_chat_iterator(model: Any,
                                 repeat = True
                                 new_answer = GetNewAnswerForCurConfig("", tool_name, tooltype)
                                 yield json.dumps(
-                                    {"clear": new_answer, "chat_history_id": chat_history_id},
+                                    {"clear": new_answer, "tool_dict": tool_dict},
                                     ensure_ascii=False)
                                 user_answer = GetUserAnswerForCurConfig(tool_name, tooltype)
                                 yield json.dumps(
@@ -424,7 +425,7 @@ async def special_chat_iterator(model: Any,
                                 print(function_text)
                                 if function_text:
                                     function_name = fn.name
-                                    function_response, tool_name, docs, tooltype = await RunAllEnableToolsInString(fn.name, args_dict)
+                                    function_response, tool_name, docs, tool_dict, tooltype = await RunAllEnableToolsInString(fn.name, args_dict)
                                     repeat = True
                                     break
                             elif text_text := part.text:
@@ -437,7 +438,7 @@ async def special_chat_iterator(model: Any,
                         if function_name and function_response:
                             new_answer = GetNewAnswerForCurConfig("", tool_name, tooltype)
                             yield json.dumps(
-                                {"clear": new_answer, "chat_history_id": chat_history_id},
+                                {"clear": new_answer, "tool_dict": tool_dict},
                                 ensure_ascii=False)
                             user_answer = GetUserAnswerForCurConfig(tool_name, tooltype)
                             yield json.dumps(
@@ -497,7 +498,7 @@ async def special_chat_iterator(model: Any,
                             if not btalk:
                                 btalk, new_answer = CallingExternalToolsForCurConfig(answer)
                                 if btalk:
-                                    new_query, tool_name, docs, tooltype = await GetQueryFromExternalToolsForCurConfig(answer=answer, query=query)
+                                    new_query, tool_name, docs, tool_dict, tooltype = await GetQueryFromExternalToolsForCurConfig(answer=answer, query=query)
                                     if not new_query:
                                         btalk = False
                                     else:
@@ -506,7 +507,7 @@ async def special_chat_iterator(model: Any,
                                         history.append({'role': "user",'content': query})
                                         history.append({'role': "assistant", 'content': new_answer})
                                         yield json.dumps(
-                                            {"clear": new_answer, "chat_history_id": chat_history_id},
+                                            {"clear": new_answer, "tool_dict": tool_dict},
                                             ensure_ascii=False)
                                         user_answer = GetUserAnswerForCurConfig(tool_name, tooltype)
                                         yield json.dumps(
@@ -544,7 +545,7 @@ async def special_chat_iterator(model: Any,
                         if not btalk:
                             btalk, new_answer = CallingExternalToolsForCurConfig(answer)
                             if btalk:
-                                new_query, tool_name, docs, tooltype = await GetQueryFromExternalToolsForCurConfig(answer=answer, query=query)
+                                new_query, tool_name, docs, tool_dict, tooltype = await GetQueryFromExternalToolsForCurConfig(answer=answer, query=query)
                                 if not new_query:
                                     btalk = False
                                 else:
@@ -553,7 +554,7 @@ async def special_chat_iterator(model: Any,
                                     history.append({'role': "user",'content': query})
                                     history.append({'role': "assistant", 'content': new_answer})
                                     yield json.dumps(
-                                        {"clear": new_answer, "chat_history_id": chat_history_id},
+                                        {"clear": new_answer, "tool_dict": tool_dict},
                                         ensure_ascii=False)
                                     user_answer = GetUserAnswerForCurConfig(tool_name, tooltype)
                                     yield json.dumps(
@@ -665,12 +666,12 @@ async def special_chat_iterator(model: Any,
                                 function_text = f"{function_name}({args})"
                                 print(function_text)
                                 if function_text:
-                                    function_response, tool_name, docs, tooltype = await RunAllEnableToolsInString(function_name, args_dict, query)
+                                    function_response, tool_name, docs, tool_dict, tooltype = await RunAllEnableToolsInString(function_name, args_dict, query)
                                     if function_name and function_response:
                                         btalk = True
                                         new_answer = GetNewAnswerForCurConfig("", tool_name, tooltype)
                                         yield json.dumps(
-                                            {"clear": new_answer, "chat_history_id": chat_history_id},
+                                            {"clear": new_answer, "tool_dict": tool_dict},
                                             ensure_ascii=False)
                                         user_answer = GetUserAnswerForCurConfig(tool_name, tooltype)
                                         yield json.dumps(
@@ -727,7 +728,7 @@ async def special_chat_iterator(model: Any,
                     if not btalk:
                         btalk, new_answer = CallingExternalToolsForCurConfig(answer)
                         if btalk:
-                            new_query, tool_name, docs, tooltype = await GetQueryFromExternalToolsForCurConfig(answer=answer, query=query)
+                            new_query, tool_name, docs, tool_dict, tooltype = await GetQueryFromExternalToolsForCurConfig(answer=answer, query=query)
                             if not new_query:
                                 btalk = False
                             else:
@@ -736,7 +737,7 @@ async def special_chat_iterator(model: Any,
                                 history.append({'role': "user",'content': query})
                                 history.append({'role': "assistant", 'content': new_answer})
                                 yield json.dumps(
-                                    {"clear": new_answer, "chat_history_id": chat_history_id},
+                                    {"clear": new_answer, "tool_dict": tool_dict},
                                     ensure_ascii=False)
                                 user_answer = GetUserAnswerForCurConfig(tool_name, tooltype)
                                 yield json.dumps(
@@ -816,12 +817,12 @@ async def special_chat_iterator(model: Any,
                             function_text = f"{function_name}({args})"
                             print(function_text)
                             if function_text:
-                                function_response, tool_name, docs, tooltype = await RunAllEnableToolsInString(function_name, args_dict, query)
+                                function_response, tool_name, docs, tool_dict, tooltype = await RunAllEnableToolsInString(function_name, args_dict, query)
                                 if function_name and function_response:
                                     btalk = True
                                     new_answer = GetNewAnswerForCurConfig("", tool_name, tooltype)
                                     yield json.dumps(
-                                        {"clear": new_answer, "chat_history_id": chat_history_id},
+                                        {"clear": new_answer, "tool_dict": tool_dict},
                                         ensure_ascii=False)
                                     user_answer = GetUserAnswerForCurConfig(tool_name, tooltype)
                                     yield json.dumps(

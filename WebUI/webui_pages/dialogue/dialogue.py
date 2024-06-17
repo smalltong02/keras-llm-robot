@@ -5,7 +5,9 @@ import time
 import base64
 import psutil
 import pynvml
+import folium
 import streamlit as st
+from streamlit_folium import st_folium
 from WebUI.webui_pages.utils import ApiRequest, check_error_msg
 from streamlit_chatbox import ChatBox, Image, Audio, Video, Markdown
 from streamlit_webrtc import webrtc_streamer, WebRtcMode, ClientSettings
@@ -267,6 +269,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
         export_btn = cols[0]
         if cols[1].button('New chat', use_container_width=True):
             chat_box.reset_history()
+            st.session_state["tool_dict"] = {}
 
         def md_callback(msg: Any):
             user_avatar : str = "User"
@@ -495,6 +498,30 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
         for video in videosdata:
             st.video(data=video)
 
+    tool_dict = st.session_state.get("tool_dict", {})
+    if tool_dict:
+        origin_location = tool_dict.get("start_location", {})
+        destination_location = tool_dict.get("end_location", {})
+        if origin_location and destination_location:
+            start_address = tool_dict.get("start_address", "")
+            end_address = tool_dict.get("end_address", "")
+            overview_polyline = tool_dict.get("overview_polyline", "")
+            start_coordinates = [origin_location['lat'], origin_location['lng']]
+            end_coordinates = [destination_location['lat'], destination_location['lng']]
+            m = folium.Map(location=start_coordinates, zoom_start=16)
+            folium.Marker(start_coordinates, popup=start_address).add_to(m)
+            folium.Marker(end_coordinates, popup=end_address).add_to(m)
+            if overview_polyline:
+                import polyline
+                coordinates = polyline.decode(overview_polyline)
+                folium.PolyLine(
+                    coordinates,
+                    color="blue",
+                    weight=8,
+                    opacity=1,
+                ).add_to(m)
+            st_data = st_folium(m, width=725, use_container_width=True)
+
     if not chat_box.chat_inited:
         chat_box.init_session()
 
@@ -622,6 +649,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                 else:
                     chat_box.ai_say(["Thinking..."])
                     chat_history_id = ""
+                    tool_dict = {}
                     metadata = {
                         "chat_history_id": chat_history_id,
                     }
@@ -653,9 +681,8 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                                 metadata["chat_history_id"] = chat_history_id
                                 chat_box.update_msg(text, element_index=0)
                             elif d.get("clear", ""):
-                                chat_history_id = d.get("chat_history_id", "")
+                                tool_dict = d.get("tool_dict", {})
                                 text = d.get("clear", "")
-                                metadata["chat_history_id"] = chat_history_id
                                 chat_box.update_msg(text, element_index=0, streaming=False, metadata=metadata)
                                 text = ""
                             elif d.get("user", ""):
@@ -674,17 +701,22 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                                 else:
                                     title = "Additional information by Unknown Tool"
                                 text += d.get("user", "")
-                                chat_box.user_say(text)
+                                chat_box.user_say(text) 
                                 text = ""
                                 chat_box.ai_say(["Thinking...", Markdown("...", in_expander=True, title=title, state="complete")])
                             elif d.get("docs", []):
                                 message = "\n\n".join(d.get("docs", []))
                                 chat_box.update_msg(Markdown(message, in_expander=True, title=title, state="complete"), element_index=1, streaming=False)
+
                     chat_box.update_msg(text, element_index=0, streaming=False, metadata=metadata)
                     chat_box.show_feedback(**feedback_kwargs,
                         key=chat_history_id,
                         on_submit=on_feedback,
                         kwargs={"chat_history_id": chat_history_id, "history_index": len(chat_box.history) - 1})
+                    if tool_dict:
+                        st.session_state["tool_dict"] = tool_dict
+                        tool_dict={}
+                        st.rerun()
                     
                     if imagegeneration_model and modelinfo["mtype"] != ModelType.Code:
                         with st.spinner("Image generation in progress...."):
@@ -761,7 +793,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                 metadata = {
                     "chat_history_id": chat_history_id,
                     }
-                with st.spinner("agent chat in progress...."):
+                with st.spinner("Agent Chat in progress...."):
                     r = api.agent_chat(
                                 prompt,
                                 interpreter_id=current_running_config["code_interpreter"]["name"],

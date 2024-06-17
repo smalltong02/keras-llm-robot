@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from dateutil.tz import gettz
 from langchain_core.tools import tool
 from googleapiclient.discovery import build
@@ -10,7 +10,7 @@ CALENDAR_READONLY_SCOPES = ["https://www.googleapis.com/auth/calendar.readonly"]
 CALENDAR_FULL_SCOPES = ["https://www.googleapis.com/auth/calendar"]
 
 
-def convert_time_to_rfc3339_time(time_str:str) ->str:
+def convert_time_to_rfc3339_time(time_str:str) ->datetime:
     if not time_str:
         return ""
     import re
@@ -20,7 +20,14 @@ def convert_time_to_rfc3339_time(time_str:str) ->str:
 
     local_timezone = gettz()
     if pattern_datetime_tz.match(time_str):
-        return pattern_datetime_tz
+        dt = datetime.strptime(time_str[:-6], '%Y-%m-%dT%H:%M:%S')
+        tz_offset = time_str[-6:]
+        td = timedelta(hours=int(tz_offset[:3]), minutes=int(tz_offset[4:]))
+        if tz_offset[0] == '-':
+            dt = dt + td
+        else:
+            dt = dt - td
+        return dt
     if pattern_datetime.match(time_str):
         time_format = "%Y-%m-%dT%H:%M:%S"
         datetime_obj = datetime.strptime(time_str, time_format)
@@ -32,7 +39,7 @@ def convert_time_to_rfc3339_time(time_str:str) ->str:
         combined_datetime = datetime.combine(today_date, time_obj)
 
     time_with_timezone = combined_datetime.replace(tzinfo=local_timezone)
-    return time_with_timezone.isoformat()
+    return time_with_timezone
 
 def get_event_from_gcalendar(start_time:str, end_time:str) ->str:
     """get event from google calendar."""
@@ -51,8 +58,8 @@ def get_event_from_gcalendar(start_time:str, end_time:str) ->str:
         if not service:
             return "Calendar object create failed. This error is unrecoverable."
         event_counts = 1
-        rfc3339_start = convert_time_to_rfc3339_time(start_time)
-        rfc3339_end = convert_time_to_rfc3339_time(end_time)
+        rfc3339_start = convert_time_to_rfc3339_time(start_time).isoformat()
+        rfc3339_end = convert_time_to_rfc3339_time(end_time).isoformat()
         if not rfc3339_start or not rfc3339_end:
             return "Invalid time format. Please check the time format."
 
@@ -116,10 +123,10 @@ def create_event_to_gcalendar(summary: str, description: str, start_time: str, e
             "summary": summary,
             "description": description,
             "start": {
-                "dateTime": convert_time_to_rfc3339_time(start_time),
+                "dateTime": convert_time_to_rfc3339_time(start_time).isoformat(),
             },
             "end": {
-                "dateTime": convert_time_to_rfc3339_time(end_time),
+                "dateTime": convert_time_to_rfc3339_time(end_time).isoformat(),
             }
         }
         event = service.events().insert(calendarId='primary', body=new_event).execute()
