@@ -5,18 +5,6 @@ import googlemaps
 from langchain_core.tools import tool
 import google.generativeai as genai
 
-    # import googlemaps
-    # import folium
-    # from streamlit_folium import st_folium
-    # gmaps = googlemaps.Client(key="***")
-    # geocode_result = gmaps.geocode("***")
-    # location = geocode_result[0]['geometry']['location']
-    # print("location: ", location)
-    # coordinates = [location['lat'], location['lng']]
-    # m = folium.Map(location=coordinates, zoom_start=16)
-    # folium.Marker(coordinates, popup="My Home").add_to(m)
-    # st_data = st_folium(m, width=725)
-
 def gmap_addressvalidation(address: str)->bool:
     if not address:
         return False
@@ -146,7 +134,7 @@ def get_gmap_static_map(origin: str, destinations: list[str], size: tuple=(600, 
         return image
     return None
 
-def get_gmap_places(query: str, location: str="", radius: int=1000, min_price: int=0, max_price: int=4, open_now: bool=True)->dict:
+def get_gmap_places(query: str, location: dict={}, radius: int=1000, min_price: int=0, max_price: int=4, open_now: bool=True)->dict:
     if not query:
         return {}
     if not location:
@@ -252,14 +240,99 @@ def get_map_directions(origin: str, destination: str, mode: str=""):
         "start_location": start_location,
         "end_address": end_address,
         "end_location": end_location,
+        "distance": distance,
+        "duration": duration,
         "overview_polyline": overview_polyline,
     }
     return prompt, direction_dict
 
-map_toolboxes = [get_map_url, get_map_directions]
+@tool
+def get_map_places(query: str, location: str="", radius: int=1000, min_price: int=0, max_price: int=4, open_now: bool=True):
+    """Get the places that match the query, such as restaurants, libraries, parks, airports, stores, etc.
+        Here is an example of calling the function 'get_map_places', When the location is "", it means that you are in the current location:
+        User: Are there any good Italian restaurants nearby? Please recommend a few for me.
+        Bot: Okay, I will call the function 'get_gmap_places' to get the Italian restaurants near you.
+        {
+            "name": "get_map_places",
+            "arguments": {
+                "query": "Italian restaurant",
+                "location": ""
+            }
+        }
+        API Output: There are 3 restaurants near you that match the query 'Italian restaurants'.
+        Bot: Here are the 3 restaurants that match the query 'Italian restaurants'.
+    """
+    def GetPrice(price_level: int = 2):
+        if price_level == 0:
+            return "Free"
+        elif price_level == 1:
+            return "Cheap"
+        elif price_level == 2:
+            return "Medium price"
+        elif price_level == 3:
+            return "Expensive"
+        elif price_level == 4:
+            return "Very Expensive"
+        else:
+            return "Unknown"
+    location_dict = {}
+    geocode_result = get_gmap_geocode(location)
+    if geocode_result:
+        location_dict = geocode_result[0]["geometry"]["location"]
+    places = get_gmap_places(query, location_dict, radius, min_price, max_price, open_now)
+    if not geocode_result or not places:
+        return "No places found.", []
+    place_list = []
+    latitude = geocode_result[0]["geometry"]["location"]["lat"]
+    longitude = geocode_result[0]["geometry"]["location"]["lng"]
+    map_dict = {
+            "name": "map_places",
+            "current_location": {
+                "lat": latitude,
+                "lng": longitude
+            }
+        }
+    prompt = "I found a set of matching places and here are their details:\n\n"
+    for place in places["results"]:
+        name = place["name"]
+        status = place["business_status"]
+        address = place["formatted_address"]
+        open_now = place["opening_hours"]["open_now"]
+        rating = place["rating"]
+        price_level = place["price_level"]
+        user_ratings_total = place["user_ratings_total"]
+        location = place["geometry"]["location"]
+        icon = place["icon"]
+        price = GetPrice(price_level)
+        place_list.append({
+            "name": name,
+            "status": status,
+            "address": address,
+            "open_now": open_now,
+            "rating": rating,
+            "price": price,
+            "user_ratings_total": user_ratings_total,
+            "icon": icon,
+            "location": location,
+        })
+        prompt += f"""name: {name}
+        address: {address}
+        business_status: {status}
+        open_now: {open_now}
+        rating: {rating}
+        price: {price}
+        user ratings total: {user_ratings_total}
+        """ + "\n\n"
+
+    map_dict["locations"] = place_list
+    return prompt, map_dict
+
+
+map_toolboxes = [get_map_url, get_map_directions, get_map_places]
 map_tool_names = {
     "get_map_url": get_map_url,
     "get_map_directions": get_map_directions,
+    "get_map_places": get_map_places,
 }
 
 # for google gemini
@@ -286,8 +359,8 @@ get_map_directions_gemini = genai.protos.Tool(
         parameters=genai.protos.Schema(
             type=genai.protos.Type.OBJECT,
             properties={
-                'origin':genai.protos.Schema(type=genai.protos.Type.STRING, description="Starting address, if it is a current local address, you can pass an empty string."),
-                'destination':genai.protos.Schema(type=genai.protos.Type.STRING, description="Destination address, if it is a local address, you can pass an empty string."),
+                'origin':genai.protos.Schema(type=genai.protos.Type.STRING, description="""Starting address, When the location is "", it means that you are in the current location."""),
+                'destination':genai.protos.Schema(type=genai.protos.Type.STRING, description="""Destination address, When the location is "", it means that you are in the current location."""),
                 'mode':genai.protos.Schema(type=genai.protos.Type.STRING, enum=["driving", "walking", "bicycling", "transit"], description="""Specifies the mode of transport to use when calculating directions. One of "driving", "walking", "bicycling" or "transit"."""),
             },
             required=['origin', 'destination', 'mode']
@@ -295,9 +368,27 @@ get_map_directions_gemini = genai.protos.Tool(
       )
     ])
 
+get_map_places_gemini = genai.protos.Tool(
+    function_declarations=[
+      genai.protos.FunctionDeclaration(
+        name='get_map_places',
+        description="Get the places that match the query, such as restaurants, libraries, parks, airports, stores, etc.",
+        parameters=genai.protos.Schema(
+            type=genai.protos.Type.OBJECT,
+            properties={
+                'query':genai.protos.Schema(type=genai.protos.Type.STRING, description="""The text string on which to search, for example: "restaurant"."""),
+                'location':genai.protos.Schema(type=genai.protos.Type.STRING, description="""location, When the location is "", it means that you are in the current location."""),
+                'radius':genai.protos.Schema(type=genai.protos.Type.INTEGER, description="Distance in meters within which to bias results."),
+            },
+            required=['query', 'location']
+        )
+      )
+    ])
+
 google_maps_tools = [
     get_map_url_gemini,
     get_map_directions_gemini,
+    get_map_places_gemini,
 ]
 
 get_map_url_openai = {
@@ -332,9 +423,27 @@ get_map_directions_openai = {
     }
 }
 
+get_map_places_openai = {
+    "type": "function",
+    "function": {
+        "name": "get_map_places",
+        "description": "Get the places that match the query, such as restaurants, libraries, parks, airports, stores, etc.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": """The text string on which to search, for example: "restaurant"."""},
+                "location": {"type": "string", "description": """location, When the location is "", it means that you are in the current location."""},
+                "radius": {"type": "string", "description": "Distance in meters within which to bias results."},
+            },
+            "required": ["query", "location"],
+        },
+    }
+}
+
 openai_maps_tools = [
     get_map_url_openai,
     get_map_directions_openai,
+    get_map_places_openai,
 ]
 
 def GetMapFuncallList() ->list:
