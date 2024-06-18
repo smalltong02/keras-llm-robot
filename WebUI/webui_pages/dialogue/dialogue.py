@@ -500,27 +500,50 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
 
     tool_dict = st.session_state.get("tool_dict", {})
     if tool_dict:
-        origin_location = tool_dict.get("start_location", {})
-        destination_location = tool_dict.get("end_location", {})
-        if origin_location and destination_location:
-            start_address = tool_dict.get("start_address", "")
-            end_address = tool_dict.get("end_address", "")
-            overview_polyline = tool_dict.get("overview_polyline", "")
-            start_coordinates = [origin_location['lat'], origin_location['lng']]
-            end_coordinates = [destination_location['lat'], destination_location['lng']]
-            m = folium.Map(location=start_coordinates, zoom_start=16)
-            folium.Marker(start_coordinates, popup=start_address).add_to(m)
-            folium.Marker(end_coordinates, popup=end_address).add_to(m)
-            if overview_polyline:
-                import polyline
-                coordinates = polyline.decode(overview_polyline)
-                folium.PolyLine(
-                    coordinates,
-                    color="blue",
-                    weight=8,
-                    opacity=1,
-                ).add_to(m)
-            st_data = st_folium(m, width=725, use_container_width=True)
+        if tool_dict["name"] == "map_directions":
+            origin_location = tool_dict.get("start_location", {})
+            destination_location = tool_dict.get("end_location", {})
+            if origin_location and destination_location:
+                start_address = tool_dict.get("start_address", "")
+                end_address = tool_dict.get("end_address", "")
+                overview_polyline = tool_dict.get("overview_polyline", "")
+                distance = tool_dict.get("distance", "")
+                duration = tool_dict.get("duration", "")
+                start_coordinates = [origin_location['lat'], origin_location['lng']]
+                end_coordinates = [destination_location['lat'], destination_location['lng']]
+                m = folium.Map(location=start_coordinates, zoom_start=16)
+                folium.Marker(start_coordinates, popup=start_address, tooltip="Start").add_to(m)
+                folium.Marker(end_coordinates, popup=end_address, tooltip="End").add_to(m)
+                if overview_polyline:
+                    import polyline
+                    coordinates = polyline.decode(overview_polyline)
+                    folium.PolyLine(
+                        coordinates,
+                        color="blue",
+                        weight=8,
+                        opacity=1,
+                        tooltip=distance + ", " + duration
+                    ).add_to(m)
+                st_folium(m, width=725, use_container_width=True)
+        elif tool_dict["name"] == "map_places":
+            locations = tool_dict.get("locations", [])
+            current_location = tool_dict.get("current_location", {})
+            if current_location:
+                current_coordinates = [current_location['lat'], current_location['lng']]
+                m = folium.Map(location=current_coordinates, zoom_start=16)
+                for location in locations:
+                    place_name = location["name"]
+                    #place_status = location["status"]
+                    #place_address = location["address"]
+                    #open_now = location["open_now"]
+                    place_rating = location["rating"]
+                    #place_price = location["price"]
+                    #icon = location["icon"]
+                    #user_ratings_total = location["user_ratings_total"]
+                    place_location = location["location"]
+                    place_coordinates = [place_location['lat'], place_location['lng']]
+                    folium.Marker(place_coordinates, icon=folium.Icon(color="orange", prefix='fa'), popup=str(place_rating)+" Star", tooltip=place_name).add_to(m)
+                st_folium(m, width=725, use_container_width=True)
 
     if not chat_box.chat_inited:
         chat_box.init_session()

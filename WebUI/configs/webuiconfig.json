@@ -2915,7 +2915,7 @@
                 "credential": "",
                 "Tools": {
                     "Google Maps": {
-                        "enable": true
+                        "enable": false
                     },
                     "Google Mail": {
                         "enable": false
