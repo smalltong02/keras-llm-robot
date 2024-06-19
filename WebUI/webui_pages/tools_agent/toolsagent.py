@@ -1342,6 +1342,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
             from WebUI.Server.funcall.google_toolboxes.calendar_funcall import GetCalendarFuncallList, GetCalendarFuncallDescription
             from WebUI.Server.funcall.google_toolboxes.gcloud_funcall import GetStorageFuncallList, GetStorageFuncallDescription
             from WebUI.Server.funcall.google_toolboxes.youtube_funcall import GetYoutubeFuncallList, GetYoutubeFuncallDescription
+            from WebUI.Server.funcall.google_toolboxes.photo_funcall import GetPhotoFuncallList, GetPhotoFuncallDescription
             toolboxes_lists = google_toolboxes.get("Tools")
             google_credential = google_toolboxes.get("credential")
             print("credential: ", google_credential)
@@ -1364,6 +1365,8 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                     function_name_list = GetStorageFuncallList()
                 elif google_tool == "Google Youtube":
                     function_name_list = GetYoutubeFuncallList()
+                elif google_tool == "Google Photos":
+                    function_name_list = GetPhotoFuncallList()
                 calling_enable = current_running_config["ToolBoxes"]["Google ToolBoxes"]["Tools"][google_tool]["enable"]
                 calling_enable = st.checkbox("Enable", key="funcall_box", value=calling_enable, help="After enabling, The function will be called automatically.")
                 current_running_config["ToolBoxes"]["Google ToolBoxes"]["Tools"][google_tool]["enable"] = calling_enable
@@ -1387,6 +1390,8 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                         function_description = GetStorageFuncallDescription(current_function)
                     elif google_tool == "Google Youtube":
                         function_description = GetYoutubeFuncallDescription(current_function)
+                    elif google_tool == "Google Photo":
+                        function_description = GetPhotoFuncallDescription(current_function)
                     st.text_input("Description", function_description, disabled=True)
                     save_parameters = st.form_submit_button(
                         "Save Parameters",

@@ -585,7 +585,7 @@ async def special_chat_iterator(model: Any,
                     docs = []
                     tooltype = ToolsType.Unknown
 
-        elif provider == "openai-api" or provider == "kimi-cloud-api":
+        elif provider == "openai-api" or provider == "kimi-cloud-api" or provider == "together-api" or provider == "firework-api":
             from openai import OpenAI
             calling_tools =[]
             tool_choice = None
@@ -604,6 +604,14 @@ async def special_chat_iterator(model: Any,
                 apikey = model_config.get("api_key", "[Your Key]")
                 if apikey == "[Your Key]":
                     apikey = os.environ.get('KIMI_API_KEY')
+            elif provider == "together-api":
+                apikey = model_config.get("api_key", "[Your Key]")
+                if apikey == "[Your Key]":
+                    apikey = os.environ.get('TOGETHER_API_KEY')
+            elif provider == "firework-api":
+                apikey = model_config.get("api_key", "[Your Key]")
+                if apikey == "[Your Key]":
+                    apikey = os.environ.get('FIREWORKS_API_KEY')
             if not apikey:
                 apikey = "EMPTY"
             if provider == "openai-api":
@@ -681,6 +689,11 @@ async def special_chat_iterator(model: Any,
                                             if tooltype == ToolsType.ToolCodeInterpreter:
                                                 tool_choice = "none"
                                             message.append({"tool_call_id": tool_call.id, "role": "function", "name": function_name,"content": function_response})
+                                        elif provider == "together-api":
+                                            message.append({"tool_call_id": tool_call.id, "role": "function", "name": function_name,"content": function_response})
+                                            tool_choice = "none"
+                                        elif provider == "firework-api":
+                                            message.append({"role": "tool", "content": function_response})
                                         else:
                                             message.append({"role": "assistant", "content": new_answer})
                                             message.append({"role": "user", "content": function_response})

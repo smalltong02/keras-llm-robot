@@ -9,6 +9,7 @@ from WebUI.Server.funcall.google_toolboxes.gmail_funcall import GMAIL_FULL_SCOPE
 from WebUI.Server.funcall.google_toolboxes.gmap_funcall import is_map_enable, map_toolboxes, map_tool_names
 from WebUI.Server.funcall.google_toolboxes.gcloud_funcall import DRIVE_FULL_SCOPES, is_cloud_storage_enable, drive_toolboxes, drive_tool_names
 from WebUI.Server.funcall.google_toolboxes.youtube_funcall import YOUTUBE_FULL_SCOPES, is_youtube_enable, youtube_toolboxes, youtube_tool_names
+from WebUI.Server.funcall.google_toolboxes.photo_funcall import PHOTO_FULL_SCOPES, is_photo_enable, photo_toolboxes, photo_tool_names
 
 GOOGLE_TOKEN_FILE = "google_token.json"
 
@@ -28,6 +29,7 @@ def init_credential() -> bool:
     scopes.append(DRIVE_FULL_SCOPES[0])
     scopes.append(GMAIL_FULL_SCOPES[0])
     scopes.append(YOUTUBE_FULL_SCOPES[0])
+    scopes.append(PHOTO_FULL_SCOPES[0])
     if os.path.exists(GOOGLE_TOKEN_FILE):
         creds = Credentials.from_authorized_user_file(GOOGLE_TOKEN_FILE, scopes)
     if not creds or not creds.valid:
@@ -63,6 +65,9 @@ def GetFuncallInToolBoxesList() ->list:
     if is_youtube_enable():
         for call_tool in youtube_toolboxes:
             funcall_list.append(call_tool.name)
+    if is_photo_enable():
+        for call_tool in photo_toolboxes:
+            funcall_list.append(call_tool.name)
     return funcall_list
 
 def GetFuncallInToolBoxesDescription(func_name: str = "") ->str:
@@ -84,6 +89,10 @@ def GetFuncallInToolBoxesDescription(func_name: str = "") ->str:
                 return call_tool.description
     if is_youtube_enable():
         for call_tool in youtube_toolboxes:
+            if func_name == call_tool.name:
+                return call_tool.description
+    if is_photo_enable():
+        for call_tool in photo_toolboxes:
             if func_name == call_tool.name:
                 return call_tool.description
     return ""
@@ -112,6 +121,10 @@ def GetFuncallInToolBoxesName(json_data: str) ->str:
             for call_tool in youtube_toolboxes:
                 if func_name == call_tool.name:
                     return func_name
+        if is_photo_enable():
+            for call_tool in photo_toolboxes:
+                if func_name == call_tool.name:
+                    return func_name
     except json.JSONDecodeError:
         return ""
     
@@ -136,6 +149,9 @@ def RunFunctionCallingInToolBoxes(json_data: str):
         if func_name in youtube_tool_names:
             result = youtube_tool_names[func_name].run(func_arg)
             return func_name, result, {}
+        if func_name in photo_tool_names:
+            result, map_dict = photo_tool_names[func_name].run(func_arg)
+            return func_name, result, map_dict
         return "", "", {}
     except json.JSONDecodeError:
         return "", "", {}

@@ -1288,6 +1288,7 @@ def ai_generator_page(api: ApiRequest, is_lite: bool = False):
                                 google_toolboxes["Tools"]["Google Youtube"]["enable"] = True
                                 google_toolboxes["Tools"]["Google Calendar"]["enable"] = True
                                 google_toolboxes["Tools"]["Google Drive"]["enable"] = True
+                                google_toolboxes["Tools"]["Google Photos"]["enable"] = True
                                 google_toolboxes["Tools"]["Google Docs"]["enable"] = True
                                 google_toolboxes["Tools"]["Google Sheets"]["enable"] = True
                                 google_toolboxes["Tools"]["Google Forms"]["enable"] = True

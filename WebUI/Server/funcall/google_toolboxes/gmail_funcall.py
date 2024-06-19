@@ -89,14 +89,16 @@ def build_file_part(file):
         content_type = "application/octet-stream"
     main_type, sub_type = content_type.split("/", 1)
     if main_type == "text":
-        with open(file, "rb"):
-            msg = MIMEText("r", _subtype=sub_type)
+        with open(file, "rb") as fp:
+            byte_content = fp.read()
+            str_content = byte_content.decode('utf-8')
+            msg = MIMEText(_text=str_content, _subtype=sub_type)
     elif main_type == "image":
-        with open(file, "rb"):
-            msg = MIMEImage("r", _subtype=sub_type)
+        with open(file, "rb") as fp:
+            msg = MIMEImage(_imagedata=fp.read(), _subtype=sub_type)
     elif main_type == "audio":
-        with open(file, "rb"):
-            msg = MIMEAudio("r", _subtype=sub_type)
+        with open(file, "rb") as fp:
+            msg = MIMEAudio(_audiodata=fp.read(), _subtype=sub_type)
     else:
         with open(file, "rb") as fp:
             msg = MIMEBase(main_type, sub_type)

@@ -54,6 +54,40 @@
                 "support_tools": true,
                 "provider": "GroqCloud"
             },
+            "together-api": {
+                "modellist": [
+                    "Qwen/Qwen2-72B-Instruct",
+                    "meta-llama/Llama-3-70b-chat-hf",
+                    "mistralai/Mixtral-8x22B-Instruct-v0.1",
+                    "mistralai/Mixtral-8x7B-Instruct-v0.1",
+                    "microsoft/WizardLM-2-8x22B"
+                ],
+                "baseurl": "https://api.together.xyz/v1",
+                "load_type": "cloud",
+                "apiversion": "",
+                "preset": "default",
+                "apikey": "[Your Key]",
+                "apiproxy": "[Private Proxy]",
+                "support_tools": true,
+                "provider": "TogetherCloud"
+            },
+            "firework-api": {
+                "modellist": [
+                    "accounts/fireworks/models/firefunction-v2",
+                    "accounts/fireworks/models/firefunction-v1",
+                    "accounts/fireworks/models/firellava-13b",
+                    "accounts/fireworks/models/mixtral-8x22b-instruct",
+                    "accounts/fireworks/models/qwen2-72b-instruct"
+                ],
+                "baseurl": "https://api.fireworks.ai/inference/v1",
+                "load_type": "cloud",
+                "apiversion": "",
+                "preset": "default",
+                "apikey": "[Your Key]",
+                "apiproxy": "[Private Proxy]",
+                "support_tools": true,
+                "provider": "FireworkCloud"
+            },
             "ali-cloud-api": {
                 "modellist": [
                     "qwen-max-longcontext",
@@ -2875,6 +2909,7 @@
                 "Google Youtube",
                 "Google Calendar",
                 "Google Drive",
+                "Google Photos",
                 "Google Docs",
                 "Google Sheets",
                 "Google Forms"
@@ -2927,6 +2962,9 @@
                         "enable": false
                     },
                     "Google Drive": {
+                        "enable": false
+                    },
+                    "Google Photos": {
                         "enable": false
                     },
                     "Google Docs": {

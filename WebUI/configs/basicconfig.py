@@ -486,6 +486,9 @@ def InitCurrentRunningCfg() -> dict:
                     "Google Drive": {
                         "enable": False
                     },
+                    "Google Photos": {
+                        "enable": False
+                    },
                     "Google Docs": {
                         "enable": False
                     },
@@ -678,6 +681,7 @@ def use_new_toolboxes_calling(json_lists : list = []) ->bool:
     from WebUI.Server.funcall.google_toolboxes.gcloud_funcall import drive_tool_names
     from WebUI.Server.funcall.google_toolboxes.gmap_funcall import map_tool_names
     from WebUI.Server.funcall.google_toolboxes.youtube_funcall import youtube_tool_names
+    from WebUI.Server.funcall.google_toolboxes.photo_funcall import photo_tool_names
     try:
         for item in json_lists:
             it = json.loads(item)
@@ -690,6 +694,8 @@ def use_new_toolboxes_calling(json_lists : list = []) ->bool:
             if it.get("name", "") in map_tool_names:
                 return True
             if it.get("name", "") in youtube_tool_names:
+                return True
+            if it.get("name", "") in photo_tool_names:
                 return True
     except Exception as e:
         print(e)
@@ -767,6 +773,7 @@ def GetSystemPromptForChatSolution(config: dict) ->str:
             from WebUI.Server.funcall.google_toolboxes.calendar_funcall import calendar_toolboxes
             from WebUI.Server.funcall.google_toolboxes.gcloud_funcall import drive_toolboxes
             from WebUI.Server.funcall.google_toolboxes.youtube_funcall import youtube_toolboxes
+            from WebUI.Server.funcall.google_toolboxes.photo_funcall import photo_toolboxes
             if google_toolboxes["Tools"]["Google Maps"]["enable"]:
                 toolboxes_tools_prompt += render_text_description(map_toolboxes) + '\n\n'
             if google_toolboxes["Tools"]["Google Mail"]["enable"]:
@@ -777,6 +784,8 @@ def GetSystemPromptForChatSolution(config: dict) ->str:
                 toolboxes_tools_prompt += render_text_description(drive_toolboxes) + '\n\n'
             if google_toolboxes["Tools"]["Google Youtube"]["enable"]:
                 toolboxes_tools_prompt += render_text_description(youtube_toolboxes) + '\n\n'
+            if google_toolboxes["Tools"]["Google Photos"]["enable"]:
+                toolboxes_tools_prompt += render_text_description(photo_toolboxes) + '\n\n'
         if funcall_tools_prompt or toolboxes_tools_prompt or code_tools_prompt:
             tools_prompt = GenerateToolsPrompt(funcall_tools_prompt + toolboxes_tools_prompt + code_tools_prompt)
             system_prompt += tools_prompt
@@ -828,6 +837,7 @@ def GetSystemPromptForChatSolution(config: dict) ->str:
             from WebUI.Server.funcall.google_toolboxes.calendar_funcall import calendar_toolboxes
             from WebUI.Server.funcall.google_toolboxes.gcloud_funcall import drive_toolboxes
             from WebUI.Server.funcall.google_toolboxes.youtube_funcall import youtube_toolboxes
+            from WebUI.Server.funcall.google_toolboxes.photo_funcall import photo_toolboxes
             if google_toolboxes["Tools"]["Google Maps"]["enable"]:
                 toolboxes_tools_prompt += render_text_description(map_toolboxes) + '\n\n'
             if google_toolboxes["Tools"]["Google Mail"]["enable"]:
@@ -838,6 +848,8 @@ def GetSystemPromptForChatSolution(config: dict) ->str:
                 toolboxes_tools_prompt += render_text_description(drive_toolboxes) + '\n\n'
             if google_toolboxes["Tools"]["Google Youtube"]["enable"]:
                 toolboxes_tools_prompt += render_text_description(youtube_toolboxes) + '\n\n'
+            if google_toolboxes["Tools"]["Google Photos"]["enable"]:
+                toolboxes_tools_prompt += render_text_description(photo_toolboxes) + '\n\n'
         if funcall_tools_prompt or toolboxes_tools_prompt or code_tools_prompt:
             tools_prompt = GenerateToolsPrompt(funcall_tools_prompt + toolboxes_tools_prompt + code_tools_prompt)
             system_prompt += tools_prompt
@@ -914,6 +926,7 @@ def GetSystemPromptForNormalChat(config)->str:
         from WebUI.Server.funcall.google_toolboxes.calendar_funcall import calendar_toolboxes
         from WebUI.Server.funcall.google_toolboxes.gcloud_funcall import drive_toolboxes
         from WebUI.Server.funcall.google_toolboxes.youtube_funcall import youtube_toolboxes
+        from WebUI.Server.funcall.google_toolboxes.photo_funcall import photo_toolboxes
         if google_toolboxes["Tools"]["Google Maps"]["enable"]:
             toolboxes_tools_prompt += render_text_description(map_toolboxes) + '\n\n'
         if google_toolboxes["Tools"]["Google Mail"]["enable"]:
@@ -924,6 +937,8 @@ def GetSystemPromptForNormalChat(config)->str:
             toolboxes_tools_prompt += render_text_description(drive_toolboxes) + '\n\n'
         if google_toolboxes["Tools"]["Google Youtube"]["enable"]:
             toolboxes_tools_prompt += render_text_description(youtube_toolboxes) + '\n\n'
+        if google_toolboxes["Tools"]["Google Photos"]["enable"]:
+            toolboxes_tools_prompt += render_text_description(photo_toolboxes) + '\n\n'
     if funcall_tools_prompt or toolboxes_tools_prompt or code_tools_prompt:
         tools_prompt = GenerateToolsPrompt(funcall_tools_prompt + toolboxes_tools_prompt + code_tools_prompt)
         system_prompt += tools_prompt
@@ -1128,6 +1143,7 @@ def GetToolBoxesToolsForGoogle(toolboxes) ->list:
     from WebUI.Server.funcall.google_toolboxes.calendar_funcall import google_calendar_tools
     from WebUI.Server.funcall.google_toolboxes.gcloud_funcall import google_cloud_tools
     from WebUI.Server.funcall.google_toolboxes.youtube_funcall import google_youtube_tools
+    from WebUI.Server.funcall.google_toolboxes.photo_funcall import google_photo_tools
     if not toolboxes:
         return []
     calling_tools = []
@@ -1145,6 +1161,8 @@ def GetToolBoxesToolsForGoogle(toolboxes) ->list:
                 calling_tools += google_cloud_tools.copy()
             elif key_tools == "Google Youtube":
                 calling_tools += google_youtube_tools.copy()
+            elif key_tools == "Google Photos":
+                calling_tools += google_photo_tools.copy()
     return calling_tools
 
 def GetGoogleNativeTools()->list:
@@ -1197,6 +1215,7 @@ def GetToolBoxesToolsForOpenai(toolboxes) ->list:
     from WebUI.Server.funcall.google_toolboxes.calendar_funcall import openai_calendar_tools
     from WebUI.Server.funcall.google_toolboxes.gcloud_funcall import openai_cloud_tools
     from WebUI.Server.funcall.google_toolboxes.youtube_funcall import openai_youtube_tools
+    from WebUI.Server.funcall.google_toolboxes.photo_funcall import openai_photo_tools
     if not toolboxes:
         return []
     calling_tools = []
@@ -1214,6 +1233,8 @@ def GetToolBoxesToolsForOpenai(toolboxes) ->list:
                 calling_tools += openai_cloud_tools.copy()
             elif key_tools == "Google Youtube":
                 calling_tools += openai_youtube_tools.copy()
+            elif key_tools == "Google Photos":
+                calling_tools += openai_photo_tools.copy()
     return calling_tools
 
 def GetOpenaiNativeTools()->list:
