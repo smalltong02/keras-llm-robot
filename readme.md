@@ -781,6 +781,10 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
 ## New Feature Updates
 
+- 🚀 Update Log for 2024-06-18
+1. support **`google photos`** tool.
+2. support **`together ai`** and **`firework ai`**.
+   
 - 🚀 Update Log for 2024-06-15
   1. Refactor the code to support the modes **`"LLM Chat"`**, **`"Knowledge Base Chat"`**, **`"File Chat"`** and **`"Agent Chat"`** on the main interface.
       

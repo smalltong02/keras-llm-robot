@@ -726,6 +726,15 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                                 text += d.get("user", "")
                                 chat_box.user_say(text) 
                                 text = ""
+                                if tool_dict:
+                                    if tool_dict["name"] == "search_photos":
+                                        photos = tool_dict.get("photos", [])
+                                        for photo in photos:
+                                            imgpath = photo.get("imgpath", "")
+                                            if imgpath:
+                                                chat_box.ai_say([""])
+                                                photo_image=Image(imgpath)
+                                                chat_box.update_msg(photo_image, element_index=0, metadata=metadata)
                                 chat_box.ai_say(["Thinking...", Markdown("...", in_expander=True, title=title, state="complete")])
                             elif d.get("docs", []):
                                 message = "\n\n".join(d.get("docs", []))
