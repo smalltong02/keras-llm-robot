@@ -2903,6 +2903,7 @@
     "ToolBoxes": {
         "Google ToolBoxes": {
             "credential": "google_credentials.json",
+            "search_key": "[Your Key]",
             "Tools": [
                 "Google Maps",
                 "Google Mail",
@@ -2948,6 +2949,7 @@
         "ToolBoxes": {
             "Google ToolBoxes": {
                 "credential": "",
+                "search_key": "",
                 "Tools": {
                     "Google Maps": {
                         "enable": false
