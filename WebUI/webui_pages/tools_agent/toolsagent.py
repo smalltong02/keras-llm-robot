@@ -1346,6 +1346,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
             toolboxes_lists = google_toolboxes.get("Tools")
             google_credential = google_toolboxes.get("credential")
             print("credential: ", google_credential)
+            search_key = google_toolboxes.get("search_key")
             current_function = ""
             function_name_list = []
             col1, col2 = st.columns(2)
@@ -1379,6 +1380,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
             if current_function:
                 with st.form("ToolBoxes"):
                     google_credential = st.text_input("Google Credential", google_credential, key="google_credential")
+                    search_key = st.text_input("Search Key", search_key, type="password", key="search_key")
                     function_description = ""
                     if google_tool == "Google Mail":
                         function_description = GetMailFuncallDescription(current_function)
@@ -1400,6 +1402,7 @@ def tools_agent_page(api: ApiRequest, is_lite: bool = False):
                     if save_parameters:
                         with st.spinner("Saving Parameters, Please do not perform any actions or refresh the page."):
                             toolboxes["Google ToolBoxes"]["credential"] = google_credential
+                            toolboxes["Google ToolBoxes"]["search_key"] = search_key
                             r = api.save_google_toolboxes_config(google_toolboxes)
                             if msg := check_error_msg(r):
                                 st.error(msg)

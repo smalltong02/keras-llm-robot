@@ -470,6 +470,7 @@ def InitCurrentRunningCfg() -> dict:
         "ToolBoxes": {
             "Google ToolBoxes": {
                 "credential": "",
+                "search_key": "",
                 "Tools": {
                     "Google Maps": {
                         "enable": False
@@ -1103,7 +1104,7 @@ def is_function_calling_enable(config: dict={}) ->bool:
     toolboxes_enable = is_toolboxes_enable(config)
     return (normal_enable or toolboxes_enable)
 
-def GetCredentialsPath() ->str:
+def GetCredentialsPath()->str:
     from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
     configinst = InnerJsonConfigWebUIParse()
     tool_boxes = configinst.get("ToolBoxes")
@@ -1116,6 +1117,20 @@ def GetCredentialsPath() ->str:
     if credential == "[Your Key]":
         credential = ""
     return credential
+
+def GetSearchKeyInGToolBox()->str:
+    from WebUI.configs.webuiconfig import InnerJsonConfigWebUIParse
+    configinst = InnerJsonConfigWebUIParse()
+    tool_boxes = configinst.get("ToolBoxes")
+    if not tool_boxes:
+        return ""
+    google_toolboxes = tool_boxes.get("Google ToolBoxes")
+    if not google_toolboxes:
+        return False
+    key = google_toolboxes.get("search_key", "[Your Key]")
+    if key == "[Your Key]":
+        key = ""
+    return key
 
 def GetSearchEngineToolsForGoogle() ->list:
     from WebUI.Server.funcall.funcall import google_search_tools

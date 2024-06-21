@@ -4,17 +4,22 @@ from PIL import Image
 import googlemaps
 from langchain_core.tools import tool
 import google.generativeai as genai
+from WebUI.configs.basicconfig import GetSearchKeyInGToolBox
 
 def gmap_addressvalidation(address: str)->bool:
     if not address:
         return False
-    api_key = os.environ.get("GOOGLE_SEARCH_KEY", "")
+    api_key = GetSearchKeyInGToolBox()
+    if not api_key:
+        api_key = os.environ.get("GOOGLE_SEARCH_KEY", "")
     gmaps = googlemaps.Client(key=api_key)
     result = gmaps.addressvalidation(address)
     return result
 
 def get_gmap_geolocate()->dict:
-    api_key = os.environ.get("GOOGLE_SEARCH_KEY", "")
+    api_key = GetSearchKeyInGToolBox()
+    if not api_key:
+        api_key = os.environ.get("GOOGLE_SEARCH_KEY", "")
     gmaps = googlemaps.Client(key=api_key)
     location = {}
     location = gmaps.geolocate()
@@ -23,7 +28,9 @@ def get_gmap_geolocate()->dict:
 def get_gmap_geocode(address: str)->list:
     if not address:
         return []
-    api_key = os.environ.get("GOOGLE_SEARCH_KEY", "")
+    api_key = GetSearchKeyInGToolBox()
+    if not api_key:
+        api_key = os.environ.get("GOOGLE_SEARCH_KEY", "")
     gmaps = googlemaps.Client(key=api_key)
     geocode_result = gmaps.geocode(address)
     if not geocode_result:
@@ -33,7 +40,9 @@ def get_gmap_geocode(address: str)->list:
 def get_gmap_reverse_geocode(latitude: float, longitude: float)->list:
     if not latitude or not longitude:
         return []
-    api_key = os.environ.get("GOOGLE_SEARCH_KEY", "")
+    api_key = GetSearchKeyInGToolBox()
+    if not api_key:
+        api_key = os.environ.get("GOOGLE_SEARCH_KEY", "")
     gmaps = googlemaps.Client(key=api_key)
     geocode_result = gmaps.reverse_geocode((latitude, longitude))
     if not geocode_result:
@@ -57,7 +66,9 @@ def get_gmap_directions(origin: str, destination: str, mode: str="", departure_t
         mode = "driving"
     if departure_time:
         arrival_time = ""
-    api_key = os.environ.get("GOOGLE_SEARCH_KEY", "")
+    api_key = GetSearchKeyInGToolBox()
+    if not api_key:
+        api_key = os.environ.get("GOOGLE_SEARCH_KEY", "")
     gmaps = googlemaps.Client(key=api_key)
     routes = []
     if not departure_time and not arrival_time:
@@ -78,7 +89,9 @@ def get_gmap_distance_matrix(origins: list, destinations: list, mode: str="", de
         mode = "driving"
     if departure_time:
         arrival_time = ""
-    api_key = os.environ.get("GOOGLE_SEARCH_KEY", "")
+    api_key = GetSearchKeyInGToolBox()
+    if not api_key:
+        api_key = os.environ.get("GOOGLE_SEARCH_KEY", "")
     gmaps = googlemaps.Client(key=api_key)
     routes = {}
     if not departure_time and not arrival_time:
@@ -103,7 +116,9 @@ def get_gmap_static_map(origin: str, destinations: list[str], size: tuple=(600, 
         return None
     from googlemaps.maps import StaticMapMarker
     from googlemaps.maps import StaticMapPath
-    api_key = os.environ.get("GOOGLE_SEARCH_KEY", "")
+    api_key = GetSearchKeyInGToolBox()
+    if not api_key:
+        api_key = os.environ.get("GOOGLE_SEARCH_KEY", "")
     gmaps = googlemaps.Client(key=api_key)
     path_list =[]
     marker_list =[]
@@ -142,7 +157,9 @@ def get_gmap_places(query: str, location: dict={}, radius: int=1000, min_price: 
         if not location:
             return {}
         location = location["location"]
-    api_key = os.environ.get("GOOGLE_SEARCH_KEY", "")
+    api_key = GetSearchKeyInGToolBox()
+    if not api_key:
+        api_key = os.environ.get("GOOGLE_SEARCH_KEY", "")
     gmaps = googlemaps.Client(key=api_key)
     places = gmaps.places(query=query, location=location, radius=radius, min_price=min_price, max_price=max_price, open_now=open_now)
     if not places:
@@ -155,7 +172,9 @@ def get_gmap_nearest_roads():
 def get_gmap_timezone(location: str)->dict:
     if not location:
         return {}
-    api_key = os.environ.get("GOOGLE_SEARCH_KEY", "")
+    api_key = GetSearchKeyInGToolBox()
+    if not api_key:
+        api_key = os.environ.get("GOOGLE_SEARCH_KEY", "")
     gmaps = googlemaps.Client(key=api_key)
     geocode_result = gmaps.geocode(location)
     if not geocode_result:
