@@ -735,6 +735,14 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
                                                 chat_box.ai_say([""])
                                                 photo_image=Image(imgpath)
                                                 chat_box.update_msg(photo_image, element_index=0, metadata=metadata)
+                                    elif tool_dict["name"] == "youtube_video_url":
+                                        videos = tool_dict.get("videos", [])
+                                        for video in videos:
+                                            video_url = video.get("video_url", "")
+                                            if video_url:
+                                                chat_box.ai_say([""])
+                                                video_image=Video(video_url)
+                                                chat_box.update_msg(video_image, element_index=0, metadata=metadata)
                                 chat_box.ai_say(["Thinking...", Markdown("...", in_expander=True, title=title, state="complete")])
                             elif d.get("docs", []):
                                 message = "\n\n".join(d.get("docs", []))
