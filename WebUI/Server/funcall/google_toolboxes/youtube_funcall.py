@@ -18,7 +18,67 @@ def get_video_url(service, video_id):
         video_url = "https:" + video_url
     return video_url
 
-def get_youtube_video_url_i(title: str) ->str:
+def get_watch_url(video_id):
+    return f'https://www.youtube.com/watch?v={video_id}'
+
+def search_from_mine_channel(service, title)->str:
+    if not service or not title:
+        return "No service or title provided"
+
+    channels_response = service.channels().list(
+            part='contentDetails',
+            mine=True
+        ).execute()
+
+    youtube_message = ""
+    for channel in channels_response.get("items", []):
+        playlist_id = channel.get("contentDetails", {}).get("relatedPlaylists", {}).get("uploads")
+        playlistItems_list = service.playlistItems().list(
+            part="snippet",
+            playlistId=playlist_id,
+            maxResults=50
+        )
+        while playlistItems_list:
+            playlist_items = playlistItems_list.execute()
+
+            for item in playlist_items.get("items", {}):
+                video_title = item.get("snippet", {}).get("title")
+                if title.lower() in video_title.lower():
+                    video_description = item.get("snippet", {}).get("description")
+                    video_id = item.get("snippet", {}).get("resourceId", {}).get("videoId")
+                    video_url = get_video_url(service, video_id)
+                    youtube_message = f" The video found:\n  video title: '{video_title}'\n video description: '{video_description}'\n  video url: '{video_url}'"
+                    break
+            if youtube_message:
+                break    
+            playlistItems_list = service.playlistItems().list_next(
+                    playlistItems_list, playlist_items
+                )
+    return youtube_message
+
+def search_from_all_channel(service, title)->str:
+    if not service or not title:
+        return "No service or title provided"
+
+    youtube_message = ""
+    request = service.search().list(
+    part="id,snippet",
+        type='video',
+        q=title,
+        videoDefinition='high',
+        maxResults=1
+    )
+    search_response = request.execute()
+    for search in search_response.get("items", []):
+        video_id = search.get("id", {}).get("videoId", "")
+        video_url = get_watch_url(video_id)
+        video_title = search.get("snippet", {}).get("title", "")
+        video_description = search.get("snippet", {}).get("description", "")
+        youtube_message = f" The video found:\n  video title: '{video_title}'\n video description: '{video_description}'\n  video url: '{video_url}'"
+        break
+    return youtube_message
+
+def get_youtube_video_url_i(title: str, mine: bool = False) ->str:
     """ Get URL about Youtube video from your own Youtube channel. """
 
     from WebUI.Server.funcall.google_toolboxes.credential import glob_credentials
@@ -34,34 +94,11 @@ def get_youtube_video_url_i(title: str) ->str:
     if not service:
         return "youtube object create failed. This error is unrecoverable."
     try:
-        channels_response = service.channels().list(
-            part='contentDetails',
-            mine=True
-        ).execute()
-
-        for channel in channels_response.get("items", {}):
-            playlist_id = channel.get("contentDetails", {}).get("relatedPlaylists", {}).get("uploads")
-            playlistItems_list = service.playlistItems().list(
-                part="snippet",
-                playlistId=playlist_id,
-                maxResults=50
-            )
-            while playlistItems_list:
-                playlist_items = playlistItems_list.execute()
-
-                for item in playlist_items.get("items", {}):
-                    video_title = item.get("snippet", {}).get("title")
-                    if title.lower() in video_title.lower():
-                        video_description = item.get("snippet", {}).get("description")
-                        video_id = item.get("snippet", {}).get("resourceId", {}).get("videoId")
-                        video_url = get_video_url(service, video_id)
-                        youtube_message = f" The video found:\n  video title: '{video_title}'\n video description: '{video_description}'\n  video url: '{video_url}'"
-                        break
-                if youtube_message:
-                    break    
-                playlistItems_list = service.playlistItems().list_next(
-                        playlistItems_list, playlist_items
-                    )
+        if mine:
+            youtube_message = search_from_mine_channel(service, title)
+        else:
+            youtube_message = search_from_all_channel(service, title)
+        
     except Exception as e:
         youtube_message = f"get video url failed, error: {e}"
         print(f"get_youtube_video_url Error: {e}")
@@ -71,15 +108,20 @@ def get_youtube_video_url_i(title: str) ->str:
 
 
 @tool
-def get_youtube_video_url(title: str) ->str:
-    """ Get URL about Youtube video from your own Youtube channel. 
+def get_youtube_video_url(title: str, mine: bool = False) ->str:
+    """ Get URL about Youtube video from Youtube. 
+        Args:
+            title (str): Search for video titles.
+            mine (boolean): Search only within my channel.
+
         Here is an example of calling the function 'get_youtube_video_url':
         User: Please retrieve the shared URL of the video 'Language Translation' from my YouTube channel.
         Bot: Okay, I will call the function 'get_youtube_video_url' to get this video URL.
         {
             "name": "get_youtube_video_url",
             "arguments": {
-                "title": "Language Translation"
+                "title": "Language Translation",
+                "mine": true
             }
         }
         API Output: "The video found:
@@ -87,7 +129,7 @@ def get_youtube_video_url(title: str) ->str:
             video url: 'https://youtu.be/H78ABFocRrQ'
         Bot: The video has been successfully found, and its shared URL is 'https://youtu.be/H78ABFocRrQ'
     """
-    return get_youtube_video_url_i(title)
+    return get_youtube_video_url_i(title, mine)
 
 youtube_toolboxes = [get_youtube_video_url]
 youtube_tool_names = {
@@ -104,8 +146,9 @@ get_youtube_video_url_func = genai.protos.Tool(
             type=genai.protos.Type.OBJECT,
             properties={
                 'title':genai.protos.Schema(type=genai.protos.Type.STRING, description="Use the advanced search syntax like the Youtube API, Here's an example: 'Language Translation'"),
+                'mine':genai.protos.Schema(type=genai.protos.Type.BOOLEAN, description="Search only within my channel."),
             },
-            required=['title']
+            required=['title', 'mine']
         )
       )
     ])
@@ -123,8 +166,9 @@ get_youtube_video_url_openai = {
             "type": "object",
             "properties": {
                 "title": {"type": "string", "description": "Use the advanced search syntax like the Youtube API, Here's an example: 'Language Translation'"},
+                "mine": {"type": "boolean", "description": "Search only within my channel."},
             },
-            "required": ["title"],
+            "required": ["title", "mine"],
         },
     }
 }
