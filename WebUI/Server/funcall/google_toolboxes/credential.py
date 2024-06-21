@@ -147,8 +147,8 @@ def RunFunctionCallingInToolBoxes(json_data: str):
             result = drive_tool_names[func_name].run(func_arg)
             return func_name, result, {}
         if func_name in youtube_tool_names:
-            result = youtube_tool_names[func_name].run(func_arg)
-            return func_name, result, {}
+            result, youtube_dict = youtube_tool_names[func_name].run(func_arg)
+            return func_name, result, youtube_dict
         if func_name in photo_tool_names:
             result, map_dict = photo_tool_names[func_name].run(func_arg)
             return func_name, result, map_dict
