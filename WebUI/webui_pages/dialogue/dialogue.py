@@ -528,9 +528,11 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
         elif tool_dict["name"] == "map_places":
             locations = tool_dict.get("locations", [])
             current_location = tool_dict.get("current_location", {})
+            start_name = tool_dict.get("start", "")
             if current_location:
                 current_coordinates = [current_location['lat'], current_location['lng']]
                 m = folium.Map(location=current_coordinates, zoom_start=16)
+                folium.Marker(current_coordinates, icon=folium.Icon(color="blue", prefix='fa'), popup=start_name, tooltip="Start").add_to(m)
                 for location in locations:
                     place_name = location["name"]
                     #place_status = location["status"]
