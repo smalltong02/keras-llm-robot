@@ -75,6 +75,34 @@
   在windows机器上，通过Https服务访问服务器
 
 
+  推荐使用.env方式加载在线服务的KEY，请将./WebUI/configs/.env.sample重命名为.env并且按照自己的需求填写需要的KEY信息：
+
+  ```bash
+    OPENAI_API_KEY=
+    GOOGLE_API_KEY=
+    GROQ_API_KEY=
+
+    ALI_API_KEY=
+    YI_API_KEY=
+    KIMI_API_KEY=
+    QIANFAN_ACCESS_KEY=
+    QIANFAN_SECRET_KEY=
+    TOGETHER_API_KEY=
+    FIREWORKS_API_KEY=
+
+    SPEECH_KEY=
+    SPEECH_REGION=
+
+    BING_SEARCH_URL=https://api.bing.microsoft.com/v7.0/search
+    BING_SUBSCRIPTION_KEY=
+    METAPHOR_API_KEY=
+    GOOGLE_CSE_ID=
+    GOOGLE_SEARCH_KEY=
+
+    GOOGLE_JSON_CREDENTIALS=
+  ```
+
+
 ## 项目介绍
 由三个主界面组成，语言模型的聊天界面，语言模型的配置界面，辅助模型的工具和代理界面。
 
@@ -785,6 +813,9 @@
 
 
 ## 新特性更新日志
+
+- 🚀 2024-06-27更新日志
+1. 添加 **`.env`** 配置文件
 
 - 🚀 2024-06-18更新日志
 1. 支持 **`google photos`** 工具。

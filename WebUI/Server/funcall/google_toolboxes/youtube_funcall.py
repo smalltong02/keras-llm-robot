@@ -71,7 +71,7 @@ def search_from_all_channel(service, title, max_results=4)->list:
         return video_results
 
     request = service.search().list(
-    part="id,snippet",
+        part="id,snippet",
         type='video',
         q=title,
         videoDefinition='high',

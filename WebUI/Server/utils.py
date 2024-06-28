@@ -675,8 +675,6 @@ def get_ChatOpenAI(
         verbose: bool = True,
         **kwargs: Any,
 ) -> ChatOpenAI:
-    from WebUI.configs.basicconfig import load_env
-    load_env()
     config = get_model_worker_config(model_name)
     apikey = None
     if provider is not None:

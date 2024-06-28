@@ -11,8 +11,6 @@ def gmap_addressvalidation(address: str)->bool:
         return False
     api_key = GetSearchKeyInGToolBox()
     if not api_key:
-        from WebUI.configs.basicconfig import load_env
-        load_env()
         api_key = os.environ.get("GOOGLE_SEARCH_KEY", "")
     gmaps = googlemaps.Client(key=api_key)
     result = gmaps.addressvalidation(address)
@@ -21,8 +19,6 @@ def gmap_addressvalidation(address: str)->bool:
 def get_gmap_geolocate()->dict:
     api_key = GetSearchKeyInGToolBox()
     if not api_key:
-        from WebUI.configs.basicconfig import load_env
-        load_env()
         api_key = os.environ.get("GOOGLE_SEARCH_KEY", "")
     gmaps = googlemaps.Client(key=api_key)
     location = {}
@@ -34,8 +30,6 @@ def get_gmap_geocode(address: str)->list:
         return []
     api_key = GetSearchKeyInGToolBox()
     if not api_key:
-        from WebUI.configs.basicconfig import load_env
-        load_env()
         api_key = os.environ.get("GOOGLE_SEARCH_KEY", "")
     gmaps = googlemaps.Client(key=api_key)
     geocode_result = gmaps.geocode(address)
@@ -48,8 +42,6 @@ def get_gmap_reverse_geocode(latitude: float, longitude: float)->list:
         return []
     api_key = GetSearchKeyInGToolBox()
     if not api_key:
-        from WebUI.configs.basicconfig import load_env
-        load_env()
         api_key = os.environ.get("GOOGLE_SEARCH_KEY", "")
     gmaps = googlemaps.Client(key=api_key)
     geocode_result = gmaps.reverse_geocode((latitude, longitude))
@@ -76,8 +68,6 @@ def get_gmap_directions(origin: str, destination: str, mode: str="", departure_t
         arrival_time = ""
     api_key = GetSearchKeyInGToolBox()
     if not api_key:
-        from WebUI.configs.basicconfig import load_env
-        load_env()
         api_key = os.environ.get("GOOGLE_SEARCH_KEY", "")
     gmaps = googlemaps.Client(key=api_key)
     routes = []
@@ -101,8 +91,6 @@ def get_gmap_distance_matrix(origins: list, destinations: list, mode: str="", de
         arrival_time = ""
     api_key = GetSearchKeyInGToolBox()
     if not api_key:
-        from WebUI.configs.basicconfig import load_env
-        load_env()
         api_key = os.environ.get("GOOGLE_SEARCH_KEY", "")
     gmaps = googlemaps.Client(key=api_key)
     routes = {}
@@ -130,8 +118,6 @@ def get_gmap_static_map(origin: str, destinations: list[str], size: tuple=(600, 
     from googlemaps.maps import StaticMapPath
     api_key = GetSearchKeyInGToolBox()
     if not api_key:
-        from WebUI.configs.basicconfig import load_env
-        load_env()
         api_key = os.environ.get("GOOGLE_SEARCH_KEY", "")
     gmaps = googlemaps.Client(key=api_key)
     path_list =[]
@@ -173,8 +159,6 @@ def get_gmap_places(query: str, location: dict={}, radius: int=1000, min_price: 
         location = location["location"]
     api_key = GetSearchKeyInGToolBox()
     if not api_key:
-        from WebUI.configs.basicconfig import load_env
-        load_env()
         api_key = os.environ.get("GOOGLE_SEARCH_KEY", "")
     gmaps = googlemaps.Client(key=api_key)
     places = gmaps.places(query=query, location=location, radius=radius, min_price=min_price, max_price=max_price, open_now=open_now)
@@ -190,8 +174,6 @@ def get_gmap_timezone(location: str)->dict:
         return {}
     api_key = GetSearchKeyInGToolBox()
     if not api_key:
-        from WebUI.configs.basicconfig import load_env
-        load_env()
         api_key = os.environ.get("GOOGLE_SEARCH_KEY", "")
     gmaps = googlemaps.Client(key=api_key)
     geocode_result = gmaps.geocode(location)

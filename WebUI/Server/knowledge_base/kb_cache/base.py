@@ -115,8 +115,6 @@ class CachePool:
 
 class EmbeddingsPool(CachePool):
     def load_embeddings(self, model: str = None, device: str = None) -> Embeddings:
-        from WebUI.configs.basicconfig import load_env
-        load_env()
         self.atomic.acquire()
         model = model or ""
         if device is None or device == "":

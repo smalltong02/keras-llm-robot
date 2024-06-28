@@ -41,8 +41,6 @@ class StreamSpeakHandler(BaseCallbackHandler):
         rate="+0.00%",
         subscription=None,
         region=None):
-        from WebUI.configs.basicconfig import load_env
-        load_env()
         self.initialize = False
         if subscription is None or subscription == "":
             if provider == "AzureCloud":

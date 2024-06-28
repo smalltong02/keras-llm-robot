@@ -84,8 +84,6 @@ def translate_voice_data(model, config, voice_data: str = "") -> str:
     return ""
 
 def cloud_voice_data(config, voice_data: str="") -> str:
-    from WebUI.configs.basicconfig import load_env
-    load_env()
     if len(voice_data):
         decoded_data = base64.b64decode(voice_data)
         language_code = config.get("language", ["en-US"])
