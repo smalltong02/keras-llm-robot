@@ -77,7 +77,6 @@
 
   推荐使用.env方式加载在线服务的KEY，请将./WebUI/configs/.env.sample重命名为.env并且按照自己的需求填写需要的KEY信息：
 
-  ```bash
     OPENAI_API_KEY=
     GOOGLE_API_KEY=
     GROQ_API_KEY=
@@ -100,7 +99,6 @@
     GOOGLE_SEARCH_KEY=
 
     GOOGLE_JSON_CREDENTIALS=
-  ```
 
 
 ## 项目介绍
