@@ -79,7 +79,6 @@ The project inherits from the Langchain-Chatchat project(https://github.com/chat
 
   It is recommended to use the .env method to load the keys for online services. Please rename ./WebUI/configs/.env.sample to .env and fill in the required key information according to your needs:
 
-    ```bash
     OPENAI_API_KEY=
     GOOGLE_API_KEY=
     GROQ_API_KEY=
@@ -102,7 +101,6 @@ The project inherits from the Langchain-Chatchat project(https://github.com/chat
     GOOGLE_SEARCH_KEY=
 
     GOOGLE_JSON_CREDENTIALS=
-  ```
 
 
 ## Project Introduction
