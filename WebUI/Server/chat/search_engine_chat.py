@@ -85,6 +85,8 @@ async def lookup_search_engine(
         search_engine_name: str,
         top_k: int = 3,
 ):
+    from WebUI.configs.basicconfig import load_env
+    load_env()
     search_engine = SEARCH_ENGINES[search_engine_name]
     
     configinst = InnerJsonConfigWebUIParse()

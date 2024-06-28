@@ -171,7 +171,8 @@ async def special_chat_iterator(model: Any,
     modelinfo: Any = None,
     prompt_name: str = "default",
     ) -> AsyncIterable[str]:
-
+    from WebUI.configs.basicconfig import load_env
+    load_env()
     configinst = InnerJsonConfigWebUIParse()
     webui_config = configinst.dump()
     model_config = GetModelConfig(webui_config, modelinfo)

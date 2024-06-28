@@ -71,6 +71,11 @@ class ToolsType(Enum):
     ToolCodeInterpreter = 4
     ToolToolBoxes = 5
 
+def load_env():
+    from dotenv import load_dotenv
+    load_dotenv("./WebUI/configs/.env")
+    return
+
 def GetTypeName(type: ModelType) -> str:
     if type == ModelType.Local:
         return "LLM Model"
