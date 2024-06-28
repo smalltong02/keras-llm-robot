@@ -77,6 +77,34 @@ The project inherits from the Langchain-Chatchat project(https://github.com/chat
   Access Server on Windows PC by https service.
 
 
+  It is recommended to use the .env method to load the keys for online services. Please rename ./WebUI/configs/.env.sample to .env and fill in the required key information according to your needs:
+
+    ```bash
+    OPENAI_API_KEY=
+    GOOGLE_API_KEY=
+    GROQ_API_KEY=
+
+    ALI_API_KEY=
+    YI_API_KEY=
+    KIMI_API_KEY=
+    QIANFAN_ACCESS_KEY=
+    QIANFAN_SECRET_KEY=
+    TOGETHER_API_KEY=
+    FIREWORKS_API_KEY=
+
+    SPEECH_KEY=
+    SPEECH_REGION=
+
+    BING_SEARCH_URL=https://api.bing.microsoft.com/v7.0/search
+    BING_SUBSCRIPTION_KEY=
+    METAPHOR_API_KEY=
+    GOOGLE_CSE_ID=
+    GOOGLE_SEARCH_KEY=
+
+    GOOGLE_JSON_CREDENTIALS=
+  ```
+
+
 ## Project Introduction
 Consists of three main interfaces: the chat interface for language models, the configuration interface for language models, and the tools and agent interface for auxiliary models.
 
@@ -780,6 +808,9 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
 
 ## New Feature Updates
+
+- 🚀 Update Log for 2024-06-27
+1. add **`.env`** configuration file
 
 - 🚀 Update Log for 2024-06-18
 1. support **`google photos`** tool.

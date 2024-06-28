@@ -306,6 +306,7 @@ def get_map_places(query: str, location: str="", radius: int=1000, min_price: in
     longitude = geocode_result[0]["geometry"]["location"]["lng"]
     map_dict = {
             "name": "map_places",
+            "start": location,
             "current_location": {
                 "lat": latitude,
                 "lng": longitude
