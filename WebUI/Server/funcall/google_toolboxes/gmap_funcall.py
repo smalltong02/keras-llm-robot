@@ -381,7 +381,7 @@ get_map_directions_gemini = genai.protos.Tool(
             properties={
                 'origin':genai.protos.Schema(type=genai.protos.Type.STRING, description="""Starting address, When the location is "", it means that you are in the current location."""),
                 'destination':genai.protos.Schema(type=genai.protos.Type.STRING, description="""Destination address, When the location is "", it means that you are in the current location."""),
-                'mode':genai.protos.Schema(type=genai.protos.Type.STRING, enum=["driving", "walking", "bicycling", "transit"], description="""Specifies the mode of transport to use when calculating directions. One of "driving", "walking", "bicycling" or "transit"."""),
+                'mode':genai.protos.Schema(type=genai.protos.Type.STRING, description="""Specifies the mode of transport to use when calculating directions. One of "driving", "walking", "bicycling" or "transit"."""),
             },
             required=['origin', 'destination', 'mode']
         )

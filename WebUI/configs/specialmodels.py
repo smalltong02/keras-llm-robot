@@ -212,6 +212,15 @@ async def special_chat_iterator(model: Any,
         modelconfig = GetModelConfig(webui_config, modelinfo)
         loadtype = modelconfig["load_type"]
 
+        if model_name.startswith("gemma-"):
+            if history and history[0]['role'] == 'system':
+                history.insert(1, {'content': 'I will strictly follow your request.', 'role': 'assistant'})
+            updated_history = [
+                {'parts': entry['content'], **({'role': 'model'} if entry['role'] == 'assistant' else {'role': "user"})}
+                for entry in history
+            ]
+            history = updated_history
+
         docs = []
         btalk = True
         while btalk:
@@ -341,7 +350,8 @@ async def special_chat_iterator(model: Any,
                 calling_tools = GetGoogleNativeTools()
             model = genai.GenerativeModel(model_name=model_name, tools=calling_tools)
             generation_config = {'temperature': temperature}
-
+            if history and history[0]['role'] == 'system':
+                history.insert(1, {'content': 'I will strictly follow your request.', 'role': 'assistant'})
             updated_history = [
                 {'parts': entry['content'], **({'role': 'model'} if entry['role'] == 'assistant' else {'role': "user"})}
                 for entry in history

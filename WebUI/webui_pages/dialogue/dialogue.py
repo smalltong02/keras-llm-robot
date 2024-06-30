@@ -532,7 +532,7 @@ def dialogue_page(api: ApiRequest, is_lite: bool = False):
             if current_location:
                 current_coordinates = [current_location['lat'], current_location['lng']]
                 m = folium.Map(location=current_coordinates, zoom_start=16)
-                folium.Marker(current_coordinates, icon=folium.Icon(color="blue", prefix='fa'), popup=start_name, tooltip="Start").add_to(m)
+                folium.Marker(current_coordinates, icon=folium.Icon(color="blue", prefix='fa'), popup="Start", tooltip=start_name).add_to(m)
                 for location in locations:
                     place_name = location["name"]
                     #place_status = location["status"]
