@@ -1920,6 +1920,28 @@
         "LocalModel": {
             "LLM Model": {
                 "3B Model": {
+                    "Qwen2-0.5B-Instruct": {
+                        "path": "models/llm/Qwen2-0.5B-Instruct",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "fastchat",
+                        "support_tools": false,
+                        "Huggingface": "Qwen/Qwen2-0.5B-Instruct"
+                    },
+                    "Qwen2-1.5B-Instruct": {
+                        "path": "models/llm/Qwen2-1.5B-Instruct",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "fastchat",
+                        "support_tools": false,
+                        "Huggingface": "Qwen/Qwen2-1.5B-Instruct"
+                    },
                     "TinyLlama-1.1B-Chat-v1.0": {
                         "path": "models/llm/TinyLlama-1.1B-Chat-v1.0",
                         "device": "auto",
@@ -2631,6 +2653,17 @@
                         "load_type": "pipeline",
                         "support_tools": false,
                         "Huggingface": "01-ai/glm-4-9b-chat-1m"
+                    },
+                    "gemma-2-9b-it": {
+                        "path": "models/llm/gemma-2-9b-it",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "pipeline",
+                        "support_tools": false,
+                        "Huggingface": "google/gemma-2-9b-it"
                     }
                 },
                 "13B Model": {},
@@ -2667,6 +2700,17 @@
                         "load_type": "llamacpp",
                         "support_tools": false,
                         "Huggingface": "TheBloke/Mixtral-8x7B-Instruct-v0.1-GGUF"
+                    },
+                    "gemma-2-27b-it": {
+                        "path": "models/llm/gemma-2-27b-it",
+                        "device": "auto",
+                        "maxmemory": 20,
+                        "cputhreads": 4,
+                        "loadbits": 16,
+                        "preset": "default",
+                        "load_type": "pipeline",
+                        "support_tools": false,
+                        "Huggingface": "google/gemma-2-27b-it"
                     }
                 },
                 "70B Model": {
@@ -2918,7 +2962,7 @@
         }
     },
     "CurrentRunningConfig": {
-        "enable": false,
+        "enable": true,
         "chat_solution": {
             "name": ""
         },

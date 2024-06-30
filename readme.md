@@ -807,6 +807,10 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
 
 ## New Feature Updates
 
+- 🚀 Update Log for 2024-06-30
+1. Support for **`gemma-2-9b-it`**, **`gemma-2-27b-it`**, Please upgrade **`transformers`** to **`4.42.3`**. (pip install transformers==4.42.3)
+2. Support for **`Qwen2-0.5B-Instruct`**, **`Qwen2-1.5B-Instruct`**, **`Qwen2-7B-Instruct`**
+
 - 🚀 Update Log for 2024-06-27
 1. add **`.env`** configuration file
 
@@ -829,13 +833,13 @@ Auxiliary models, such as retrieval, code execution, text-to-speech, speech-to-t
   3. Add the **`Keras code interpreter`** to the toolbox. When the code interpreter is activated, the model in "LLM Chat" will autonomously decide whether to invoke this tool.
 
 - 🚀 Update Log for 2024-06-05
-  1. Support for glm-4v-9b, glm-4-9b-chat, glm-4-9b-chat-1m
+  1. Support for **`glm-4v-9b`**, **`glm-4-9b-chat`**, **`glm-4-9b-chat-1m`**
 
 - 🚀 Update Log for 2024-06-03
-  1. Support for MiniCPM-Llama3-V-2_5
+  1. Support for **`MiniCPM-Llama3-V-2_5`**
 
 - 🚀 Update Log for 2024-06-02
-  1. Support for Phi-3-vision-128k-instruct, please install the `flash-attn` library first.
+  1. Support for **`Phi-3-vision-128k-instruct`**, please install the `flash-attn` library first.
   ```bash
   # for Linux, Takes about 1 hour to compile and install.
   pip install flash-attn
