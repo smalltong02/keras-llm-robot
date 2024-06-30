@@ -333,7 +333,7 @@ def LocalModelExist(local_path):
             total_size_bytes += os.path.getsize(filepath)
     total_size_gb = total_size_bytes / (MIN_LLMMODEL_SIZE)
     print("total_size_gb: ", total_size_gb)
-    if total_size_gb > 1:
+    if total_size_gb > 0.8:
         return True
     return False
 
