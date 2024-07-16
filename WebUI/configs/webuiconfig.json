@@ -1718,7 +1718,8 @@
                             "en-US-NancyNeural",
                             "en-US-SaraNeural",
                             "en-US-AIGenerate2Neural",
-                            "en-US-JennyMultilingualV2Neural"
+                            "en-US-JennyMultilingualV2Neural",
+                            "en-US-AnaNeural"
                         ],
                         "non-binary": [
                             "en-US-BlueNeural"
@@ -1750,7 +1751,9 @@
                             "zh-CN-XiaoyanNeural",
                             "zh-CN-XiaoyouNeural",
                             "zh-CN-XiaozhenNeural",
-                            "zh-CN-XiaorouNeural"
+                            "zh-CN-XiaorouNeural",
+                            "zh-CN-XiaoshuangNeural",
+                            "zh-CN-XiaoyouNeural"
                         ],
                         "non-binary": []
                     },
@@ -2987,8 +2990,8 @@
             "language": ""
         },
         "speech": {
-            "name": "",
-            "speaker": ""
+            "name": "AzureSpeechService",
+            "speaker": "zh-CN-XiaoyouNeural"
         },
         "ToolBoxes": {
             "Google ToolBoxes": {

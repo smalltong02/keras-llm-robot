@@ -165,7 +165,7 @@ google_photo_tools = [
 ]
 
 # for openai
-search_in_emails_openai = {
+search_photos_openai = {
     "type": "function",
     "function": {
         "name": "search_photos",
@@ -182,7 +182,7 @@ search_in_emails_openai = {
 }
 
 openai_photo_tools = [
-    search_in_emails_openai,
+    search_photos_openai,
 ]
 
 def GetPhotoFuncallList() ->list:
