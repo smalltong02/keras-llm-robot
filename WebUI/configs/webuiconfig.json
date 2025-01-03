@@ -562,7 +562,6 @@
                 "voice_key": "[Your Key]",
                 "voice_region": "[Your Region]",
                 "language": [
-                    "zh-CN",
                     "en-US"
                 ],
                 "provider": "AzureCloud",
@@ -1684,8 +1683,8 @@
             },
             "AzureSpeechService": {
                 "type": "cloud",
-                "speech_key": "4a7733d8a9b44e73b29054ef32680066",
-                "speech_region": "eastus",
+                "speech_key": "[Your Key]",
+                "speech_region": "[Your Region]",
                 "provider": "AzureCloud",
                 "synthesis": {
                     "en-US": {
