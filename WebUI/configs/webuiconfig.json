@@ -27,7 +27,8 @@
                 "modellist": [
                     "gpt-3.5-turbo",
                     "gpt-4-turbo",
-                    "gpt-4o"
+                    "gpt-4o",
+                    "gpt-4o-mini"
                 ],
                 "baseurl": "https://api.openai.com/v1",
                 "load_type": "cloud",
@@ -561,7 +562,8 @@
                 "voice_key": "[Your Key]",
                 "voice_region": "[Your Region]",
                 "language": [
-                    "zh-CN"
+                    "zh-CN",
+                    "en-US"
                 ],
                 "provider": "AzureCloud",
                 "CloudTemplates": "AzureVoiceTemplate",
@@ -1682,8 +1684,8 @@
             },
             "AzureSpeechService": {
                 "type": "cloud",
-                "speech_key": "[Your Key]",
-                "speech_region": "[Your Region]",
+                "speech_key": "4a7733d8a9b44e73b29054ef32680066",
+                "speech_region": "eastus",
                 "provider": "AzureCloud",
                 "synthesis": {
                     "en-US": {
@@ -2990,8 +2992,8 @@
             "language": ""
         },
         "speech": {
-            "name": "AzureSpeechService",
-            "speaker": "zh-CN-XiaoyouNeural"
+            "name": "",
+            "speaker": ""
         },
         "ToolBoxes": {
             "Google ToolBoxes": {
